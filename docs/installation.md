@@ -83,7 +83,7 @@ see [Backup and restore](backup-restore.md) for scheduling and recovery.
 
 ## What setup generates
 
-<!-- docref: begin src=server/deploy/setup.sh#main:654e85a9 -->
+<!-- docref: begin src=server/deploy/setup.sh#main:19109030 -->
 `setup.sh` is the enforcing half of the installation. It never downloads, never
 prompts, and never touches Docker: it validates the environment, creates the
 directory tree with restrictive permissions, writes the ACME overlay, generates
@@ -91,13 +91,13 @@ the key material, renders the service
 configuration, and verifies the resulting permissions.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/deploy/setup.sh#load_environment:47ab1d3d -->
+<!-- docref: begin src=server/deploy/setup.sh#load_environment:57a835bd -->
 It parses `.env` as plain key/value assignments rather than sourcing it. A
 configuration file is data; sourcing it would make it code, and a stray
 backtick in a domain name would execute.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/deploy/setup.sh#@generated-material:908e4cd7 -->
+<!-- docref: begin src=server/deploy/setup.sh#@generated-material:c44d1838 -->
 Generated once and then retained: the internal CA, the control-plane server
 certificate, the at-rest encryption key, and the session signing key.
 <!-- docref: end -->
@@ -122,7 +122,7 @@ hostname does not match — so trusting it would have silently accepted a
 certificate for the wrong host.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/deploy/setup.sh#validate_permissions:6a1a257d -->
+<!-- docref: begin src=server/deploy/setup.sh#validate_permissions:6ccb550f -->
 Finally it verifies the result rather than assuming it: the data directories
 must be writable, and every key, secret, and rendered environment file must have
 no group or world bits.
@@ -132,7 +132,7 @@ no group or world bits.
 
 ## The stack
 
-<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:c3bfad13 -->
+<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:9a1eca5a -->
 Three services, and **only Traefik publishes ports** — 80 and 443. Control and
 the web UI have no published ports at all; they are reachable only across the
 compose networks.
@@ -150,7 +150,7 @@ the browser-facing path does not put an attacker on the device network.
 
 ### Routing
 
-<!-- docref: begin src=server/deploy/traefik/dynamic/routes.yml#@public-backend-tls:da534a3f -->
+<!-- docref: begin src=server/deploy/traefik/dynamic/routes.yml#@public-backend-tls:4a18996e -->
 The browser domain serves both the API and the UI **same-origin**, split by path
 priority rather than by hostname or subpath: the control plane's RPC, SCIM,
 terminal, and health paths take precedence, and everything else falls through to
@@ -169,7 +169,7 @@ control. It prepends a PROXY protocol v2 header so control still learns the real
 client address.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/deploy/traefik/traefik.yml#@safe-access-log:e383937a -->
+<!-- docref: begin src=server/deploy/traefik/traefik.yml#@safe-access-log:18c7080a -->
 The access log drops the request path, the request line, and all headers by
 default. An ingress log is a standing risk of recording a token someone put in a
 URL; this one is configured not to be able to.
@@ -177,7 +177,7 @@ URL; this one is configured not to be able to.
 
 ### TLS
 
-<!-- docref: begin src=server/deploy/setup.sh#ensure_traefik_acme_config:ce19406b -->
+<!-- docref: begin src=server/deploy/setup.sh#ensure_traefik_acme_config:112fe600 -->
 Two ACME challenge types are supported. `http01` needs port 80 reachable from
 the internet and nothing else. `dns01` needs a provider code and API credentials,
 and works when port 80 is not reachable — or when you want a certificate before
@@ -232,7 +232,7 @@ Issuing a new one retires the old.
 
 ## Configuration reference
 
-<!-- docref: begin src=server/cmd/cadestro/config.go#optionPrefix:5752112f,server/cmd/cadestro/config.go#readEnvironment:88fc4d61 -->
+<!-- docref: begin src=server/cmd/cadestro/config.go#optionPrefix:e975db97,server/cmd/cadestro/config.go#readEnvironment:88fc4d61 -->
 Control is configured entirely through `CADESTRO_`-prefixed environment
 variables, rendered into `config/control.env` by setup. The recognised set is
 derived from the configuration structure itself rather than maintained as a
@@ -242,7 +242,7 @@ silently leaving the default in place. Error messages name variables, never
 their values.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/cmd/cadestro/config.go#validateConfig:8dff7139,server/cmd/cadestro/config.go#validateWritableDirectory:0881f863 -->
+<!-- docref: begin src=server/cmd/cadestro/config.go#validateConfig:fde0feb4,server/cmd/cadestro/config.go#validateWritableDirectory:0881f863 -->
 Validation is thorough and happens before anything opens a socket: the two
 listen addresses must be present and distinct; the proxy sources must be valid
 addresses or CIDRs; the public base URL must be absolute HTTPS with no
@@ -267,7 +267,7 @@ docker compose ps                    # all three healthy
 curl -fsS https://control.example.com/ready
 ```
 
-<!-- docref: begin src=server/cmd/cadestro/readiness.go#checkReadiness:8aac1435 -->
+<!-- docref: begin src=server/cmd/cadestro/readiness.go#checkReadiness:654959a2 -->
 Readiness checks that the database answers and that the active-certificate
 lookup works, and
 that the artifact path is writable. When backup posture is configured, a

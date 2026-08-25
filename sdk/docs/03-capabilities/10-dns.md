@@ -56,7 +56,7 @@ err := m.Apply(ctx, dns.Config{
 })
 ```
 
-<!-- docref: begin src=sys/dns/resolved.go#resolvedManager.Apply:8bd678ae -->
+<!-- docref: begin src=sys/dns/resolved.go#resolvedManager.Apply:e700c399 -->
 `Apply` validates the whole `Config` (rejecting non-IP nameservers, malformed or
 flag-shaped search domains, and bad interface names) *before* it touches any
 backend, so an invalid configuration has no side effects. On the Resolved
@@ -73,7 +73,7 @@ apply, and nothing persistent is lost.
 <!-- docref: end -->
 
 {% callout type="info" title="Backend scope" %}
-<!-- docref: begin src=sys/dns/dns.go#Config.Interface:acca040e,sys/dns/networkmanager.go#nmManager.Apply:88f225c8 -->
+<!-- docref: begin src=sys/dns/dns.go#Config.Interface:acca040e,sys/dns/networkmanager.go#nmManager.Apply:7cbfc21c -->
 The **Resolved** backend supports host-global config (empty `Interface`).
 **NetworkManager** is connection-scoped — it configures DNS on a specific
 interface's active connection, so `Interface` is required there. For host-wide

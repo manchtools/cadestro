@@ -65,7 +65,7 @@ The agent has one explicit enrollment method:
 6. The Control Server validates the token, signs the certificate, and returns credentials
 7. The agent saves credentials, closes the enrollment socket, starts the auth socket, and opens its stream to control
 
-<!-- docref: begin src=agent/internal/deviceauth/enroll_server.go#EnrollSocketPath:a4fcf356 -->
+<!-- docref: begin src=agent/internal/deviceauth/enroll_server.go#EnrollSocketPath:c6d1f4f2 -->
 > **Trust boundary.** The enrollment socket is owner-only (mode `0600`) and
 > the agent authenticates the connecting process by its OS identity
 > (`SO_PEERCRED`): only the agent's own uid — root under the shipped unit — may
@@ -127,7 +127,7 @@ curl -fsSL https://your-server/install.sh | sudo bash -s -- \
   --pin YOUR_CA_SHA256
 ```
 
-<!-- docref: begin src=agent/install.sh#download_binary:da1c3e0a -->
+<!-- docref: begin src=agent/install.sh#download_binary:b0fefcdb -->
 The install script:
 1. Installs its own release by default: the release build stamps the tag into
    the installer, so a release asset run without `-v` fetches that release's
@@ -242,7 +242,7 @@ The agent supports 16 action types for managing the system:
 
 ### Package Management (`PACKAGE`)
 
-Install, update, or remove system packages using the detected package manager (apt, dnf, pacman, or zypper).
+Install, update, or remove system packages using the detected package manager (apt, dnf/dnf5, pacman, or zypper).
 
 | Field | Description |
 |-------|-------------|
@@ -254,7 +254,7 @@ Install, update, or remove system packages using the detected package manager (a
 - `PRESENT`: Install or update the package, optionally pin to version
 - `ABSENT`: Unpin and remove the package
 
-`PACKAGE` and `UPDATE` actions honor their per-action `timeout_seconds`; when none is set they fall back to a default 30-minute ceiling so a wedged package-manager operation (mirror outage, lock contention) cannot run unbounded. The package manager is bound to the action's deadline, so a timeout aborts the underlying `apt`/`dnf`/`zypper`/`pacman` subprocess.
+`PACKAGE` and `UPDATE` actions honor their per-action `timeout_seconds`; when none is set they fall back to a default 30-minute ceiling so a wedged package-manager operation (mirror outage, lock contention) cannot run unbounded. The package manager is bound to the action's deadline, so a timeout aborts the underlying `apt`/`dnf`/`dnf5`/`zypper`/`pacman` subprocess.
 
 ### System Update (`UPDATE`)
 
@@ -337,7 +337,7 @@ Create, modify, or remove system users.
 
 On creation, a temporary password is generated and returned in the `lps.rotations` metadata field.
 
-<!-- docref: begin src=agent/internal/executor/action_user.go#Executor.updateUser:a25091e2 -->
+<!-- docref: begin src=agent/internal/executor/action_user.go#Executor.updateUser:3532bc04 -->
 `disabled: true` shadow-locks the account (`usermod -L`, a leading `!` on the password hash) and — for regular users — defaults the shell to `/usr/sbin/nologin` for offboarding. **Disabling the superuser is deliberately lock-only**: for any UID-0 account (keyed on the UID, not the name `root`, so a renamed superuser is covered without a name list) the shell is left untouched, so `sudo -i` and key-based root SSH keep working while password login stops — the same posture as Ubuntu's locked-by-default root. This is an operator choice and has no effect on the agent itself (a running root service neither re-authenticates nor uses the login shell); the agent logs a warning when it locks a UID-0 account. An explicitly set `shell` is always honored, superuser included.
 <!-- docref: end -->
 
@@ -534,13 +534,13 @@ Manage package manager repositories.
 |-------|-------------|
 | `name` | Repository identifier |
 | `apt` | APT repository config (url, distribution, components, gpg_key, trusted) |
-| `dnf` | DNF repository config (baseurl, gpgkey, gpgcheck) |
+| `dnf/dnf5` | DNF repository config (baseurl, gpgkey, gpgcheck) |
 | `pacman` | Pacman repository config (server, sig_level) |
 | `zypper` | Zypper repository config (baseurl, gpgkey, gpgcheck) |
 
 Only one repository type should be set per action. The matching type is determined by the detected package manager.
 
-**Argument hardening:** `dnf.baseurl` / `zypper.url` / `pacman.server` must be **HTTPS** (these fetch root-installed packages, so the transport is the trust boundary); `apt.url` is exempt because apt's security is the gpg-signed Release file. `dnf`/`zypper` `gpgkey` refs are restricted to an https URL, a `file:///abs` path, or an absolute path (never a flag, `http://`, or rpm `ext::` transport) and are imported via `rpm --import -- <ref>`. `gpgcheck` is an **operator choice** — an https mirror with `gpgcheck=false` is permitted.
+**Argument hardening:** `dnf`/`dnf5` `baseurl` / `zypper.url` / `pacman.server` must be **HTTPS** (these fetch root-installed packages, so the transport is the trust boundary); `apt.url` is exempt because apt's security is the gpg-signed Release file. `dnf`/`dnf5`/`zypper` `gpgkey` refs are restricted to an https URL, a `file:///abs` path, or an absolute path (never a flag, `http://`, or rpm `ext::` transport) and are imported via `rpm --import -- <ref>`. `gpgcheck` is an **operator choice** — an https mirror with `gpgcheck=false` is permitted.
 
 **Desired State:**
 - `PRESENT`: Add or update the repository configuration
@@ -632,7 +632,7 @@ The agent automatically detects the system's package manager:
 | Distribution | Package Manager |
 |--------------|-----------------|
 | Debian, Ubuntu | apt |
-| Fedora, RHEL, CentOS | dnf |
+| Fedora, RHEL, CentOS | dnf/dnf5 |
 | Arch Linux | pacman |
 | openSUSE | zypper |
 
@@ -679,8 +679,8 @@ flag-shaped value can never be reparsed as an option:
 |---------|-----------|------|
 | `RPM` `%{NAME}` (read off the downloaded `.rpm`) | `pkg.ValidateRpmPackageName` — a crafted `.rpm` cannot name itself `--eval=%{lua:…}` | `rpm -q -- <name>`, `rpm -e -- <name>` |
 | `RPM`/`DEB`/`APP_IMAGE` artifact | https + non-empty checksum, fail-closed **before** any privileged remount or download | — |
-| dnf/zypper/pacman base URL | `pkg.ValidateRepoBaseURL` (https + host) | written to the repo config |
-| dnf/zypper GPG key ref | `pkg.ValidateGpgKeyRef` (https / `file://` abs / abs path) | `rpm --import -- <ref>` |
+| dnf/dnf5/zypper/pacman base URL | `pkg.ValidateRepoBaseURL` (https + host) | written to the repo config |
+| dnf/dnf5/zypper GPG key ref | `pkg.ValidateGpgKeyRef` (https / `file://` abs / abs path) | `rpm --import -- <ref>` |
 | `FLATPAK` app-id / remote | `pkg.ValidatePackageName` / `pkg.ValidateRemoteName`, **before** dispatch | `flatpak install … -- <remote> <appId>` |
 
 A self-discovering test walks every string field of each repository proto and
@@ -780,7 +780,7 @@ Both URLs must be HTTPS. The server and agent reject an action without a signed
 checksum-manifest source; an update action cannot supply or replace the trusted
 public key.
 
-<!-- docref: begin src=agent/internal/executor/release_signature.go#verifyReleaseManifest:ef74f2a3,agent/internal/executor/agent_update.go#downloadAndExtractChecksum:ca7f8bef -->
+<!-- docref: begin src=agent/internal/executor/release_signature.go#verifyReleaseManifest:ef74f2a3,agent/internal/executor/agent_update.go#downloadAndExtractChecksum:1b01a1ad -->
 Once a trusted installer or agent containing the embedded key is present, a
 compromised artifact host can replace the binary, manifest, and signature but
 cannot produce a signature that it accepts. The initial `curl | bash` bootstrap
@@ -976,7 +976,7 @@ The repository's single release workflow (`.github/workflows/release.yml`) gates
 the agent binaries on passing integration tests, then signs the checksum
 manifest — which covers every asset in the release — before publishing.
 
-<!-- docref: begin src=.github/workflows/release.yml#@release-signing:5b6b6553 -->
+<!-- docref: begin src=.github/workflows/release.yml#@release-signing:baf6fb17 -->
 Release signing uses two GitHub settings:
 
 - `RELEASE_SIGNING_PRIVATE_KEY`: the PKCS#8 PEM private key, stored only as a
@@ -997,7 +997,7 @@ Cloning or forking this repository does not provide MANCHTOOLS release-signing
 settings or private key material. Downstream maintainers must configure their
 own Ed25519 pair under the same Actions variable and environment-secret names.
 
-<!-- docref: begin src=.github/workflows/release.yml#@release-signing:5b6b6553,agent/internal/executor/release_signature.go#verifyReleaseManifest:ef74f2a3 -->
+<!-- docref: begin src=.github/workflows/release.yml#@release-signing:baf6fb17,agent/internal/executor/release_signature.go#verifyReleaseManifest:ef74f2a3 -->
 There are two deliberately different build modes:
 
 - A normal `go build ./cmd/cadestrod` development build succeeds

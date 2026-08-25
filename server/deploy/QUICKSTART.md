@@ -1,6 +1,6 @@
 # Cadestro server quickstart
 
-<!-- docref: begin src=deploy/compose.yml#@deployment-services:c3bfad13 -->
+<!-- docref: begin src=deploy/compose.yml#@deployment-services:9a1eca5a -->
 The stack has exactly three services: Traefik, one control process with an
 embedded SQLite database, and the administration UI. Compose gives control no
 arguments and passes it the rendered `config/control.env` as the container's
@@ -76,7 +76,7 @@ into `config/control.env`, and that file is where ordinary settings such as the
 log level or the log settings are edited. `setup.sh` re-renders it on
 every run, including through `./deploy.sh`, so re-apply local edits afterwards.
 
-<!-- docref: begin src=deploy/setup.sh#@generated-material:908e4cd7 -->
+<!-- docref: begin src=deploy/setup.sh#@generated-material:c44d1838 -->
 `setup.sh` creates the internal Ed25519 CA, the control certificate, the
 encryption and session keys, `config/control.env` with the SQLite `CADESTRO_DATABASE_PATH`, and
 `config/web.env` with the `PUBLIC_CONTROL_URL` the UI calls — the same origin
@@ -99,7 +99,7 @@ protocol v2 on an isolated network; control itself authenticates the device
 certificate and checks its active serial.
 <!-- docref: end -->
 
-<!-- docref: begin src=deploy/traefik/dynamic/routes.yml#@public-backend-tls:da534a3f,deploy/traefik/traefik.yml#@safe-access-log:e383937a -->
+<!-- docref: begin src=deploy/traefik/dynamic/routes.yml#@public-backend-tls:4a18996e,deploy/traefik/traefik.yml#@safe-access-log:18c7080a -->
 Traefik also authenticates control's internal TLS certificate against the
 deployment CA, so browser/API traffic stays encrypted after public TLS
 termination. Control keeps the paths it serves — the `cadestro.v1.ControlService`

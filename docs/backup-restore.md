@@ -90,7 +90,7 @@ directory), and with the named artifact actually present **and matching the
 recorded size**.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/backupstatus/status.go#StatusFilename:7eb37ef1 -->
+<!-- docref: begin src=server/internal/backupstatus/status.go#StatusFilename:c2db02bf -->
 The status document is only ever replaced after SQLite has validated a snapshot,
 which is what makes its timestamp meaningful: it records the last time a backup
 was *verified*, not the last time one was attempted.

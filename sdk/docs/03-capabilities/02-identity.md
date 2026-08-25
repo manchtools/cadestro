@@ -50,7 +50,7 @@ info, err := m.Get(ctx, "deploy") // uid, gid, home, shell, …
 err = m.Delete(ctx, "deploy", user.DeleteOptions{RemoveHome: true})
 ```
 
-<!-- docref: begin src=sys/user/user.go#shadowUtils.Create:e0468cf4 -->
+<!-- docref: begin src=sys/user/user.go#shadowUtils.Create:a89e80ba -->
 `Create` drives `useradd` through the escalated Runner. A system account
 (`System: true`) defaults to a `nologin` shell, so a service account can't be
 logged into by accident.
@@ -58,7 +58,7 @@ logged into by accident.
 
 ## Passwords are secrets, not arguments
 
-<!-- docref: begin src=sys/user/password.go#shadowUtils.SetPassword:33cb1ef7 -->
+<!-- docref: begin src=sys/user/password.go#shadowUtils.SetPassword:7e187564 -->
 `SetPassword` takes an `exec.Secret`, not a string:
 <!-- docref: end -->
 
@@ -78,7 +78,7 @@ written verbatim to a file, where newlines are legitimate payload, use
 `NewMultilineSecret`.)
 <!-- docref: end -->
 
-<!-- docref: begin src=sys/user/password.go#shadowUtils.SetPassword:33cb1ef7 -->
+<!-- docref: begin src=sys/user/password.go#shadowUtils.SetPassword:7e187564 -->
 `SetPassword` feeds `name:secret` to `chpasswd` on **stdin** — the password
 never appears in the process's argv, where any other process could read it from
 `/proc/<pid>/cmdline`. The `Reveal` call here is the single sanctioned sink for

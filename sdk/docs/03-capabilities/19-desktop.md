@@ -32,7 +32,7 @@ users, err := m.HomeUsers(ctx)                      // accounts with a home unde
 flat, err := m.UsersWithFlatpakInstall(ctx, "org.example.App") // who has it installed
 ```
 
-<!-- docref: begin src=sys/desktop/users.go#manager.HomeUsers:41afbbaf -->
+<!-- docref: begin src=sys/desktop/users.go#manager.HomeUsers:5d34ed24 -->
 `HomeUsers` enumerates accounts whose home lives directly under the configured
 home root (default `/home`), confirming each against passwd — so a stale
 `userdel`-without-`-r` directory is skipped rather than treated as a user.

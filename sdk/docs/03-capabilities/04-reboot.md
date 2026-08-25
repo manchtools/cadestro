@@ -25,7 +25,7 @@ if err != nil {
 
 ## Is a reboot required?
 
-<!-- docref: begin src=sys/reboot/reboot.go#rebooter.IsRequired:acb46152,sys/exec/runner.go#Direct:ed029c0e -->
+<!-- docref: begin src=sys/reboot/reboot.go#rebooter.IsRequired:1ebf42ad,sys/exec/runner.go#Direct:ed029c0e -->
 The probe is unprivileged, so a `Direct` Runner is enough to *read*:
 <!-- docref: end -->
 
@@ -36,7 +36,7 @@ if need {
 }
 ```
 
-<!-- docref: begin src=sys/reboot/reboot.go#rebooter.IsRequired:acb46152 -->
+<!-- docref: begin src=sys/reboot/reboot.go#rebooter.IsRequired:1ebf42ad -->
 `IsRequired` checks the Debian/Ubuntu `/var/run/reboot-required` marker and, on
 RHEL/Fedora, `needs-restarting -r`. A host with neither signal returns
 `(false, nil)` — the *absence* of a detection mechanism is not an error. Only a

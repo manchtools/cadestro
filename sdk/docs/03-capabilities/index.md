@@ -20,8 +20,8 @@ behavioural claims on them are anchored to the code with
 
 {% cards %}
   {% card title="Packages" icon="📦" %}
-  `pkg` — install, remove, and upgrade software across apt, dnf, pacman,
-  zypper, and flatpak behind one Manager.
+  `pkg` — install, remove, and upgrade software across apt, dnf/dnf5, pacman,
+  and zypper behind one Manager; Flatpak has a separate concrete manager.
   {% /card %}
   {% card title="Identity" icon="👤" %}
   `sys/user` — users and groups, password handling, and account state.

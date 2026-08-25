@@ -32,7 +32,7 @@ if err != nil {
 // sess wires the PTY's input/output for the caller to stream.
 ```
 
-<!-- docref: begin src=sys/terminal/terminal.go#manager.Open:392b4e8f -->
+<!-- docref: begin src=sys/terminal/terminal.go#manager.Open:1c662caf -->
 `Open` allocates a real pseudo-terminal and starts the user's shell behind it,
 dropping privilege to the target account with `setresuid`/`setresgid` (and its
 supplementary groups) before `exec` — so the shell runs with exactly that user's

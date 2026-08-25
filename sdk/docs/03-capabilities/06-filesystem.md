@@ -37,7 +37,7 @@ ok, err := m.Exists(ctx, "/etc/cadestro")
 entries, err := m.ReadDir(ctx, "/etc/cadestro")
 ```
 
-<!-- docref: begin src=sys/fs/write.go#manager.WriteFile:d23eed7b -->
+<!-- docref: begin src=sys/fs/write.go#manager.WriteFile:19e446ca -->
 `WriteFile` creates or replaces the file and applies the requested mode, owner,
 and group in one call, through the same privilege-keyed safe backend described
 below.
@@ -68,7 +68,7 @@ through the escalated tool.
 <!-- docref: end -->
 
 {% callout type="info" title="Read-only roots" %}
-<!-- docref: begin src=sys/fs/mount.go#manager.IsReadOnly:1edb9acd,sys/fs/mount.go#manager.RemountRW:3eadcb2c,sys/fs/protected.go#IsUnderProtectedPrefix:4231d9a0 -->
+<!-- docref: begin src=sys/fs/mount.go#manager.IsReadOnly:1edb9acd,sys/fs/mount.go#manager.RemountRW:3eadcb2c,sys/fs/protected.go#IsUnderProtectedPrefix:8f8db390 -->
 `IsReadOnly` (an unprivileged `findmnt` probe) and `RemountRW` (an escalated
 `mount -o remount,rw`) handle the immutable-root case (ostree, a read-only
 `/usr`): check, remount read-write for the change. There is no remount-ro

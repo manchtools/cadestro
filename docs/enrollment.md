@@ -22,7 +22,7 @@ rest of this page is what each part of it does and why.
 
 ## 1. Issue a registration token
 
-<!-- docref: begin src=server/internal/registrationtoken/handlers.go#Handlers.CreateToken:596169c0,contract/proto/cadestro/v1/control.proto#CreateTokenRequest:5fa6aaf2 -->
+<!-- docref: begin src=server/internal/registrationtoken/handlers.go#Handlers.CreateToken:b70b58fa,contract/proto/cadestro/v1/control.proto#CreateTokenRequest:b749066d -->
 Tokens are minted by `ControlService.CreateToken`. A token has a name, a
 required future expiry, and an optional global maximum use count where **zero
 means unlimited**. Each successful new device enrollment is one immutable use
@@ -30,7 +30,7 @@ record on the device's token relation; retries by the same Ed25519 identity do
 not consume another use.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/auth/permissions.go#DefaultUserPermissions:1ecf98d4 -->
+<!-- docref: begin src=server/internal/auth/permissions.go#DefaultUserPermissions:909ee98a -->
 Only a holder of the full `CreateToken` permission may mint enrollment tokens.
 There is no token owner and enrollment never assigns a human owner; operators
 use the existing device-user and device-group assignment controls afterwards.
@@ -40,7 +40,7 @@ The token's plaintext exists exactly once. Control stores only its SHA-256
 digest, and the read RPCs never return the value again — so a token that was not
 copied at creation must be replaced, not recovered.
 
-<!-- docref: begin src=contract/proto/cadestro/v1/control.proto#CreateTokenResponse:073a976b -->
+<!-- docref: begin src=contract/proto/cadestro/v1/control.proto#CreateTokenResponse:0c3bb248 -->
 The creation response carries a second, equally important value: the **CA
 fingerprint pin**. It travels beside the token because the two are useless apart
 — the token authorizes the agent *to* control, and the pin is what tells the
@@ -61,7 +61,7 @@ plus `-d/--data-dir` (default `/var/lib/cadestro`), `-b/--binary` (default
 prereleases, `--skip-download`, `--enable-uri-handler`, and `--uninstall`.
 <!-- docref: end -->
 
-<!-- docref: begin src=agent/install.sh#enroll_agent:69bee6dc -->
+<!-- docref: begin src=agent/install.sh#enroll_agent:8f8b5b48 -->
 Enrollment is attempted only when a server URL and token are both present, and
 the three enrollment arguments are **all-or-nothing**: supplying none of them
 installs the agent unenrolled and says so, but supplying some and not others is
@@ -87,7 +87,7 @@ line. The last still works but prints a warning, because an argv token is
 readable by any local process through `/proc/<pid>/cmdline`.
 <!-- docref: end -->
 
-<!-- docref: begin src=agent/cmd/cadestrod/cmd_enroll.go#runEnroll:677388d1 -->
+<!-- docref: begin src=agent/cmd/cadestrod/cmd_enroll.go#runEnroll:52b2e72e -->
 Server, token, and pin are all mandatory: a missing one is a usage error and a
 non-zero exit, never a degraded enrollment.
 <!-- docref: end -->
@@ -99,7 +99,7 @@ non-zero exit, never a degraded enrollment.
 Enrollment does not go straight out to the network. The `enroll` command is a
 *client* that talks to the already-running agent over a local unix socket.
 
-<!-- docref: begin src=agent/internal/deviceauth/enroll_server.go#EnrollSocketPath:a4fcf356,agent/internal/deviceauth/enroll_server.go#EnrollServer.Start:35b41ac8 -->
+<!-- docref: begin src=agent/internal/deviceauth/enroll_server.go#EnrollSocketPath:c6d1f4f2,agent/internal/deviceauth/enroll_server.go#EnrollServer.Start:a2c034d8 -->
 The unenrolled agent listens on `/run/cadestro/enroll.sock`, chmod'ed to `0600`
 immediately after binding — and if that chmod fails, the listener is closed and
 startup aborts rather than serving on a permissive socket.
@@ -124,7 +124,7 @@ an error unconditionally and every connection is refused. The feature is not
 "best effort" off Linux; it is closed.
 <!-- docref: end -->
 
-<!-- docref: begin src=agent/internal/deviceauth/enroll.go#EnrollHandler.Enroll:e092186e -->
+<!-- docref: begin src=agent/internal/deviceauth/enroll.go#EnrollHandler.Enroll:c57d6c89 -->
 The handler applies a global rate limit of five enrollment attempts per rolling
 minute, and serializes the rest of the work under a mutex so that concurrent
 callers cannot each pass the "already enrolled?" check and register duplicate
@@ -189,7 +189,7 @@ exactly 64 hex characters, and lowercased. A malformed pin fails before any CSR
 is generated and before any network call is made.
 <!-- docref: end -->
 
-<!-- docref: begin src=contract/proto/cadestro/v1/device_auth.proto#EnrollRequest:53f6ae03 -->
+<!-- docref: begin src=contract/proto/cadestro/v1/device_auth.proto#EnrollRequest:905e7bbe -->
 The pin is a required field on the wire, constrained to 64 hexadecimal
 characters. **There is no trust-on-first-use path.** An enrollment without a pin
 is not a less secure enrollment; it is not an enrollment.
@@ -247,7 +247,7 @@ Every privileged frame re-checks the active serial, so a stream displaced by a
 promotion is denied immediately.
 <!-- docref: end -->
 
-<!-- docref: begin src=agent/cmd/cadestrod/runtime.go#runAgent:4e4110a3,agent/cmd/cadestrod/main.go#maxBackoff:2d5b57db -->
+<!-- docref: begin src=agent/cmd/cadestrod/runtime.go#runAgent:d1976f78,agent/cmd/cadestrod/main.go#maxBackoff:a17cf095 -->
 Reconnection uses jittered exponential backoff — a randomised 5–10 second first
 wait, doubling, capped at five minutes — and resets once a session has lasted
 longer than the current backoff, so a stable agent recovers a short retry
@@ -297,7 +297,7 @@ after certificate promotion.
 
 ## What enrollment writes into the audit log
 
-<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.Register:325ea25e -->
+<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.Register:1f650bcf -->
 A successful new registration records the device creation as an effect of one
 audited operation whose actor is the registration token itself, identified by
 its digest rather than its value. A same-identity retry is audited as an
@@ -320,7 +320,7 @@ so control has nothing to audit.
 
 Two things a code reading proves that an operator should know:
 
-<!-- docref: begin src=agent/internal/credentials/credentials.go#Store.Save:2a0990ab -->
+<!-- docref: begin src=agent/internal/credentials/credentials.go#Store.Save:8215f297 -->
 - **A credential save failure after a successful registration is not rolled
   back.** If the agent registers and then cannot persist the result, control has
   a device row and a spent token use, while the device has no usable

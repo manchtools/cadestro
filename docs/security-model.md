@@ -35,7 +35,7 @@ header carries it, and a connection that does not present a v2 header is
 rejected before TLS.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/architecture/deploy_test.go#TestDeploymentIsTheThreeServiceTarget:a5c1f429 -->
+<!-- docref: begin src=server/internal/architecture/deploy_test.go#TestDeploymentIsTheThreeServiceTarget:fa0af118 -->
 The shape of the deployment is a test, not a convention. It asserts exactly
 three services, forbids mounting the Docker socket, forbids Docker-provider
 autodiscovery, requires the agent network to be internal-only, and requires
@@ -74,7 +74,7 @@ classified as a mutation, a sensitive read, or discovery — and the discovery
 endpoints are authenticated too.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/scim/auth.go#Handler.withAuth:33fa16d3,server/internal/scim/auth.go#absentTokenDigest:aebfb116 -->
+<!-- docref: begin src=server/internal/scim/auth.go#Handler.withAuth:e39a30a4,server/internal/scim/auth.go#absentTokenDigest:aebfb116 -->
 The bearer token is compared in constant time against a stored digest. The
 interesting part is the failure path: an unknown provider, a disabled provider,
 SCIM not enabled, and no token configured all compare against a sentinel digest
@@ -100,7 +100,7 @@ the person.
 
 ### OIDC just-in-time provisioning
 
-<!-- docref: begin src=server/internal/idp/linker.go#Linker.LinkOrCreate:1422b5b6 -->
+<!-- docref: begin src=server/internal/idp/linker.go#Linker.LinkOrCreate:62c0b564 -->
 For deployments without SCIM, a provider can be configured to create users on
 first login. Resolution is ordered: an existing binding for that provider and
 subject; then auto-link by email, **only** if the provider allows it and — where
@@ -111,7 +111,7 @@ account" error, so a login attempt cannot probe which of the three conditions
 failed.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/identity/users.go#Handlers.EraseJITUser:643c75df -->
+<!-- docref: begin src=server/internal/identity/users.go#Handlers.EraseJITUser:993bfcf8 -->
 Erasure is correspondingly narrow. The erase RPC refuses any subject that was
 not created by OIDC just-in-time provisioning — a SCIM-managed user is erased
 through SCIM, and the RPC says so rather than deleting a record the directory
@@ -134,7 +134,7 @@ secret, backup code, MFA or WebAuthn field fails the test, as does the existence
 of a TOTP or WebAuthn table.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/identity/guards_test.go#TestPublicProcedures_AreExactlyTheUnauthenticatedSurface:03f0bc7a -->
+<!-- docref: begin src=server/internal/identity/guards_test.go#TestPublicProcedures_AreExactlyTheUnauthenticatedSurface:b89dcb0e -->
 The unauthenticated surface is pinned as an exact set — not a maximum, an exact
 set, so adding an unauthenticated endpoint fails the build until someone
 consciously adds it to that list. It is additionally asserted to contain nothing
@@ -147,7 +147,7 @@ the contract are named individually so the entry cannot come back on its own.
 A fresh install has no identity provider, and therefore no way to log in. The
 bootstrap token is the one exception, and it is scoped to exactly that problem.
 
-<!-- docref: begin src=server/internal/identity/bootstrap.go#Bootstrapper.Issue:38580545,server/internal/identity/bootstrap.go#DefaultBootstrapTokenTTL:77b258d2 -->
+<!-- docref: begin src=server/internal/identity/bootstrap.go#Bootstrapper.Issue:38580545,server/internal/identity/bootstrap.go#DefaultBootstrapTokenTTL:343cb2c1 -->
 It is minted only by a subcommand run on the host — you must already have
 control of the machine. It is 32 bytes of cryptographic randomness, valid for 15
 minutes, and only its digest is stored. Issuing one retires any predecessor in
@@ -177,7 +177,7 @@ by a list of exceptions someone has to maintain.
 
 ### Authorization
 
-<!-- docref: begin src=server/internal/auth/permissions.go#registryPermissions:ec6dc317 -->
+<!-- docref: begin src=server/internal/auth/permissions.go#registryPermissions:c15dadf8 -->
 Permissions live in one registry — roughly 165 entries, each declaring its key,
 its UI grouping, its description, and the kind of target it acts on. That target
 kind is what decides whether a permission can be scoped to a group, and the zero
@@ -206,7 +206,7 @@ kind — a device-group scope on a user permission — always fails closed rathe
 than being ignored.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/identity/users.go#Handlers.resolveUserTarget:9918fbf0,server/internal/device/handlers.go#Handlers.readDevice:9eca5df2 -->
+<!-- docref: begin src=server/internal/identity/users.go#Handlers.resolveUserTarget:68c7cd82,server/internal/device/handlers.go#Handlers.readDevice:9eca5df2 -->
 **Out-of-scope access returns NotFound, not Forbidden.** A caller confined to a
 subset of the fleet must not be able to learn that a device or user exists by
 observing which error it gets. Unauthenticated still returns unauthenticated —
@@ -216,14 +216,14 @@ not exist" are deliberately indistinguishable.
 
 ### Browser sessions
 
-<!-- docref: begin src=server/internal/auth/jwt.go#SigningAlgorithm:72fb2ebe,server/internal/auth/jwt.go#DefaultAccessTokenExpiry:b58dd1b5 -->
+<!-- docref: begin src=server/internal/auth/jwt.go#SigningAlgorithm:72fb2ebe,server/internal/auth/jwt.go#DefaultAccessTokenExpiry:4d36049d -->
 Sessions are Ed25519-signed JWTs. Validation pins the signing method — it does
 not accept whatever the token's header claims — requires the issuer, requires an
 expiry, and rejects an access token presented where a refresh token belongs. An
 access token lives five minutes; a refresh token seven days.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/identity/session.go#Handlers.RefreshToken:c8fe60db -->
+<!-- docref: begin src=server/internal/identity/session.go#Handlers.RefreshToken:231614a7 -->
 Permissions ride only on the short-lived access token; refresh re-reads
 authority from the database. So revoking a role takes effect within five
 minutes rather than at the end of a seven-day session. Refresh also rejects a
@@ -240,7 +240,7 @@ on the origin can read them. What that buys is that there is no ambient cookie
 credential, so there is no cross-site request forgery surface to defend.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/middleware/security.go#SecurityHeaders:8aca50d7,server/internal/middleware/cors.go#CORS:89535eab -->
+<!-- docref: begin src=server/internal/middleware/security.go#SecurityHeaders:8aca50d7,server/internal/middleware/cors.go#CORS:b4652c4c -->
 The mitigations that actually apply are a content security policy restricting
 scripts to the origin and forbidding framing, and a CORS policy that sends
 credentials only to an explicitly allow-listed origin. There is one qualifier
@@ -336,7 +336,7 @@ escape hatch (a raw query, a transaction handle, the connection pool) so they
 cannot be added at all.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/identity/credentials_test.go#TestProcedureClassification_MatchesTheMountedSurface:3136a55a,server/internal/controlrpc/mount_test.go#TestMountIsExactControlServiceDescriptorSet:5c06681a -->
+<!-- docref: begin src=server/internal/identity/credentials_test.go#TestProcedureClassification_MatchesTheMountedSurface:3136a55a,server/internal/controlrpc/mount_test.go#TestMountIsExactControlServiceDescriptorSet:b2ba7c4a -->
 Coverage cannot drift either. Every mounted procedure must be classified as a
 mutation, a read, or a sensitive read, and every classified procedure must be
 mounted — so a new RPC fails the build until it is classified. The mounted set
@@ -378,7 +378,7 @@ returning protected data.
 
 ### Secrets in transit use the authenticated device stream
 
-<!-- docref: begin src=contract/proto/cadestro/v1/agent.proto#GetLuksKeyResponse:68d4d881,server/internal/agentsecrets/service.go#Service.GetLuksKey:d4754b06 -->
+<!-- docref: begin src=contract/proto/cadestro/v1/agent.proto#GetLuksKeyResponse:0002b4e2,server/internal/agentsecrets/service.go#Service.GetLuksKey:834c52d4 -->
 Agent-facing secrets are raw bytes inside the mutually authenticated TLS
 connection. The peer certificate supplies the device identity, so Cadestro does
 not add a second recipient-key envelope, request device identifier, or
@@ -387,7 +387,7 @@ only for the authenticated outbound stream and encrypts an inbound value before
 persisting it.
 <!-- docref: end -->
 
-<!-- docref: begin src=contract/contract_rpc_surface_test.go#TestContract_SecretsAreClassified:231be066 -->
+<!-- docref: begin src=contract/contract_rpc_surface_test.go#TestContract_SecretsAreClassified:9ec67387 -->
 Which fields are secrets is not a matter of remembering. A test sweeps the whole
 protobuf registry: every classified agent-stream secret must be raw bytes,
 while the small set of authenticated write-only control inputs is explicit.
@@ -439,7 +439,7 @@ both render as redacted. Formatting it, logging it, or including it in a
 structured log record cannot emit the value; only an explicit reveal call can.
 <!-- docref: end -->
 
-<!-- docref: begin src=sdk/archtest/reveal_sink_test.go#TestRevealOnlyFromKnownSinks:7a1b97ae -->
+<!-- docref: begin src=sdk/archtest/reveal_sink_test.go#TestRevealOnlyFromKnownSinks:ecbfe338 -->
 And those reveal calls are enumerated. A build-time test parses every capability
 source file, walks the syntax tree for reveal calls, and fails on any that is
 not one of six named sinks — a password-change stdin, a LUKS keyfile, a TPM

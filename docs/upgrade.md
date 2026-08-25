@@ -26,7 +26,7 @@ reinstall.
 
 ## Updating within a version
 
-<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:c3bfad13 -->
+<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:9a1eca5a -->
 The control and web images share a single tag variable, because both are
 released from one repository under one version. They are updated together by
 construction — you cannot accidentally run a control plane and a UI from

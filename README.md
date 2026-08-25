@@ -74,13 +74,13 @@ SQLite in WAL mode at `synchronous=FULL`, and full-text search is SQLite FTS5 �
 no database server, no cache, no queue, no search cluster.
 <!-- docref: end -->
 
-<!-- docref: begin src=contract/proto/cadestro/v1/agent.proto#AgentService:d650612e -->
+<!-- docref: begin src=contract/proto/cadestro/v1/agent.proto#AgentService:8a36fcca -->
 Devices connect outbound to a dedicated mutual-TLS listener and hold one
 bidirectional stream that carries everything: handshake, synchronization,
 results, secret operations, and terminal sessions. Nothing listens on the device.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:c3bfad13 -->
+<!-- docref: begin src=server/deploy/compose.yml#@deployment-services:9a1eca5a -->
 The reference deployment is three containers behind Traefik — ingress, control,
 and the web UI served same-origin beside it — with agents on a separate,
 internal-only network.
@@ -93,14 +93,14 @@ image pull. Across a schema version there is no migration path — the server
 refuses a database it does not recognise rather than guessing.
 → [upgrades](docs/upgrade.md)
 
-<!-- docref: begin src=.github/workflows/agent-integration.yml#@distro-matrix:8502f31d,.github/workflows/sdk.yml#@sdk-distro-matrix:3fc7efef -->
+<!-- docref: begin src=.github/workflows/agent-integration.yml#@distro-matrix:5b369588,.github/workflows/sdk.yml#@sdk-distro-matrix:7cafa43b -->
 **Tested on**, in CI, against real system state in containers: the agent's
 executor on Debian, Fedora, openSUSE, and Arch; the system capability layer on
 Fedora, AlmaLinux, Arch, and openSUSE in addition to its Debian base lanes.
 Other distributions may work; these are the ones a merge cannot break silently.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/store/sqlite_scale_test.go#TestSQLiteScale_MixedWorkloadAtTenThousandAgents:942b9dd0 -->
+<!-- docref: begin src=server/internal/store/sqlite_scale_test.go#TestSQLiteScale_MixedWorkloadAtTenThousandAgents:e1ec9650 -->
 **Scale target: one control instance for 10,000 connected agents.** There is a
 gate for it — a mixed synchronization, heartbeat, terminal, and search
 workload at that agent count with latency assertions. It is **operator-run, not

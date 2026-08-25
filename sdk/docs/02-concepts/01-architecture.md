@@ -65,7 +65,7 @@ model fixes that, and the shape is deliberate:
 - **Uniform.** A reader who understands one capability understands them all;
   adding a capability is a copy of the same small shape.
 
-<!-- docref: begin src=archtest/no_global_backend_test.go#TestNoGlobalBackendState:65a4d3bf -->
+<!-- docref: begin src=archtest/no_global_backend_test.go#TestNoGlobalBackendState:6b909225 -->
 The no-global-state rule is enforced by an architectural test, not just
 convention: the build fails if any capability reintroduces a process-global
 backend selector or setter.

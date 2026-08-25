@@ -8,7 +8,7 @@ icon: "📦"
 # Packages
 
 `pkg` manages software through the host's native package manager behind a
-single `Manager` interface. One set of calls drives apt, dnf, pacman, or
+single `Manager` interface. One set of calls drives apt, dnf/dnf5, pacman, or
 zypper. Flatpak has a separate concrete manager with explicit remotes.
 
 It follows the [architecture](/concepts/architecture): build a Runner, choose a
@@ -112,7 +112,7 @@ and `InstalledVersion` returns its version or an `ErrNotFound` error.
 ## Backends
 
 <!-- docref: begin src=pkg/pkg.go#Backend:11393461 -->
-The backend is fixed at construction and selected from apt, dnf, pacman, or
+The backend is fixed at construction and selected from apt, dnf/dnf5, pacman, or
 zypper. Flatpak has its own concrete manager. The zero value is invalid; only
 implemented backends exist, so there is no "unknown backend" that silently does
 nothing.
@@ -120,9 +120,9 @@ nothing.
 
 Behavioural differences the Manager smooths over but you should know about:
 
-<!-- docref: begin src=pkg/pkg.go#Manager:1fbc3b2c,pkg/pacman.go#pacman.UpgradeAll:3da8f270 -->
+<!-- docref: begin src=pkg/pkg.go#Manager:3b22a029,pkg/pacman.go#pacman.UpgradeAll:3da8f270 -->
 - `Update` is the explicit index refresh; `UpgradeAll` maps to the backend's
-  full upgrade (`apt upgrade` / `dnf upgrade` / `zypper update`) and does
+  full upgrade (`apt upgrade` / `dnf/dnf5 upgrade` / `zypper update`) and does
   **not** re-sync the index first — except
   **pacman**, whose `-Syu` syncs the database and upgrades in one transaction
   (Arch does not support partial upgrades).

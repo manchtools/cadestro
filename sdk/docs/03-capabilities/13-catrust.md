@@ -31,7 +31,7 @@ if err != nil {
 }
 ```
 
-<!-- docref: begin src=sys/catrust/detect.go#Detect:0d85bd62 -->
+<!-- docref: begin src=sys/catrust/detect.go#Detect:3f42e3b3 -->
 `Detect` reports the trust-store backends usable on this host: `CaCertificates`
 or `SuseCaCertificates` when `update-ca-certificates` is on `PATH` (the two are
 disambiguated by the anchors directory — Debian vs openSUSE), and `P11Kit` when
@@ -46,7 +46,7 @@ err = m.Remove(ctx, "corp-root")
 anchors, err := m.List(ctx) // the trusted anchors this manager can see
 ```
 
-<!-- docref: begin src=sys/catrust/catrust.go#manager.Install:4a59e802 -->
+<!-- docref: begin src=sys/catrust/catrust.go#manager.Install:4b6f6efd -->
 `Install` writes the anchor under the backend's local-anchors directory and runs
 the store-rebuild tool (`update-ca-certificates` / `update-ca-trust`) so the new
 root takes effect host-wide. The name identifies the anchor for later removal,

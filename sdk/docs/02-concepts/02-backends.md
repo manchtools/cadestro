@@ -7,7 +7,7 @@ description: How a capability's backend is chosen explicitly, how to discover wh
 # Backends & detection
 
 <!-- docref: begin src=sys/service/service.go#Backend:11393461,sys/user/user.go#ShadowUtils:936a2cbe -->
-A *backend* is one concrete way to do a job: `apt` vs `dnf` for packages,
+A *backend* is one concrete way to do a job: `apt` vs `dnf/dnf5` for packages,
 `systemd` for services, `ca-certificates` vs `p11-kit` for CA trust. A
 capability that drives such a family takes a `Backend` value at construction —
 and it takes one **even when only one backend is implemented today** (services
@@ -44,7 +44,7 @@ a no-op.
 You usually know the target platform, but when you don't, `Detect` reports the
 backends usable on *this* host so the caller can pick one:
 
-<!-- docref: begin src=sys/catrust/detect.go#Detect:0d85bd62 -->
+<!-- docref: begin src=sys/catrust/detect.go#Detect:3f42e3b3 -->
 `Detect` probes the host (typically by looking for each backend's tools on
 `PATH`) and returns the list of backends that are usable here. It reports what
 is available; it does not choose or activate anything — the caller passes one
@@ -67,7 +67,7 @@ behind your back the way call-site auto-detection would.
 The `Backend`-enum shape fits "this host has exactly one right answer, fixed
 for the process" — package managers, init systems, encryption tools.
 
-<!-- docref: begin src=sys/remote/remote.go#Source:2cfeaa37,sys/remote/http.go#NewHTTP:9089d62f,sys/remote/git.go#NewGit:0a6c132d,sys/remote/s3.go#NewS3:78a4b3e6 -->
+<!-- docref: begin src=sys/remote/remote.go#Source:2cfeaa37,sys/remote/http.go#NewHTTP:02a43c43,sys/remote/git.go#NewGit:0a6c132d,sys/remote/s3.go#NewS3:78a4b3e6 -->
 `sys/remote` deliberately departs from it. An agent may fetch a tarball over
 HTTPS, clone a Git repo, and read an S3 prefix in the same cycle, driven by
 different actions — there is no single "active source" for the process. So

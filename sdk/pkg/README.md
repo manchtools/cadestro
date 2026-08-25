@@ -1,7 +1,8 @@
 # Package Manager SDK
 
-A Go library for driving Linux package managers (apt, dnf, pacman, zypper,
-flatpak) through a single `Manager` interface built over an injected
+A Go library for driving native Linux package managers (apt, dnf/dnf5, pacman,
+zypper) through a single `Manager` interface, with a separate Flatpak manager,
+built over an injected
 `exec.Runner` — no global escalation state, fully unit-testable with
 `exectest.FakeRunner` (no host, no sudo, no container).
 
@@ -50,7 +51,7 @@ backends are installed (it lists, in priority order; it never picks):
 
 ```go
 for _, b := range pkg.Detect() {
-    fmt.Println(b) // "apt", "dnf", ...
+    fmt.Println(b) // "apt", "dnf5", ...
 }
 m, err := pkg.New(pkg.Dnf, r)
 ```
@@ -120,7 +121,7 @@ type InstallOptions struct {
 
 type InstallLocalOptions struct {
     AllowDowngrade bool // install a file older than the installed version
-    AllowUnsigned  bool // skip the backend GPG check (dnf --nogpgcheck / zypper
+    AllowUnsigned  bool // skip the backend GPG check (dnf/dnf5 --nogpgcheck / zypper
                         // --allow-unsigned-rpm) for an out-of-band-verified file;
                         // secure-default-off. apt/flatpak: no-op; pacman: NOT
                         // honored (pacman -U always enforces SigLevel).
@@ -152,6 +153,7 @@ type VersionInfo struct {
 |---------|---------|-----------------|---------|
 | `pkg.Apt` | Debian, Ubuntu, Mint | `apt-get` | `apt-mark hold/unhold` |
 | `pkg.Dnf` | Fedora, RHEL 8+, CentOS Stream | `dnf` | `dnf versionlock` when available |
+| `pkg.Dnf5` | Fedora, RHEL, CentOS Stream with dnf5 | `dnf5` | `dnf5 versionlock` when available |
 | `pkg.Pacman` | Arch, Manjaro | `pacman` | `IgnorePkg` in `/etc/pacman.conf` |
 | `pkg.Zypper` | openSUSE, SLES | `zypper` | `zypper addlock/removelock` |
 
@@ -167,13 +169,13 @@ reparsed as an option):
 
 | Validator | Guards | Rule |
 |-----------|--------|------|
-| `ValidatePackageName` / `ValidatePackageNames` | apt/dnf/pacman/zypper/flatpak names | first char alphanumeric, then `[a-zA-Z0-9._+:/@~-]`, ≤256 |
+| `ValidatePackageName` / `ValidatePackageNames` | apt/dnf/dnf5/pacman/zypper/flatpak names | first char alphanumeric, then `[a-zA-Z0-9._+:/@~-]`, ≤256 |
 | `ValidatePackageVersion` | `<name>=<version>` argv | cross-distro EVR grammar, empty = "no pin" |
 | `ValidateRpmPackageName` | `rpm -q` / `rpm -e <NAME>` (NAME read off a crafted `.rpm`) | first char alphanumeric, then `[a-zA-Z0-9._+-]`, ≤256 |
-| `ValidateRepoBaseURL` | dnf `baseurl` / zypper `url` / pacman `server` / flatpak remote URL | **https only**, host required, control-char free (template vars `$releasever`/`$arch` allowed). apt is excluded — its security is the gpg-signed Release file. |
-| `ValidateGpgKeyRef` | dnf/zypper `gpgkey` passed to `rpm --import` | https URL, `file:///abs` path, or absolute path; no `..`, no leading `-`, no `http://`, no `ext::` |
+| `ValidateRepoBaseURL` | dnf/dnf5 `baseurl` / zypper `url` / pacman `server` / flatpak remote URL | **https only**, host required, control-char free (template vars `$releasever`/`$arch` allowed). apt is excluded — its security is the gpg-signed Release file. |
+| `ValidateGpgKeyRef` | dnf/dnf5/zypper `gpgkey` passed to `rpm --import` | https URL, `file:///abs` path, or absolute path; no `..`, no leading `-`, no `http://`, no `ext::` |
 | `ValidateRemoteName` | flatpak remote alias | first char alphanumeric, then `[a-zA-Z0-9._-]`, ≤128 |
-| `ValidateLocalPackagePath` | `InstallLocal` file operand (`apt-get`/`dnf`/`pacman -U`/`zypper`/`flatpak` install) | **absolute path** (never flag-shaped), no `..`, no control chars; a space is allowed |
+| `ValidateLocalPackagePath` | `InstallLocal` file operand (`apt-get`/`dnf`/`dnf5`/`pacman -U`/`zypper`/`flatpak` install) | **absolute path** (never flag-shaped), no `..`, no control chars; a space is allowed |
 | `ValidateSearchQuery` | the free-text `Search` query | must not start with `-` (a search term cannot be `--`-guarded because dnf5 rejects `--`), no control chars; empty allowed |
 
 In addition, pacman's `Pin` runs a stricter `[a-zA-Z0-9][a-zA-Z0-9._+-]*` gate
@@ -205,8 +207,8 @@ m.Install(ctx, pkg.InstallOptions{}, pkg.InstallSpec{Name: "nginx"})
 - **Non-interactive mode**: apt commands run with
   `DEBIAN_FRONTEND=noninteractive`; the C locale (`LANG=C`/`LC_ALL=C`) is forced
   on every command for stable English-only output parsing.
-- **Version formats**: apt `1.24.0-1ubuntu1`, dnf `1.24.0-1.fc39`, pacman
+- **Version formats**: apt `1.24.0-1ubuntu1`, dnf/dnf5 `1.24.0-1.fc39`, pacman
   `1.24.0-1`, zypper `1.24.0-1.1`. Flatpak addresses bundles by application ID
   (e.g. `org.mozilla.firefox`) and has no version pin.
-- **Pinning setup**: dnf uses its installed versionlock command when available;
+- **Pinning setup**: dnf/dnf5 use their installed versionlock command when available;
   pacman edits `/etc/pacman.conf` (root). apt/zypper need no setup.

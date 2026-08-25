@@ -32,7 +32,7 @@ ok, err := m.VerifyPassphrase(ctx, "/dev/sda2", existing) // existing is an exec
 vol, err := m.DetectVolume(ctx)                            // the system's LUKS volume
 ```
 
-<!-- docref: begin src=sys/encryption/luks.go#luks.VerifyPassphrase:1a83767d -->
+<!-- docref: begin src=sys/encryption/luks.go#luks.VerifyPassphrase:90a7c3ed -->
 `VerifyPassphrase` is a read-only probe: a wrong passphrase returns
 `(false, nil)`, not an error, so testing a guess never looks like a failure.
 <!-- docref: end -->
@@ -56,7 +56,7 @@ Runner before returning a Manager.
 The key-slot operations take their key material as `exec.Secret`, so a passphrase
 is never rendered into a log or a panic:
 
-<!-- docref: begin src=sys/encryption/luks.go#luks.AddKey:d57720e5 -->
+<!-- docref: begin src=sys/encryption/luks.go#luks.AddKey:951755a6 -->
 `AddKey` rejects empty key material up front (`ErrEmptyKeyMaterial`) — both an
 empty new key (which would create an empty-passphrase unlock slot) and an empty
 authenticating passphrase — before `cryptsetup` is ever run.

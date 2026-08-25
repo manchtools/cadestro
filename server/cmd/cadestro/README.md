@@ -91,7 +91,7 @@ make sqlc-check
 
 Generated sqlc and protobuf outputs are never edited by hand.
 
-<!-- docref: begin src=internal/store/sqlite_scale_test.go#TestSQLiteScale_MixedWorkloadAtTenThousandAgents:942b9dd0 -->
+<!-- docref: begin src=internal/store/sqlite_scale_test.go#TestSQLiteScale_MixedWorkloadAtTenThousandAgents:e1ec9650 -->
 Run the explicit SQLite 10,000-agent gate with:
 
 ```bash

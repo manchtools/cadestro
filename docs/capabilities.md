@@ -6,7 +6,7 @@ is how these get scheduled, delivered, and reported.
 
 ## How every action behaves
 
-<!-- docref: begin src=agent/internal/executor/executor.go#Executor.ExecuteAction:35a5f88b -->
+<!-- docref: begin src=agent/internal/executor/executor.go#Executor.ExecuteAction:dcc1af84 -->
 One action switch maps an action type to its implementation. An unrecognised
 type is refused rather than ignored, so a contract the agent is too old to
 understand fails loudly instead of silently doing nothing.
@@ -38,12 +38,12 @@ below; it is not universal, and the exceptions are deliberate.
 
 ### Package
 
-<!-- docref: begin src=agent/internal/executor/action_package.go#Executor.executePackage:3a356e64,contract/proto/cadestro/v1/actions.proto#PackageParams:8ff14120 -->
+<!-- docref: begin src=agent/internal/executor/action_package.go#Executor.executePackage:940f0cd7,contract/proto/cadestro/v1/actions.proto#PackageParams:d5d55b4c -->
 Installs or removes a package through the host's detected package manager,
 probing the installed state first and failing closed if that probe errors.
 
 `name` is the generic package name. Because distributions disagree, there are
-per-backend overrides — `apt_name`, `dnf_name`, `pacman_name`, `zypper_name` —
+per-backend overrides — `apt_name`, `dnf_name` (for dnf/dnf5), `pacman_name`, `zypper_name` —
 and the resolver picks the one for *this* host's backend, falling back to
 `name`. If neither is set for the detected backend the action reports
 `NOT_APPLICABLE` rather than guessing.
@@ -57,7 +57,7 @@ apply the hold is a real action failure, not a warning.
 
 ### Update
 
-<!-- docref: begin src=agent/internal/executor/action_update.go#Executor.executeUpdate:7edd0cd3,contract/proto/cadestro/v1/actions.proto#UpdateParams:cc7d27eb -->
+<!-- docref: begin src=agent/internal/executor/action_update.go#Executor.executeUpdate:e61f60a4,contract/proto/cadestro/v1/actions.proto#UpdateParams:632e58d6 -->
 A system-wide upgrade: refresh the index, upgrade everything, optionally
 autoremove, then detect whether a reboot is now required.
 
@@ -72,12 +72,12 @@ asked of a backend that cannot express it (see the platform table below).
 
 ### Repository
 
-<!-- docref: begin src=agent/internal/executor/action_repository.go#Executor.executeRepository:ad870dbc,contract/proto/cadestro/v1/actions.proto#RepositoryParams:108a9362 -->
+<!-- docref: begin src=agent/internal/executor/action_repository.go#Executor.executeRepository:05b03cbf,contract/proto/cadestro/v1/actions.proto#RepositoryParams:bc5082f6 -->
 Adds or removes an external package repository, after a network-free validation
 pre-flight.
 
 `name` identifies the repository and names its file. Then one config block per
-backend — `apt`, `dnf`, `pacman`, `zypper` — each with a `disabled` flag that
+backend — `apt`, `dnf/dnf5`, `pacman`, `zypper` — each with a `disabled` flag that
 makes the action a no-op on that backend, so one action can carry a fleet-wide
 repository definition and apply correctly everywhere. Only the block matching
 this host's backend is used; if none matches, `NOT_APPLICABLE`.
@@ -94,7 +94,7 @@ The APT block takes a signing key by URL (https only, body capped at 10 MiB and
 
 ### AppImage
 
-<!-- docref: begin src=agent/internal/executor/action_appimage.go#Executor.executeAppImage:9302672f,contract/proto/cadestro/v1/actions.proto#AppInstallParams:9f00505b -->
+<!-- docref: begin src=agent/internal/executor/action_appimage.go#Executor.executeAppImage:a02b68fa,contract/proto/cadestro/v1/actions.proto#AppInstallParams:61065413 -->
 Fetches an AppImage to the install directory (default `/opt/appimages`) at mode
 `0755`, atomically.
 
@@ -109,7 +109,7 @@ right hash is not re-downloaded.
 
 ### Deb
 
-<!-- docref: begin src=agent/internal/executor/action_deb.go#Executor.executeDeb:cf2ca7b7 -->
+<!-- docref: begin src=agent/internal/executor/action_deb.go#Executor.executeDeb:4d0a0a2a -->
 Downloads a `.deb`, reads its canonical package name from the control file, then
 installs it through apt so that dependencies resolve — not through a bare `dpkg
 -i` that would leave them broken.
@@ -124,20 +124,20 @@ URL.
 
 ### RPM
 
-<!-- docref: begin src=agent/internal/executor/action_rpm.go#Executor.executeRpm:8ba617b4 -->
-The same shape for `.rpm`, installed through dnf or zypper.
+<!-- docref: begin src=agent/internal/executor/action_rpm.go#Executor.executeRpm:6a70b6a0 -->
+The same shape for `.rpm`, installed through dnf/dnf5 or zypper.
 
 One deliberate difference from deb: removal also requires a reachable, verified
 artifact, because rpm package names may contain hyphens and cannot be derived
 from a filename reliably. A dead URL on removal is an explicit error rather than
 a wrong guess.
 
-**Honours `PRESENT` and `ABSENT`.** `NOT_APPLICABLE` without dnf or zypper.
+**Honours `PRESENT` and `ABSENT`.** `NOT_APPLICABLE` without dnf/dnf5 or zypper.
 <!-- docref: end -->
 
 ### Flatpak
 
-<!-- docref: begin src=agent/internal/executor/action_flatpak.go#Executor.executeFlatpak:f914131b,contract/proto/cadestro/v1/actions.proto#FlatpakParams:57593e47 -->
+<!-- docref: begin src=agent/internal/executor/action_flatpak.go#Executor.executeFlatpak:f84642b3,contract/proto/cadestro/v1/actions.proto#FlatpakParams:82e6893a -->
 Installs or removes a Flatpak application, system-wide or per signed-in desktop
 user.
 
@@ -158,7 +158,7 @@ Uninstalling should not depend on who happens to be logged in.
 
 ### Shell / Script run
 
-<!-- docref: begin src=agent/internal/executor/executor.go#Executor.executeShell:6afece0a,contract/proto/cadestro/v1/actions.proto#ShellParams:144d2cec -->
+<!-- docref: begin src=agent/internal/executor/executor.go#Executor.executeShell:c02ae997,contract/proto/cadestro/v1/actions.proto#ShellParams:678d12be -->
 The general escape hatch, with a detection/remediation/verify flow and
 captured command output.
 
@@ -181,7 +181,7 @@ detection output and compliance flag on its result.
 
 ## Services
 
-<!-- docref: begin src=agent/internal/executor/action_service.go#Executor.executeService:1607f3f9,contract/proto/cadestro/v1/actions.proto#ServiceParams:5292a421 -->
+<!-- docref: begin src=agent/internal/executor/action_service.go#Executor.executeService:c03b4763,contract/proto/cadestro/v1/actions.proto#ServiceParams:5292a421 -->
 Writes a unit file if one is supplied, converges enable/disable, and drives the
 run state.
 
@@ -205,7 +205,7 @@ action fires, which is what "restart nightly" needs to mean.
 
 ### File
 
-<!-- docref: begin src=agent/internal/executor/action_file.go#Executor.executeFile:5b6351ea,contract/proto/cadestro/v1/actions.proto#FileParams:e5ad3099 -->
+<!-- docref: begin src=agent/internal/executor/action_file.go#Executor.executeFile:8c0a8faf,contract/proto/cadestro/v1/actions.proto#FileParams:45f8798e -->
 Writes a file atomically with owner, group, and mode, or deletes it.
 
 `path` must be absolute and is symlink-resolved before use. `content` is capped
@@ -224,7 +224,7 @@ a `..` can walk out of the guard.
 
 ### Directory
 
-<!-- docref: begin src=agent/internal/executor/action_directory.go#Executor.executeDirectory:9675ee4c,contract/proto/cadestro/v1/actions.proto#DirectoryParams:d431ae82 -->
+<!-- docref: begin src=agent/internal/executor/action_directory.go#Executor.executeDirectory:701e84c2,contract/proto/cadestro/v1/actions.proto#DirectoryParams:cb3fa1ed -->
 Creates a directory with mode and ownership applied through a no-follow
 directory descriptor, or removes it recursively.
 
@@ -252,7 +252,7 @@ operations](policy-model.md#3-pull-synchronization).
 
 ### Reboot
 
-<!-- docref: begin src=agent/internal/executor/action_reboot.go#Executor.executeReboot:36ef5b8c -->
+<!-- docref: begin src=agent/internal/executor/action_reboot.go#Executor.executeReboot:6d7d45ae -->
 Broadcasts a best-effort notification to logged-in users, then schedules a
 reboot five minutes out. It **fails closed when no privileged runner is
 configured** rather than reporting a success that never happens.
@@ -270,7 +270,7 @@ that the sync completed.
 
 ### User
 
-<!-- docref: begin src=agent/internal/executor/action_user.go#Executor.executeUser:be2dec1c,contract/proto/cadestro/v1/actions.proto#UserParams:ea58c2fa -->
+<!-- docref: begin src=agent/internal/executor/action_user.go#Executor.executeUser:1cebcfb1,contract/proto/cadestro/v1/actions.proto#UserParams:633f78b4 -->
 Creates, updates, locks, or removes a local account.
 
 `username` is validated. `uid`/`gid` are applied only when greater than zero, so
@@ -300,7 +300,7 @@ metadata; they use the authenticated control stream.
 
 ### Group
 
-<!-- docref: begin src=agent/internal/executor/group.go#Executor.executeGroup:3a0a08cc,contract/proto/cadestro/v1/actions.proto#GroupParams:2389ce38 -->
+<!-- docref: begin src=agent/internal/executor/group.go#Executor.executeGroup:3a0a08cc,contract/proto/cadestro/v1/actions.proto#GroupParams:9adb25c5 -->
 Creates a group if missing and syncs its membership to **exactly** the declared
 set — adding what is missing and removing what is extra. `gid` is applied only
 when greater than zero; `system_group` places it below 1000.
@@ -314,7 +314,7 @@ when greater than zero; `system_group` places it below 1000.
 
 ### SSH
 
-<!-- docref: begin src=agent/internal/executor/action_ssh.go#Executor.executeSsh:5d8532f4,contract/proto/cadestro/v1/actions.proto#SshParams:0d2115e1 -->
+<!-- docref: begin src=agent/internal/executor/action_ssh.go#Executor.executeSsh:5d8532f4,contract/proto/cadestro/v1/actions.proto#SshParams:afe03bde -->
 Grants SSH access to a named set of users, by creating a per-action Linux group
 and a `sshd_config.d` drop-in containing a `Match Group` block for it.
 
@@ -328,7 +328,7 @@ the machine.
 
 ### SSHD
 
-<!-- docref: begin src=agent/internal/executor/action_ssh.go#Executor.executeSshd:57eeeef9,contract/proto/cadestro/v1/actions.proto#SshdParams:4b6b9970 -->
+<!-- docref: begin src=agent/internal/executor/action_ssh.go#Executor.executeSshd:57eeeef9,contract/proto/cadestro/v1/actions.proto#SshdParams:4e4b0857 -->
 Sets global sshd directives through a numbered drop-in, where `priority` is the
 numeric filename prefix that determines load order.
 
@@ -343,7 +343,7 @@ newline would be a directive injection. Validated with `sshd -t` and reloaded.
 
 ## Privilege delegation
 
-<!-- docref: begin src=agent/internal/executor/sudo.go#Executor.executeSudo:8010e22a,contract/proto/cadestro/v1/actions.proto#AdminPolicyParams:c2a89b15 -->
+<!-- docref: begin src=agent/internal/executor/sudo.go#Executor.executeSudo:8010e22a,contract/proto/cadestro/v1/actions.proto#AdminPolicyParams:cf38159d -->
 Creates a per-action Linux group and a `/etc/sudoers.d/` drop-in at mode `0440
 root:root`, validated with `visudo -c` before installation, and syncs the group's
 members.
@@ -352,7 +352,7 @@ members.
 level is `CUSTOM`, with `{group}` substituted for the generated group name.
 <!-- docref: end -->
 
-<!-- docref: begin src=contract/proto/cadestro/v1/actions.proto#AdminAccessLevel:b30f7293 -->
+<!-- docref: begin src=contract/proto/cadestro/v1/actions.proto#AdminAccessLevel:bc6e3046 -->
 `FULL` grants unrestricted access with a password prompt; `LIMITED` restricts to
 system-management commands, also with a password; `CUSTOM` carries operator-
 authored policy text. The two `TERMINAL_ADMIN_*` levels are passwordless variants
@@ -374,7 +374,7 @@ three.
 
 ### Local password solution (LPS)
 
-<!-- docref: begin src=agent/internal/executor/lps.go#Executor.executeLps:a3c9b7f9,contract/proto/cadestro/v1/actions.proto#LpsParams:3d4b4a57 -->
+<!-- docref: begin src=agent/internal/executor/lps.go#Executor.executeLps:a3c9b7f9,contract/proto/cadestro/v1/actions.proto#LpsParams:b276a903 -->
 Rotates a random password per managed local account — the LAPS pattern — and
 reports it to control.
 
@@ -399,7 +399,7 @@ is no local password store or device identity.
 
 ### Disk encryption (LUKS)
 
-<!-- docref: begin src=agent/internal/executor/secret_transport.go#Executor.executeLuksAction:16f12830,agent/internal/executor/luks.go#Executor.executeLuks:6d5d79d1,contract/proto/cadestro/v1/actions.proto#EncryptionParams:503a1dfa -->
+<!-- docref: begin src=agent/internal/executor/secret_transport.go#Executor.executeLuksAction:16f12830,agent/internal/executor/luks.go#Executor.executeLuks:6d5d79d1,contract/proto/cadestro/v1/actions.proto#EncryptionParams:d02e0538 -->
 Takes ownership of the machine's LUKS volume and manages its passphrase.
 
 `preshared_key` is delivered only on the authenticated device's mTLS stream and
@@ -412,7 +412,7 @@ the failure this ordering exists to prevent.
 passphrase length, with the generator enforcing its own floors.
 <!-- docref: end -->
 
-<!-- docref: begin src=contract/proto/cadestro/v1/actions.proto#EncryptionDeviceBoundKeyType:c35263d8 -->
+<!-- docref: begin src=contract/proto/cadestro/v1/actions.proto#EncryptionDeviceBoundKeyType:bc41304f -->
 Slot 7 is the device-bound key slot and holds one of three things: nothing (the
 managed passphrase alone), a TPM2 enrollment for unattended boot, or a
 user-defined passphrase entered through the local CLI. The field is
@@ -425,7 +425,7 @@ requested TPM enrollment instead of being refused.
 
 ### WiFi
 
-<!-- docref: begin src=agent/internal/executor/secret_transport.go#Executor.executeWifiAction:faa8baea,agent/internal/executor/wifi.go#Executor.executeWifi:cd15c3ba,contract/proto/cadestro/v1/actions.proto#WifiParams:bd82074d -->
+<!-- docref: begin src=agent/internal/executor/secret_transport.go#Executor.executeWifiAction:faa8baea,agent/internal/executor/wifi.go#Executor.executeWifi:9b4cebea,contract/proto/cadestro/v1/actions.proto#WifiParams:07073231 -->
 Manages a NetworkManager connection profile.
 
 `ssid` and `auth_type` are required, and the auth type selects which secret is
@@ -446,7 +446,7 @@ unchanged rather than failing.
 
 ## Agent self-update
 
-<!-- docref: begin src=agent/internal/executor/agent_update.go#Executor.executeAgentUpdate:b4a12c97,contract/proto/cadestro/v1/actions.proto#AgentUpdateParams:2cff2cac -->
+<!-- docref: begin src=agent/internal/executor/agent_update.go#Executor.executeAgentUpdate:3267969e,contract/proto/cadestro/v1/actions.proto#AgentUpdateParams:df13f631 -->
 Replaces the agent binary with a newer one, at most once per sync cycle.
 
 The agent picks the entry matching its own architecture and **no matching entry
@@ -463,7 +463,7 @@ subcommands, then replaces atomically with a backup and signals a graceful
 restart.
 <!-- docref: end -->
 
-<!-- docref: begin src=contract/proto/cadestro/v1/actions.proto#AgentUpdateArch:e6dec03f -->
+<!-- docref: begin src=contract/proto/cadestro/v1/actions.proto#AgentUpdateArch:fc90a532 -->
 Each architecture entry is a binary URL plus a checksum-manifest URL, both https.
 The agent requires a detached signature next to the manifest and verifies the
 **exact manifest bytes** against its embedded Ed25519 release-signing public key
@@ -500,7 +500,7 @@ upgrade. Flatpak is outside the native update path.
 
 | Capability | Backends implemented | Selection |
 |---|---|---|
-| Repositories | apt (deb822 `.sources` + keyrings), dnf (`.repo`), pacman (config sections), zypper (`addrepo`) | Follows the detected package backend |
+| Repositories | apt (deb822 `.sources` + keyrings), dnf/dnf5 (`.repo`), pacman (config sections), zypper (`addrepo`) | Follows the detected package backend |
 | Services | **systemd only** | Requires both `systemctl` and `/run/systemd/system` |
 | Users, groups, passwords | shadow-utils (`useradd`, `usermod`, `chpasswd`, `getent`, `loginctl`) | Single implementation |
 | Disk encryption | LUKS via `cryptsetup`, TPM via `systemd-cryptenroll`, volume discovery via `lsblk` | Single implementation |
@@ -516,8 +516,8 @@ promise more: **systemd is the only init system implemented.** OpenRC, runit, an
 s6 scaffolds were removed rather than left as stubs that would fail at runtime.
 <!-- docref: end -->
 
-<!-- docref: begin src=sdk/sys/repo/repo.go#New:7c11139c -->
-The repository manager accepts only the four real repository backends; flatpak
+<!-- docref: begin src=sdk/sys/repo/repo.go#New:59f2a591 -->
+The repository manager accepts only the five real repository backends; flatpak
 and the zero value are rejected at construction rather than producing a manager
 that silently does nothing.
 <!-- docref: end -->
@@ -528,7 +528,7 @@ if neither escalation tool is present, that is an absence to handle, not a
 licence to skip escalation.
 <!-- docref: end -->
 
-<!-- docref: begin src=sdk/sys/user/user.go#Manager:6e51c335,sdk/sys/encryption/encryption.go#Manager:637550ad,sdk/sys/network/detect.go#Detect:356657a1,sdk/sys/reboot/reboot.go#New:981f19ac,sdk/sys/notify/notify.go#New:9cbfe737,sdk/sys/desktop/desktop.go#New:de9849d1 -->
+<!-- docref: begin src=sdk/sys/user/user.go#Manager:6e51c335,sdk/sys/encryption/encryption.go#Manager:637550ad,sdk/sys/network/detect.go#Detect:356657a1,sdk/sys/reboot/reboot.go#New:981f19ac,sdk/sys/notify/notify.go#New:9cbfe737,sdk/sys/desktop/desktop.go#New:d4942c32 -->
 The user, encryption, network, reboot, notification, and desktop managers each
 have exactly one implementation. Where a table row above says "single
 implementation", that is what it means: there is no second backend to fall back

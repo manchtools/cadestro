@@ -45,7 +45,7 @@ lines, err := s.Query(ctx, log.Query{
 })
 ```
 
-<!-- docref: begin src=sys/log/journald.go#journaldSource.Query:44fcc941 -->
+<!-- docref: begin src=sys/log/journald.go#journaldSource.Query:0a99a61b -->
 `Query` builds the `journalctl` invocation with every dynamic value as an
 option-argument (`-u <unit>`, `--grep <pat>`, `-k`, …), never a positional operand, so
 none can be reinterpreted as a flag. Two real-journald behaviours it normalises:

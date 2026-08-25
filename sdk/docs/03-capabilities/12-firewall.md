@@ -49,7 +49,7 @@ err = m.RemoveRule(ctx, "allow-ssh")
 rules, err := m.List(ctx) // only rules in this manager's namespace
 ```
 
-<!-- docref: begin src=sys/firewall/nftables.go#nftables.List:6b96ce82 -->
+<!-- docref: begin src=sys/firewall/nftables.go#nftables.List:1041a15d -->
 `List` decodes each rule's full match — protocol, port, **and** source/destination
 address — back out of the live nftables ruleset, so what you read reflects
 exactly what was applied. A namespace that was never provisioned (its table does

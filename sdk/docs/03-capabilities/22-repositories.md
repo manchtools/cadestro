@@ -8,7 +8,7 @@ icon: "🗄️"
 # Repositories
 
 `sys/repo` configures the external package repositories a host installs from. It
-owns the per-backend file format (apt deb822 `.sources` + keyrings, dnf `.repo`,
+owns the per-backend file format (apt deb822 `.sources` + keyrings, dnf/dnf5 `.repo`,
 pacman.conf sections, `zypper addrepo`), GPG public-key handling, and the
 idempotency comparison — so you never hand-write a `.repo` file.
 
@@ -25,7 +25,7 @@ if err != nil {
 }
 ```
 
-<!-- docref: begin src=sys/repo/repo.go#New:7c11139c -->
+<!-- docref: begin src=sys/repo/repo.go#New:59f2a591 -->
 `New` reuses the `pkg.Backend` enum and is fail-closed: a nil Runner or a
 backend without native repository support (flatpak, the zero value) is
 rejected. It is pure — it does not probe the host; use `pkg.Detect` to learn
@@ -52,7 +52,7 @@ exits 0 whether or not the alias existed, so the absent-repo no-op is detected
 from its "not found" message rather than the exit code (`Changed: false`).
 <!-- docref: end -->
 
-<!-- docref: begin src=sys/repo/repo.go#manager.Apply:65c7e700 -->
+<!-- docref: begin src=sys/repo/repo.go#manager.Apply:042f4daa -->
 `Apply` validates the repository (name and the backend's config) before touching
 the system, then writes the backend's native format and refreshes the index. It
 is idempotent — an unchanged config reports `Changed: false` — so re-applying the
@@ -60,10 +60,10 @@ same desired state is safe and produces no spurious change events.
 <!-- docref: end -->
 
 {% callout type="info" title="GPG keys are public material" %}
-<!-- docref: begin src=sys/repo/apt.go#updateAptKey:f3733dcc,sys/repo/dnf.go#manager.applyDnf:644580b5,sys/repo/zypper.go#manager.applyZypper:f9958adf -->
+<!-- docref: begin src=sys/repo/apt.go#updateAptKey:f3733dcc,sys/repo/dnf.go#manager.applyDnf:0a62087a,sys/repo/zypper.go#manager.applyZypper:c0726901 -->
 The signing keys here are *public* repository keys, not secrets. apt receives the
-key bytes (dearmored into `/etc/apt/keyrings`); dnf and zypper take a key
-reference (URL or path) the package manager imports — and both dnf and zypper
+key bytes (dearmored into `/etc/apt/keyrings`); dnf/dnf5 and zypper take a key
+reference (URL or path) the package manager imports — and dnf/dnf5 and zypper
 import it only when `GPGCheck` is on, so a key is never trusted system-wide while
 the repository itself verifies nothing.
 <!-- docref: end -->

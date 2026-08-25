@@ -44,7 +44,7 @@ git, err  := remote.NewGit(remote.GitConfig{URL: "https://…", Ref: "v1.2.3"})
 s3, err   := remote.NewS3(remote.S3Config{Bucket: "artifacts", Key: "agent/latest"})
 ```
 
-<!-- docref: begin src=sys/remote/http.go#NewHTTP:9089d62f,sys/remote/git.go#NewGit:0a6c132d,sys/remote/s3.go#NewS3:78a4b3e6 -->
+<!-- docref: begin src=sys/remote/http.go#NewHTTP:02a43c43,sys/remote/git.go#NewGit:0a6c132d,sys/remote/s3.go#NewS3:78a4b3e6 -->
 Each constructor validates its configuration up front and returns an error for a
 malformed one, so a bad URL, missing checksum, or unusable S3 config fails at
 construction rather than mid-download. The returned value is a `Source` — the
@@ -68,7 +68,7 @@ src, err := remote.NewHTTP(remote.HTTPConfig{
 })
 ```
 
-<!-- docref: begin src=sys/remote/http.go#RedirectPolicy:1f1fa7c7,sys/remote/http.go#redirectPolicy:a59120a4 -->
+<!-- docref: begin src=sys/remote/http.go#RedirectPolicy:1f1fa7c7,sys/remote/http.go#redirectPolicy:0e6cfaaa -->
 `Redirect` selects one of three ordered levels. `RedirectSameOrigin` — the zero
 value — follows only same-scheme, same-host redirects. `RedirectNone` refuses
 every redirect. `RedirectCrossOrigin` additionally follows host changes and
@@ -80,7 +80,7 @@ governs the default client only; a caller-supplied `Client` owns its own.
 
 ## Fetch into memory
 
-<!-- docref: begin src=sys/remote/fetch_bytes.go#FetchBytes:c8e91045 -->
+<!-- docref: begin src=sys/remote/fetch_bytes.go#FetchBytes:228d48dd -->
 When the payload is small and you want the bytes in hand rather than a file on
 disk — a `SHA256SUMS` manifest, a GPG key, a short JSON descriptor — `FetchBytes`
 fetches an HTTPS source into memory and returns the bytes:
@@ -93,7 +93,7 @@ data, err := remote.FetchBytes(ctx, remote.HTTPConfig{
 })
 ```
 
-<!-- docref: begin src=sys/remote/fetch_bytes.go#FetchBytes:c8e91045 -->
+<!-- docref: begin src=sys/remote/fetch_bytes.go#FetchBytes:228d48dd -->
 `FetchBytes` applies the same guards as `Fetch` — URL/scheme validation, the size
 cap, and the optional sha256 pin — but bounded for RAM because the whole body is
 buffered. The cap defaults to 64 MiB (not the 2 GiB file default) unless you
@@ -109,7 +109,7 @@ have no meaning for a single in-memory payload. It is for small payloads; use
 The destination is not a free-for-all path. `Fetch` refuses to write outside the
 locations the SDK is allowed to manage:
 
-<!-- docref: begin src=sys/remote/paths.go#validateDestination:e25e0621 -->
+<!-- docref: begin src=sys/remote/paths.go#validateDestination:1c442d05 -->
 A destination is rejected unless it falls under a managed root (e.g.
 `/var/lib/cadestro`, `/etc/cadestro`); a write that would land in a
 sensitive system location — `/etc/cron.d`, `/usr/bin`, a user's `~/.ssh` — is

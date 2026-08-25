@@ -15,7 +15,7 @@ to get them.
   control CA, and keeps one outbound mTLS stream open. No inbound ports on
   endpoints, no SSH reachability requirement.
 - **Applies desired state on a schedule, online or offline.** Actions declare
-  `PRESENT`/`ABSENT` for packages (apt, dnf, pacman, zypper — plus flatpak,
+  `PRESENT`/`ABSENT` for packages (apt, dnf/dnf5, pacman, zypper — plus flatpak,
   deb, rpm, AppImage), services, files, users and groups, SSH and sshd policy,
   disk encryption, Wi-Fi, and more. Agents store their manifests durably and
   re-apply them on cron or drift intervals even without a server connection,
@@ -28,7 +28,7 @@ to get them.
   persistence fails, the state change rolls back. Sensitive reads are their
   own audited operations, and secret values never enter logs or audit
   payloads.
-<!-- docref: begin src=internal/scim/users_write.go#Handler.provisionSubject:3b57e30f,internal/idp/linker.go#Linker.createUser:7858b2ad,internal/identity/users.go#Handlers.EraseJITUser:643c75df -->
+<!-- docref: begin src=internal/scim/users_write.go#Handler.provisionSubject:90234164,internal/idp/linker.go#Linker.createUser:7858b2ad,internal/identity/users.go#Handlers.EraseJITUser:993bfcf8 -->
 - **Uses enterprise identity from day one.** Human accounts come from SCIM
   lifecycle management or per-provider OIDC just-in-time creation — there is
   no manual user creation and no local passwords. JIT-created subjects have an
