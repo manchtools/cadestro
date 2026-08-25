@@ -79,10 +79,11 @@ model; the reference lists the surface.
 
 ## Construction validates before it works
 
-<!-- docref: begin src=sys/catrust/catrust.go#New:78dcd9a7 -->
-`New` is pure and fail-closed: it rejects a nil Runner and an unrecognized
-Backend, returning an error, before constructing a usable handle. A successful
-call gives you a Manager that is ready to use.
+<!-- docref: begin src=sys/catrust/catrust.go#New:c8724b27 -->
+`New` is a fail-closed constructor, not a pure selector: it validates the Runner
+and backend, requires an existing backend anchors directory, constructs the
+filesystem manager, and returns typed or wrapped errors for every failure. A
+successful call returns a Manager ready to use.
 <!-- docref: end -->
 
 This means a misconfigured caller fails at construction, loudly, rather than at
