@@ -18,7 +18,6 @@ import (
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/contract/maintenance"
 	"github.com/manchtools/cadestro/server/internal/auth"
-	"github.com/manchtools/cadestro/server/internal/dynamicquery"
 	"github.com/manchtools/cadestro/server/internal/middleware"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -371,11 +370,11 @@ func (h *Handlers) ValidateDynamicQuery(ctx context.Context, req *connect.Reques
 	if err := h.authorize(ctx, "ValidateDynamicQuery", ""); err != nil {
 		return nil, err
 	}
-	if err := dynamicquery.ValidateDeviceQuery(req.Msg.Query); err != nil {
-		return connect.NewResponse(&cadestrov1.ValidateDynamicQueryResponse{Valid: false, Error: err.Error()}), nil
-	}
 	count, err := h.state.CountMatchingDevices(ctx, req.Msg.Query)
 	if err != nil {
+		if errors.Is(err, ErrInvalidQuery) {
+			return connect.NewResponse(&cadestrov1.ValidateDynamicQueryResponse{Valid: false, Error: err.Error()}), nil
+		}
 		return nil, h.mapError(ctx, "count dynamic query matches", err)
 	}
 	return connect.NewResponse(&cadestrov1.ValidateDynamicQueryResponse{

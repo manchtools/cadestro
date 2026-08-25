@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/manchtools/cadestro/server/internal/dynamicquery"
 	"github.com/manchtools/cadestro/server/internal/store"
@@ -22,7 +23,7 @@ type EvaluationResult struct {
 
 // CountMatchingDevices validates a query and counts its current matches.
 func (s *State) CountMatchingDevices(ctx context.Context, raw string) (int64, error) {
-	expr, err := parseDeviceQuery(raw)
+	query, err := parseDeviceQuery(raw)
 	if err != nil {
 		return 0, err
 	}
@@ -30,7 +31,7 @@ func (s *State) CountMatchingDevices(ctx context.Context, raw string) (int64, er
 	if err != nil {
 		return 0, err
 	}
-	matches, err := matchingDeviceIDs(expr, rows)
+	matches, err := matchingDeviceIDs(ctx, query, rows)
 	return int64(len(matches)), err
 }
 
@@ -52,7 +53,7 @@ func (s *State) EvaluateDynamicGroup(ctx context.Context, op store.AuditOperatio
 		if group.DynamicQuery == nil {
 			return ErrInvalidQuery
 		}
-		expr, err := parseDeviceQuery(*group.DynamicQuery)
+		query, err := parseDeviceQuery(*group.DynamicQuery)
 		if err != nil {
 			return err
 		}
@@ -60,7 +61,7 @@ func (s *State) EvaluateDynamicGroup(ctx context.Context, op store.AuditOperatio
 		if err != nil {
 			return fmt.Errorf("device group: list evaluation devices: %w", err)
 		}
-		wanted, err := matchingDeviceIDs(expr, devices)
+		wanted, err := matchingDeviceIDs(ctx, query, devices)
 		if err != nil {
 			return err
 		}
@@ -112,106 +113,162 @@ func (s *State) EvaluateDynamicGroup(ctx context.Context, op store.AuditOperatio
 	return EvaluationResult{Group: group, Added: int64(len(added)), Removed: int64(len(removed))}, nil
 }
 
-func parseDeviceQuery(raw string) (dynamicquery.Expr, error) {
-	if dynamicquery.ValidateDeviceQuery(raw) != nil {
-		return nil, ErrInvalidQuery
-	}
-	expr, err := dynamicquery.Parse(raw)
+func parseDeviceQuery(raw string) (dynamicquery.DeviceQuery, error) {
+	query, err := dynamicquery.CompileDevice(raw)
 	if err != nil {
-		return nil, ErrInvalidQuery
+		return dynamicquery.DeviceQuery{}, fmt.Errorf("%w: %w", ErrInvalidQuery, err)
 	}
-	return expr, nil
+	return query, nil
 }
 
-func matchingDeviceIDs(expr dynamicquery.Expr, rows []db.ListDevicesForDynamicEvaluationRow) ([]string, error) {
+func matchingDeviceIDs(ctx context.Context, query dynamicquery.DeviceQuery, rows []db.ListDevicesForDynamicEvaluationRow) ([]string, error) {
 	ids := make([]string, 0, len(rows))
 	for _, row := range rows {
-		ctx, err := evaluationContext(row)
+		device, err := evaluationContext(row)
 		if err != nil {
 			return nil, fmt.Errorf("device group: decode evaluation device %s: %w", row.ID, err)
 		}
-		if dynamicquery.EvaluateDevice(expr, ctx) {
+		matched, err := query.Eval(ctx, device)
+		if err != nil {
+			return nil, fmt.Errorf("device group: evaluate device %s: %w", row.ID, err)
+		}
+		if matched {
 			ids = append(ids, row.ID)
 		}
 	}
 	return ids, nil
 }
 
-func evaluationContext(row db.ListDevicesForDynamicEvaluationRow) (dynamicquery.DeviceContext, error) {
+func evaluationContext(row db.ListDevicesForDynamicEvaluationRow) (dynamicquery.Device, error) {
 	labels := map[string]string{}
 	if err := json.Unmarshal(row.LabelsJson, &labels); err != nil {
-		return dynamicquery.DeviceContext{}, err
+		return dynamicquery.Device{}, err
 	}
-	values, err := inventoryValues(row.Hostname, row.InventoryJson)
+	device, err := inventoryDevice(row.Hostname, row.InventoryJson)
 	if err != nil {
-		return dynamicquery.DeviceContext{}, err
+		return dynamicquery.Device{}, err
 	}
 	var groupNames []string
 	if err := json.Unmarshal(row.GroupNamesJson, &groupNames); err != nil {
-		return dynamicquery.DeviceContext{}, err
+		return dynamicquery.Device{}, err
 	}
-	return dynamicquery.DeviceContext{
-		DeviceID: row.ID, Labels: labels, GroupNames: groupNames,
-		Inventory: func(field string) (string, bool) {
-			value, ok := values[field]
-			return value, ok
-		},
-	}, nil
+	device.Labels, device.Groups = labels, groupNames
+	return device, nil
 }
 
-var inventorySources = map[string][2]string{
-	"os":                {"os_version", "name"},
-	"os_version":        {"os_version", "version"},
-	"os_major":          {"os_version", "major"},
-	"os_minor":          {"os_version", "minor"},
-	"os_arch":           {"os_version", "arch"},
-	"os_platform":       {"os_version", "platform"},
-	"os_platform_like":  {"os_version", "platform_like"},
-	"cpu_type":          {"system_info", "cpu_type"},
-	"cpu_brand":         {"system_info", "cpu_brand"},
-	"cpu_cores":         {"system_info", "cpu_physical_cores"},
-	"cpu_logical_cores": {"system_info", "cpu_logical_cores"},
-	"memory_total":      {"system_info", "physical_memory"},
-	"kernel":            {"kernel_info", "version"},
+type inventoryTables struct {
+	OSVersion  []inventoryOSVersion  `json:"os_version"`
+	SystemInfo []inventorySystemInfo `json:"system_info"`
+	KernelInfo []inventoryKernelInfo `json:"kernel_info"`
 }
 
-func inventoryValues(hostname string, raw []byte) (map[string]string, error) {
-	encoded := map[string]json.RawMessage{}
-	if err := json.Unmarshal(raw, &encoded); err != nil {
-		return nil, err
-	}
-	tables := make(map[string]map[string]any, len(encoded))
-	for name, value := range encoded {
-		var rows []map[string]any
-		if err := json.Unmarshal(value, &rows); err != nil {
-			return nil, fmt.Errorf("inventory table %s: %w", name, err)
-		}
-		if len(rows) > 0 {
-			tables[name] = rows[0]
-		}
-	}
-	values := map[string]string{"hostname": hostname}
-	for field, source := range inventorySources {
-		if table := tables[source[0]]; table != nil {
-			if value := scalarString(table[source[1]]); value != "" {
-				values[field] = value
-			}
-		}
-	}
-	return values, nil
+type inventoryOSVersion struct {
+	Name         json.RawMessage `json:"name"`
+	Version      json.RawMessage `json:"version"`
+	Major        json.RawMessage `json:"major"`
+	Minor        json.RawMessage `json:"minor"`
+	Arch         json.RawMessage `json:"arch"`
+	Platform     json.RawMessage `json:"platform"`
+	PlatformLike json.RawMessage `json:"platform_like"`
 }
 
-func scalarString(value any) string {
-	switch value := value.(type) {
-	case string:
-		return value
-	case bool:
-		return strconv.FormatBool(value)
-	case float64:
-		return strconv.FormatFloat(value, 'f', -1, 64)
-	default:
-		return ""
+type inventorySystemInfo struct {
+	CPUType        json.RawMessage `json:"cpu_type"`
+	CPUBrand       json.RawMessage `json:"cpu_brand"`
+	PhysicalCores  json.RawMessage `json:"cpu_physical_cores"`
+	LogicalCores   json.RawMessage `json:"cpu_logical_cores"`
+	PhysicalMemory json.RawMessage `json:"physical_memory"`
+}
+
+type inventoryKernelInfo struct {
+	Version json.RawMessage `json:"version"`
+}
+
+func inventoryDevice(hostname string, raw []byte) (dynamicquery.Device, error) {
+	var tables inventoryTables
+	if err := json.Unmarshal(raw, &tables); err != nil {
+		return dynamicquery.Device{}, err
 	}
+	device := dynamicquery.Device{Hostname: hostname}
+	if len(tables.OSVersion) > 0 {
+		row := tables.OSVersion[0]
+		var err error
+		if device.OS, err = inventoryText(row.Name, "os"); err != nil {
+			return dynamicquery.Device{}, err
+		}
+		if device.OSVersion, err = inventoryText(row.Version, "os_version"); err != nil {
+			return dynamicquery.Device{}, err
+		}
+		if device.OSMajor, err = inventoryNumber(row.Major, "os_major"); err != nil {
+			return dynamicquery.Device{}, err
+		}
+		if device.OSMinor, err = inventoryNumber(row.Minor, "os_minor"); err != nil {
+			return dynamicquery.Device{}, err
+		}
+		if device.OSArch, err = inventoryText(row.Arch, "os_arch"); err != nil {
+			return dynamicquery.Device{}, err
+		}
+		if device.OSPlatform, err = inventoryText(row.Platform, "os_platform"); err != nil {
+			return dynamicquery.Device{}, err
+		}
+		if device.OSPlatformLike, err = inventoryText(row.PlatformLike, "os_platform_like"); err != nil {
+			return dynamicquery.Device{}, err
+		}
+	}
+	if len(tables.SystemInfo) > 0 {
+		row := tables.SystemInfo[0]
+		var err error
+		if device.CPUType, err = inventoryText(row.CPUType, "cpu_type"); err != nil {
+			return dynamicquery.Device{}, err
+		}
+		if device.CPUBrand, err = inventoryText(row.CPUBrand, "cpu_brand"); err != nil {
+			return dynamicquery.Device{}, err
+		}
+		if device.CPUCores, err = inventoryNumber(row.PhysicalCores, "cpu_cores"); err != nil {
+			return dynamicquery.Device{}, err
+		}
+		if device.CPULogicalCores, err = inventoryNumber(row.LogicalCores, "cpu_logical_cores"); err != nil {
+			return dynamicquery.Device{}, err
+		}
+		if device.MemoryTotal, err = inventoryNumber(row.PhysicalMemory, "memory_total"); err != nil {
+			return dynamicquery.Device{}, err
+		}
+	}
+	if len(tables.KernelInfo) > 0 {
+		var err error
+		device.Kernel, err = inventoryText(tables.KernelInfo[0].Version, "kernel")
+		if err != nil {
+			return dynamicquery.Device{}, err
+		}
+	}
+	return device, nil
+}
+
+func inventoryText(raw json.RawMessage, field string) (string, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return "", nil
+	}
+	var value string
+	if err := json.Unmarshal(raw, &value); err == nil {
+		return value, nil
+	}
+	var number json.Number
+	if err := json.Unmarshal(raw, &number); err == nil {
+		return number.String(), nil
+	}
+	return "", fmt.Errorf("inventory %s is not a string or number", field)
+}
+
+func inventoryNumber(raw json.RawMessage, field string) (int64, error) {
+	value, err := inventoryText(raw, field)
+	if err != nil || value == "" {
+		return 0, err
+	}
+	parsed, err := strconv.ParseInt(strings.TrimSpace(value), 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("inventory %s is not an integer: %w", field, err)
+	}
+	return parsed, nil
 }
 
 func membershipDelta(current, wanted []string) (added, removed []string) {

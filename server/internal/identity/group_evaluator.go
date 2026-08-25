@@ -3,6 +3,7 @@ package identity
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
 
 	"github.com/manchtools/cadestro/server/internal/dynamicquery"
@@ -22,7 +23,7 @@ type userGroupEvaluationResult struct {
 }
 
 func (h *Handlers) countMatchingUsers(ctx context.Context, raw string) (int64, error) {
-	expr, err := parseUserGroupQuery(raw)
+	query, err := parseUserGroupQuery(raw)
 	if err != nil {
 		return 0, err
 	}
@@ -30,7 +31,11 @@ func (h *Handlers) countMatchingUsers(ctx context.Context, raw string) (int64, e
 	if err != nil {
 		return 0, err
 	}
-	return int64(len(matchingUserIDs(expr, rows))), nil
+	matched, err := matchingUserIDs(ctx, query, rows)
+	if err != nil {
+		return 0, err
+	}
+	return int64(len(matched)), nil
 }
 
 // evaluateDynamicUserGroup reconciles the materialized membership, session
@@ -48,7 +53,7 @@ func (h *Handlers) evaluateDynamicUserGroup(ctx context.Context, op store.AuditO
 		if group.DynamicQuery == nil {
 			return errUserGroupInvalidQuery
 		}
-		expr, err := parseUserGroupQuery(*group.DynamicQuery)
+		query, err := parseUserGroupQuery(*group.DynamicQuery)
 		if err != nil {
 			return err
 		}
@@ -56,7 +61,10 @@ func (h *Handlers) evaluateDynamicUserGroup(ctx context.Context, op store.AuditO
 		if err != nil {
 			return err
 		}
-		wanted := matchingUserIDs(expr, users)
+		wanted, err := matchingUserIDs(ctx, query, users)
+		if err != nil {
+			return err
+		}
 		current, err := tx.ListUserGroupMemberIDs(ctx, groupID)
 		if err != nil {
 			return err
@@ -108,28 +116,29 @@ func (h *Handlers) evaluateDynamicUserGroup(ctx context.Context, op store.AuditO
 	return result, err
 }
 
-func parseUserGroupQuery(raw string) (dynamicquery.Expr, error) {
-	if dynamicquery.ValidateUserQuery(raw) != nil {
-		return nil, errUserGroupInvalidQuery
-	}
-	expr, err := dynamicquery.Parse(raw)
+func parseUserGroupQuery(raw string) (dynamicquery.UserQuery, error) {
+	query, err := dynamicquery.CompileUser(raw)
 	if err != nil {
-		return nil, errUserGroupInvalidQuery
+		return dynamicquery.UserQuery{}, fmt.Errorf("%w: %w", errUserGroupInvalidQuery, err)
 	}
-	return expr, nil
+	return query, nil
 }
 
-func matchingUserIDs(expr dynamicquery.Expr, rows []store.UserDynamicEvaluationRow) []string {
+func matchingUserIDs(ctx context.Context, query dynamicquery.UserQuery, rows []store.UserDynamicEvaluationRow) ([]string, error) {
 	ids := make([]string, 0, len(rows))
 	for _, row := range rows {
-		if dynamicquery.EvaluateUser(expr, dynamicquery.UserContext{
+		matched, err := query.Eval(ctx, dynamicquery.User{
 			Email: row.Email, Disabled: row.Disabled, DisplayName: row.DisplayName,
 			PreferredUsername: row.PreferredUsername, Locale: row.Locale,
-		}) {
+		})
+		if err != nil {
+			return nil, fmt.Errorf("evaluate user %s: %w", row.ID, err)
+		}
+		if matched {
 			ids = append(ids, row.ID)
 		}
 	}
-	return ids
+	return ids, nil
 }
 
 func userMembershipDelta(current, wanted []string) (added, removed []string) {

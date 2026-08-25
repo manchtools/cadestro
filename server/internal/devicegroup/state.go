@@ -372,10 +372,7 @@ func validatedQuery(dynamic bool, raw string) (*string, error) {
 		}
 		return nil, nil
 	}
-	// The empty query is the documented match-all rule: the parser reads ""
-	// as the always-true tree, the user-group path already stores it, and
-	// the UI advertises it. Only oversized or unparseable queries are wrong.
-	if utf8.RuneCountInString(raw) > 4096 || dynamicquery.ValidateDeviceQuery(raw) != nil {
+	if _, err := dynamicquery.CompileDevice(raw); err != nil {
 		return nil, ErrInvalidQuery
 	}
 	return &raw, nil

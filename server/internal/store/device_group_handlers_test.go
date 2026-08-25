@@ -108,11 +108,11 @@ func TestDeviceGroupHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	// design §5.1). This group still has one hand-picked member; converting it
 	// hands membership to the rule, so that member does not survive the call.
 	converted, err := f.handlers.UpdateDeviceGroupQuery(ctx, connect.NewRequest(&cadestrov1.UpdateDeviceGroupQueryRequest{
-		Id: id, IsDynamic: true, DynamicQuery: `device.labels.env equals prod`,
+		Id: id, IsDynamic: true, DynamicQuery: `device.labels["env"] == "prod"`,
 	}))
 	require.NoError(t, err, "a curated group is convertible to a rule")
 	assert.True(t, converted.Msg.Group.IsDynamic)
-	assert.Equal(t, `device.labels.env equals prod`, converted.Msg.Group.DynamicQuery)
+	assert.Equal(t, `device.labels["env"] == "prod"`, converted.Msg.Group.DynamicQuery)
 	assert.Zero(t, converted.Msg.Group.MemberCount, "the curated membership does not survive the rule")
 	convertedGroup, err := f.handlers.GetDeviceGroup(ctx, connect.NewRequest(&cadestrov1.GetDeviceGroupRequest{Id: id}))
 	require.NoError(t, err)
@@ -124,7 +124,7 @@ func TestDeviceGroupHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	dynamic, err := f.handlers.CreateDeviceGroup(ctx, connect.NewRequest(&cadestrov1.CreateDeviceGroupRequest{
-		Name: "dynamic workstations", IsDynamic: true, DynamicQuery: `device.labels.env equals prod`,
+		Name: "dynamic workstations", IsDynamic: true, DynamicQuery: `device.labels["env"] == "prod"`,
 	}))
 	require.NoError(t, err)
 	invalid, err := f.handlers.ValidateDynamicQuery(ctx, connect.NewRequest(&cadestrov1.ValidateDynamicQueryRequest{Query: "("}))
@@ -135,10 +135,10 @@ func TestDeviceGroupHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	_, err = f.raw.Exec(ctx, `UPDATE device_inventory SET rows = '[{"physical_memory":2048}]' WHERE device_id = $1 AND table_name = 'system_info'`, f.groupID)
 	require.NoError(t, err)
 	for _, query := range []string{
-		`device.hostname equals group`,
-		`device.labels.env equals prod`,
-		`device.memory_total greaterThan 1024`,
-		`device.group equals scope`,
+		`device.hostname == "group"`,
+		`device.labels["env"] == "prod"`,
+		`device.memory_total > 1024`,
+		`"scope" in device.groups`,
 	} {
 		preview, err := f.handlers.ValidateDynamicQuery(ctx, connect.NewRequest(&cadestrov1.ValidateDynamicQueryRequest{Query: query}))
 		require.NoError(t, err, query)
@@ -146,17 +146,17 @@ func TestDeviceGroupHandlers_CRUDMembershipAndAudit(t *testing.T) {
 		assert.Equal(t, int32(1), preview.Msg.MatchingDeviceCount, query)
 	}
 	updatedQuery, err := f.handlers.UpdateDeviceGroupQuery(ctx, connect.NewRequest(&cadestrov1.UpdateDeviceGroupQueryRequest{
-		Id: dynamic.Msg.Group.Id, IsDynamic: true, DynamicQuery: `device.hostname equals group`,
+		Id: dynamic.Msg.Group.Id, IsDynamic: true, DynamicQuery: `device.hostname == "group"`,
 	}))
 	require.NoError(t, err)
-	assert.Equal(t, `device.hostname equals group`, updatedQuery.Msg.Group.DynamicQuery)
+	assert.Equal(t, `device.hostname == "group"`, updatedQuery.Msg.Group.DynamicQuery)
 	evaluated, err := f.handlers.EvaluateDynamicGroup(ctx, connect.NewRequest(&cadestrov1.EvaluateDynamicGroupRequest{Id: dynamic.Msg.Group.Id}))
 	require.NoError(t, err)
 	assert.Equal(t, int32(1), evaluated.Msg.DevicesAdded)
 	assert.Zero(t, evaluated.Msg.DevicesRemoved)
 	assert.Equal(t, int32(1), evaluated.Msg.Group.MemberCount)
 	_, err = f.handlers.UpdateDeviceGroupQuery(ctx, connect.NewRequest(&cadestrov1.UpdateDeviceGroupQueryRequest{
-		Id: dynamic.Msg.Group.Id, IsDynamic: true, DynamicQuery: `device.hostname equals outside`,
+		Id: dynamic.Msg.Group.Id, IsDynamic: true, DynamicQuery: `device.hostname == "outside"`,
 	}))
 	require.NoError(t, err)
 	evaluated, err = f.handlers.EvaluateDynamicGroup(ctx, connect.NewRequest(&cadestrov1.EvaluateDynamicGroupRequest{Id: dynamic.Msg.Group.Id}))
@@ -196,13 +196,13 @@ func TestDeviceGroupHandlers_ShapeSpecificCreatePermissionAndScope(t *testing.T)
 	f := newDeviceGroupHandlerFixture(t)
 	staticOnly := f.actor("CreateStaticDeviceGroup")
 	_, err := f.handlers.CreateDeviceGroup(staticOnly, connect.NewRequest(&cadestrov1.CreateDeviceGroupRequest{
-		Name: "denied", IsDynamic: true, DynamicQuery: `device.labels.env equals prod`,
+		Name: "denied", IsDynamic: true, DynamicQuery: `device.labels["env"] == "prod"`,
 	}))
 	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 
 	dynamicOnly := f.actor("CreateDynamicDeviceGroup")
 	created, err := f.handlers.CreateDeviceGroup(dynamicOnly, connect.NewRequest(&cadestrov1.CreateDeviceGroupRequest{
-		Name: "dynamic", IsDynamic: true, DynamicQuery: `device.labels.env equals prod`,
+		Name: "dynamic", IsDynamic: true, DynamicQuery: `device.labels["env"] == "prod"`,
 	}))
 	require.NoError(t, err)
 

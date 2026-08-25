@@ -142,7 +142,7 @@ func TestUserGroups_DynamicMembershipRejectsManualChanges(t *testing.T) {
 	}})
 	member := f.seedSubject()
 	created, err := f.client.CreateUserGroup(f.ctx(), authed(&cadestrov1.CreateUserGroupRequest{
-		Name: "Disabled", IsDynamic: true, DynamicQuery: `user.disabled equals "true"`,
+		Name: "Disabled", IsDynamic: true, DynamicQuery: `user.disabled == true`,
 	}, operator.Token))
 	require.NoError(t, err)
 
@@ -190,21 +190,21 @@ func TestDynamicUserGroups_ValidateUpdateAndEvaluateDirectState(t *testing.T) {
 	require.NoError(t, err)
 
 	preview, err := f.client.ValidateUserGroupQuery(f.ctx(), authed(&cadestrov1.ValidateUserGroupQueryRequest{
-		Query: `user.disabled equals "true"`,
+		Query: `user.disabled == true`,
 	}, operator.Token))
 	require.NoError(t, err)
 	assert.True(t, preview.Msg.Valid)
 	assert.Equal(t, int32(1), preview.Msg.MatchingUserCount)
 
 	invalid, err := f.client.ValidateUserGroupQuery(f.ctx(), authed(&cadestrov1.ValidateUserGroupQueryRequest{
-		Query: `user.has_password equals "true"`,
+		Query: `user.has_password == true`,
 	}, operator.Token))
 	require.NoError(t, err)
 	assert.False(t, invalid.Msg.Valid, "removed local-auth state cannot remain a dynamic-group field")
 
 	created, err := f.client.CreateUserGroup(f.ctx(), authed(&cadestrov1.CreateUserGroupRequest{
 		Name: "Selected user", IsDynamic: true,
-		DynamicQuery: `user.email equals "` + matched.Email + `"`,
+		DynamicQuery: `user.email == "` + matched.Email + `"`,
 	}, operator.Token))
 	require.NoError(t, err)
 	groupID := created.Msg.Group.Id
@@ -216,10 +216,10 @@ func TestDynamicUserGroups_ValidateUpdateAndEvaluateDirectState(t *testing.T) {
 	assert.Equal(t, int32(1), first.Msg.Group.MemberCount)
 
 	updated, err := f.client.UpdateUserGroupQuery(f.ctx(), authed(&cadestrov1.UpdateUserGroupQueryRequest{
-		Id: groupID, IsDynamic: true, DynamicQuery: `user.disabled equals "true"`,
+		Id: groupID, IsDynamic: true, DynamicQuery: `user.disabled == true`,
 	}, operator.Token))
 	require.NoError(t, err)
-	assert.Equal(t, `user.disabled equals "true"`, updated.Msg.Group.DynamicQuery)
+	assert.Equal(t, `user.disabled == true`, updated.Msg.Group.DynamicQuery)
 
 	second, err := f.client.EvaluateDynamicUserGroup(f.ctx(), authed(&cadestrov1.EvaluateDynamicUserGroupRequest{Id: groupID}, operator.Token))
 	require.NoError(t, err)
@@ -254,7 +254,7 @@ func TestEvaluateDynamicUserGroup_AllowsRemovingFinalAdminMembership(t *testing.
 	soleAdmin := f.seedSubject()
 	groupID := f.insertUserGroup()
 	_, err := f.raw.Exec(f.ctx(),
-		`UPDATE user_groups SET is_dynamic = TRUE, dynamic_query = 'user.disabled equals "true"' WHERE id = $1`, groupID)
+		`UPDATE user_groups SET is_dynamic = TRUE, dynamic_query = 'user.disabled == true' WHERE id = $1`, groupID)
 	require.NoError(t, err)
 	f.addUserToGroup(groupID, soleAdmin.ID)
 	const adminRoleID = "00000000000000000000000001"
@@ -317,11 +317,11 @@ func TestUpdateUserGroupQuery_ConvertsCuratedGroupAndRefusesSCIMManaged(t *testi
 	require.Len(t, intact.Msg.Members, 1)
 
 	converted, err := f.client.UpdateUserGroupQuery(f.ctx(), authed(&cadestrov1.UpdateUserGroupQueryRequest{
-		Id: groupID, IsDynamic: true, DynamicQuery: `user.disabled equals "true"`,
+		Id: groupID, IsDynamic: true, DynamicQuery: `user.disabled == true`,
 	}, operator.Token))
 	require.NoError(t, err, "a curated group is convertible to a rule")
 	assert.True(t, converted.Msg.Group.IsDynamic)
-	assert.Equal(t, `user.disabled equals "true"`, converted.Msg.Group.DynamicQuery)
+	assert.Equal(t, `user.disabled == true`, converted.Msg.Group.DynamicQuery)
 	assert.Zero(t, converted.Msg.Group.MemberCount, "the curated membership does not survive the rule")
 	var versionAfterConversion int32
 	require.NoError(t, f.raw.QueryRow(f.ctx(),
@@ -359,7 +359,7 @@ func TestUpdateUserGroupQuery_ConvertsCuratedGroupAndRefusesSCIMManaged(t *testi
 		"SCIM ownership rejects every query update, including a same-mode request")
 
 	_, err = f.client.UpdateUserGroupQuery(f.ctx(), authed(&cadestrov1.UpdateUserGroupQueryRequest{
-		Id: managed.Msg.Group.Id, IsDynamic: true, DynamicQuery: `user.disabled equals "true"`,
+		Id: managed.Msg.Group.Id, IsDynamic: true, DynamicQuery: `user.disabled == true`,
 	}, operator.Token))
 	assert.Equal(t, connect.CodeFailedPrecondition, connectCodeOf(t, err),
 		"a SCIM-managed group's membership belongs to its directory")

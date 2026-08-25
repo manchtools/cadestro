@@ -146,7 +146,7 @@ func TestDeviceGroupState_DynamicShapeAndBoundsFailClosed(t *testing.T) {
 	op := deviceGroupOperation()
 	dynamic, err := state.Create(ctx, op, devicegroup.CreateParams{
 		Name: "production", CreatedBy: op.ActorID, Dynamic: true,
-		Query: `device.labels.env equals prod`,
+		Query: `device.labels["env"] == "prod"`,
 	})
 	require.NoError(t, err)
 	_, err = state.AddDevices(ctx, deviceGroupOperation(), dynamic.ID, []string{newID()})
@@ -219,11 +219,11 @@ func TestDeviceGroupState_ConvertingCuratedGroupToRuleClearsItsMembers(t *testin
 	assert.Equal(t, int64(2), unchanged.LiveMemberCount, "a rejected query cannot drop members")
 
 	convertOp := deviceGroupOperation()
-	converted, err := state.UpdateQuery(ctx, convertOp, group.ID, true, `device.labels.env equals prod`)
+	converted, err := state.UpdateQuery(ctx, convertOp, group.ID, true, `device.labels["env"] == "prod"`)
 	require.NoError(t, err, "a curated group must be convertible to a rule")
 	assert.True(t, converted.IsDynamic)
 	require.NotNil(t, converted.DynamicQuery)
-	assert.Equal(t, `device.labels.env equals prod`, *converted.DynamicQuery)
+	assert.Equal(t, `device.labels["env"] == "prod"`, *converted.DynamicQuery)
 	assert.Equal(t, int64(0), converted.LiveMemberCount, "the curated membership does not survive the rule")
 
 	members, err := st.ListDeviceGroupMembers(ctx, group.ID)

@@ -20,14 +20,7 @@ func seedBareDevice(t *testing.T, raw *testdb.DB, deviceID string) {
 	require.NoError(t, err)
 }
 
-// TestCreateDeviceGroup_EmptyDynamicQueryIsTheMatchAllRule proves the
-// documented empty-query semantics through the real handlers: the parser
-// treats the empty string as the always-true tree, the UI advertises "an
-// empty query will match all devices", and the user-group path already
-// accepts it — but validatedQuery rejected raw == "" for dynamic DEVICE
-// groups, so the advertised match-all group was uncreatable. The evaluation
-// half then proves the stored empty query really materializes every device.
-func TestCreateDeviceGroup_EmptyDynamicQueryIsTheMatchAllRule(t *testing.T) {
+func TestCreateDeviceGroup_TrueDynamicQueryMatchesAllDevices(t *testing.T) {
 	h, raw := newScopeFixture(t)
 	ctx := context.Background()
 
@@ -42,9 +35,9 @@ func TestCreateDeviceGroup_EmptyDynamicQueryIsTheMatchAllRule(t *testing.T) {
 	callerCtx := auth.WithUser(ctx, creator)
 
 	created, err := h.CreateDeviceGroup(callerCtx, connect.NewRequest(&cadestrov1.CreateDeviceGroupRequest{
-		Name: "everything", IsDynamic: true, DynamicQuery: "",
+		Name: "everything", IsDynamic: true, DynamicQuery: "true",
 	}))
-	require.NoError(t, err, "an empty dynamic query is the documented match-all rule and must be creatable")
+	require.NoError(t, err)
 	require.NotNil(t, created.Msg.Group)
 	assert.True(t, created.Msg.Group.IsDynamic)
 
@@ -52,8 +45,7 @@ func TestCreateDeviceGroup_EmptyDynamicQueryIsTheMatchAllRule(t *testing.T) {
 		Id: created.Msg.Group.Id,
 	}))
 	require.NoError(t, err)
-	assert.EqualValues(t, 2, evaluated.Msg.DevicesAdded,
-		"the stored empty query must materialize every registered device")
+	assert.EqualValues(t, 2, evaluated.Msg.DevicesAdded)
 
 	var members int
 	require.NoError(t, raw.QueryRow(ctx,
@@ -62,8 +54,6 @@ func TestCreateDeviceGroup_EmptyDynamicQueryIsTheMatchAllRule(t *testing.T) {
 	assert.Equal(t, 2, members)
 }
 
-// The loosened gate must not admit a genuinely malformed query: garbage still
-// fails before any write, as the positive control for the fix above.
 func TestCreateDeviceGroup_MalformedDynamicQueryStaysRejected(t *testing.T) {
 	h, _ := newScopeFixture(t)
 	creator := &auth.UserContext{
@@ -72,7 +62,7 @@ func TestCreateDeviceGroup_MalformedDynamicQueryStaysRejected(t *testing.T) {
 	}
 	_, err := h.CreateDeviceGroup(auth.WithUser(context.Background(), creator),
 		connect.NewRequest(&cadestrov1.CreateDeviceGroupRequest{
-			Name: "broken", IsDynamic: true, DynamicQuery: `device.labels.env equals`,
+			Name: "broken", IsDynamic: true, DynamicQuery: `device.labels["env"] ==`,
 		}))
 	require.Error(t, err)
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))

@@ -36,7 +36,7 @@ func (h *Handlers) CreateUserGroup(ctx context.Context, req *connect.Request[cad
 	var query *string
 	if req.Msg.IsDynamic {
 		permission = PermCreateDynamicUserGroup
-		if err := dynamicquery.ValidateUserQuery(req.Msg.DynamicQuery); err != nil {
+		if _, err := dynamicquery.CompileUser(req.Msg.DynamicQuery); err != nil {
 			return nil, rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument, "invalid dynamic query")
 		}
 		query = &req.Msg.DynamicQuery
@@ -533,7 +533,7 @@ func (h *Handlers) UpdateUserGroupQuery(ctx context.Context, req *connect.Reques
 	}
 	var query *string
 	if req.Msg.IsDynamic {
-		if dynamicquery.ValidateUserQuery(req.Msg.DynamicQuery) != nil {
+		if _, err := dynamicquery.CompileUser(req.Msg.DynamicQuery); err != nil {
 			return nil, rpcError(ctx, ErrInvalidDynamicQuery, connect.CodeInvalidArgument, "invalid dynamic query")
 		}
 		query = &req.Msg.DynamicQuery
@@ -625,11 +625,11 @@ func (h *Handlers) ValidateUserGroupQuery(ctx context.Context, req *connect.Requ
 	if err := h.authorize(ctx, PermValidateUserGroupQuery, ""); err != nil {
 		return nil, err
 	}
-	if dynamicquery.ValidateUserQuery(req.Msg.Query) != nil {
-		return connect.NewResponse(&cadestrov1.ValidateUserGroupQueryResponse{Valid: false, Error: "invalid query"}), nil
-	}
 	count, err := h.countMatchingUsers(ctx, req.Msg.Query)
 	if err != nil {
+		if errors.Is(err, errUserGroupInvalidQuery) {
+			return connect.NewResponse(&cadestrov1.ValidateUserGroupQueryResponse{Valid: false, Error: "invalid query"}), nil
+		}
 		return nil, internalError(ctx, "failed to count dynamic user group matches")
 	}
 	return connect.NewResponse(&cadestrov1.ValidateUserGroupQueryResponse{

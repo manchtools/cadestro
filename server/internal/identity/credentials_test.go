@@ -158,7 +158,7 @@ var authenticatedMutations = map[string]call{
 	},
 	cadestrov1connect.ControlServiceUpdateUserGroupQueryProcedure: func(f *fixture, token string) error {
 		_, err := f.client.UpdateUserGroupQuery(f.ctx(), authed(&cadestrov1.UpdateUserGroupQueryRequest{
-			Id: newULID(), IsDynamic: true, DynamicQuery: `user.disabled equals "true"`,
+			Id: newULID(), IsDynamic: true, DynamicQuery: `user.disabled == true`,
 		}, token))
 		return err
 	},
