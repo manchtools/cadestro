@@ -55,12 +55,6 @@ func (f *fakeEncManager) VerifyPassphrase(_ context.Context, _ string, _ sysexec
 	return true, nil
 }
 
-// swapEncMgr installs a fake encryption manager for the test's duration.
-func swapEncMgr(t *testing.T, e *Executor, m sysenc.Manager) {
-	t.Helper()
-	e.deps.encrypt = m
-}
-
 // The custody property: the passphrase control is given is the same one the
 // volume now accepts, and it is stored BEFORE the PSK is removed — so a store
 // failure can never strand a volume whose only remaining key is unknown to the
