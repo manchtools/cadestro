@@ -14,7 +14,7 @@ authority is
 - SQLite FTS5 full-text search;
 - certificate issuance, renewal, and active/pending serial lifecycle;
 - artifact metadata and filesystem ownership; and
-<!-- docref: begin src=internal/controlruntime/runtime.go#health:550d4ab3,internal/controlruntime/runtime.go#readinessHandler:679b3b18,cmd/cadestro/backup_status.go#runBackupStatus:41ed4e6c -->
+<!-- docref: begin src=internal/controlruntime/runtime.go#health:e7aad7af,internal/controlruntime/runtime.go#readinessHandler:7eb4bc39,cmd/cadestro/backup_status.go#runBackupStatus:41ed4e6c -->
 - health and readiness endpoints, plus the host-facing `backup-status` command.
 <!-- docref: end -->
 
