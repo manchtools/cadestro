@@ -424,8 +424,7 @@ func canonicalJSONObject(raw []byte) ([]byte, error) {
 		return nil, ErrInvalidInput
 	}
 	decoder := json.NewDecoder(bytes.NewReader(raw))
-	decoder.UseNumber()
-	var value map[string]any
+	var value map[string]json.RawMessage
 	if err := decoder.Decode(&value); err != nil || value == nil {
 		return nil, ErrInvalidInput
 	}
