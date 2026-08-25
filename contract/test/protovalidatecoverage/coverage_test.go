@@ -54,3 +54,35 @@ func TestEveryBoundableRequestFieldCarriesAValidateRule(t *testing.T) {
 			len(missing), strings.Join(missing, "\n  "))
 	}
 }
+
+func boundable(fd protoreflect.FieldDescriptor) bool {
+	switch {
+	case fd.IsMap():
+		return scalarValueKind(fd.MapValue().Kind())
+	case fd.IsList():
+		return scalarValueKind(fd.Kind())
+	default:
+		return boundableScalarKind(fd.Kind())
+	}
+}
+
+func boundableScalarKind(k protoreflect.Kind) bool {
+	switch k {
+	case protoreflect.StringKind, protoreflect.BytesKind,
+		protoreflect.Int32Kind, protoreflect.Int64Kind,
+		protoreflect.Uint32Kind, protoreflect.Uint64Kind,
+		protoreflect.Sint32Kind, protoreflect.Sint64Kind,
+		protoreflect.Fixed32Kind, protoreflect.Fixed64Kind,
+		protoreflect.Sfixed32Kind, protoreflect.Sfixed64Kind:
+		return true
+	}
+	return false
+}
+
+func scalarValueKind(k protoreflect.Kind) bool {
+	switch k {
+	case protoreflect.MessageKind, protoreflect.GroupKind, protoreflect.EnumKind:
+		return false
+	}
+	return true
+}

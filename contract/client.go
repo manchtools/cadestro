@@ -1,4 +1,4 @@
-// Package sdk provides a client library for communicating with the cadestro server.
+// Package contract provides a client library for communicating with the cadestro server.
 package contract
 
 import (
