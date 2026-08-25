@@ -2,6 +2,10 @@ package handler
 
 import (
 	"context"
+	"errors"
+	"log/slog"
+	"os/user"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -10,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/sdk/sys/terminal"
 	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 )
 
@@ -86,4 +91,136 @@ func TestTerminalCleanupContextSurvivesRequestCancellationButStaysBounded(t *tes
 	case <-time.After(time.Second):
 		t.Fatal("terminal cleanup context was not bounded")
 	}
+}
+
+func TestSweepIdleTerminals_BoundsCleanupContext(t *testing.T) {
+	originalModify := sysuserModify
+	originalTimeout := terminalCleanupTimeout
+	t.Cleanup(func() {
+		sysuserModify = originalModify
+		terminalCleanupTimeout = originalTimeout
+	})
+
+	terminalCleanupTimeout = 50 * time.Millisecond
+	var cleanupCtx context.Context
+	sysuserModify = func(ctx context.Context, _ string, _ sysuser.ModifyOptions) error {
+		cleanupCtx = ctx
+		return nil
+	}
+
+	h, _ := newTestHandler(t)
+	h.terminalIdleTimeout = time.Millisecond
+	addTestSession(h, "01ARZ3NDEKTSV4RRFFQ69G5FAV", "cadestro-tty-test", time.Now().Add(-time.Hour))
+	h.sweepIdleTerminals()
+
+	require.NotNil(t, cleanupCtx)
+	deadline, ok := cleanupCtx.Deadline()
+	require.True(t, ok)
+	require.LessOrEqual(t, time.Until(deadline), terminalCleanupTimeout)
+	require.ErrorIs(t, cleanupCtx.Err(), context.Canceled)
+}
+
+type terminalContextSender struct {
+	outputCtx chan context.Context
+	stateCtx  chan context.Context
+	release   chan struct{}
+}
+
+func (s *terminalContextSender) SendTerminalOutput(ctx context.Context, _ *pb.TerminalOutput) error {
+	s.outputCtx <- ctx
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-s.release:
+		return errors.New("released")
+	}
+}
+
+func (s *terminalContextSender) SendTerminalStateChange(ctx context.Context, _ *pb.TerminalStateChange) error {
+	s.stateCtx <- ctx
+	return nil
+}
+
+func TestPumpTerminalOutput_UsesSessionAndCleanupContexts(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("PTY session test requires Linux")
+	}
+	current, err := user.Current()
+	if err != nil {
+		t.Skipf("cannot determine current user: %v", err)
+	}
+	tm, err := terminal.New()
+	if err != nil {
+		t.Skipf("cannot build terminal manager: %v", err)
+	}
+	sess, err := tm.Open(context.Background(), terminal.SessionConfig{User: current.Username})
+	if err != nil {
+		t.Skipf("cannot start a local PTY session: %v", err)
+	}
+
+	originalModify := sysuserModify
+	originalTimeout := terminalCleanupTimeout
+	t.Cleanup(func() {
+		sysuserModify = originalModify
+		terminalCleanupTimeout = originalTimeout
+		_ = sess.Close()
+	})
+	terminalCleanupTimeout = 50 * time.Millisecond
+	sysuserModify = func(context.Context, string, sysuser.ModifyOptions) error { return nil }
+
+	sender := &terminalContextSender{
+		outputCtx: make(chan context.Context, 1),
+		stateCtx:  make(chan context.Context, 1),
+		release:   make(chan struct{}),
+	}
+	sessionCtx, cancelSession := context.WithCancel(context.Background())
+	ts := &terminalSession{
+		id:      "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+		ttyUser: current.Username,
+		sender:  sender,
+		state:   sessionStateActive,
+		session: sess,
+		cancel:  func() {},
+		now:     time.Now,
+	}
+	h := &Handler{
+		logger:    slog.Default(),
+		terminals: map[string]*terminalSession{ts.id: ts},
+	}
+
+	done := make(chan struct{})
+	go func() {
+		h.pumpTerminalOutput(sessionCtx, ts)
+		close(done)
+	}()
+	if _, err := sess.Write([]byte("output\n")); err != nil {
+		t.Fatal(err)
+	}
+
+	var outputCtx context.Context
+	select {
+	case outputCtx = <-sender.outputCtx:
+	case <-time.After(time.Second):
+		t.Fatal("terminal output was not sent")
+	}
+	cancelSession()
+	if err := sess.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		close(sender.release)
+		<-done
+		t.Fatal("terminal output ignored session cancellation")
+	}
+	if outputCtx == context.Background() {
+		t.Fatal("terminal output used a background context")
+	}
+
+	stateCtx := <-sender.stateCtx
+	deadline, ok := stateCtx.Deadline()
+	require.True(t, ok)
+	require.LessOrEqual(t, time.Until(deadline), terminalCleanupTimeout)
 }

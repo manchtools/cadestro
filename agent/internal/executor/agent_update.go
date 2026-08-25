@@ -98,7 +98,7 @@ func (e *Executor) executeAgentUpdate(ctx context.Context, params *pb.AgentUpdat
 		return nil, false, fmt.Errorf("download binary: %w", err)
 	}
 
-	newVersion, err := e.getBinaryVersion(tmpPath)
+	newVersion, err := e.getBinaryVersion(ctx, tmpPath)
 	if err != nil {
 		return nil, false, fmt.Errorf("version check on downloaded binary: %w", err)
 	}
@@ -356,8 +356,8 @@ func getArchEntry(params *pb.AgentUpdateParams) *pb.AgentUpdateArch {
 	}
 }
 
-func (e *Executor) getBinaryVersion(binaryPath string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+func (e *Executor) getBinaryVersion(ctx context.Context, binaryPath string) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	result, err := e.runnerOrDirect().Run(ctx, sysexec.Command{Name: binaryPath, Args: []string{"version"}})
 	if err != nil {

@@ -30,4 +30,6 @@ func testExecutor() *Executor {
 func runAsUser(ctx context.Context, s desktop.Session, extraEnv []string, dir, name string, args []string) (*pb.CommandOutput, error) {
 	return testExecutor().runAsUser(ctx, s, extraEnv, dir, name, args)
 }
-func getBinaryVersion(path string) (string, error) { return testExecutor().getBinaryVersion(path) }
+func getBinaryVersion(ctx context.Context, path string) (string, error) {
+	return testExecutor().getBinaryVersion(ctx, path)
+}

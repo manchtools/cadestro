@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -142,7 +143,7 @@ func TestGetBinaryVersion(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	version, err := getBinaryVersion(script)
+	version, err := getBinaryVersion(context.Background(), script)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -159,9 +160,41 @@ func TestGetBinaryVersion_Empty(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = getBinaryVersion(script)
+	_, err = getBinaryVersion(context.Background(), script)
 	if err == nil {
 		t.Error("expected error for empty version output")
+	}
+}
+
+func TestGetBinaryVersion_UsesCallerCancellation(t *testing.T) {
+	dir := t.TempDir()
+	release := filepath.Join(dir, "release")
+	script := filepath.Join(dir, "fake-agent")
+	contents := fmt.Sprintf("#!/bin/sh\nwhile [ ! -f %q ]; do sleep 0.01; done\necho 'v2026.04.01'\n", release)
+	if err := os.WriteFile(script, []byte(contents), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() {
+		_, err := getBinaryVersion(ctx, script)
+		done <- err
+	}()
+	time.Sleep(100 * time.Millisecond)
+	cancel()
+
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("getBinaryVersion error = %v, want context.Canceled", err)
+		}
+	case <-time.After(500 * time.Millisecond):
+		if err := os.WriteFile(release, nil, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		<-done
+		t.Fatal("getBinaryVersion ignored caller cancellation")
 	}
 }
 

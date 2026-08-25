@@ -443,7 +443,7 @@ func (h *Handler) pumpTerminalOutput(sessionCtx context.Context, ts *terminalSes
 			ExitCode:  int32(exitCode),
 		}
 
-		sendCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		sendCtx, cancel := terminalCleanupContext(sessionCtx)
 		err := ts.sender.SendTerminalStateChange(sendCtx, state)
 		cancel()
 		if err != nil {
@@ -451,7 +451,9 @@ func (h *Handler) pumpTerminalOutput(sessionCtx context.Context, ts *terminalSes
 				"session_id", ts.id, "error", err)
 		}
 
-		h.closeTerminal(context.Background(), ts.id, "")
+		cleanupCtx, cancelCleanup := terminalCleanupContext(sessionCtx)
+		h.closeTerminal(cleanupCtx, ts.id, "")
+		cancelCleanup()
 	}()
 
 	buf := make([]byte, terminalReadChunkBytes)
@@ -469,7 +471,7 @@ func (h *Handler) pumpTerminalOutput(sessionCtx context.Context, ts *terminalSes
 				SessionId: &pb.SessionId{Value: ts.id},
 				Data:      append([]byte(nil), buf[:n]...),
 			}
-			if sendErr := ts.sender.SendTerminalOutput(context.Background(), out); sendErr != nil {
+			if sendErr := ts.sender.SendTerminalOutput(sessionCtx, out); sendErr != nil {
 				h.logger.Warn("failed to send terminal output; tearing down session",
 					"session_id", ts.id, "error", sendErr)
 
@@ -591,7 +593,7 @@ func (h *Handler) anySessionForUserExcept(ttyUser, exceptSessionID string) bool 
 }
 
 func (h *Handler) deactivateShell(ctx context.Context, ttyUser string) {
-	if err := termUserMgr.Modify(ctx, ttyUser, sysuser.ModifyOptions{Shell: terminalDeactivatedShell}); err != nil {
+	if err := sysuserModify(ctx, ttyUser, sysuser.ModifyOptions{Shell: terminalDeactivatedShell}); err != nil {
 		h.logger.Warn("failed to revert tty user shell",
 			"tty_user", ttyUser, "error", err)
 	}
@@ -654,6 +656,8 @@ func (h *Handler) sweepIdleTerminals() {
 
 	for _, id := range idle {
 		h.logger.Info("closing idle terminal session", "session_id", id, "timeout", timeout)
-		h.closeTerminal(context.Background(), id, "idle timeout")
+		cleanupCtx, cancelCleanup := terminalCleanupContext(context.Background())
+		h.closeTerminal(cleanupCtx, id, "idle timeout")
+		cancelCleanup()
 	}
 }
