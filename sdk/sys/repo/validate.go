@@ -14,7 +14,6 @@ var (
 	validAptDistribution = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]*$`)
 	validAptComponent    = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]*$`)
 	validAptArch         = regexp.MustCompile(`^[a-z0-9][a-z0-9,_-]*$`)
-	validPacmanSigLevel  = regexp.MustCompile(`^[a-zA-Z ]+$`)
 )
 
 const maxNameLen = 128
@@ -164,12 +163,8 @@ func validatePacman(c *PacmanConfig) error {
 	if err := rejectControl("pacman.sig_level", c.SigLevel); err != nil {
 		return err
 	}
-	if c.SigLevel != "" && !validPacmanSigLevel.MatchString(c.SigLevel) {
-		return badShape("pacman.sig_level")
-	}
-
-	if disablesPacmanSig(c.SigLevel) {
-		return fmt.Errorf("%w: field %q disables signature verification (Never)", ErrInvalidConfig, "pacman.sig_level")
+	if err := validatePacmanSigLevel(c.SigLevel); err != nil {
+		return err
 	}
 	if pkg.ValidateRepoBaseURL(c.Server) != nil {
 		return badShape("pacman.server")
@@ -186,14 +181,41 @@ func validatePacmanName(name string) error {
 	return nil
 }
 
-func disablesPacmanSig(sigLevel string) bool {
-	for _, tok := range strings.Fields(sigLevel) {
-		switch strings.ToLower(tok) {
-		case "never", "packagenever", "databasenever":
-			return true
-		}
+func validatePacmanSigLevel(sigLevel string) error {
+	if sigLevel == "" {
+		return nil
 	}
-	return false
+	seen := false
+tokens:
+	for token := range strings.SplitSeq(sigLevel, " ") {
+		if token == "" {
+			continue
+		}
+		seen = true
+		switch token {
+		case "Never", "PackageNever", "DatabaseNever":
+			return fmt.Errorf("%w: field %q disables signature verification (Never)", ErrInvalidConfig, "pacman.sig_level")
+		case "Optional", "Required", "TrustedOnly", "TrustAll":
+			continue
+		}
+		for _, prefix := range []string{"Package", "Database"} {
+			suffix, ok := strings.CutPrefix(token, prefix)
+			if !ok {
+				continue
+			}
+			switch suffix {
+			case "Optional", "Required", "TrustedOnly", "TrustAll":
+				continue tokens
+			default:
+				return badShape("pacman.sig_level")
+			}
+		}
+		return badShape("pacman.sig_level")
+	}
+	if !seen {
+		return badShape("pacman.sig_level")
+	}
+	return nil
 }
 
 func validateZypper(c *ZypperConfig) error {

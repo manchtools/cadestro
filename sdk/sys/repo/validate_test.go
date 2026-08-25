@@ -143,6 +143,63 @@ func TestValidate_Pacman(t *testing.T) {
 	}
 }
 
+func TestValidate_PacmanSigLevel(t *testing.T) {
+	m, _, _ := newTestManager(t, pkg.Pacman)
+	tests := []struct {
+		name         string
+		sigLevel     string
+		wantErr      bool
+		wantDisabled bool
+	}{
+		{name: "empty"},
+		{name: "optional", sigLevel: "Optional"},
+		{name: "required", sigLevel: "Required"},
+		{name: "trusted only", sigLevel: "TrustedOnly"},
+		{name: "trust all", sigLevel: "TrustAll"},
+		{name: "package optional", sigLevel: "PackageOptional"},
+		{name: "package required", sigLevel: "PackageRequired"},
+		{name: "package trusted only", sigLevel: "PackageTrustedOnly"},
+		{name: "package trust all", sigLevel: "PackageTrustAll"},
+		{name: "database optional", sigLevel: "DatabaseOptional"},
+		{name: "database required", sigLevel: "DatabaseRequired"},
+		{name: "database trusted only", sigLevel: "DatabaseTrustedOnly"},
+		{name: "database trust all", sigLevel: "DatabaseTrustAll"},
+		{name: "left to right combinations", sigLevel: "Required DatabaseOptional PackageTrustedOnly"},
+		{name: "trust combinations", sigLevel: "Optional TrustAll"},
+		{name: "wrong case", sigLevel: "optional", wantErr: true},
+		{name: "wrong prefixed case", sigLevel: "packageRequired", wantErr: true},
+		{name: "unknown token", sigLevel: "Signed", wantErr: true},
+		{name: "punctuation", sigLevel: "Optional,", wantErr: true},
+		{name: "leading spaces", sigLevel: "  Optional TrustAll"},
+		{name: "multiple spaces", sigLevel: "Optional  TrustAll"},
+		{name: "trailing spaces", sigLevel: "Optional TrustAll  "},
+		{name: "all spaces", sigLevel: "   ", wantErr: true},
+		{name: "double prefix", sigLevel: "PackagePackageRequired", wantErr: true},
+		{name: "cross prefix", sigLevel: "PackageDatabaseRequired", wantErr: true},
+		{name: "reverse cross prefix", sigLevel: "DatabasePackageOptional", wantErr: true},
+		{name: "never", sigLevel: "Never", wantErr: true, wantDisabled: true},
+		{name: "package never", sigLevel: "PackageNever", wantErr: true, wantDisabled: true},
+		{name: "database never", sigLevel: "DatabaseNever", wantErr: true, wantDisabled: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := m.Validate(Repository{Name: "r", Pacman: &PacmanConfig{Server: "https://h/r", SigLevel: tt.sigLevel}})
+			if !tt.wantErr {
+				if err != nil {
+					t.Fatalf("Validate(SigLevel=%q) = %v, want nil", tt.sigLevel, err)
+				}
+				return
+			}
+			if !errors.Is(err, ErrInvalidConfig) {
+				t.Fatalf("Validate(SigLevel=%q) = %v, want ErrInvalidConfig", tt.sigLevel, err)
+			}
+			if tt.wantDisabled && !strings.Contains(err.Error(), "disables signature verification") {
+				t.Fatalf("Validate(SigLevel=%q) = %v, want signature-disabled error", tt.sigLevel, err)
+			}
+		})
+	}
+}
+
 func TestValidate_Zypper(t *testing.T) {
 	m, _, _ := newTestManager(t, pkg.Zypper)
 	reject := map[string]*ZypperConfig{
