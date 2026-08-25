@@ -4,8 +4,6 @@
 outcomes.** One server binary, embedded SQLite, agents that connect outbound
 over mTLS, and a transactional audit log that cannot be written around.
 
-<!-- TERMINAL RECORDING GOES HERE — enrol a device and dispatch an action, ~30s. -->
-
 ---
 
 ## What it does

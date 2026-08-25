@@ -2,7 +2,7 @@
 // resolver and evaluator for cadestro.v1.MaintenanceWindow. The package is
 // shared so server (handler validation, union computation across the
 // device's groups) and agent (per-tick gate in the scheduler) agree
-// bit-for-bit on what counts as an allowed dispatch time.
+// bit-for-bit on what counts as an allowed manifest execution time.
 //
 // Window semantics:
 //

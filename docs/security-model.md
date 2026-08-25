@@ -162,9 +162,8 @@ rejection returns one indistinguishable error.
 Its authority is a fixed, minimal list: create and read identity providers,
 create and read roles, list permissions, read users, and assign a role to a
 user. That is precisely enough to configure the first identity provider and
-grant the first admin — and nothing else. It cannot dispatch an action, read a
-secret, or touch a device; policy work reaches devices through their assigned
-manifests.
+grant the first admin — and nothing else. It cannot read a secret or operate on
+a device; policy work reaches devices through their assigned manifests.
 <!-- docref: end -->
 
 <!-- docref: begin src=server/internal/auth/context.go#UserContext.CanOwnResources:411da86b -->

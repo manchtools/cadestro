@@ -29,15 +29,15 @@ authenticated device sync returns the current assignment snapshot.
 ## 3. Pull synchronization
 
 The agent maintains one outbound bidirectional mTLS stream. Synchronization
-returns the device's current assigned manifests and any durable one-shot work
-already created by an explicit dispatch. The agent records received work in its
-local store before scheduling it, deduplicates by delivery id and manifest
-bytes, and queues results for the next connection when offline.
+returns the device's current assigned manifests. The agent records received work
+in its local store before scheduling it, reconciling the assigned snapshot by
+policy revision and manifest identity. Results remain queued for the next
+connection when offline.
 
 Assigned manifests remain available for recurring local execution without a
-server connection. A one-shot manifest executes once and becomes terminal.
-Live operations such as reboot, inventory, logs, queries, and terminal use
-their typed stream messages and do not pass through manifest scheduling.
+server connection. Live operations such as reboot, inventory, logs, queries,
+and terminal use their typed stream messages and do not pass through manifest
+scheduling.
 
 ## 4. Maintenance windows
 
@@ -45,9 +45,6 @@ Maintenance windows are evaluated using the device's local wall clock. The
 server resolves the union of windows that reach a device and the agent stores
 that resolved value with its work. An empty window means always allowed; an
 invalid persisted window fails closed until the next successful sync.
-
-One-shot work is exempt from the window because an explicit operator request is
-immediate. Authorization and audit checks still apply.
 
 ## 5. Offline autonomy
 
@@ -72,7 +69,7 @@ check remains `UNKNOWN`.
 
 ## 7. Results
 
-Each occurrence reports its action id, delivery id, occurrence id, status, and
+Each occurrence reports its action id, run id, occurrence id, status, and
 error details. The manifest result summarizes the run. Results are keyed by
 those durable identifiers, so reconnects and retries update the same execution
 instead of creating duplicates.

@@ -41,26 +41,7 @@ function getDB(): Promise<IDBPDatabase<OfflineDB>> {
 
 export type DraftType =
 	| 'create-token'
-	| 'create-definition'
-	| 'create-user'
-	| 'device-label'
-	| 'dispatch-action';
-
-export interface DraftPayloadMap {}
-
-type BuiltinDraftPayloadMap = {
-	'create-token': unknown;
-	'create-definition': unknown;
-	'create-user': unknown;
-	'device-label': unknown;
-	'dispatch-action': unknown;
-};
-
-type DraftPayload<T extends DraftType> = T extends keyof DraftPayloadMap
-	? DraftPayloadMap[T]
-	: T extends keyof BuiltinDraftPayloadMap
-		? BuiltinDraftPayloadMap[T]
-		: unknown;
+	| 'create-definition';
 
 export class OfflineStore {
 	private drafts: Map<string, unknown> = new Map();
@@ -104,9 +85,9 @@ export class OfflineStore {
 		return this.loaded;
 	}
 
-	getDraft<T extends DraftType>(type: T, id: string = 'default'): DraftPayload<T> | undefined {
+	getDraft(type: DraftType, id: string = 'default'): unknown | undefined {
 		const key = `${type}:${id}`;
-		return this.drafts.get(key) as DraftPayload<T> | undefined;
+		return this.drafts.get(key);
 	}
 
 	hasDraft(type: DraftType, id: string = 'default'): boolean {
@@ -114,9 +95,9 @@ export class OfflineStore {
 		return this.drafts.has(key);
 	}
 
-	async saveDraft<T extends DraftType>(
-		type: T,
-		data: DraftPayload<T>,
+	async saveDraft(
+		type: DraftType,
+		data: unknown,
 		id: string = 'default'
 	): Promise<void> {
 		const key = `${type}:${id}`;
@@ -170,12 +151,12 @@ export class OfflineStore {
 		this.notify();
 	}
 
-	getDraftsOfType<T extends DraftType>(type: T): Map<string, DraftPayload<T>> {
-		const result = new Map<string, DraftPayload<T>>();
+	getDraftsOfType(type: DraftType): Map<string, unknown> {
+		const result = new Map<string, unknown>();
 		for (const [key, value] of this.drafts.entries()) {
 			if (key.startsWith(`${type}:`)) {
 				const id = key.slice(type.length + 1);
-				result.set(id, value as DraftPayload<T>);
+				result.set(id, value);
 			}
 		}
 		return result;

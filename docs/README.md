@@ -7,9 +7,8 @@ that proves it, so a change to the code fails the page that describes it.
 ## Start here
 
 **[The policy model](policy-model.md)** — read this first. Desired state,
-manifests, durable delivery, maintenance windows, one-shot dispatch, offline
-autonomy, and why compliance never remediates. Everything else is an application
-of it.
+manifests, recurring delivery, maintenance windows, offline autonomy, and why
+compliance never remediates. Everything else is an application of it.
 
 ## Running it
 
