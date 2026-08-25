@@ -141,7 +141,7 @@ surface exists only during the window it is needed.
 
 ## 4. The key and the CSR
 
-<!-- docref: begin src=sdk/crypto/csr.go#GenerateCSR:c49e8cf1 -->
+<!-- docref: begin src=sdk/crypto/csr.go#GenerateCSR:567f4d50 -->
 The agent generates an **Ed25519** key pair locally and builds a certificate
 signing request from it. The private key never leaves the machine — it is not
 sent during enrollment and not sent during renewal.
