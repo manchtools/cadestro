@@ -188,11 +188,11 @@ describe('device-groups list page', () => {
 
 	it('renders each group as a linked row in the row grammar — never a table', async () => {
 		render(DeviceGroupsPage);
-		await vi.waitFor(() => expect(rowKeys()).toEqual([STATIC_GROUP.id]));
+		await vi.waitFor(() => expect(rowKeys()).toEqual([STATIC_GROUP.id?.value ?? '']));
 
 		expect(document.querySelector('[data-testid="row-list"]')).not.toBeNull();
 		expect(document.querySelectorAll('table').length).toBe(0);
-		expect(rowLinks()).toEqual([`/device-groups/${STATIC_GROUP.id}`]);
+		expect(rowLinks()).toEqual([`/device-groups/${STATIC_GROUP.id?.value ?? ''}`]);
 	});
 
 	it('round-trips a deep-linked sort / direction / page / page-size / type filter', async () => {
@@ -315,13 +315,13 @@ describe('user-groups list page', () => {
 
 	it('renders each group as a linked row in the row grammar — never a table', async () => {
 		render(UserGroupsPage);
-		await vi.waitFor(() => expect(rowKeys()).toEqual([SCIM_GROUP.id, LOCAL_GROUP.id]));
+		await vi.waitFor(() => expect(rowKeys()).toEqual([SCIM_GROUP.id?.value ?? '', LOCAL_GROUP.id?.value ?? '']));
 
 		expect(document.querySelector('[data-testid="row-list"]')).not.toBeNull();
 		expect(document.querySelectorAll('table').length).toBe(0);
 		expect(rowLinks()).toEqual([
-			`/user-groups/${SCIM_GROUP.id}`,
-			`/user-groups/${LOCAL_GROUP.id}`
+			`/user-groups/${SCIM_GROUP.id?.value ?? ''}`,
+			`/user-groups/${LOCAL_GROUP.id?.value ?? ''}`
 		]);
 	});
 
@@ -338,7 +338,7 @@ describe('user-groups list page', () => {
 
 	it('disables the delete action for a SCIM-managed group and keeps it enabled otherwise', async () => {
 		render(UserGroupsPage);
-		await vi.waitFor(() => expect(rowKeys()).toEqual([SCIM_GROUP.id, LOCAL_GROUP.id]));
+		await vi.waitFor(() => expect(rowKeys()).toEqual([SCIM_GROUP.id?.value ?? '', LOCAL_GROUP.id?.value ?? '']));
 
 		const triggers = document.querySelectorAll<HTMLButtonElement>('button[aria-label="Actions"]');
 		expect(triggers.length).toBe(2);
