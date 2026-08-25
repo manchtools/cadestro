@@ -36,6 +36,10 @@ message ManifestId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }
 
+message QueryId {
+  string value = 1 [(buf.validate.field).string.ulid = true];
+}
+
 // Execution status for any action
 enum ExecutionStatus {
   EXECUTION_STATUS_UNSPECIFIED = 0;

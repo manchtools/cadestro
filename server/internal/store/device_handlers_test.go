@@ -180,10 +180,10 @@ func TestDeviceHandlers_ValidateBeforeAuthentication(t *testing.T) {
 		connect.NewRequest(&cadestrov1.GetDeviceInventoryRequest{DeviceId: "bad"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.GetOSQueryResult)(context.Background(),
-		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: "bad"}))
+		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: &cadestrov1.QueryId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.GetDeviceLogResult)(context.Background(),
-		connect.NewRequest(&cadestrov1.GetDeviceLogResultRequest{QueryId: "bad"}))
+		connect.NewRequest(&cadestrov1.GetDeviceLogResultRequest{QueryId: &cadestrov1.QueryId{Value: "bad"}}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	_, err = validated(f.handlers.GetDeviceCompliance)(context.Background(),
 		connect.NewRequest(&cadestrov1.GetDeviceComplianceRequest{DeviceId: "bad"}))
@@ -240,10 +240,10 @@ func TestDeviceHandlers_ValidateBeforeAuthentication(t *testing.T) {
 		connect.NewRequest(&cadestrov1.GetDeviceInventoryRequest{DeviceId: f.directID}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.GetOSQueryResult)(context.Background(),
-		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: newID()}))
+		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: &cadestrov1.QueryId{Value: newID()}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.GetDeviceLogResult)(context.Background(),
-		connect.NewRequest(&cadestrov1.GetDeviceLogResultRequest{QueryId: newID()}))
+		connect.NewRequest(&cadestrov1.GetDeviceLogResultRequest{QueryId: &cadestrov1.QueryId{Value: newID()}}))
 	assert.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 	_, err = validated(f.handlers.GetDeviceCompliance)(context.Background(),
 		connect.NewRequest(&cadestrov1.GetDeviceComplianceRequest{DeviceId: f.directID}))
@@ -442,7 +442,7 @@ func TestDeviceHandlers_GetOSQueryResultReadsDirectState(t *testing.T) {
 	})
 
 	completed, err := f.handlers.GetOSQueryResult(ctx,
-		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: completedID}))
+		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: &cadestrov1.QueryId{Value: completedID}}))
 	require.NoError(t, err)
 	assert.True(t, completed.Msg.Completed)
 	assert.True(t, completed.Msg.Success)
@@ -450,12 +450,12 @@ func TestDeviceHandlers_GetOSQueryResultReadsDirectState(t *testing.T) {
 	assert.Equal(t, "bash", completed.Msg.Rows[0].Data["package"])
 
 	pending, err := f.handlers.GetOSQueryResult(ctx,
-		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: pendingID}))
+		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: &cadestrov1.QueryId{Value: pendingID}}))
 	require.NoError(t, err)
 	assert.False(t, pending.Msg.Completed)
 
 	stale, err := f.handlers.GetOSQueryResult(ctx,
-		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: staleID}))
+		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: &cadestrov1.QueryId{Value: staleID}}))
 	require.NoError(t, err)
 	assert.True(t, stale.Msg.Completed)
 	assert.False(t, stale.Msg.Success)
@@ -466,10 +466,10 @@ func TestDeviceHandlers_GetOSQueryResultReadsDirectState(t *testing.T) {
 	assert.False(t, storedCompleted, "a read must not smuggle in an unaudited expiry mutation")
 
 	_, err = f.handlers.GetOSQueryResult(ctx,
-		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: outsideID}))
+		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: &cadestrov1.QueryId{Value: outsideID}}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), "scope must not disclose the result")
 	_, err = f.handlers.GetOSQueryResult(ctx,
-		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: newID()}))
+		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: &cadestrov1.QueryId{Value: newID()}}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 	assertSensitiveDeviceRead(t, f, cadestrov1connect.ControlServiceGetOSQueryResultProcedure,
 		"osquery_result", staleID)
@@ -485,7 +485,7 @@ func TestDeviceHandlers_GetOSQueryResultRejectsInvalidStoredShape(t *testing.T) 
 	require.NoError(t, err)
 
 	_, err = f.handlers.GetOSQueryResult(f.actor("GetOSQueryResult"),
-		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: queryID}))
+		connect.NewRequest(&cadestrov1.GetOSQueryResultRequest{QueryId: &cadestrov1.QueryId{Value: queryID}}))
 	assert.Equal(t, connect.CodeInternal, connect.CodeOf(err), "corrupt rows must not look like an empty result")
 }
 
@@ -518,14 +518,14 @@ func TestDeviceHandlers_GetDeviceLogResultReadsDirectState(t *testing.T) {
 	})
 
 	completed, err := f.handlers.GetDeviceLogResult(ctx,
-		connect.NewRequest(&cadestrov1.GetDeviceLogResultRequest{QueryId: completedID}))
+		connect.NewRequest(&cadestrov1.GetDeviceLogResultRequest{QueryId: &cadestrov1.QueryId{Value: completedID}}))
 	require.NoError(t, err)
 	assert.True(t, completed.Msg.Completed)
 	assert.True(t, completed.Msg.Success)
 	assert.Equal(t, "service started\n", completed.Msg.Logs)
 
 	stale, err := f.handlers.GetDeviceLogResult(ctx,
-		connect.NewRequest(&cadestrov1.GetDeviceLogResultRequest{QueryId: staleID}))
+		connect.NewRequest(&cadestrov1.GetDeviceLogResultRequest{QueryId: &cadestrov1.QueryId{Value: staleID}}))
 	require.NoError(t, err)
 	assert.True(t, stale.Msg.Completed)
 	assert.False(t, stale.Msg.Success)
@@ -537,10 +537,10 @@ func TestDeviceHandlers_GetDeviceLogResultReadsDirectState(t *testing.T) {
 	assert.False(t, storedCompleted, "a read must not smuggle in an unaudited expiry mutation")
 
 	_, err = f.handlers.GetDeviceLogResult(ctx,
-		connect.NewRequest(&cadestrov1.GetDeviceLogResultRequest{QueryId: outsideID}))
+		connect.NewRequest(&cadestrov1.GetDeviceLogResultRequest{QueryId: &cadestrov1.QueryId{Value: outsideID}}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err), "scope must not disclose the result")
 	_, err = f.handlers.GetDeviceLogResult(ctx,
-		connect.NewRequest(&cadestrov1.GetDeviceLogResultRequest{QueryId: newID()}))
+		connect.NewRequest(&cadestrov1.GetDeviceLogResultRequest{QueryId: &cadestrov1.QueryId{Value: newID()}}))
 	assert.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 	assertSensitiveDeviceRead(t, f, cadestrov1connect.ControlServiceGetDeviceLogResultProcedure,
 		"device_log_result", staleID)
@@ -907,7 +907,7 @@ func TestDeviceHandlers_InstantQueriesUseDirectStreamAndSQLiteResults(t *testing
 	require.NoError(t, err)
 	require.Len(t, f.sender.messages, 1)
 	queryFrame := f.sender.messages[0]
-	assert.Equal(t, osquery.Msg.QueryId, queryFrame.Id)
+	assert.Equal(t, osquery.Msg.GetQueryId().GetValue(), queryFrame.Id)
 	require.NotNil(t, queryFrame.GetQuery())
 	assert.Equal(t, "packages", queryFrame.GetQuery().Table)
 	assert.Equal(t, []string{"name"}, queryFrame.GetQuery().Columns)
@@ -915,7 +915,7 @@ func TestDeviceHandlers_InstantQueriesUseDirectStreamAndSQLiteResults(t *testing
 	var osTable string
 	err = f.raw.QueryRow(context.Background(), `
 		SELECT table_name, completed, success FROM osquery_results WHERE query_id = $1`,
-		osquery.Msg.QueryId).Scan(&osTable, &osCompleted, &osSuccess)
+		osquery.Msg.GetQueryId().GetValue()).Scan(&osTable, &osCompleted, &osSuccess)
 	require.NoError(t, err)
 	assert.Equal(t, "packages", osTable)
 	assert.False(t, osCompleted)
@@ -927,12 +927,12 @@ func TestDeviceHandlers_InstantQueriesUseDirectStreamAndSQLiteResults(t *testing
 	require.NoError(t, err)
 	require.Len(t, f.sender.messages, 2)
 	logFrame := f.sender.messages[1]
-	assert.Equal(t, logs.Msg.QueryId, logFrame.Id)
+	assert.Equal(t, logs.Msg.GetQueryId().GetValue(), logFrame.Id)
 	require.NotNil(t, logFrame.GetLogQuery())
 	assert.Equal(t, "sshd.service", logFrame.GetLogQuery().Unit)
 	var logCompleted bool
 	require.NoError(t, f.raw.QueryRow(context.Background(), `
-		SELECT completed FROM log_query_results WHERE query_id = $1`, logs.Msg.QueryId).Scan(&logCompleted))
+		SELECT completed FROM log_query_results WHERE query_id = $1`, logs.Msg.GetQueryId().GetValue()).Scan(&logCompleted))
 	assert.False(t, logCompleted)
 
 	_, err = f.handlers.RefreshDeviceInventory(ctx,
@@ -941,7 +941,7 @@ func TestDeviceHandlers_InstantQueriesUseDirectStreamAndSQLiteResults(t *testing
 	require.Len(t, f.sender.messages, 3)
 	refreshFrame := f.sender.messages[2]
 	require.NotNil(t, refreshFrame.GetRequestInventory())
-	assert.Equal(t, refreshFrame.Id, refreshFrame.GetRequestInventory().QueryId)
+	assert.Equal(t, refreshFrame.Id, refreshFrame.GetRequestInventory().GetQueryId().GetValue())
 
 	for _, procedure := range []string{
 		cadestrov1connect.ControlServiceDispatchOSQueryProcedure,
@@ -971,7 +971,7 @@ func TestDeviceHandlers_InstantQuerySendFailureIsTerminalAndGeneric(t *testing.T
 	}))
 	assert.Equal(t, connect.CodeUnavailable, connect.CodeOf(err))
 	require.Len(t, f.sender.messages, 1)
-	osID := f.sender.messages[0].GetQuery().QueryId
+	osID := f.sender.messages[0].GetQuery().GetQueryId().GetValue()
 	var completed, success bool
 	var storedError, tableName string
 	err = f.raw.QueryRow(context.Background(), `
@@ -988,7 +988,7 @@ func TestDeviceHandlers_InstantQuerySendFailureIsTerminalAndGeneric(t *testing.T
 	}))
 	assert.Equal(t, connect.CodeUnavailable, connect.CodeOf(err))
 	require.Len(t, f.sender.messages, 2)
-	logID := f.sender.messages[1].GetLogQuery().QueryId
+	logID := f.sender.messages[1].GetLogQuery().GetQueryId().GetValue()
 	err = f.raw.QueryRow(context.Background(), `
 		SELECT completed, success, error FROM log_query_results WHERE query_id = $1`, logID).
 		Scan(&completed, &success, &storedError)
@@ -1023,31 +1023,31 @@ func TestDeviceHandlers_AgentQueryResultsAndInventoryCommitDirectly(t *testing.T
 
 	// A result from another authenticated device cannot claim this query.
 	require.NoError(t, f.handlers.CompleteOSQueryResult(context.Background(), f.outsideID,
-		&cadestrov1.OSQueryResult{QueryId: osquery.Msg.QueryId, Success: true}))
+		&cadestrov1.OSQueryResult{QueryId: osquery.Msg.GetQueryId(), Success: true}))
 	var completed bool
 	require.NoError(t, f.raw.QueryRow(context.Background(), `
-		SELECT completed FROM osquery_results WHERE query_id = $1`, osquery.Msg.QueryId).Scan(&completed))
+		SELECT completed FROM osquery_results WHERE query_id = $1`, osquery.Msg.GetQueryId().GetValue()).Scan(&completed))
 	assert.False(t, completed)
 
 	require.NoError(t, f.handlers.CompleteOSQueryResult(context.Background(), f.directID,
 		&cadestrov1.OSQueryResult{
-			QueryId: osquery.Msg.QueryId, Success: true,
+			QueryId: osquery.Msg.GetQueryId(), Success: true,
 			Rows: []*cadestrov1.OSQueryRow{{Data: map[string]string{"name": "bash"}}},
 		}))
 	var rowsJSON []byte
 	var success bool
 	require.NoError(t, f.raw.QueryRow(context.Background(), `
-		SELECT completed, success, rows FROM osquery_results WHERE query_id = $1`, osquery.Msg.QueryId).
+		SELECT completed, success, rows FROM osquery_results WHERE query_id = $1`, osquery.Msg.GetQueryId().GetValue()).
 		Scan(&completed, &success, &rowsJSON))
 	assert.True(t, completed)
 	assert.True(t, success)
 	assert.JSONEq(t, `[{"name":"bash"}]`, string(rowsJSON))
 
 	require.NoError(t, f.handlers.CompleteLogQueryResult(context.Background(), f.directID,
-		&cadestrov1.LogQueryResult{QueryId: logs.Msg.QueryId, Success: true, Logs: "service started\n"}))
+		&cadestrov1.LogQueryResult{QueryId: logs.Msg.GetQueryId(), Success: true, Logs: "service started\n"}))
 	var storedLogs string
 	require.NoError(t, f.raw.QueryRow(context.Background(), `
-		SELECT completed, success, logs FROM log_query_results WHERE query_id = $1`, logs.Msg.QueryId).
+		SELECT completed, success, logs FROM log_query_results WHERE query_id = $1`, logs.Msg.GetQueryId().GetValue()).
 		Scan(&completed, &success, &storedLogs))
 	assert.True(t, completed)
 	assert.True(t, success)

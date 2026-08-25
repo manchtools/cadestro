@@ -1612,16 +1612,16 @@ message DispatchOSQueryRequest {
 }
 
 message DispatchOSQueryResponse {
-  string query_id = 1;
+  QueryId query_id = 1;
 }
 
 // Poll for the result of a dispatched OSQuery
 message GetOSQueryResultRequest {
-  string query_id = 1 [(buf.validate.field).string.ulid = true];
+  QueryId query_id = 1 [(buf.validate.field).required = true];
 }
 
 message GetOSQueryResultResponse {
-  string query_id = 1;
+  QueryId query_id = 1;
   bool completed = 2;
   bool success = 3;
   string error = 4;
@@ -1687,15 +1687,15 @@ message QueryDeviceLogsRequest {
 }
 
 message QueryDeviceLogsResponse {
-  string query_id = 1;
+  QueryId query_id = 1;
 }
 
 message GetDeviceLogResultRequest {
-  string query_id = 1 [(buf.validate.field).string.ulid = true];
+  QueryId query_id = 1 [(buf.validate.field).required = true];
 }
 
 message GetDeviceLogResultResponse {
-  string query_id = 1;
+  QueryId query_id = 1;
   bool completed = 2;
   bool success = 3;
   string error = 4;

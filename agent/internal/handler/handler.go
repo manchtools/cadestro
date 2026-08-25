@@ -233,18 +233,19 @@ func isBase64Char(b byte) bool {
 
 // OnQuery handles OS queries from the server.
 func (h *Handler) OnQuery(ctx context.Context, query *pb.OSQuery) (*pb.OSQueryResult, error) {
-	h.logger.Info("received query", "query_id", query.QueryId, "table", query.Table)
+	queryID := query.GetQueryId().GetValue()
+	h.logger.Info("received query", "query_id", queryID, "table", query.Table)
 
 	// Validate at the boundary before executing privileged work.
 	if err := streamValidator.Validate(query); err != nil {
-		h.logger.Warn("rejecting invalid query", "query_id", query.GetQueryId(), "error", err)
+		h.logger.Warn("rejecting invalid query", "query_id", queryID, "error", err)
 		return &pb.OSQueryResult{QueryId: query.GetQueryId(), Success: false, Error: err.Error()}, nil
 	}
 
 	// Check if osquery is available (lazy init — detects installs without restart)
 	oq := h.getOsquery()
 	if oq == nil {
-		h.logger.Warn("osquery not available", "query_id", query.QueryId)
+		h.logger.Warn("osquery not available", "query_id", queryID)
 		return &pb.OSQueryResult{
 			QueryId: query.QueryId,
 			Success: false,
@@ -254,7 +255,7 @@ func (h *Handler) OnQuery(ctx context.Context, query *pb.OSQuery) (*pb.OSQueryRe
 
 	result, err := queryOsquery(ctx, oq, query)
 	if err != nil {
-		h.logger.Error("query execution error", "query_id", query.QueryId, "error", err)
+		h.logger.Error("query execution error", "query_id", queryID, "error", err)
 		return &pb.OSQueryResult{
 			QueryId: query.QueryId,
 			Success: false,
@@ -262,7 +263,7 @@ func (h *Handler) OnQuery(ctx context.Context, query *pb.OSQuery) (*pb.OSQueryRe
 		}, nil
 	}
 
-	h.logger.Info("query completed", "query_id", query.QueryId, "success", result.Success, "row_count", len(result.Rows))
+	h.logger.Info("query completed", "query_id", queryID, "success", result.Success, "row_count", len(result.Rows))
 	return result, nil
 }
 
@@ -290,14 +291,14 @@ func (h *Handler) BuildHeartbeat() *pb.Heartbeat {
 	defer cancel()
 
 	// Get uptime
-	if result, _ := queryOsquery(ctx, oq, &pb.OSQuery{QueryId: "hb", Table: "uptime"}); result != nil && result.Success && len(result.Rows) > 0 {
+	if result, _ := queryOsquery(ctx, oq, &pb.OSQuery{QueryId: &pb.QueryId{Value: "hb"}, Table: "uptime"}); result != nil && result.Success && len(result.Rows) > 0 {
 		if sec, err := strconv.ParseInt(result.Rows[0].Data["total_seconds"], 10, 64); err == nil {
 			hb.Uptime = durationpb.New(time.Duration(sec) * time.Second)
 		}
 	}
 
 	// Get memory usage
-	if result, _ := queryOsquery(ctx, oq, &pb.OSQuery{QueryId: "hb", Table: "memory_info"}); result != nil && result.Success && len(result.Rows) > 0 {
+	if result, _ := queryOsquery(ctx, oq, &pb.OSQuery{QueryId: &pb.QueryId{Value: "hb"}, Table: "memory_info"}); result != nil && result.Success && len(result.Rows) > 0 {
 		data := result.Rows[0].Data
 		total, totalErr := strconv.ParseInt(data["memory_total"], 10, 64)
 		free, freeErr := strconv.ParseInt(data["memory_free"], 10, 64)
@@ -338,11 +339,12 @@ func (h *Handler) OnRevokeLuksDeviceKey(ctx context.Context, req *pb.RevokeLuksD
 // OnLogQuery handles a remote journalctl log query from the server.
 // Implements sdk.LogQueryHandler.
 func (h *Handler) OnLogQuery(ctx context.Context, query *pb.LogQuery) (*pb.LogQueryResult, error) {
-	h.logger.Info("received log query", "query_id", query.QueryId, "unit", query.Unit)
+	queryID := query.GetQueryId().GetValue()
+	h.logger.Info("received log query", "query_id", queryID, "unit", query.Unit)
 
 	// Validate at the boundary before executing privileged work.
 	if err := streamValidator.Validate(query); err != nil {
-		h.logger.Warn("rejecting invalid log query", "query_id", query.GetQueryId(), "error", err)
+		h.logger.Warn("rejecting invalid log query", "query_id", queryID, "error", err)
 		return &pb.LogQueryResult{QueryId: query.GetQueryId(), Success: false, Error: err.Error()}, nil
 	}
 
@@ -355,7 +357,7 @@ func (h *Handler) OnLogQuery(ctx context.Context, query *pb.LogQuery) (*pb.LogQu
 	// unchanged.
 	src, err := syslog.New(syslog.Journald, handlerRunner)
 	if err != nil {
-		h.logger.Warn("log query setup failed", "query_id", query.QueryId, "error", err)
+		h.logger.Warn("log query setup failed", "query_id", queryID, "error", err)
 		return &pb.LogQueryResult{QueryId: query.QueryId, Success: false, Error: err.Error()}, nil
 	}
 	lines, err := src.Query(ctx, syslog.Query{
@@ -371,7 +373,7 @@ func (h *Handler) OnLogQuery(ctx context.Context, query *pb.LogQuery) (*pb.LogQu
 		// Surfaces both the SDK's validation rejections (invalid priority,
 		// over-cap/pathological grep) and journalctl's own failure (the
 		// CommandError carries stderr).
-		h.logger.Warn("log query failed", "query_id", query.QueryId, "error", err)
+		h.logger.Warn("log query failed", "query_id", queryID, "error", err)
 		return &pb.LogQueryResult{QueryId: query.QueryId, Success: false, Error: err.Error()}, nil
 	}
 
@@ -381,7 +383,7 @@ func (h *Handler) OnLogQuery(ctx context.Context, query *pb.LogQuery) (*pb.LogQu
 		logs = logs[len(logs)-(1<<20):]
 	}
 
-	h.logger.Info("log query completed", "query_id", query.QueryId, "bytes", len(logs))
+	h.logger.Info("log query completed", "query_id", queryID, "bytes", len(logs))
 	return &pb.LogQueryResult{
 		QueryId: query.QueryId,
 		Success: true,

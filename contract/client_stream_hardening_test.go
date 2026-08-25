@@ -35,7 +35,7 @@ func TestDispatchRejectsBeforeWelcome(t *testing.T) {
 	msg := &cadestrov1.ServerMessage{
 		Id: NewULID(),
 		Payload: &cadestrov1.ServerMessage_Query{Query: &cadestrov1.OSQuery{
-			QueryId: validULID,
+			QueryId: &cadestrov1.QueryId{Value: validULID},
 			Table:   "processes",
 		}},
 	}

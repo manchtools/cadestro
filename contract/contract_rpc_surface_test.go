@@ -390,6 +390,17 @@ func TestContract_TargetShape(t *testing.T) {
 		{"ActionResult", "occurrence_id", protoreflect.MessageKind, "OccurrenceId", false, "per-action result ingestion cannot be idempotent"},
 		{"ManifestResult", "run_id", protoreflect.MessageKind, "RunId", false, "the manifest result cannot be matched to its run"},
 		{"ManifestResult", "manifest_id", protoreflect.MessageKind, "ManifestId", false, "the manifest result names no manifest"},
+		{"OSQuery", "query_id", protoreflect.MessageKind, "QueryId", false, "an OS query has no identity"},
+		{"OSQueryResult", "query_id", protoreflect.MessageKind, "QueryId", false, "an OS query result has no identity"},
+		{"RequestInventory", "query_id", protoreflect.MessageKind, "QueryId", false, "an inventory request has no identity"},
+		{"LogQuery", "query_id", protoreflect.MessageKind, "QueryId", false, "a log query has no identity"},
+		{"LogQueryResult", "query_id", protoreflect.MessageKind, "QueryId", false, "a log query result has no identity"},
+		{"DispatchOSQueryResponse", "query_id", protoreflect.MessageKind, "QueryId", false, "a dispatched OS query response has no identity"},
+		{"GetOSQueryResultRequest", "query_id", protoreflect.MessageKind, "QueryId", false, "an OS query result request has no identity"},
+		{"GetOSQueryResultResponse", "query_id", protoreflect.MessageKind, "QueryId", false, "an OS query result response has no identity"},
+		{"QueryDeviceLogsResponse", "query_id", protoreflect.MessageKind, "QueryId", false, "a device log query response has no identity"},
+		{"GetDeviceLogResultRequest", "query_id", protoreflect.MessageKind, "QueryId", false, "a device log result request has no identity"},
+		{"GetDeviceLogResultResponse", "query_id", protoreflect.MessageKind, "QueryId", false, "a device log result response has no identity"},
 		{"AgentMessage", "manifest_result", protoreflect.MessageKind, "ManifestResult", false, "there is no result for the complete manifest"},
 	} {
 		md, ok := msgs[protoreflect.Name(f.msg)]

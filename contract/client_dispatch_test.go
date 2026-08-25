@@ -96,7 +96,7 @@ func TestDispatchServerMessage_InventoryConcurrencyBounded(t *testing.T) {
 		msg := &cadestrov1.ServerMessage{
 			Id: "m",
 			Payload: &cadestrov1.ServerMessage_RequestInventory{
-				RequestInventory: &cadestrov1.RequestInventory{QueryId: "01HQ0000000000000000000000"},
+				RequestInventory: &cadestrov1.RequestInventory{QueryId: &cadestrov1.QueryId{Value: "01HQ0000000000000000000000"}},
 			},
 		}
 		if err := c.dispatchServerMessage(context.Background(), msg, h); err != nil {

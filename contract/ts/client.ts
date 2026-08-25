@@ -1188,13 +1188,13 @@ export class ApiClient {
 				deviceId, table, columns: columns ?? [], limit: limit ?? 0, rawSql: rawSql ?? ''
 			})
 		);
-		return response.queryId;
+		return response.queryId?.value ?? '';
 	}
 
 	async getOSQueryResult(queryId: string) {
 		const client = this.getClient();
 		return client.getOSQueryResult(
-			create(GetOSQueryResultRequestSchema, { queryId })
+			create(GetOSQueryResultRequestSchema, { queryId: { value: queryId } })
 		);
 	}
 
@@ -1215,13 +1215,13 @@ export class ApiClient {
 				kernel: options?.kernel ?? false
 			})
 		);
-		return response.queryId;
+		return response.queryId?.value ?? '';
 	}
 
 	async getDeviceLogResult(queryId: string) {
 		const client = this.getClient();
 		return client.getDeviceLogResult(
-			create(GetDeviceLogResultRequestSchema, { queryId })
+			create(GetDeviceLogResultRequestSchema, { queryId: { value: queryId } })
 		);
 	}
 

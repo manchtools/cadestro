@@ -311,7 +311,7 @@ message OSQuery {
     expression: "this.table != '' || this.raw_sql != ''"
   };
 
-  string query_id = 1 [(buf.validate.field).string.ulid = true];
+  QueryId query_id = 1 [(buf.validate.field).required = true];
   string table = 2 [
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 64,
@@ -357,7 +357,7 @@ enum OSQueryOp {
 }
 
 message OSQueryResult {
-  string query_id = 1 [(buf.validate.field).string.ulid = true];
+  QueryId query_id = 1 [(buf.validate.field).required = true];
   bool success = 2;
   string error = 3 [
     (buf.validate.field).string.max_len = 1024,
@@ -396,7 +396,7 @@ message InventoryTable {
 // Agent-initiated periodic inventory (on connect + every 24h) does NOT travel
 // this message — it is the agent's own decision, not a command.
 message RequestInventory {
-  string query_id = 1 [(buf.validate.field).string.ulid = true];
+  QueryId query_id = 1 [(buf.validate.field).required = true];
 }
 
 // ============================================================================
@@ -639,7 +639,7 @@ enum LogSource {
 
 // Server -> Agent: request system log output
 message LogQuery {
-  string query_id = 1 [(buf.validate.field).string.ulid = true];
+  QueryId query_id = 1 [(buf.validate.field).required = true];
   int32 lines = 2 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).int32.lte = 10000,
@@ -673,7 +673,7 @@ message LogQuery {
 
 // Agent -> Server: journalctl output result
 message LogQueryResult {
-  string query_id = 1 [(buf.validate.field).string.ulid = true];
+  QueryId query_id = 1 [(buf.validate.field).required = true];
   bool success = 2;
   string error = 3 [
     (buf.validate.field).string.max_len = 1024,

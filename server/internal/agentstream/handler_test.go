@@ -106,8 +106,8 @@ func TestHandleAgentMessageRoutesRetainedFrames(t *testing.T) {
 		{Id: "sync-operation", Payload: &cadestrov1.AgentMessage_SyncDeviceResult{SyncDeviceResult: &cadestrov1.SyncDeviceResult{Success: true}}},
 		{Id: "reboot-operation", Payload: &cadestrov1.AgentMessage_RebootDeviceResult{RebootDeviceResult: &cadestrov1.RebootDeviceResult{Success: true}}},
 		{Payload: &cadestrov1.AgentMessage_ActionResult{ActionResult: &cadestrov1.ActionResult{OccurrenceId: &cadestrov1.OccurrenceId{Value: "occurrence"}}}},
-		{Payload: &cadestrov1.AgentMessage_QueryResult{QueryResult: &cadestrov1.OSQueryResult{QueryId: "query"}}},
-		{Payload: &cadestrov1.AgentMessage_LogQueryResult{LogQueryResult: &cadestrov1.LogQueryResult{QueryId: "log"}}},
+		{Payload: &cadestrov1.AgentMessage_QueryResult{QueryResult: &cadestrov1.OSQueryResult{QueryId: &cadestrov1.QueryId{Value: "query"}}}},
+		{Payload: &cadestrov1.AgentMessage_LogQueryResult{LogQueryResult: &cadestrov1.LogQueryResult{QueryId: &cadestrov1.QueryId{Value: "log"}}}},
 		{Payload: &cadestrov1.AgentMessage_Inventory{Inventory: &cadestrov1.DeviceInventory{}}},
 		{Payload: &cadestrov1.AgentMessage_RevokeLuksDeviceKeyResult{RevokeLuksDeviceKeyResult: &cadestrov1.RevokeLuksDeviceKeyResult{ActionId: "action"}}},
 	}

@@ -74,15 +74,15 @@ const (
 func TestDispatch_RejectsInvalidInboundCommands(t *testing.T) {
 	mkOSQuery := func(id string) *cadestrov1.ServerMessage {
 		return &cadestrov1.ServerMessage{Id: "m", Payload: &cadestrov1.ServerMessage_Query{
-			Query: &cadestrov1.OSQuery{QueryId: id, Table: "processes"}}}
+			Query: &cadestrov1.OSQuery{QueryId: &cadestrov1.QueryId{Value: id}, Table: "processes"}}}
 	}
 	mkInventory := func(id string) *cadestrov1.ServerMessage {
 		return &cadestrov1.ServerMessage{Id: "m", Payload: &cadestrov1.ServerMessage_RequestInventory{
-			RequestInventory: &cadestrov1.RequestInventory{QueryId: id}}}
+			RequestInventory: &cadestrov1.RequestInventory{QueryId: &cadestrov1.QueryId{Value: id}}}}
 	}
 	mkLogQuery := func(id string) *cadestrov1.ServerMessage {
 		return &cadestrov1.ServerMessage{Id: "m", Payload: &cadestrov1.ServerMessage_LogQuery{
-			LogQuery: &cadestrov1.LogQuery{QueryId: id}}}
+			LogQuery: &cadestrov1.LogQuery{QueryId: &cadestrov1.QueryId{Value: id}}}}
 	}
 	mkLuks := func(id string) *cadestrov1.ServerMessage {
 		return &cadestrov1.ServerMessage{Id: "m", Payload: &cadestrov1.ServerMessage_RevokeLuksDeviceKey{

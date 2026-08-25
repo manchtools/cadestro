@@ -1916,7 +1916,7 @@ func (x *Error) GetMessage() string {
 
 type OSQuery struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
-	QueryId string                 `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
+	QueryId *QueryId               `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
 	Table   string                 `protobuf:"bytes,2,opt,name=table,proto3" json:"table,omitempty"`
 	Columns []string               `protobuf:"bytes,3,rep,name=columns,proto3" json:"columns,omitempty"`
 	Where   []*OSQueryCondition    `protobuf:"bytes,4,rep,name=where,proto3" json:"where,omitempty"`
@@ -1957,11 +1957,11 @@ func (*OSQuery) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{16}
 }
 
-func (x *OSQuery) GetQueryId() string {
+func (x *OSQuery) GetQueryId() *QueryId {
 	if x != nil {
 		return x.QueryId
 	}
-	return ""
+	return nil
 }
 
 func (x *OSQuery) GetTable() string {
@@ -2061,7 +2061,7 @@ func (x *OSQueryCondition) GetValue() string {
 
 type OSQueryResult struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	QueryId       string                 `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
+	QueryId       *QueryId               `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
 	Success       bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
 	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
 	Rows          []*OSQueryRow          `protobuf:"bytes,4,rep,name=rows,proto3" json:"rows,omitempty"`
@@ -2099,11 +2099,11 @@ func (*OSQueryResult) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{18}
 }
 
-func (x *OSQueryResult) GetQueryId() string {
+func (x *OSQueryResult) GetQueryId() *QueryId {
 	if x != nil {
 		return x.QueryId
 	}
-	return ""
+	return nil
 }
 
 func (x *OSQueryResult) GetSuccess() bool {
@@ -2274,7 +2274,7 @@ func (x *InventoryTable) GetRows() []*OSQueryRow {
 // this message — it is the agent's own decision, not a command.
 type RequestInventory struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	QueryId       string                 `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
+	QueryId       *QueryId               `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2309,11 +2309,11 @@ func (*RequestInventory) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{22}
 }
 
-func (x *RequestInventory) GetQueryId() string {
+func (x *RequestInventory) GetQueryId() *QueryId {
 	if x != nil {
 		return x.QueryId
 	}
-	return ""
+	return nil
 }
 
 // Agent requests the current managed passphrase for a LUKS action.
@@ -3121,7 +3121,7 @@ func (x *DesiredPolicy) GetManifests() []*Manifest {
 // Server -> Agent: request system log output
 type LogQuery struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
-	QueryId  string                 `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
+	QueryId  *QueryId               `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
 	Lines    int32                  `protobuf:"varint,2,opt,name=lines,proto3" json:"lines,omitempty"`
 	Unit     string                 `protobuf:"bytes,3,opt,name=unit,proto3" json:"unit,omitempty"`
 	Since    string                 `protobuf:"bytes,4,opt,name=since,proto3" json:"since,omitempty"`
@@ -3166,11 +3166,11 @@ func (*LogQuery) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{37}
 }
 
-func (x *LogQuery) GetQueryId() string {
+func (x *LogQuery) GetQueryId() *QueryId {
 	if x != nil {
 		return x.QueryId
 	}
-	return ""
+	return nil
 }
 
 func (x *LogQuery) GetLines() int32 {
@@ -3232,7 +3232,7 @@ func (x *LogQuery) GetSource() LogSource {
 // Agent -> Server: journalctl output result
 type LogQueryResult struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
-	QueryId string                 `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
+	QueryId *QueryId               `protobuf:"bytes,1,opt,name=query_id,json=queryId,proto3" json:"query_id,omitempty"`
 	Success bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
 	Error   string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
 	// Raw journalctl output (plain text)
@@ -3271,11 +3271,11 @@ func (*LogQueryResult) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{38}
 }
 
-func (x *LogQueryResult) GetQueryId() string {
+func (x *LogQueryResult) GetQueryId() *QueryId {
 	if x != nil {
 		return x.QueryId
 	}
-	return ""
+	return nil
 }
 
 func (x *LogQueryResult) GetSuccess() bool {
@@ -3799,9 +3799,9 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\x05Error\x12 \n" +
 	"\x04code\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x04code\x12'\n" +
 	"\amessage\x18\x02 \x01(\tB\r\xbaH\n" +
-	"\xc8\x01\x01r\x05\x10\x01\x18\x80\bR\amessage\"\xfa\x02\n" +
-	"\aOSQuery\x12#\n" +
-	"\bquery_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\aqueryId\x12\"\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\x80\bR\amessage\"\x8e\x03\n" +
+	"\aOSQuery\x127\n" +
+	"\bquery_id\x18\x01 \x01(\v2\x14.cadestro.v1.QueryIdB\x06\xbaH\x03\xc8\x01\x01R\aqueryId\x12\"\n" +
 	"\x05table\x18\x02 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x10\x01\x18@R\x05table\x12&\n" +
 	"\acolumns\x18\x03 \x03(\tB\f\xbaH\t\x92\x01\x06\"\x04r\x02\x18@R\acolumns\x123\n" +
 	"\x05where\x18\x04 \x03(\v2\x1d.cadestro.v1.OSQueryConditionR\x05where\x12#\n" +
@@ -3812,9 +3812,9 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\x10OSQueryCondition\x12$\n" +
 	"\x06column\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x06column\x12.\n" +
 	"\x02op\x18\x02 \x01(\x0e2\x16.cadestro.v1.OSQueryOpB\x06\xbaH\x03\xc8\x01\x01R\x02op\x12!\n" +
-	"\x05value\x18\x03 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x18\x80 R\x05value\"\x9e\x01\n" +
-	"\rOSQueryResult\x12#\n" +
-	"\bquery_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\aqueryId\x12\x18\n" +
+	"\x05value\x18\x03 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x18\x80 R\x05value\"\xb2\x01\n" +
+	"\rOSQueryResult\x127\n" +
+	"\bquery_id\x18\x01 \x01(\v2\x14.cadestro.v1.QueryIdB\x06\xbaH\x03\xc8\x01\x01R\aqueryId\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12!\n" +
 	"\x05error\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\x05error\x12+\n" +
 	"\x04rows\x18\x04 \x03(\v2\x17.cadestro.v1.OSQueryRowR\x04rows\"\x92\x01\n" +
@@ -3829,9 +3829,9 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\x0eInventoryTable\x12+\n" +
 	"\n" +
 	"table_name\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\ttableName\x12+\n" +
-	"\x04rows\x18\x02 \x03(\v2\x17.cadestro.v1.OSQueryRowR\x04rows\"7\n" +
-	"\x10RequestInventory\x12#\n" +
-	"\bquery_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\aqueryId\":\n" +
+	"\x04rows\x18\x02 \x03(\v2\x17.cadestro.v1.OSQueryRowR\x04rows\"K\n" +
+	"\x10RequestInventory\x127\n" +
+	"\bquery_id\x18\x01 \x01(\v2\x14.cadestro.v1.QueryIdB\x06\xbaH\x03\xc8\x01\x01R\aqueryId\":\n" +
 	"\x11GetLuksKeyRequest\x12%\n" +
 	"\taction_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\bactionId\"D\n" +
 	"\x12GetLuksKeyResponse\x12.\n" +
@@ -3884,9 +3884,9 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\x0edesired_policy\x18\x03 \x01(\v2\x1a.cadestro.v1.DesiredPolicyR\rdesiredPolicy\"j\n" +
 	"\rDesiredPolicy\x12$\n" +
 	"\brevision\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\brevision\x123\n" +
-	"\tmanifests\x18\x02 \x03(\v2\x15.cadestro.v1.ManifestR\tmanifests\"\xca\x02\n" +
-	"\bLogQuery\x12#\n" +
-	"\bquery_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\aqueryId\x12#\n" +
+	"\tmanifests\x18\x02 \x03(\v2\x15.cadestro.v1.ManifestR\tmanifests\"\xde\x02\n" +
+	"\bLogQuery\x127\n" +
+	"\bquery_id\x18\x01 \x01(\v2\x14.cadestro.v1.QueryIdB\x06\xbaH\x03\xc8\x01\x01R\aqueryId\x12#\n" +
 	"\x05lines\x18\x02 \x01(\x05B\r\xbaH\n" +
 	"\xd8\x01\x01\x1a\x05\x18\x90N(\x00R\x05lines\x12\x1f\n" +
 	"\x04unit\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x02R\x04unit\x12 \n" +
@@ -3898,9 +3898,9 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\xbaH\a\xd8\x01\x01r\x02\x18 R\bpriority\x12\x1f\n" +
 	"\x04grep\x18\a \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x02R\x04grep\x12\x16\n" +
 	"\x06kernel\x18\b \x01(\bR\x06kernel\x12.\n" +
-	"\x06source\x18\t \x01(\x0e2\x16.cadestro.v1.LogSourceR\x06source\"\x86\x01\n" +
-	"\x0eLogQueryResult\x12#\n" +
-	"\bquery_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\aqueryId\x12\x18\n" +
+	"\x06source\x18\t \x01(\x0e2\x16.cadestro.v1.LogSourceR\x06source\"\x9a\x01\n" +
+	"\x0eLogQueryResult\x127\n" +
+	"\bquery_id\x18\x01 \x01(\v2\x14.cadestro.v1.QueryIdB\x06\xbaH\x03\xc8\x01\x01R\aqueryId\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12!\n" +
 	"\x05error\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\bR\x05error\x12\x12\n" +
 	"\x04logs\x18\x04 \x01(\tR\x04logs\"\xa9\x01\n" +
@@ -4047,9 +4047,10 @@ var file_cadestro_v1_agent_proto_goTypes = []any{
 	(*RunId)(nil),                     // 63: cadestro.v1.RunId
 	(ExecutionStatus)(0),              // 64: cadestro.v1.ExecutionStatus
 	(*timestamppb.Timestamp)(nil),     // 65: google.protobuf.Timestamp
-	(RotationReason)(0),               // 66: cadestro.v1.RotationReason
-	(LpsPasswordComplexity)(0),        // 67: cadestro.v1.LpsPasswordComplexity
-	(*MaintenanceWindow)(nil),         // 68: cadestro.v1.MaintenanceWindow
+	(*QueryId)(nil),                   // 66: cadestro.v1.QueryId
+	(RotationReason)(0),               // 67: cadestro.v1.RotationReason
+	(LpsPasswordComplexity)(0),        // 68: cadestro.v1.LpsPasswordComplexity
+	(*MaintenanceWindow)(nil),         // 69: cadestro.v1.MaintenanceWindow
 }
 var file_cadestro_v1_agent_proto_depIdxs = []int32{
 	7,  // 0: cadestro.v1.AgentMessage.hello:type_name -> cadestro.v1.Hello
@@ -4110,28 +4111,33 @@ var file_cadestro_v1_agent_proto_depIdxs = []int32{
 	65, // 55: cadestro.v1.ManifestResult.completed_at:type_name -> google.protobuf.Timestamp
 	55, // 56: cadestro.v1.ManifestResult.duration:type_name -> google.protobuf.Duration
 	2,  // 57: cadestro.v1.ResultAck.code:type_name -> cadestro.v1.ResultAckCode
-	23, // 58: cadestro.v1.OSQuery.where:type_name -> cadestro.v1.OSQueryCondition
-	3,  // 59: cadestro.v1.OSQueryCondition.op:type_name -> cadestro.v1.OSQueryOp
-	25, // 60: cadestro.v1.OSQueryResult.rows:type_name -> cadestro.v1.OSQueryRow
-	52, // 61: cadestro.v1.OSQueryRow.data:type_name -> cadestro.v1.OSQueryRow.DataEntry
-	27, // 62: cadestro.v1.DeviceInventory.tables:type_name -> cadestro.v1.InventoryTable
-	25, // 63: cadestro.v1.InventoryTable.rows:type_name -> cadestro.v1.OSQueryRow
-	66, // 64: cadestro.v1.StoreLuksKeyRequest.rotation_reason:type_name -> cadestro.v1.RotationReason
-	66, // 65: cadestro.v1.LpsPasswordRotation.reason:type_name -> cadestro.v1.RotationReason
-	33, // 66: cadestro.v1.StoreLpsPasswordsRequest.rotations:type_name -> cadestro.v1.LpsPasswordRotation
-	67, // 67: cadestro.v1.ValidateLuksTokenResponse.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
-	68, // 68: cadestro.v1.SyncState.maintenance_window:type_name -> cadestro.v1.MaintenanceWindow
-	42, // 69: cadestro.v1.SyncState.desired_policy:type_name -> cadestro.v1.DesiredPolicy
-	18, // 70: cadestro.v1.DesiredPolicy.manifests:type_name -> cadestro.v1.Manifest
-	4,  // 71: cadestro.v1.LogQuery.source:type_name -> cadestro.v1.LogSource
-	5,  // 72: cadestro.v1.TerminalStateChange.state:type_name -> cadestro.v1.TerminalSessionState
-	6,  // 73: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
-	10, // 74: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
-	74, // [74:75] is the sub-list for method output_type
-	73, // [73:74] is the sub-list for method input_type
-	73, // [73:73] is the sub-list for extension type_name
-	73, // [73:73] is the sub-list for extension extendee
-	0,  // [0:73] is the sub-list for field type_name
+	66, // 58: cadestro.v1.OSQuery.query_id:type_name -> cadestro.v1.QueryId
+	23, // 59: cadestro.v1.OSQuery.where:type_name -> cadestro.v1.OSQueryCondition
+	3,  // 60: cadestro.v1.OSQueryCondition.op:type_name -> cadestro.v1.OSQueryOp
+	66, // 61: cadestro.v1.OSQueryResult.query_id:type_name -> cadestro.v1.QueryId
+	25, // 62: cadestro.v1.OSQueryResult.rows:type_name -> cadestro.v1.OSQueryRow
+	52, // 63: cadestro.v1.OSQueryRow.data:type_name -> cadestro.v1.OSQueryRow.DataEntry
+	27, // 64: cadestro.v1.DeviceInventory.tables:type_name -> cadestro.v1.InventoryTable
+	25, // 65: cadestro.v1.InventoryTable.rows:type_name -> cadestro.v1.OSQueryRow
+	66, // 66: cadestro.v1.RequestInventory.query_id:type_name -> cadestro.v1.QueryId
+	67, // 67: cadestro.v1.StoreLuksKeyRequest.rotation_reason:type_name -> cadestro.v1.RotationReason
+	67, // 68: cadestro.v1.LpsPasswordRotation.reason:type_name -> cadestro.v1.RotationReason
+	33, // 69: cadestro.v1.StoreLpsPasswordsRequest.rotations:type_name -> cadestro.v1.LpsPasswordRotation
+	68, // 70: cadestro.v1.ValidateLuksTokenResponse.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
+	69, // 71: cadestro.v1.SyncState.maintenance_window:type_name -> cadestro.v1.MaintenanceWindow
+	42, // 72: cadestro.v1.SyncState.desired_policy:type_name -> cadestro.v1.DesiredPolicy
+	18, // 73: cadestro.v1.DesiredPolicy.manifests:type_name -> cadestro.v1.Manifest
+	66, // 74: cadestro.v1.LogQuery.query_id:type_name -> cadestro.v1.QueryId
+	4,  // 75: cadestro.v1.LogQuery.source:type_name -> cadestro.v1.LogSource
+	66, // 76: cadestro.v1.LogQueryResult.query_id:type_name -> cadestro.v1.QueryId
+	5,  // 77: cadestro.v1.TerminalStateChange.state:type_name -> cadestro.v1.TerminalSessionState
+	6,  // 78: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
+	10, // 79: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
+	79, // [79:80] is the sub-list for method output_type
+	78, // [78:79] is the sub-list for method input_type
+	78, // [78:78] is the sub-list for extension type_name
+	78, // [78:78] is the sub-list for extension extendee
+	0,  // [0:78] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_agent_proto_init() }

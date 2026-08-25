@@ -65,7 +65,7 @@ func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[cad
 	err = h.agentSender.Send(req.Msg.DeviceId, &cadestrov1.ServerMessage{
 		Id: queryID,
 		Payload: &cadestrov1.ServerMessage_Query{Query: &cadestrov1.OSQuery{
-			QueryId: queryID, Table: req.Msg.Table, Columns: req.Msg.Columns,
+			QueryId: &cadestrov1.QueryId{Value: queryID}, Table: req.Msg.Table, Columns: req.Msg.Columns,
 			Limit: req.Msg.Limit, RawSql: req.Msg.RawSql,
 		}},
 	})
@@ -75,7 +75,7 @@ func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[cad
 		}
 		return nil, rpcError(ctx, errDeviceUnavailable, connect.CodeUnavailable, "device is unavailable")
 	}
-	return connect.NewResponse(&cadestrov1.DispatchOSQueryResponse{QueryId: queryID}), nil
+	return connect.NewResponse(&cadestrov1.DispatchOSQueryResponse{QueryId: &cadestrov1.QueryId{Value: queryID}}), nil
 }
 
 // QueryDeviceLogs creates the pollable SQLite result before sending one
@@ -110,7 +110,7 @@ func (h *Handlers) QueryDeviceLogs(ctx context.Context, req *connect.Request[cad
 	err = h.agentSender.Send(req.Msg.DeviceId, &cadestrov1.ServerMessage{
 		Id: queryID,
 		Payload: &cadestrov1.ServerMessage_LogQuery{LogQuery: &cadestrov1.LogQuery{
-			QueryId: queryID, Lines: req.Msg.Lines, Unit: req.Msg.Unit,
+			QueryId: &cadestrov1.QueryId{Value: queryID}, Lines: req.Msg.Lines, Unit: req.Msg.Unit,
 			Since: req.Msg.Since, Until: req.Msg.Until, Priority: req.Msg.Priority,
 			Grep: req.Msg.Grep, Kernel: req.Msg.Kernel,
 		}},
@@ -121,7 +121,7 @@ func (h *Handlers) QueryDeviceLogs(ctx context.Context, req *connect.Request[cad
 		}
 		return nil, rpcError(ctx, errDeviceUnavailable, connect.CodeUnavailable, "device is unavailable")
 	}
-	return connect.NewResponse(&cadestrov1.QueryDeviceLogsResponse{QueryId: queryID}), nil
+	return connect.NewResponse(&cadestrov1.QueryDeviceLogsResponse{QueryId: &cadestrov1.QueryId{Value: queryID}}), nil
 }
 
 // RefreshDeviceInventory sends one immediate collection request. Periodic
@@ -148,7 +148,7 @@ func (h *Handlers) RefreshDeviceInventory(ctx context.Context, req *connect.Requ
 	err = h.agentSender.Send(req.Msg.DeviceId, &cadestrov1.ServerMessage{
 		Id: requestID,
 		Payload: &cadestrov1.ServerMessage_RequestInventory{
-			RequestInventory: &cadestrov1.RequestInventory{QueryId: requestID},
+			RequestInventory: &cadestrov1.RequestInventory{QueryId: &cadestrov1.QueryId{Value: requestID}},
 		},
 	})
 	if err == nil {
@@ -200,11 +200,11 @@ func (h *Handlers) CompleteOSQueryResult(ctx context.Context, deviceID string, r
 		}
 	}
 	completedAt := h.now().UTC()
-	return h.completeAgentResult(ctx, deviceID, "OSQueryResult", "osquery_result", result.QueryId, "rows",
+	return h.completeAgentResult(ctx, deviceID, "OSQueryResult", "osquery_result", result.GetQueryId().GetValue(), "rows",
 		func(ctx context.Context, tx *store.Tx) (int64, error) {
 			return tx.CompleteOSQueryResult(ctx, db.CompleteOSQueryResultParams{
 				Success: result.Success, Error: resultError, Rows: rowsJSON, CompletedAt: &completedAt,
-				QueryID: result.QueryId, DeviceID: deviceID,
+				QueryID: result.GetQueryId().GetValue(), DeviceID: deviceID,
 			})
 		})
 }
@@ -230,11 +230,11 @@ func (h *Handlers) CompleteLogQueryResult(ctx context.Context, deviceID string, 
 		}
 	}
 	completedAt := h.now().UTC()
-	return h.completeAgentResult(ctx, deviceID, "LogQueryResult", "log_query_result", result.QueryId, "logs",
+	return h.completeAgentResult(ctx, deviceID, "LogQueryResult", "log_query_result", result.GetQueryId().GetValue(), "logs",
 		func(ctx context.Context, tx *store.Tx) (int64, error) {
 			return tx.CompleteLogQueryResult(ctx, db.CompleteLogQueryResultParams{
 				Success: result.Success, Error: resultError, Logs: logs, CompletedAt: &completedAt,
-				QueryID: result.QueryId, DeviceID: deviceID,
+				QueryID: result.GetQueryId().GetValue(), DeviceID: deviceID,
 			})
 		})
 }

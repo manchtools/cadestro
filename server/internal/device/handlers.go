@@ -353,7 +353,7 @@ func (h *Handlers) GetOSQueryResult(ctx context.Context, req *connect.Request[ca
 	if err := h.authorize(ctx, "GetOSQueryResult", ""); err != nil {
 		return nil, err
 	}
-	result, err := h.store.GetOSQueryResult(ctx, req.Msg.QueryId)
+	result, err := h.store.GetOSQueryResult(ctx, req.Msg.GetQueryId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, errQueryResultMissing, "query result not found")
@@ -368,7 +368,7 @@ func (h *Handlers) GetOSQueryResult(ctx context.Context, req *connect.Request[ca
 	}
 
 	response := &cadestrov1.GetOSQueryResultResponse{
-		QueryId: result.QueryID, Completed: result.Completed,
+		QueryId: &cadestrov1.QueryId{Value: result.QueryID}, Completed: result.Completed,
 		Success: result.Success, Error: result.Error,
 	}
 	if !result.Completed && h.now().Sub(result.CreatedAt) > resultTimeout {
@@ -402,7 +402,7 @@ func (h *Handlers) GetDeviceLogResult(ctx context.Context, req *connect.Request[
 	if err := h.authorize(ctx, "GetDeviceLogResult", ""); err != nil {
 		return nil, err
 	}
-	result, err := h.store.GetDeviceLogResult(ctx, req.Msg.QueryId)
+	result, err := h.store.GetDeviceLogResult(ctx, req.Msg.GetQueryId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, notFound(ctx, errQueryResultMissing, "log query result not found")
@@ -417,7 +417,7 @@ func (h *Handlers) GetDeviceLogResult(ctx context.Context, req *connect.Request[
 	}
 
 	response := &cadestrov1.GetDeviceLogResultResponse{
-		QueryId: result.QueryID, Completed: result.Completed,
+		QueryId: &cadestrov1.QueryId{Value: result.QueryID}, Completed: result.Completed,
 		Success: result.Success, Error: result.Error, Logs: result.Logs,
 	}
 	if !result.Completed && h.now().Sub(result.CreatedAt) > resultTimeout {
