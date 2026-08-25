@@ -10,12 +10,7 @@ import (
 )
 
 // CAFingerprintFromPEM returns the lowercase-hex SHA-256 of the
-// certificate's DER bytes. It is byte-for-byte identical to the control
-// server's ca.FingerprintFromPEM, so an operator-delivered pin computed
-// from the control CA (e.g. `openssl x509 -in ca.crt -outform DER |
-// sha256sum`) matches what the agent derives from the CA returned at
-// registration. This is the out-of-band trust anchor for the optional
-// enrollment CA-pin.
+// certificate's decoded DER bytes.
 func CAFingerprintFromPEM(certPEM []byte) (string, error) {
 	block, _ := pem.Decode(certPEM)
 	if block == nil {

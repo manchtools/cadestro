@@ -28,6 +28,7 @@ import (
 	"github.com/manchtools/cadestro/server/internal/enrollment"
 	"github.com/manchtools/cadestro/server/internal/mtls"
 	"github.com/manchtools/cadestro/server/internal/store"
+	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 )
 
 type enrollmentFixture struct {
@@ -275,14 +276,14 @@ func TestEnrollment_RenewalStagesPendingSuccessor(t *testing.T) {
 	registered, err := f.handlers.Register(context.Background(), registerRequest(token, csr, 0x55))
 	require.NoError(t, err)
 	deviceID := registered.Msg.DeviceId.Value
-	oldFingerprint, err := ca.FingerprintFromPEM(registered.Msg.Certificate)
+	oldFingerprint, err := sdkcrypto.CAFingerprintFromPEM(registered.Msg.Certificate)
 	require.NoError(t, err)
 
 	renewed, err := f.handlers.RenewCertificate(renewalContext(t, registered.Msg.Certificate, deviceID), connect.NewRequest(&cadestrov1.RenewCertificateRequest{
 		Csr: enrollmentCSR(t, identity),
 	}))
 	require.NoError(t, err)
-	newFingerprint, err := ca.FingerprintFromPEM(renewed.Msg.Certificate)
+	newFingerprint, err := sdkcrypto.CAFingerprintFromPEM(renewed.Msg.Certificate)
 	require.NoError(t, err)
 	assert.NotEqual(t, oldFingerprint, newFingerprint)
 	assert.True(t, renewed.Msg.NotAfter.AsTime().Equal(f.now.Add(24*time.Hour)))

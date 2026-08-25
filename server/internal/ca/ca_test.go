@@ -586,25 +586,6 @@ func TestCACertPEM(t *testing.T) {
 	assert.Equal(t, "CERTIFICATE", block.Type)
 }
 
-func TestFingerprintFromPEM(t *testing.T) {
-	certPEM, keyPEM := generateTestCA(t)
-	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
-	require.NoError(t, err)
-
-	csrPEM, _ := generateCSR(t, "device-001")
-	issued, err := c.IssueCertificateFromCSR("device-001", csrPEM)
-	require.NoError(t, err)
-
-	fp, err := ca.FingerprintFromPEM(issued.CertPEM)
-	require.NoError(t, err)
-	assert.Equal(t, issued.Fingerprint, fp)
-}
-
-func TestFingerprintFromPEM_InvalidPEM(t *testing.T) {
-	_, err := ca.FingerprintFromPEM([]byte("not a certificate"))
-	assert.Error(t, err)
-}
-
 func TestDeviceIDFromPEM(t *testing.T) {
 	certPEM, keyPEM := generateTestCA(t)
 	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)

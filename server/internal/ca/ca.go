@@ -299,16 +299,6 @@ func parsePrivateKey(der []byte) (crypto.Signer, error) {
 	return nil, fmt.Errorf("unsupported private key format")
 }
 
-func FingerprintFromPEM(certPEM []byte) (string, error) {
-	block, _ := pem.Decode(certPEM)
-	if block == nil {
-		return "", fmt.Errorf("failed to decode certificate PEM")
-	}
-
-	fingerprint := sha256.Sum256(block.Bytes)
-	return hex.EncodeToString(fingerprint[:]), nil
-}
-
 func NotAfterFromPEM(certPEM []byte) (time.Time, error) {
 	block, _ := pem.Decode(certPEM)
 	if block == nil {

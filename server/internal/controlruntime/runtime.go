@@ -37,6 +37,7 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 	"github.com/manchtools/cadestro/server/internal/terminal"
 	"github.com/manchtools/cadestro/server/internal/terminalbridge"
+	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 )
 
 const (
@@ -91,7 +92,7 @@ func New(cfg Config) *Runtime {
 	if cfg.Now == nil {
 		cfg.Now = time.Now
 	}
-	caFingerprint, err := ca.FingerprintFromPEM(cfg.CA.CACertPEM())
+	caFingerprint, err := sdkcrypto.CAFingerprintFromPEM(cfg.CA.CACertPEM())
 	if err != nil {
 		panic("controlruntime: loaded CA has no usable fingerprint")
 	}

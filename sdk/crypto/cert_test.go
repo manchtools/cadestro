@@ -8,10 +8,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/cryptotest"
 )
 
-// TestCAFingerprintFromPEM pins that the fingerprint is the lowercase hex
-// SHA-256 of the certificate DER — byte-identical to the server's
-// ca.FingerprintFromPEM, so an operator-supplied pin (derived from the
-// control CA, e.g. `openssl x509 -outform DER | sha256sum`) matches.
 func TestCAFingerprintFromPEM(t *testing.T) {
 	caPEM, _, caCert := cryptotest.GenCA(t, "fp-ca")
 	want := hex.EncodeToString(func() []byte { s := sha256.Sum256(caCert.Raw); return s[:] }())
