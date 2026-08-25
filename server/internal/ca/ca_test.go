@@ -544,6 +544,29 @@ func TestDeviceIDFromPEM_InvalidPEM(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestDeviceIDFromPEM_StrictDecoding(t *testing.T) {
+	certPEM, keyPEM := generateTestCA(t)
+	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
+	require.NoError(t, err)
+
+	csrPEM, _ := generateCSR(t, "device-003")
+	issued, err := c.IssueCertificateFromCSR("device-003", csrPEM)
+	require.NoError(t, err)
+
+	t.Run("wrong PEM block type rejected", func(t *testing.T) {
+		block, _ := pem.Decode(issued.CertPEM)
+		require.NotNil(t, block)
+		block.Type = "CERTIFICATE REQUEST"
+		_, err := ca.DeviceIDFromPEM(pem.EncodeToMemory(block))
+		assert.Error(t, err)
+	})
+	t.Run("trailing data after PEM rejected", func(t *testing.T) {
+		input := append(append([]byte(nil), issued.CertPEM...), []byte("trailing")...)
+		_, err := ca.DeviceIDFromPEM(input)
+		assert.Error(t, err)
+	})
+}
+
 func TestTrustPool(t *testing.T) {
 	certPEM, keyPEM := generateTestCA(t)
 	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)

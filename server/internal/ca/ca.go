@@ -85,15 +85,23 @@ func SerialFromCert(cert *x509.Certificate) (string, error) {
 }
 
 func SerialFromPEM(certPEM []byte) (string, error) {
+	cert, err := parseCertificatePEM(certPEM)
+	if err != nil {
+		return "", err
+	}
+	return SerialFromCert(cert)
+}
+
+func parseCertificatePEM(certPEM []byte) (*x509.Certificate, error) {
 	block, rest := pem.Decode(certPEM)
 	if block == nil || block.Type != "CERTIFICATE" || len(bytes.TrimSpace(rest)) != 0 {
-		return "", errors.New("invalid certificate PEM")
+		return nil, errors.New("invalid certificate PEM")
 	}
 	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return "", fmt.Errorf("parse certificate: %w", err)
+		return nil, fmt.Errorf("parse certificate: %w", err)
 	}
-	return SerialFromCert(cert)
+	return cert, nil
 }
 
 func New(certPath, keyPath string, validity time.Duration, opts ...Option) (*CA, error) {
@@ -320,14 +328,9 @@ func FingerprintFromCert(cert *x509.Certificate) string {
 }
 
 func DeviceIDFromPEM(certPEM []byte) (string, error) {
-	block, _ := pem.Decode(certPEM)
-	if block == nil {
-		return "", fmt.Errorf("failed to decode certificate PEM")
-	}
-
-	cert, err := x509.ParseCertificate(block.Bytes)
+	cert, err := parseCertificatePEM(certPEM)
 	if err != nil {
-		return "", fmt.Errorf("parse certificate: %w", err)
+		return "", err
 	}
 
 	return cert.Subject.CommonName, nil
