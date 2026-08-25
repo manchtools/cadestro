@@ -27,7 +27,7 @@ compose() {
 remove_root_owned_content() {
     local directory="$1"
     [[ -d "$directory" ]] || return 0
-    docker run --rm -v "$directory:/target" docker.io/library/alpine:3.23 \
+    docker run --rm --memory=6g --cpus=4 -v "$directory:/target" docker.io/library/alpine:3.23 \
         find /target -mindepth 1 -delete >/dev/null 2>&1 || true
 }
 

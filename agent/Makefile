@@ -105,9 +105,11 @@ test-integration-archlinux:
 	$(CONTAINER_CMD) build -f test/Dockerfile.integration.archlinux -t cadestro-agent-test-archlinux ../
 	$(CONTAINER_CMD) run --rm $(CONTAINER_LIMITS) cadestro-agent-test-archlinux $(TEST_CMD)
 
-# Run all 4 distros in parallel
 test-integration-all:
-	$(MAKE) -j4 test-integration-debian test-integration-fedora test-integration-opensuse test-integration-archlinux
+	$(MAKE) test-integration-debian
+	$(MAKE) test-integration-fedora
+	$(MAKE) test-integration-opensuse
+	$(MAKE) test-integration-archlinux
 
 # Edge case tests in privileged Debian container (disk-full, read-only FS, etc.)
 test-integration-edgecase:

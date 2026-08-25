@@ -140,7 +140,7 @@ jobs:
         run: docker build -f sdk/test/Dockerfile.integration --target systemd -t cadestro-sdk-test .
 
       - name: Start systemd container
-        run: docker run -d --privileged --name cadestro-sdk-test cadestro-sdk-test
+        run: docker run -d --privileged --memory=6g --cpus=4 --name cadestro-sdk-test cadestro-sdk-test
 
       - name: Wait for systemd
         run: |
@@ -183,7 +183,7 @@ jobs:
         run: docker build -f sdk/test/Dockerfile.integration --target with-networkmanager -t cadestro-sdk-nm .
 
       - name: Start systemd + NM container
-        run: docker run -d --privileged --name cadestro-sdk-nm cadestro-sdk-nm
+        run: docker run -d --privileged --memory=6g --cpus=4 --name cadestro-sdk-nm cadestro-sdk-nm
 
       - name: Wait for NetworkManager
         run: |
@@ -339,7 +339,7 @@ jobs:
         if: matrix.expect != ''
         run: |
           for tool in ${{ matrix.expect }}; do
-            if ! docker run --rm cadestro-sdk-container sh -c "command -v $tool >/dev/null 2>&1"; then
+            if ! docker run --rm --memory=6g --cpus=4 cadestro-sdk-container sh -c "command -v $tool >/dev/null 2>&1"; then
               echo "::error::expected tool '$tool' absent from '${{ matrix.label }}' image — its container test would skip VACUOUSLY instead of running"
               exit 1
             fi
@@ -347,7 +347,7 @@ jobs:
 
       - name: Run container tests
         run: |
-          docker run --rm --shm-size=512m --cap-add NET_ADMIN cadestro-sdk-container \
+          docker run --rm --memory=6g --cpus=4 --shm-size=512m --cap-add NET_ADMIN cadestro-sdk-container \
             go test -p 1 -tags=container -count=1 -v ${{ matrix.path }} -run Container
 
   # The non-Debian distro families. Where the per-capability Debian matrix above
@@ -383,18 +383,18 @@ jobs:
       - name: Assert base tool surface (no vacuous skip)
         run: |
           for tool in cryptsetup nft ip lsblk useradd runuser env smartctl gpg flatpak fuser openssl ${{ matrix.walltool }}; do
-            if ! docker run --rm cadestro-base sh -c "command -v $tool >/dev/null 2>&1"; then
+            if ! docker run --rm --memory=6g --cpus=4 cadestro-base sh -c "command -v $tool >/dev/null 2>&1"; then
               echo "::error::tool '$tool' absent from the ${{ matrix.distro }} base image — its container test would skip VACUOUSLY"
               exit 1
             fi
           done
           # catrust Detect must find a refresh tool, or its test skips vacuously.
-          docker run --rm cadestro-base sh -c 'command -v update-ca-trust >/dev/null 2>&1 || command -v update-ca-certificates >/dev/null 2>&1' \
+          docker run --rm --memory=6g --cpus=4 cadestro-base sh -c 'command -v update-ca-trust >/dev/null 2>&1 || command -v update-ca-certificates >/dev/null 2>&1' \
             || { echo "::error::no CA-trust refresh tool on ${{ matrix.distro }}"; exit 1; }
 
       - name: Run base-stage container tests
         run: |
-          docker run --rm --shm-size=512m --cap-add NET_ADMIN cadestro-base \
+          docker run --rm --memory=6g --cpus=4 --shm-size=512m --cap-add NET_ADMIN cadestro-base \
             go test -p 1 -tags=container -count=1 -v -run Container \
             ./sdk/sys/encryption/ ./sdk/sys/firewall/ ./sdk/sys/netconfig/ ./sdk/sys/inventory/ \
             ./sdk/sys/catrust/ ./sdk/sys/terminal/ ./sdk/sys/desktop/ ./sdk/sys/smart/ \
@@ -403,7 +403,7 @@ jobs:
       - name: Run antivirus (with-clamav seed DB)
         run: |
           docker build -f sdk/test/Dockerfile.${{ matrix.distro }} --target with-clamav -t cadestro-clamav .
-          docker run --rm cadestro-clamav \
+          docker run --rm --memory=6g --cpus=4 cadestro-clamav \
             go test -p 1 -tags=container -count=1 -v -run Container ./sdk/sys/antivirus/
 
   test-apt:

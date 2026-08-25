@@ -66,7 +66,7 @@ jobs:
 
       - name: Run integration tests
         run: |
-          docker run --rm cadestro-agent-test-${{ matrix.distro }} \
+          docker run --rm --memory=6g --cpus=4 cadestro-agent-test-${{ matrix.distro }} \
             /go/bin/gotestsum \
               --format testdox \
               --format-hide-empty-pkg \
@@ -88,7 +88,7 @@ jobs:
 
       - name: Run edge case tests
         run: |
-          docker run --rm --privileged cadestro-agent-test-debian \
+          docker run --rm --privileged --memory=6g --cpus=4 cadestro-agent-test-debian \
             /go/bin/gotestsum \
               --format testdox \
               --format-hide-empty-pkg \
