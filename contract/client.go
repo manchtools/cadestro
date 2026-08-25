@@ -48,10 +48,6 @@ type Client struct {
 	// not leak a transport per reconnect attempt (WS13 #8).
 	httpClient *http.Client
 
-	// validator enforces the inbound buf.validate rules on each server command
-	// before dispatch. Created in NewClient.
-	validator protovalidate.Validator
-
 	mu     sync.RWMutex
 	stream *connect.BidiStreamForClient[cadestrov1.AgentMessage, cadestrov1.ServerMessage]
 
@@ -114,13 +110,8 @@ const (
 
 // NewClient creates a new SDK client.
 func NewClient(serverURL string, opts ...ClientOption) *Client {
-	v, err := protovalidate.New()
-	if err != nil {
-		panic(fmt.Sprintf("contract: building protovalidate validator failed: %v", err))
-	}
 	c := &Client{
 		logger:         slog.Default(),
-		validator:      v,
 		sendSem:        make(chan struct{}, 1),
 		invSem:         make(chan struct{}, inventoryDispatchConcurrency),
 		luksRevokeSem:  make(chan struct{}, luksRevokeDispatchConcurrency),
@@ -1245,15 +1236,7 @@ func (c *Client) validateInbound(payload any) error {
 	if !ok {
 		return fmt.Errorf("inbound payload is not a proto.Message: %T", payload)
 	}
-	v := c.validator
-	if v == nil {
-		var err error
-		v, err = protovalidate.New()
-		if err != nil {
-			return err
-		}
-	}
-	return v.Validate(msg)
+	return protovalidate.Validate(msg)
 }
 
 func (c *Client) validateServerMessage(msg *cadestrov1.ServerMessage) error {
