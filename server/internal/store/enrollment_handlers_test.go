@@ -24,11 +24,11 @@ import (
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
+	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/cadestro/server/internal/ca"
 	"github.com/manchtools/cadestro/server/internal/enrollment"
 	"github.com/manchtools/cadestro/server/internal/mtls"
 	"github.com/manchtools/cadestro/server/internal/store"
-	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 )
 
 type enrollmentFixture struct {

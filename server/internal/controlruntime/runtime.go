@@ -13,6 +13,7 @@ import (
 	connectvalidate "connectrpc.com/validate"
 
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
+	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/cadestro/server/internal/agentsecrets"
 	"github.com/manchtools/cadestro/server/internal/agentstream"
 	"github.com/manchtools/cadestro/server/internal/agentsync"
@@ -37,7 +38,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 	"github.com/manchtools/cadestro/server/internal/terminal"
 	"github.com/manchtools/cadestro/server/internal/terminalbridge"
-	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 )
 
 const (
