@@ -22,7 +22,7 @@ rest of this page is what each part of it does and why.
 
 ## 1. Issue a registration token
 
-<!-- docref: begin src=server/internal/registrationtoken/handlers.go#Handlers.CreateToken:1eee71f6,contract/proto/cadestro/v1/control.proto#CreateTokenRequest:5fa6aaf2 -->
+<!-- docref: begin src=server/internal/registrationtoken/handlers.go#Handlers.CreateToken:596169c0,contract/proto/cadestro/v1/control.proto#CreateTokenRequest:5fa6aaf2 -->
 Tokens are minted by `ControlService.CreateToken`. A token has a name, a
 required future expiry, and an optional global maximum use count where **zero
 means unlimited**. Each successful new device enrollment is one immutable use
@@ -87,7 +87,7 @@ line. The last still works but prints a warning, because an argv token is
 readable by any local process through `/proc/<pid>/cmdline`.
 <!-- docref: end -->
 
-<!-- docref: begin src=agent/cmd/cadestrod/cmd_enroll.go#runEnroll:5fae8105 -->
+<!-- docref: begin src=agent/cmd/cadestrod/cmd_enroll.go#runEnroll:677388d1 -->
 Server, token, and pin are all mandatory: a missing one is a usage error and a
 non-zero exit, never a degraded enrollment.
 <!-- docref: end -->
@@ -124,7 +124,7 @@ an error unconditionally and every connection is refused. The feature is not
 "best effort" off Linux; it is closed.
 <!-- docref: end -->
 
-<!-- docref: begin src=agent/internal/deviceauth/enroll.go#EnrollHandler.Enroll:6abe0cc7 -->
+<!-- docref: begin src=agent/internal/deviceauth/enroll.go#EnrollHandler.Enroll:e092186e -->
 The handler applies a global rate limit of five enrollment attempts per rolling
 minute, and serializes the rest of the work under a mutex so that concurrent
 callers cannot each pass the "already enrolled?" check and register duplicate
@@ -239,7 +239,7 @@ certificate's peer class must be `agent`. The stream handler then admits only
 the device's active certificate serial.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/agentstream/handler.go#Handler.recordHello:95d29635 -->
+<!-- docref: begin src=server/internal/agentstream/handler.go#Handler.recordHello:282ba2a6 -->
 The application layer then performs the lifecycle transition in the Hello
 transaction: the first frame must be a Hello, its device id must equal the
 mTLS identity, and a pending serial may promote only after that fresh Hello.
@@ -275,7 +275,7 @@ If the B configuration or connection fails, the agent falls back to A and uses
 the existing periodic sync cadence to retry. There is no forced stream close,
 retry goroutine, CA response, or trust-bundle rotation.
 
-<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.RenewCertificate:af87f4ad -->
+<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.RenewCertificate:580309fd -->
 The renewal handler runs behind the authenticated agent listener, checks the
 CSR against the actual TLS peer leaf, and stages one pending successor in the
 device row. A retry returns the existing pending certificate where possible;
@@ -297,7 +297,7 @@ after certificate promotion.
 
 ## What enrollment writes into the audit log
 
-<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.Register:1917894f -->
+<!-- docref: begin src=server/internal/enrollment/handlers.go#Handlers.Register:325ea25e -->
 A successful new registration records the device creation as an effect of one
 audited operation whose actor is the registration token itself, identified by
 its digest rather than its value. A same-identity retry is audited as an

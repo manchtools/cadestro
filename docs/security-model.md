@@ -111,7 +111,7 @@ account" error, so a login attempt cannot probe which of the three conditions
 failed.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/identity/users.go#Handlers.EraseJITUser:d797382e -->
+<!-- docref: begin src=server/internal/identity/users.go#Handlers.EraseJITUser:643c75df -->
 Erasure is correspondingly narrow. The erase RPC refuses any subject that was
 not created by OIDC just-in-time provisioning — a SCIM-managed user is erased
 through SCIM, and the RPC says so rather than deleting a record the directory
@@ -163,7 +163,8 @@ Its authority is a fixed, minimal list: create and read identity providers,
 create and read roles, list permissions, read users, and assign a role to a
 user. That is precisely enough to configure the first identity provider and
 grant the first admin — and nothing else. It cannot dispatch an action, read a
-secret, or touch a device.
+secret, or touch a device; policy work reaches devices through their assigned
+manifests.
 <!-- docref: end -->
 
 <!-- docref: begin src=server/internal/auth/context.go#UserContext.CanOwnResources:411da86b -->
@@ -176,7 +177,7 @@ by a list of exceptions someone has to maintain.
 
 ### Authorization
 
-<!-- docref: begin src=server/internal/auth/permissions.go#registryPermissions:a3354971 -->
+<!-- docref: begin src=server/internal/auth/permissions.go#registryPermissions:ec6dc317 -->
 Permissions live in one registry — roughly 165 entries, each declaring its key,
 its UI grouping, its description, and the kind of target it acts on. That target
 kind is what decides whether a permission can be scoped to a group, and the zero
@@ -222,7 +223,7 @@ expiry, and rejects an access token presented where a refresh token belongs. An
 access token lives five minutes; a refresh token seven days.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/identity/session.go#Handlers.RefreshToken:11427c55 -->
+<!-- docref: begin src=server/internal/identity/session.go#Handlers.RefreshToken:c8fe60db -->
 Permissions ride only on the short-lived access token; refresh re-reads
 authority from the database. So revoking a role takes effect within five
 minutes rather than at the end of a seven-day session. Refresh also rejects a
@@ -311,7 +312,7 @@ digest with a named kind. That is not stylistic: it is what makes it
 structurally impossible for a credential to end up in the audit log.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/store/audit.go#Store.WithAudit:850de46e,server/internal/store/store.go#Store.withTx:f0b64994 -->
+<!-- docref: begin src=server/internal/store/audit.go#Store.WithAudit:93302ba8,server/internal/store/store.go#Store.withTx:f0b64994 -->
 The mutation and its audit rows are written in **one** database transaction. The
 audited-write primitive opens a transaction, runs the mutation, appends the
 operation and effects, and commits them together.
@@ -335,7 +336,7 @@ escape hatch (a raw query, a transaction handle, the connection pool) so they
 cannot be added at all.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/identity/credentials_test.go#TestProcedureClassification_MatchesTheMountedSurface:3136a55a,server/internal/controlrpc/mount_test.go#TestMountIsExactControlServiceDescriptorSet:b9a99888 -->
+<!-- docref: begin src=server/internal/identity/credentials_test.go#TestProcedureClassification_MatchesTheMountedSurface:3136a55a,server/internal/controlrpc/mount_test.go#TestMountIsExactControlServiceDescriptorSet:5c06681a -->
 Coverage cannot drift either. Every mounted procedure must be classified as a
 mutation, a read, or a sensitive read, and every classified procedure must be
 mounted — so a new RPC fails the build until it is classified. The mounted set
@@ -345,9 +346,9 @@ nothing extra, no duplicates.
 
 ### Reads that are audited
 
-<!-- docref: begin src=server/internal/device/mount.go#SensitiveReadProcedures:cfc7b0a6 -->
+<!-- docref: begin src=server/internal/device/mount.go#SensitiveReadProcedures:cb00077d -->
 Some reads are evidence too. Device inventory, query and log results, compliance
-status, execution history, the credential lists, the credential reveals, and
+status, policy-run history, the credential lists, the credential reveals, and
 active terminal sessions are all recorded as sensitive-read operations.
 <!-- docref: end -->
 
@@ -377,7 +378,7 @@ returning protected data.
 
 ### Secrets in transit use the authenticated device stream
 
-<!-- docref: begin src=contract/proto/cadestro/v1/agent.proto#GetLuksKeyResponse:68d4d881,server/internal/agentsecrets/service.go#Service.GetLuksKey:5ad82508 -->
+<!-- docref: begin src=contract/proto/cadestro/v1/agent.proto#GetLuksKeyResponse:68d4d881,server/internal/agentsecrets/service.go#Service.GetLuksKey:d4754b06 -->
 Agent-facing secrets are raw bytes inside the mutually authenticated TLS
 connection. The peer certificate supplies the device identity, so Cadestro does
 not add a second recipient-key envelope, request device identifier, or
@@ -386,7 +387,7 @@ only for the authenticated outbound stream and encrypts an inbound value before
 persisting it.
 <!-- docref: end -->
 
-<!-- docref: begin src=contract/contract_rpc_surface_test.go#TestContract_SecretsAreClassifiedAndFramesAreUnsigned:911f0cd1 -->
+<!-- docref: begin src=contract/contract_rpc_surface_test.go#TestContract_SecretsAreClassified:231be066 -->
 Which fields are secrets is not a matter of remembering. A test sweeps the whole
 protobuf registry: every classified agent-stream secret must be raw bytes,
 while the small set of authenticated write-only control inputs is explicit.

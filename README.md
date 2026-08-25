@@ -74,9 +74,9 @@ SQLite in WAL mode at `synchronous=FULL`, and full-text search is SQLite FTS5 �
 no database server, no cache, no queue, no search cluster.
 <!-- docref: end -->
 
-<!-- docref: begin src=contract/proto/cadestro/v1/agent.proto#AgentService:1027f6e5 -->
+<!-- docref: begin src=contract/proto/cadestro/v1/agent.proto#AgentService:d650612e -->
 Devices connect outbound to a dedicated mutual-TLS listener and hold one
-bidirectional stream that carries everything: handshake, sync, policy delivery,
+bidirectional stream that carries everything: handshake, synchronization,
 results, secret operations, and terminal sessions. Nothing listens on the device.
 <!-- docref: end -->
 
@@ -100,9 +100,9 @@ Fedora, AlmaLinux, Arch, and openSUSE in addition to its Debian base lanes.
 Other distributions may work; these are the ones a merge cannot break silently.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/store/sqlite_scale_test.go#TestSQLiteScale_MixedWorkloadAtTenThousandAgents:5db396bd -->
+<!-- docref: begin src=server/internal/store/sqlite_scale_test.go#TestSQLiteScale_MixedWorkloadAtTenThousandAgents:942b9dd0 -->
 **Scale target: one control instance for 10,000 connected agents.** There is a
-gate for it — a mixed dispatch, result, heartbeat, terminal, and search
+gate for it — a mixed synchronization, heartbeat, terminal, and search
 workload at that agent count with latency assertions. It is **operator-run, not
 CI-run**: it skips unless explicitly enabled, so treat the number as a target
 this repository can demonstrate on request, not as something every merge proves.

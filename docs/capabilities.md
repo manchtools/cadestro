@@ -6,8 +6,8 @@ is how these get scheduled, delivered, and reported.
 
 ## How every action behaves
 
-<!-- docref: begin src=agent/internal/executor/executor.go#Executor.ExecuteWithStreaming:417d960c -->
-One dispatch switch maps an action type to its implementation. An unrecognised
+<!-- docref: begin src=agent/internal/executor/executor.go#Executor.ExecuteAction:35a5f88b -->
+One action switch maps an action type to its implementation. An unrecognised
 type is refused rather than ignored, so a contract the agent is too old to
 understand fails loudly instead of silently doing nothing.
 <!-- docref: end -->
@@ -57,9 +57,9 @@ apply the hold is a real action failure, not a warning.
 
 ### Update
 
-<!-- docref: begin src=agent/internal/executor/action_update.go#Executor.executeUpdate:7af07503,contract/proto/cadestro/v1/actions.proto#UpdateParams:cc7d27eb -->
-A system-wide upgrade: repair the package manager, refresh the index, upgrade
-everything, optionally autoremove, then detect whether a reboot is now required.
+<!-- docref: begin src=agent/internal/executor/action_update.go#Executor.executeUpdate:7edd0cd3,contract/proto/cadestro/v1/actions.proto#UpdateParams:cc7d27eb -->
+A system-wide upgrade: refresh the index, upgrade everything, optionally
+autoremove, then detect whether a reboot is now required.
 
 `security_only` restricts to security updates. `autoremove` removes orphaned
 dependencies, with the change detected by comparing installed counts before and
@@ -72,7 +72,7 @@ asked of a backend that cannot express it (see the platform table below).
 
 ### Repository
 
-<!-- docref: begin src=agent/internal/executor/action_repository.go#Executor.executeRepository:abc92a2d,contract/proto/cadestro/v1/actions.proto#RepositoryParams:108a9362 -->
+<!-- docref: begin src=agent/internal/executor/action_repository.go#Executor.executeRepository:ad870dbc,contract/proto/cadestro/v1/actions.proto#RepositoryParams:108a9362 -->
 Adds or removes an external package repository, after a network-free validation
 pre-flight.
 
@@ -109,7 +109,7 @@ right hash is not re-downloaded.
 
 ### Deb
 
-<!-- docref: begin src=agent/internal/executor/action_deb.go#Executor.executeDeb:45573323 -->
+<!-- docref: begin src=agent/internal/executor/action_deb.go#Executor.executeDeb:cf2ca7b7 -->
 Downloads a `.deb`, reads its canonical package name from the control file, then
 installs it through apt so that dependencies resolve — not through a bare `dpkg
 -i` that would leave them broken.
@@ -124,7 +124,7 @@ URL.
 
 ### RPM
 
-<!-- docref: begin src=agent/internal/executor/action_rpm.go#Executor.executeRpm:6cb2b092 -->
+<!-- docref: begin src=agent/internal/executor/action_rpm.go#Executor.executeRpm:8ba617b4 -->
 The same shape for `.rpm`, installed through dnf or zypper.
 
 One deliberate difference from deb: removal also requires a reachable, verified
@@ -137,7 +137,7 @@ a wrong guess.
 
 ### Flatpak
 
-<!-- docref: begin src=agent/internal/executor/action_flatpak.go#Executor.executeFlatpak:e05bba49,contract/proto/cadestro/v1/actions.proto#FlatpakParams:57593e47 -->
+<!-- docref: begin src=agent/internal/executor/action_flatpak.go#Executor.executeFlatpak:f914131b,contract/proto/cadestro/v1/actions.proto#FlatpakParams:57593e47 -->
 Installs or removes a Flatpak application, system-wide or per signed-in desktop
 user.
 
@@ -158,9 +158,9 @@ Uninstalling should not depend on who happens to be logged in.
 
 ### Shell / Script run
 
-<!-- docref: begin src=agent/internal/executor/executor.go#Executor.executeShellStreaming:a1d14e71,contract/proto/cadestro/v1/actions.proto#ShellParams:144d2cec -->
+<!-- docref: begin src=agent/internal/executor/executor.go#Executor.executeShell:6afece0a,contract/proto/cadestro/v1/actions.proto#ShellParams:144d2cec -->
 The general escape hatch, with a detection/remediation/verify flow and
-line-by-line output streaming.
+captured command output.
 
 `detection_script` runs first; exit 0 means compliant and the remediation is
 skipped; non-zero runs `script` and then re-runs detection to verify. With no
@@ -480,21 +480,21 @@ already on the machine. This is what "supported platform" concretely means.
 
 ### Package managers
 
-<!-- docref: begin src=sdk/pkg/pkg.go#Backend:11393461,sdk/pkg/pkg.go#Detect:374bb12a -->
-Exactly five backends are implemented: **apt, dnf, pacman, zypper, and flatpak**.
-Detection is a `PATH` lookup for `apt-get`, `dnf`, `pacman`, `zypper`, and
-`flatpak`, in that priority order; the first match is the host's package
-manager, and flatpak is additionally consulted alongside it.
+<!-- docref: begin src=sdk/pkg/pkg.go#Backend:11393461,sdk/pkg/pkg.go#Detect:8927e775 -->
+Exactly five native backends are implemented: **apt, dnf, dnf5, pacman, and
+zypper**. Detection lists the native managers whose primary binaries resolve on
+`PATH`; callers select the manager they need. Flatpak is a separate desktop
+capability, not a native package backend.
 
 There is **no snap, apk, nix, portage, or homebrew backend.** (Some of those
 names appear in the privilege-policy templates as permitted commands — that is a
 sudoers grant, not a package backend.)
 <!-- docref: end -->
 
-Security-only updates are supported by apt (via unattended-upgrades), dnf, and
-zypper. Pacman and flatpak cannot express the concept, so a security-only update
-targeting them reports `NOT_APPLICABLE` and changes nothing, rather than
-silently widening to a full upgrade.
+Security-only updates are supported by apt (via unattended-upgrades), dnf/dnf5,
+and zypper. Pacman cannot express the concept, so a security-only update reports
+`NOT_APPLICABLE` and changes nothing rather than silently widening to a full
+upgrade. Flatpak is outside the native update path.
 
 ### Everything else
 
@@ -516,7 +516,7 @@ promise more: **systemd is the only init system implemented.** OpenRC, runit, an
 s6 scaffolds were removed rather than left as stubs that would fail at runtime.
 <!-- docref: end -->
 
-<!-- docref: begin src=sdk/sys/repo/repo.go#New:73121dda -->
+<!-- docref: begin src=sdk/sys/repo/repo.go#New:7c11139c -->
 The repository manager accepts only the four real repository backends; flatpak
 and the zero value are rejected at construction rather than producing a manager
 that silently does nothing.
@@ -528,7 +528,7 @@ if neither escalation tool is present, that is an absence to handle, not a
 licence to skip escalation.
 <!-- docref: end -->
 
-<!-- docref: begin src=sdk/sys/user/user.go#Manager:6e51c335,sdk/sys/encryption/encryption.go#Manager:637550ad,sdk/sys/network/detect.go#Detect:356657a1,sdk/sys/reboot/reboot.go#New:981f19ac,sdk/sys/notify/notify.go#New:9cbfe737,sdk/sys/desktop/desktop.go#New:afe4141a -->
+<!-- docref: begin src=sdk/sys/user/user.go#Manager:6e51c335,sdk/sys/encryption/encryption.go#Manager:637550ad,sdk/sys/network/detect.go#Detect:356657a1,sdk/sys/reboot/reboot.go#New:981f19ac,sdk/sys/notify/notify.go#New:9cbfe737,sdk/sys/desktop/desktop.go#New:de9849d1 -->
 The user, encryption, network, reboot, notification, and desktop managers each
 have exactly one implementation. Where a table row above says "single
 implementation", that is what it means: there is no second backend to fall back
