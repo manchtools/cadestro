@@ -23,9 +23,13 @@ message SyncDeviceResponse {}
 message RebootDeviceRequest {}
 message RebootDeviceResponse {}
 message Manifest {}
-message ManifestDelivery {}
 message ManifestResult {}
-message SyncState { repeated ManifestDelivery deliveries = 1; }
+message SyncState {
+  int32 sync_interval_minutes = 1;
+  MaintenanceWindow maintenance_window = 2;
+  DesiredPolicy desired_policy = 3;
+}
+message DesiredPolicy { repeated Manifest manifests = 1; }
 """)
     write(root, "contract/proto/cadestro/v1/actions.proto", "enum ActionType { ACTION_TYPE_PACKAGE = 1; }\n")
 

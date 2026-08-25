@@ -242,12 +242,12 @@ def pull_sync_structure_matches(root: Path) -> list[Match]:
     }
     result = [Match("contract/proto", 0, f"missing {name}") for name, match in required.items() if match is None]
     text = "\n".join(source(path) for path in files(root, {".proto"}))
-    for message in ("Manifest", "ManifestDelivery", "ManifestResult", "SyncState"):
+    for message in ("Manifest", "ManifestResult", "SyncState", "DesiredPolicy"):
         if not re.search(rf"\bmessage\s+{message}\s*\{{", text):
             result.append(Match("contract/proto", 0, f"missing message {message}"))
     sync_state = re.search(r"\bmessage\s+SyncState\s*\{([^}]*)\}", text, re.DOTALL)
-    if not sync_state or not re.search(r"\brepeated\s+ManifestDelivery\s+deliveries\s*=", sync_state.group(1)):
-        result.append(Match("contract/proto", 0, "SyncState.deliveries is not pull-sync data"))
+    if not sync_state or not re.search(r"\bDesiredPolicy\s+desired_policy\s*=", sync_state.group(1)):
+        result.append(Match("contract/proto", 0, "SyncState.desired_policy is not pull-sync data"))
     return result
 
 
