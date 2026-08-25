@@ -129,6 +129,12 @@ func TestGetPackageNameForManager_FallbackToName(t *testing.T) {
 			expected: "curl",
 		},
 		{
+			name:     "dnf5 uses dnf-specific name",
+			backend:  pkg.Dnf5,
+			params:   &pb.PackageParams{Name: "curl", DnfName: "libcurl"},
+			expected: "libcurl",
+		},
+		{
 			name:     "pacman falls back to Name when no pacman-specific",
 			backend:  pkg.Pacman,
 			params:   &pb.PackageParams{Name: "curl", AptName: "libcurl4"},
@@ -139,12 +145,6 @@ func TestGetPackageNameForManager_FallbackToName(t *testing.T) {
 			backend:  pkg.Zypper,
 			params:   &pb.PackageParams{Name: "curl", AptName: "libcurl4"},
 			expected: "curl",
-		},
-		{
-			name:     "flatpak returns Name (no flatpak-specific override)",
-			backend:  pkg.Flatpak,
-			params:   &pb.PackageParams{Name: "org.gimp.GIMP"},
-			expected: "org.gimp.GIMP",
 		},
 		{
 			name:     "empty name returns empty (caller handles skip)",

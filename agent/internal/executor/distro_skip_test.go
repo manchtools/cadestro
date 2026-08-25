@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	"github.com/manchtools/cadestro/sdk/pkg"
+	packageSDK "github.com/manchtools/cadestro/sdk/pkg"
 )
 
 // These skip-gates mirror the production detection exactly: the executors now
@@ -16,12 +16,12 @@ import (
 // (Apt / Dnf|Zypper / Flatpak), not a raw LookPath of dpkg/rpm/flatpak. Gating
 // the tests on the same predicate keeps them honest on any host — e.g. a dnf
 // box with a stray dpkg binary is NOT deb-capable and the DEB action skips.
-func debCapable() bool { return slices.Contains(pkg.Detect(context.Background()), pkg.Apt) }
+func debCapable() bool { return slices.Contains(packageSDK.Detect(), packageSDK.Apt) }
 func rpmCapable() bool {
-	d := pkg.Detect(context.Background())
-	return slices.Contains(d, pkg.Dnf) || slices.Contains(d, pkg.Zypper)
+	d := packageSDK.Detect()
+	return slices.Contains(d, packageSDK.Dnf) || slices.Contains(d, packageSDK.Dnf5) || slices.Contains(d, packageSDK.Zypper)
 }
-func flatpakCapable() bool { return slices.Contains(pkg.Detect(context.Background()), pkg.Flatpak) }
+func flatpakCapable() bool { return packageSDK.FlatpakAvailable() }
 
 // requireNotApplicable asserts the spec-23 contract for a structural
 // backend-missing path: an errNotApplicable-wrapped reason and

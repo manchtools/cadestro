@@ -51,7 +51,7 @@ func (e *Executor) executeDeb(ctx context.Context, params *pb.AppInstallParams, 
 	// backend the SDK's pkg.Detect enumerates (it probes apt-get, which dpkg
 	// underpins), so this honors the SDK's PATH resolution instead of
 	// hard-coding "dpkg".
-	if !slices.Contains(pkg.Detect(ctx), pkg.Apt) {
+	if !slices.Contains(pkg.Detect(), pkg.Apt) {
 		return nil, false, notApplicable("no supported .deb package manager available on this system")
 	}
 

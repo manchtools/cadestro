@@ -10,63 +10,54 @@ import (
 
 	"github.com/manchtools/cadestro/sdk/pkg"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-// fakeFlatpakPinMgr is a minimal pkg.Manager that drives ensureFlatpakPinned's
-// IsPinned/Pin contract. Embedding the interface means any OTHER method panics
-// (none are called by ensureFlatpakPinned), keeping the fake honest and the test
-// decoupled from the SDK's `flatpak mask` argv.
-type fakeFlatpakPinMgr struct {
-	pkg.Manager
-	pinned    bool
-	pinnedErr error
-	pinErr    error
-	pinCalls  []string
-}
-
-func (f *fakeFlatpakPinMgr) IsPinned(ctx context.Context, name string) (bool, error) {
-	return f.pinned, f.pinnedErr
-}
-
-func (f *fakeFlatpakPinMgr) Pin(ctx context.Context, packages ...string) (sysexec.Result, error) {
-	f.pinCalls = append(f.pinCalls, packages...)
-	return sysexec.Result{}, f.pinErr
-}
-
-// Pinning is part of the requested desired state. ensureFlatpakPinned must
-// (a) converge — pin an already-installed-but-unpinned app, not skip it;
-// (b) be idempotent — not re-pin an already-pinned app; and (c) surface a pin
-// failure OR an IsPinned probe failure as a real error, never a silent success.
 func TestEnsureFlatpakPinned(t *testing.T) {
 	const app = "org.example.App"
 	ctx := context.Background()
 
-	t.Run("already pinned -> no change, Pin not run", func(t *testing.T) {
-		f := &fakeFlatpakPinMgr{pinned: true}
-		changed, err := ensureFlatpakPinned(ctx, f, app)
+	t.Run("already pinned", func(t *testing.T) {
+		runner := exectest.New(sysexec.Direct)
+		mgr, err := pkg.NewFlatpak(runner)
 		require.NoError(t, err)
-		assert.False(t, changed, "an already-pinned app must not report a change")
-		assert.Empty(t, f.pinCalls, "must not re-pin an already-pinned app")
-	})
-
-	t.Run("not pinned -> applies pin and reports change", func(t *testing.T) {
-		f := &fakeFlatpakPinMgr{pinned: false}
-		changed, err := ensureFlatpakPinned(ctx, f, app)
+		runner.Push(sysexec.Result{Stdout: app + "\n"}, nil)
+		changed, err := ensureFlatpakPinned(ctx, mgr, app)
 		require.NoError(t, err)
-		assert.True(t, changed, "newly pinning an unpinned app must report a change")
-		assert.Equal(t, []string{app}, f.pinCalls, "must pin the requested app id")
+		assert.False(t, changed)
+		assert.Len(t, runner.Calls(), 1)
 	})
 
-	t.Run("pin failure is a real error, not a success", func(t *testing.T) {
-		f := &fakeFlatpakPinMgr{pinned: false, pinErr: errors.New("permission denied")}
-		_, err := ensureFlatpakPinned(ctx, f, app)
-		require.Error(t, err, "a failed pin must surface as an error so the action reports FAILED")
+	t.Run("not pinned", func(t *testing.T) {
+		runner := exectest.New(sysexec.Direct)
+		mgr, err := pkg.NewFlatpak(runner)
+		require.NoError(t, err)
+		runner.Push(sysexec.Result{}, nil)
+		changed, err := ensureFlatpakPinned(ctx, mgr, app)
+		require.NoError(t, err)
+		assert.True(t, changed)
+		calls := runner.Calls()
+		require.Len(t, calls, 2)
+		assert.Equal(t, []string{"mask", app, "--system"}, calls[1].Args)
 	})
 
-	t.Run("IsPinned probe failure surfaces as an error", func(t *testing.T) {
-		f := &fakeFlatpakPinMgr{pinnedErr: errors.New("flatpak unavailable")}
-		_, err := ensureFlatpakPinned(ctx, f, app)
-		require.Error(t, err, "an inability to determine pin state must not be treated as 'pinned'")
-		assert.Empty(t, f.pinCalls, "must not attempt Pin when the pin-state probe failed")
+	t.Run("pin failure", func(t *testing.T) {
+		runner := exectest.New(sysexec.Direct)
+		mgr, err := pkg.NewFlatpak(runner)
+		require.NoError(t, err)
+		runner.Push(sysexec.Result{}, nil)
+		runner.Push(sysexec.Result{}, errors.New("permission denied"))
+		_, err = ensureFlatpakPinned(ctx, mgr, app)
+		require.Error(t, err)
+	})
+
+	t.Run("probe failure", func(t *testing.T) {
+		runner := exectest.New(sysexec.Direct)
+		mgr, err := pkg.NewFlatpak(runner)
+		require.NoError(t, err)
+		runner.Push(sysexec.Result{}, errors.New("flatpak unavailable"))
+		_, err = ensureFlatpakPinned(ctx, mgr, app)
+		require.Error(t, err)
+		assert.Len(t, runner.Calls(), 1)
 	})
 }

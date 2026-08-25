@@ -14,41 +14,44 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// upgradeFakeMgr embeds pkg.Manager (every un-overridden method nil-panics)
-// and overrides exactly the calls executeUpdate makes: Repair, Update,
-// HasUpdates and UpgradeAll. upgraded records whether UpgradeAll actually
-// "performed" an upgrade so the fail-closed assertions are behavioral, not
-// inferred from the error string.
 type upgradeFakeMgr struct {
 	pkg.Manager
-	backend    pkg.Backend
-	hasUpdates bool
-	upgradeErr error
-	upgraded   bool
+	backend            pkg.Backend
+	hasUpdates         bool
+	hasSecurityUpdates bool
+	normalUpgradeErr   error
+	securityUpgradeErr error
+	normalUpgraded     bool
+	securityUpgraded   bool
 }
 
 func (f *upgradeFakeMgr) Backend() pkg.Backend { return f.backend }
-func (f *upgradeFakeMgr) Repair(_ context.Context) (sysexec.Result, error) {
-	return sysexec.Result{}, nil
-}
 func (f *upgradeFakeMgr) Update(_ context.Context) (sysexec.Result, error) {
 	return sysexec.Result{Stdout: "index refreshed"}, nil
 }
-func (f *upgradeFakeMgr) HasUpdates(_ context.Context, _ bool) (bool, error) {
+func (f *upgradeFakeMgr) HasUpdates(_ context.Context) (bool, error) {
 	return f.hasUpdates, nil
 }
-func (f *upgradeFakeMgr) UpgradeAll(_ context.Context, _ pkg.UpgradeOptions) (sysexec.Result, error) {
-	if f.upgradeErr != nil {
-		return sysexec.Result{}, f.upgradeErr
+func (f *upgradeFakeMgr) HasSecurityUpdates(_ context.Context) (bool, error) {
+	return f.hasSecurityUpdates, nil
+}
+func (f *upgradeFakeMgr) UpgradeAll(_ context.Context) (sysexec.Result, error) {
+	if f.normalUpgradeErr != nil {
+		return sysexec.Result{}, f.normalUpgradeErr
 	}
-	f.upgraded = true
+	f.normalUpgraded = true
+	return sysexec.Result{Stdout: "upgraded"}, nil
+}
+func (f *upgradeFakeMgr) UpgradeSecurity(_ context.Context) (sysexec.Result, error) {
+	if f.securityUpgradeErr != nil {
+		return sysexec.Result{}, f.securityUpgradeErr
+	}
+	f.securityUpgraded = true
 	return sysexec.Result{Stdout: "upgraded"}, nil
 }
 
 // updateTestExecutor builds an Executor with the fake manager injected and
-// every host side effect stubbed: repairFS short-circuits the filesystem
-// repair, the empty PATH keeps pkg.Detect (flatpak repair) from finding real
-// binaries, and the nil runner makes rebootRequired report false.
+// every host side effect stubbed.
 func updateTestExecutor(t *testing.T, fake *upgradeFakeMgr) *Executor {
 	t.Helper()
 	t.Setenv("PATH", t.TempDir())
@@ -66,7 +69,7 @@ func updateTestExecutor(t *testing.T, fake *upgradeFakeMgr) *Executor {
 // scoping stays fail-closed (nothing upgraded) but classifies as
 // NOT_APPLICABLE with the reason, not FAILED.
 func TestExecuteUpdate_SecurityOnlyUnsupported_NotApplicable(t *testing.T) {
-	fake := &upgradeFakeMgr{backend: pkg.Pacman, upgradeErr: pkg.ErrSecurityOnlyUnsupported}
+	fake := &upgradeFakeMgr{backend: pkg.Pacman, securityUpgradeErr: pkg.ErrUnsupported}
 	e := updateTestExecutor(t, fake)
 
 	_, changed, err := e.executeUpdate(context.Background(), &pb.UpdateParams{SecurityOnly: true})
@@ -80,8 +83,8 @@ func TestExecuteUpdate_SecurityOnlyUnsupported_NotApplicable(t *testing.T) {
 	if changed {
 		t.Error("expected changed=false for a not-applicable security-only update")
 	}
-	if fake.upgraded {
-		t.Error("fail-closed violated: UpgradeAll performed an upgrade despite security-only being unsupported")
+	if fake.securityUpgraded || fake.normalUpgraded {
+		t.Error("fail-closed violated: an upgrade ran despite security-only being unsupported")
 	}
 }
 
@@ -93,9 +96,9 @@ func TestExecuteUpdate_SecurityOnlyUnsupported_NotApplicable(t *testing.T) {
 // inheriting updatesAvailable.
 func TestExecuteUpdate_SecurityOnlyToolingMissing_NotApplicable(t *testing.T) {
 	fake := &upgradeFakeMgr{
-		backend:    pkg.Apt,
-		hasUpdates: true,
-		upgradeErr: fmt.Errorf("apt security upgrade: %w", sysexec.ErrBackendUnavailable),
+		backend:            pkg.Apt,
+		hasUpdates:         true,
+		securityUpgradeErr: fmt.Errorf("apt security upgrade: %w", sysexec.ErrBackendUnavailable),
 	}
 	e := updateTestExecutor(t, fake)
 
@@ -114,8 +117,8 @@ func TestExecuteUpdate_SecurityOnlyToolingMissing_NotApplicable(t *testing.T) {
 // during a NORMAL update is a real failure, not inapplicability.
 func TestExecuteUpdate_SecurityOnlyFalse_BackendErrorStaysFailed(t *testing.T) {
 	fake := &upgradeFakeMgr{
-		backend:    pkg.Apt,
-		upgradeErr: fmt.Errorf("apt-get vanished mid-flight: %w", sysexec.ErrBackendUnavailable),
+		backend:          pkg.Apt,
+		normalUpgradeErr: fmt.Errorf("apt-get vanished mid-flight: %w", sysexec.ErrBackendUnavailable),
 	}
 	e := updateTestExecutor(t, fake)
 
@@ -133,7 +136,7 @@ func TestExecuteUpdate_SecurityOnlyFalse_BackendErrorStaysFailed(t *testing.T) {
 // positive path (spec 23 AC 7): a capable backend performs the security-only
 // upgrade and nothing classifies as not-applicable.
 func TestExecuteUpdate_SecurityOnlySupported_Proceeds(t *testing.T) {
-	fake := &upgradeFakeMgr{backend: pkg.Dnf, hasUpdates: true}
+	fake := &upgradeFakeMgr{backend: pkg.Dnf, hasSecurityUpdates: true}
 	e := updateTestExecutor(t, fake)
 
 	_, changed, err := e.executeUpdate(context.Background(), &pb.UpdateParams{SecurityOnly: true})
@@ -141,8 +144,8 @@ func TestExecuteUpdate_SecurityOnlySupported_Proceeds(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected success, got: %v", err)
 	}
-	if !fake.upgraded {
-		t.Error("expected UpgradeAll to run on a capable backend")
+	if !fake.securityUpgraded {
+		t.Error("expected UpgradeSecurity to run on a capable backend")
 	}
 	if !changed {
 		t.Error("expected changed=true when updates were applied")
@@ -155,7 +158,7 @@ func TestExecuteUpdate_SecurityOnlySupported_Proceeds(t *testing.T) {
 // run had a REAL failure — it must stay FAILED, not be demoted to
 // NOT_APPLICABLE.
 func TestSecurityOnlyNotApplicable_Decision(t *testing.T) {
-	sentinel := pkg.ErrSecurityOnlyUnsupported
+	sentinel := pkg.ErrUnsupported
 	wrapped := fmt.Errorf("apt security upgrade: %w", sysexec.ErrBackendUnavailable)
 	rebootFail := errors.New("schedule reboot: shutdown refused")
 
@@ -189,7 +192,7 @@ func TestSecurityOnlyNotApplicable_Decision(t *testing.T) {
 // ActionResult — not FAILED — with the reason in the result error and
 // Changed=false.
 func TestExecuteAction_SecurityOnly_NotApplicableStatus(t *testing.T) {
-	fake := &upgradeFakeMgr{backend: pkg.Pacman, upgradeErr: pkg.ErrSecurityOnlyUnsupported}
+	fake := &upgradeFakeMgr{backend: pkg.Pacman, securityUpgradeErr: pkg.ErrUnsupported}
 	e := updateTestExecutor(t, fake)
 
 	action := &pb.Action{

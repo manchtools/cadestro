@@ -57,6 +57,17 @@ func TestExecuteRepository_RejectsBeforePrivilegedRemount(t *testing.T) {
 	}
 }
 
+func TestRepositoryFields_Dnf5UsesDnfConfig(t *testing.T) {
+	e := &Executor{pkgBackend: pkg.Dnf5}
+	r := e.repositoryFields(&pb.RepositoryParams{
+		Name: "corp",
+		Dnf:  &pb.DnfRepository{Baseurl: "https://mirror.example/repo", Description: "Fedora", Enabled: true},
+	})
+	if r.Dnf == nil || r.Dnf.BaseURL != "https://mirror.example/repo" || r.Dnf.Description != "Fedora" || !r.Dnf.Enabled {
+		t.Fatalf("Dnf5 repository fields = %+v", r.Dnf)
+	}
+}
+
 // TestDownloadAptKey_RejectsNonHTTPS pins WS7 #2 at the agent boundary: the apt
 // signing-key download — the one repository responsibility the SDK Manager
 // cannot own, because it takes raw key bytes, not a URL — refuses any non-https

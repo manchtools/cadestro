@@ -44,7 +44,7 @@ func (e *Executor) executeRepository(ctx context.Context, params *pb.RepositoryP
 		if params.Apt == nil || params.Apt.Disabled {
 			return nil, false, notApplicable("no APT repository configuration provided")
 		}
-	case pkg.Dnf:
+	case pkg.Dnf, pkg.Dnf5:
 		if params.Dnf == nil || params.Dnf.Disabled {
 			return nil, false, notApplicable("no DNF repository configuration provided")
 		}
@@ -120,7 +120,7 @@ func (e *Executor) repositoryFields(params *pb.RepositoryParams) repo.Repository
 			Arch:         a.Arch,
 			Trusted:      a.Trusted,
 		}
-	case pkg.Dnf:
+	case pkg.Dnf, pkg.Dnf5:
 		d := params.Dnf
 		r.Dnf = &repo.DnfConfig{
 			BaseURL:        d.Baseurl,

@@ -143,7 +143,7 @@ func NewExecutor(runner sysexec.Runner) *Executor {
 		// before flatpak); pick the first. An empty list means no supported
 		// package manager — operators need to know every package action will
 		// fail rather than silently no-op on boot (Audit F031).
-		if backends := pkg.Detect(context.Background()); len(backends) == 0 {
+		if backends := pkg.Detect(); len(backends) == 0 {
 			logger.Warn("no supported package manager detected; package actions will fail")
 		} else {
 			backend = backends[0]

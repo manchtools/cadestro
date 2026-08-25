@@ -9,9 +9,9 @@ import (
 
 // TestNoRedundantPackageManagerLookPath enforces that the agent does NOT call
 // exec.LookPath or osexec.LookPath for package-manager binaries (flatpak, dpkg,
-// rpm) that the SDK's pkg.Detect() already enumerates. The SDK runs Detect at
+// rpm) that the SDK's package detector already enumerates. The SDK runs Detect at
 // startup (executor.go:155), stores the result in e.pkgBackend, and the
-// executor's per-format action files can check pkg.Detect(ctx) for sibling
+// executor's per-format action files can check the detector for sibling
 // backends instead of hard-coding binary names and bypassing the SDK's PATH
 // resolution.
 //
@@ -31,9 +31,9 @@ func TestNoRedundantPackageManagerLookPath(t *testing.T) {
 
 	// Package manager binaries whose presence the SDK pkg.Detect already checks.
 	sdkDetectedBinaries := map[string]string{
-		"flatpak": "pkg.Detect(ctx) already checks for flatpak; check pkg.Flatpak membership or use the executor's pkgBackend",
-		"dpkg":    "pkg.Detect(ctx) already checks for apt which requires dpkg; use the executor's pkgBackend or check pkg.Apt membership",
-		"rpm":     "pkg.Detect(ctx) already checks for dnf/zypper which require rpm; use the executor's pkgBackend or check pkg.Dnf/pacman list membership",
+		"flatpak": "FlatpakAvailable already checks for flatpak; use the executor's pkgBackend for native managers",
+		"dpkg":    "pkg.Detect() already checks for apt which requires dpkg; use the executor's pkgBackend",
+		"rpm":     "pkg.Detect() already checks for dnf/zypper which require rpm; use the executor's pkgBackend",
 	}
 
 	findings := 0

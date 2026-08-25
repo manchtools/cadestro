@@ -4,11 +4,10 @@ package executor
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	"github.com/manchtools/cadestro/sdk/pkg"
+	packageSDK "github.com/manchtools/cadestro/sdk/pkg"
 	"github.com/manchtools/cadestro/sdk/sys/desktop"
 )
 
@@ -27,7 +26,7 @@ func (e *Executor) executeFlatpak(ctx context.Context, params *pb.FlatpakParams,
 	if params.AppId == "" {
 		return nil, false, fmt.Errorf("flatpak app_id is required")
 	}
-	if err := pkg.ValidatePackageName(params.AppId); err != nil {
+	if err := packageSDK.ValidatePackageName(params.AppId); err != nil {
 		return nil, false, fmt.Errorf("invalid flatpak app_id: %w", err)
 	}
 
@@ -36,15 +35,11 @@ func (e *Executor) executeFlatpak(ctx context.Context, params *pb.FlatpakParams,
 	if remote == "" {
 		remote = "flathub"
 	}
-	if err := pkg.ValidateRemoteName(remote); err != nil {
+	if err := packageSDK.ValidateRemoteName(remote); err != nil {
 		return nil, false, fmt.Errorf("invalid flatpak remote: %w", err)
 	}
 
-	// Not applicable on systems without flatpak (spec 23). flatpak is a
-	// first-class pkg.Backend that the SDK's pkg.Detect enumerates, so this
-	// honors the SDK's PATH resolution instead of hard-coding the "flatpak"
-	// binary name.
-	if !slices.Contains(pkg.Detect(ctx), pkg.Flatpak) {
+	if !packageSDK.FlatpakAvailable() {
 		return nil, false, notApplicable("flatpak not available on this system")
 	}
 
@@ -54,26 +49,16 @@ func (e *Executor) executeFlatpak(ctx context.Context, params *pb.FlatpakParams,
 	return e.executeFlatpakPerUser(ctx, params, state, remote)
 }
 
-// newPerUserFlatpak builds a per-user flatpak Manager that runs AS the given
-// session's user: a desktop.RunAsRunner wraps the escalating base runner so the
-// flatpak --user operations execute under that user's uid/HOME, and WithUserScope
-// selects the per-user installation. This composes desktop.RunAsRunner +
-// pkg.Flatpak so the agent no longer hand-builds `runuser … flatpak --user`
-// command lines (SDK gap 7).
-func (e *Executor) newPerUserFlatpak(s desktop.Session) (pkg.Manager, error) {
+func (e *Executor) newPerUserFlatpak(s desktop.Session) (*packageSDK.FlatpakManager, error) {
 	ru, err := desktop.RunAsRunner(e.runnerOrDirect(), s)
 	if err != nil {
 		return nil, fmt.Errorf("build run-as runner for %s: %w", s.Username, err)
 	}
-	return pkg.New(pkg.Flatpak, ru, pkg.WithUserScope())
+	return packageSDK.NewUserFlatpak(ru)
 }
 
-// executeFlatpakSystem implements the system-wide install/uninstall path,
-// delegating to the SDK's system-scoped flatpak Manager (escalates via the
-// configured runner). The explicit remote is honored through InstallOptions
-// (SDK gap 6), and pin/unpin go through Pin/IsPinned/Unpin.
 func (e *Executor) executeFlatpakSystem(ctx context.Context, params *pb.FlatpakParams, state pb.DesiredState, remote string) (*pb.CommandOutput, bool, error) {
-	mgr, err := pkg.New(pkg.Flatpak, e.runnerOrDirect())
+	mgr, err := packageSDK.NewFlatpak(e.runnerOrDirect())
 	if err != nil {
 		return nil, false, fmt.Errorf("build flatpak manager: %w", err)
 	}
@@ -116,7 +101,7 @@ func (e *Executor) executeFlatpakSystem(ctx context.Context, params *pb.FlatpakP
 			return out, false, err
 		}
 
-		out, _, instErr := packageResult(mgr.Install(ctx, pkg.InstallOptions{Remote: remote}, params.AppId))
+		out, _, instErr := packageResult(mgr.Install(ctx, remote, params.AppId))
 		if instErr != nil {
 			return out, false, fmt.Errorf("flatpak install failed: %w", instErr)
 		}
@@ -155,7 +140,7 @@ func (e *Executor) executeFlatpakSystem(ctx context.Context, params *pb.FlatpakP
 				"app_id", params.AppId, "error", err)
 		}
 
-		return packageResult(mgr.Remove(ctx, pkg.RemoveOptions{}, params.AppId))
+		return packageResult(mgr.Remove(ctx, packageSDK.RemoveOptions{}, params.AppId))
 	}
 
 	return nil, false, fmt.Errorf("unknown desired state: %v", state)
@@ -246,7 +231,7 @@ func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.Flatpak
 				continue
 			}
 
-			if _, runErr := umgr.Install(ctx, pkg.InstallOptions{Remote: remote}, params.AppId); runErr != nil {
+			if _, runErr := umgr.Install(ctx, remote, params.AppId); runErr != nil {
 				if firstFailure == nil {
 					firstFailure = fmt.Errorf("user %s: install failed: %w", s.Username, runErr)
 				}
@@ -319,7 +304,7 @@ func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.Flatpak
 					"user", u.Username, "app_id", params.AppId, "error", err)
 			}
 
-			if _, runErr := umgr.Remove(ctx, pkg.RemoveOptions{}, params.AppId); runErr != nil {
+			if _, runErr := umgr.Remove(ctx, packageSDK.RemoveOptions{}, params.AppId); runErr != nil {
 				if firstFailure == nil {
 					firstFailure = fmt.Errorf("user %s: uninstall failed: %w", u.Username, runErr)
 				}
@@ -343,7 +328,7 @@ func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.Flatpak
 // part of the requested desired state (mirrors action_package.go's
 // ensurePackagePinned contract), so a failed pin must NOT be reported as success.
 // IsPinned makes the pin converge on an already-installed-but-unpinned app.
-func ensureFlatpakPinned(ctx context.Context, mgr pkg.Manager, appID string) (bool, error) {
+func ensureFlatpakPinned(ctx context.Context, mgr *packageSDK.FlatpakManager, appID string) (bool, error) {
 	pinned, err := mgr.IsPinned(ctx, appID)
 	if err != nil {
 		return false, fmt.Errorf("check pin %s: %w", appID, err)
@@ -355,22 +340,4 @@ func ensureFlatpakPinned(ctx context.Context, mgr pkg.Manager, appID string) (bo
 		return false, fmt.Errorf("pin (mask) %s: %w", appID, err)
 	}
 	return true, nil
-}
-
-// repairFlatpak fixes common Flatpak issues (broken/orphaned refs, stale
-// appstream metadata) via the system-scoped flatpak Manager: Repair restores a
-// consistent installation state and Update refreshes appstream metadata
-// (flatpak update --appstream).
-func (e *Executor) repairFlatpak(ctx context.Context) {
-	mgr, err := pkg.New(pkg.Flatpak, e.runnerOrDirect())
-	if err != nil {
-		e.logger.Warn("repairFlatpak: build flatpak manager failed", "error", err)
-		return
-	}
-	if _, err := mgr.Repair(ctx); err != nil {
-		e.logger.Warn("repairFlatpak: repair failed", "error", err)
-	}
-	if _, err := mgr.Update(ctx); err != nil {
-		e.logger.Warn("repairFlatpak: appstream update failed", "error", err)
-	}
 }

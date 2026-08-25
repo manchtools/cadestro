@@ -5,11 +5,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"strings"
 
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	"github.com/manchtools/cadestro/sdk/pkg"
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	sysreboot "github.com/manchtools/cadestro/sdk/sys/reboot"
 )
 
@@ -70,45 +69,6 @@ func (e *Executor) repairFilesystem(ctx context.Context) bool {
 	return allOk
 }
 
-// repairPackageManager attempts to fix common broken package manager states.
-// This handles issues like interrupted dpkg operations, broken dependencies,
-// and stale lock files that can prevent package operations from succeeding.
-func (e *Executor) repairPackageManager(ctx context.Context) {
-	// If root filesystem is read-only (e.g. disk error caused kernel to remount ro),
-	// all package operations will fail. Attempt to remount it read-write first.
-	// A probe error is treated as "not read-only" (skip the remount) — the same
-	// fail-safe as the previous /proc/mounts parse, letting the package op surface
-	// the real failure rather than remounting speculatively.
-	if ro, err := e.deps.fs.IsReadOnly(ctx, "/"); err == nil && ro {
-		slog.Warn("root filesystem is mounted read-only, attempting remount as read-write")
-		if err := e.deps.fs.RemountRW(ctx, "/"); err != nil {
-			slog.Error("failed to remount root filesystem as read-write", "error", err)
-		}
-	}
-
-	// All four backends' repair is owned by the SDK pkg.Manager.Repair:
-	//   apt    — stale-lock removal + dpkg --configure + fix-broken + update
-	//   dnf    — history redo + remove --duplicates + rpmdb verify/rebuild
-	//   pacman — stale-lock + pacman-key init/populate + -Syy
-	//   zypper — PID-probe stale-lock + clean --all/refresh/verify + rpmdb rebuild
-	//            (SDK #250)
-	// The agent no longer hand-rolls any per-distro repair.
-	if mgr := e.pkgManagerForCtx(ctx); mgr != nil {
-		if _, err := mgr.Repair(ctx); err != nil {
-			slog.Warn("package manager repair failed", "backend", e.pkgBackend, "error", err)
-		}
-	}
-
-	// Flatpak can coexist with any traditional package manager, so check
-	// presence via Detect rather than the primary backend (e.pkgBackend).
-	for _, b := range pkg.Detect(ctx) {
-		if b == pkg.Flatpak {
-			e.repairFlatpak(ctx)
-			break
-		}
-	}
-}
-
 // executeUpdate performs a system-wide package update.
 // It respects version pinning (apt-mark hold / dnf versionlock).
 func (e *Executor) executeUpdate(ctx context.Context, params *pb.UpdateParams) (*pb.CommandOutput, bool, error) {
@@ -126,17 +86,17 @@ func (e *Executor) executeUpdate(ctx context.Context, params *pb.UpdateParams) (
 		return out, false, err
 	}
 
-	// Repair any broken package manager state first
-	e.repairPackageManager(ctx)
-
 	var allOutput strings.Builder
 	var lastErr error
 
 	securityOnly := params != nil && params.SecurityOnly
-
-	// Check if updates are available before running the upgrade (SDK HasUpdates).
-	// A probe error fails SAFE toward running the upgrade (prior behavior).
-	updatesAvailable, hasUpdErr := mgr.HasUpdates(ctx, securityOnly)
+	var updatesAvailable bool
+	var hasUpdErr error
+	if securityOnly {
+		updatesAvailable, hasUpdErr = mgr.HasSecurityUpdates(ctx)
+	} else {
+		updatesAvailable, hasUpdErr = mgr.HasUpdates(ctx)
+	}
 	if hasUpdErr != nil {
 		updatesAvailable = true
 	}
@@ -160,7 +120,14 @@ func (e *Executor) executeUpdate(ctx context.Context, params *pb.UpdateParams) (
 
 	// Re-check after index update (new updates may now be visible).
 	if !updatesAvailable {
-		if u, err := mgr.HasUpdates(ctx, securityOnly); err == nil {
+		var u bool
+		var err error
+		if securityOnly {
+			u, err = mgr.HasSecurityUpdates(ctx)
+		} else {
+			u, err = mgr.HasUpdates(ctx)
+		}
+		if err == nil {
 			updatesAvailable = u
 		}
 	}
@@ -168,12 +135,13 @@ func (e *Executor) executeUpdate(ctx context.Context, params *pb.UpdateParams) (
 	// Perform the upgrade
 	allOutput.WriteString("=== Package Upgrade ===\n")
 
-	// Full system upgrade via the SDK Manager. SecurityOnly is honored per
-	// backend by the SDK: apt routes to unattended-upgrade (failing closed if it
-	// is absent), dnf adds --security, zypper its security patch path; pacman and
-	// flatpak return ErrSecurityOnlyUnsupported (so a security-only request fails
-	// closed instead of silently widening to a full upgrade).
-	upgradeResult, upgradeErr := mgr.UpgradeAll(ctx, pkg.UpgradeOptions{SecurityOnly: securityOnly})
+	var upgradeResult sysexec.Result
+	var upgradeErr error
+	if securityOnly {
+		upgradeResult, upgradeErr = mgr.UpgradeSecurity(ctx)
+	} else {
+		upgradeResult, upgradeErr = mgr.UpgradeAll(ctx)
+	}
 	allOutput.WriteString(upgradeResult.Stdout)
 	allOutput.WriteString(upgradeResult.Stderr)
 	if upgradeErr != nil {
@@ -219,13 +187,6 @@ func (e *Executor) executeUpdate(ctx context.Context, params *pb.UpdateParams) (
 		}
 	}
 
-	// Spec 23 AC 2: a security-only request on a backend that cannot scope
-	// to security patches (pacman/flatpak → ErrSecurityOnlyUnsupported) or
-	// whose scoping tool is absent (apt without unattended-upgrades →
-	// ErrBackendUnavailable) is structural inapplicability, not a failure.
-	// Fail-closed is preserved — nothing was upgraded — only the
-	// classification changes. changed deliberately excludes
-	// updatesAvailable: it reflects what WOULD apply, not what did.
 	if securityOnlyNotApplicable(securityOnly, upgradeErr, lastErr) {
 		return &pb.CommandOutput{
 			ExitCode: 0,

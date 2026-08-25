@@ -54,18 +54,13 @@ func (e *Executor) ensurePackagePresent(ctx context.Context, mgr pkg.Manager, pa
 	if out, err := e.requireWritableFS(ctx); err != nil {
 		return out, false, err
 	}
-	e.repairPackageManager(ctx)
-
 	if _, updateErr := mgr.Update(ctx); updateErr != nil {
 		e.logger.Warn("package index update failed, continuing with install", "error", updateErr)
 	}
 
-	// Version and AllowDowngrade are independent — setting a version does NOT
-	// imply downgrade permission. Callers must explicitly set AllowDowngrade.
-	result, err := mgr.Install(ctx, pkg.InstallOptions{
-		Version:        params.Version,
-		AllowDowngrade: params.AllowDowngrade,
-	}, pkgName)
+	spec := pkg.InstallSpec{Name: pkgName, Version: params.Version}
+	options := pkg.InstallOptions{AllowDowngrade: params.AllowDowngrade}
+	result, err := mgr.Install(ctx, options, spec)
 
 	if err == nil && params.Pin {
 		if _, pinErr := e.pinPackage(ctx, mgr, pkgName); pinErr != nil {
@@ -140,11 +135,6 @@ func (e *Executor) ensurePackageAbsent(ctx context.Context, mgr pkg.Manager, _ *
 	if out, err := e.requireWritableFS(ctx); err != nil {
 		return out, false, err
 	}
-	e.repairPackageManager(ctx)
-	// Audit F061: previously the unpin error was discarded silently —
-	// a pinned package's removal would surface as the package
-	// manager's "held" message instead of the underlying unpin
-	// failure. Log so the operator can correlate.
 	if _, err := e.ensurePackageUnpinned(ctx, mgr, pkgName); err != nil {
 		e.logger.Warn("ensurePackageAbsent: failed to unpin package before removal",
 			"package", pkgName, "error", err)
@@ -189,6 +179,10 @@ func (e *Executor) getPackageNameForManager(params *pb.PackageParams) string {
 			return params.AptName
 		}
 	case pkg.Dnf:
+		if params.DnfName != "" {
+			return params.DnfName
+		}
+	case pkg.Dnf5:
 		if params.DnfName != "" {
 			return params.DnfName
 		}

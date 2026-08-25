@@ -27,7 +27,7 @@ func notApplicable(format string, args ...any) error {
 // securityOnlyNotApplicable decides whether an update run's outcome is
 // structural inapplicability (spec 23 AC 2): the request was security-only,
 // the upgrade failed with one of the two capability sentinels
-// (ErrSecurityOnlyUnsupported: pacman/flatpak can't scope;
+// (ErrUnsupported: a backend cannot scope security updates;
 // ErrBackendUnavailable: apt's unattended-upgrade tooling absent), and
 // nothing ELSE went wrong afterwards — lastErr must still be exactly the
 // upgrade error. A reboot-scheduling failure joined onto lastErr means the
@@ -35,6 +35,6 @@ func notApplicable(format string, args ...any) error {
 // (CodeRabbit catch on the spec 23 change).
 func securityOnlyNotApplicable(securityOnly bool, upgradeErr, lastErr error) bool {
 	return securityOnly && upgradeErr != nil && lastErr == upgradeErr &&
-		(errors.Is(upgradeErr, pkg.ErrSecurityOnlyUnsupported) ||
+		(errors.Is(upgradeErr, pkg.ErrUnsupported) ||
 			errors.Is(upgradeErr, sysexec.ErrBackendUnavailable))
 }

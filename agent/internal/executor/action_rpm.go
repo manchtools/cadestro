@@ -32,7 +32,7 @@ func (e *Executor) executeRpm(ctx context.Context, params *pb.AppInstallParams, 
 	// rpm-format backends the SDK's pkg.Detect enumerates; detecting either
 	// means rpm is usable, honoring SDK PATH resolution instead of
 	// hard-coding "rpm".
-	if detected := pkg.Detect(ctx); !slices.Contains(detected, pkg.Dnf) && !slices.Contains(detected, pkg.Zypper) {
+	if detected := pkg.Detect(); !slices.Contains(detected, pkg.Dnf) && !slices.Contains(detected, pkg.Dnf5) && !slices.Contains(detected, pkg.Zypper) {
 		return nil, false, notApplicable("no supported .rpm package manager available on this system")
 	}
 
