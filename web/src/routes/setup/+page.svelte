@@ -8,6 +8,7 @@
 	import { configStore, apiClient } from '$lib/sdk';
 	import { IdentityProviderType } from '$contract/cadestro/v1/common_pb';
 	import { checkAndSwitchVersion } from '$lib/version';
+	import { fetchHealth } from '$lib/health';
 	import { ErrorCode } from '$contract/cadestro/v1/common_pb';
 	import { getLocalizedError, getErrorCode } from '$lib/errors';
 	import { Button } from '$lib/components/ui/button';
@@ -116,7 +117,7 @@
 		}
 		testing = true;
 		try {
-			const response = await fetch(`${serverUrl}/health`, { method: 'GET', mode: 'cors' });
+			const { response } = await fetchHealth(serverUrl, { method: 'GET', mode: 'cors' });
 			if (response.ok) {
 				toast.success(m.setup_connection_success());
 			} else {

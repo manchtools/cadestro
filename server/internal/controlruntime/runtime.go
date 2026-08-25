@@ -2,6 +2,7 @@ package controlruntime
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -163,8 +164,9 @@ func New(cfg Config) *Runtime {
 		Manager: manager, Sessions: sessions, Tokens: tokens, Store: cfg.Store, Logger: cfg.Logger,
 		OriginPatterns: cfg.TerminalOriginPatterns, Now: cfg.Now,
 	}))
-	publicMux.HandleFunc("/health", health)
-	publicMux.HandleFunc("/ready", readinessHandler(cfg.Readiness))
+	healthHandler := health(cfg.Version)
+	publicMux.HandleFunc("/health", healthHandler)
+	publicMux.HandleFunc("/ready", readinessHandler(cfg.Readiness, healthHandler))
 	auth.SetTrustedProxies(cfg.TrustedProxies)
 	publicHandler := middleware.RequestID(middleware.SecurityHeaders(
 		middleware.CORS(cfg.CORSOrigins, cfg.CORSAllowAll, cfg.Logger)(publicMux)))
@@ -175,8 +177,8 @@ func New(cfg Config) *Runtime {
 	agentMux.Handle(agentPath, directAgentHandler)
 
 	enrollmentHandler.MountRenewal(agentMux, controlOptions...)
-	agentMux.HandleFunc("/health", health)
-	agentMux.HandleFunc("/ready", readinessHandler(cfg.Readiness))
+	agentMux.HandleFunc("/health", healthHandler)
+	agentMux.HandleFunc("/ready", readinessHandler(cfg.Readiness, healthHandler))
 	agentHandler := agentstream.MTLSMiddleware(agentMux)
 
 	return &Runtime{
@@ -230,18 +232,22 @@ func (r *Runtime) Close() {
 	})
 }
 
-func health(response http.ResponseWriter, _ *http.Request) {
-	response.WriteHeader(http.StatusOK)
-	_, _ = response.Write([]byte("ok"))
+func health(version string) http.HandlerFunc {
+	return func(response http.ResponseWriter, _ *http.Request) {
+		response.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(response).Encode(struct {
+			Version string `json:"version"`
+		}{Version: version})
+	}
 }
 
-func readinessHandler(check func(context.Context) error) http.HandlerFunc {
+func readinessHandler(check func(context.Context) error, healthy http.Handler) http.HandlerFunc {
 	return func(response http.ResponseWriter, request *http.Request) {
 		if err := check(request.Context()); err != nil {
 			http.Error(response, "not ready", http.StatusServiceUnavailable)
 			return
 		}
-		health(response, request)
+		healthy.ServeHTTP(response, request)
 	}
 }
 

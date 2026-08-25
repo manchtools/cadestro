@@ -15,6 +15,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import PageShell from '$lib/components/page-shell.svelte';
 	import { getVersionCookie, clearVersionCookie } from '$lib/version';
+	import { fetchHealth } from '$lib/health';
 	import { startTour } from '$lib/onboarding';
 	import * as m from '$lib/paraglide/messages';
 	import { getLocale, setLocale } from '$lib/paraglide/runtime';
@@ -73,10 +74,9 @@
 	onMount(async () => {
 		pinnedVersion = getVersionCookie();
 		try {
-			const res = await fetch(`${configStore.serverUrl}/health`);
-			if (res.ok) {
-				const data = await res.json();
-				serverVersion = data.version ?? '';
+			const { response, version } = await fetchHealth(configStore.serverUrl);
+			if (response.ok) {
+				serverVersion = version ?? '';
 			}
 		} catch (err) {
 			console.warn(err);

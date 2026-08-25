@@ -1,3 +1,5 @@
+import { fetchHealth } from '$lib/health';
+
 const COOKIE_NAME = 'cadestro-version';
 const LOOP_KEY = 'cadestro-version-attempted';
 
@@ -18,10 +20,10 @@ export function clearVersionCookie() {
 
 export async function checkAndSwitchVersion(serverUrl: string): Promise<boolean> {
 	try {
-		const res = await fetch(`${serverUrl}/health`, { signal: AbortSignal.timeout(3000) });
-		if (!res.ok) return false;
-		const data = await res.json();
-		const serverVersion = data.version;
+		const { response, version: serverVersion } = await fetchHealth(serverUrl, {
+			signal: AbortSignal.timeout(3000)
+		});
+		if (!response.ok) return false;
 
 		if (!serverVersion || serverVersion === 'dev' || serverVersion === __APP_VERSION__) {
 			sessionStorage.removeItem(LOOP_KEY);
