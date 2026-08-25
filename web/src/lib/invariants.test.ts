@@ -6,6 +6,7 @@ import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
+const projectSettings = join(srcRoot, '..', 'project.inlang', 'settings.json');
 
 function walk(dir: string): string[] {
 	const out: string[] = [];
@@ -56,5 +57,11 @@ describe('web source invariants (NIS2 / CLAUDE)', () => {
 	it('G6: no crypto.randomUUID() / uuid package — IDs are ULIDs', () => {
 		const hits = scan(/\brandomUUID\s*\(|from\s+['"]uuid['"]|require\(\s*['"]uuid['"]\s*\)|\buuidv4\s*\(/);
 		expect(hits, `use a ULID, not randomUUID/uuid:\n${hits.join('\n')}`).toEqual([]);
+	});
+
+	it('inlang modules use exact versions', () => {
+		const settings = JSON.parse(readFileSync(projectSettings, 'utf8')) as { modules: string[] };
+		expect(settings.modules).toHaveLength(3);
+		expect(settings.modules.every((module) => /@\d+\.\d+\.\d+\/dist\/index\.js$/.test(module))).toBe(true);
 	});
 });
