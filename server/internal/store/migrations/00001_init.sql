@@ -781,7 +781,6 @@ FROM audit_operations o
 WHERE o.stream = 'control'
   AND NOT EXISTS (SELECT 1 FROM audit_effects e WHERE e.operation_id = o.operation_id);
 
--- docref: begin audit-append-only
 -- +goose StatementBegin
 CREATE TRIGGER audit_operations_block_update BEFORE UPDATE ON audit_operations BEGIN
     SELECT RAISE(ABORT, 'audit_operations is append-only');
@@ -802,7 +801,6 @@ CREATE TRIGGER audit_effects_block_delete BEFORE DELETE ON audit_effects BEGIN
     SELECT RAISE(ABORT, 'audit_effects is append-only');
 END;
 -- +goose StatementEnd
--- docref: end audit-append-only
 
 CREATE TABLE jobs (
     job_id        text PRIMARY KEY CHECK (
@@ -905,4 +903,3 @@ VALUES ('00000000000000000000000001', 'Admin', 'Full system access', '[]', true,
 INSERT INTO roles (id, name, description, permissions, is_system, created_at, updated_at)
 VALUES ('00000000000000000000000002', 'User', 'Basic user access', '[]', true,
         '2026-01-01 00:00:00+00:00', '2026-01-01 00:00:00+00:00');
-
