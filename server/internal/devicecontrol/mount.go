@@ -11,7 +11,7 @@ import (
 // MountLiveControl registers live device-control procedures.
 func (h *Handlers) MountLiveControl(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
 	if mux == nil {
-	panic("devicecontrol: mux is required")
+		panic("devicecontrol: mux is required")
 	}
 	mounted := make([]string, 0, 2)
 	register := func(procedure string, handler http.Handler) {

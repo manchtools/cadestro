@@ -36,6 +36,7 @@ type AuditEventFilter struct {
 	BeforeSeq    int64
 	Limit        int32
 }
+
 // DeviceRow is one stored device.
 type DeviceRow = generated.Device
 
