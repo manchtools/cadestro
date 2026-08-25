@@ -399,7 +399,7 @@ is no local password store or device identity.
 
 ### Disk encryption (LUKS)
 
-<!-- docref: begin src=agent/internal/executor/secret_transport.go#Executor.executeLuksAction:16f12830,agent/internal/executor/luks.go#Executor.executeLuks:d673138a,contract/proto/cadestro/v1/actions.proto#EncryptionParams:503a1dfa -->
+<!-- docref: begin src=agent/internal/executor/secret_transport.go#Executor.executeLuksAction:16f12830,agent/internal/executor/luks.go#Executor.executeLuks:6d5d79d1,contract/proto/cadestro/v1/actions.proto#EncryptionParams:503a1dfa -->
 Takes ownership of the machine's LUKS volume and manages its passphrase.
 
 `preshared_key` is delivered only on the authenticated device's mTLS stream and
