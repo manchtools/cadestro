@@ -16,17 +16,15 @@
 	let { params = $bindable(), errors, onclearerror }: Props = $props();
 
 	let usePerManagerNames = $state(false);
-	let seededParams: PackageFormState | null = null;
 
-	function seedMode() {
+	function seedMode(next: PackageFormState) {
 		usePerManagerNames =
-			!!params.aptName || !!params.dnfName || !!params.pacmanName || !!params.zypperName;
+			!!next.aptName || !!next.dnfName || !!next.pacmanName || !!next.zypperName;
 	}
 
 	$effect(() => {
-		if (params === seededParams) return;
-		seededParams = params;
-		untrack(seedMode);
+		const next = params;
+		untrack(() => seedMode(next));
 	});
 
 	function handleModeChange(enabled: boolean) {
