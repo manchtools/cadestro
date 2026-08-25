@@ -961,7 +961,7 @@ make test-integration-fedora
 make test-integration-opensuse
 make test-integration-archlinux
 
-# Run all 4 distros in parallel
+# Run all distro lanes in parallel
 make test-integration-all
 
 # Run privileged edge case tests (requires --privileged container)
@@ -1021,11 +1021,12 @@ The test suite (`internal/executor/integration_test.go`, ~3,500 lines) exercises
 
 ### Test Containers
 
-Each distro has its own Dockerfile in `test/`:
+Each distro family has one Dockerfile in `test/`; the Debian Dockerfile is parameterized for both supported suites:
 
 | Container | Dockerfile | Base Image | Package Manager |
 |-----------|------------|------------|-----------------|
-| Debian | `Dockerfile.integration` | `golang:1.26-bookworm` | apt |
+| Debian 12 | `Dockerfile.integration` with `DEBIAN_SUITE=bookworm` | `golang:1.26-bookworm` | apt |
+| Debian 13 | `Dockerfile.integration` with `DEBIAN_SUITE=trixie` | `golang:1.26-trixie` | apt |
 | Fedora | `Dockerfile.integration.fedora` | `fedora:42` | dnf |
 | openSUSE | `Dockerfile.integration.opensuse` | `opensuse/tumbleweed` | zypper |
 | Arch Linux | `Dockerfile.integration.archlinux` | `archlinux:latest` | pacman |
@@ -1036,7 +1037,7 @@ Container setup:
 3. Set up SSHD host keys and config directory for validation tests
 4. Pre-download Go module dependencies
 
-Tests run via `gotestsum ...` directly as root — same execution context as the production systemd unit.
+Tests run via `go test -p 1` directly as root — same execution context as the production systemd unit.
 
 ### Core Action Tests
 

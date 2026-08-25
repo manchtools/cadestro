@@ -29,7 +29,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - distro: debian
+          - distro: debian-12
+            suite: bookworm
+            dockerfile: agent/test/Dockerfile.integration
+          - distro: debian-13
+            suite: trixie
             dockerfile: agent/test/Dockerfile.integration
           - distro: fedora
             dockerfile: agent/test/Dockerfile.integration.fedora
@@ -43,7 +47,12 @@ jobs:
 
       - name: Build test image
         run: |
+          build_args=()
+          if [ -n "${{ matrix.suite }}" ]; then
+            build_args+=(--build-arg "DEBIAN_SUITE=${{ matrix.suite }}")
+          fi
           docker build \
+            "${build_args[@]}" \
             -f ${{ matrix.dockerfile }} \
             -t cadestro-agent-test-${{ matrix.distro }} \
             .
@@ -51,11 +60,8 @@ jobs:
       - name: Run integration tests
         run: |
           docker run --rm --memory=6g --cpus=4 cadestro-agent-test-${{ matrix.distro }} \
-            /go/bin/gotestsum \
-              --format testdox \
-              --format-hide-empty-pkg \
-              -- -p 1 -tags=integration -count=1 -timeout=10m \
-              ./agent/internal/executor/ -run Integration
+            go test -p 1 -tags=integration -count=1 -timeout=10m \
+            ./agent/internal/executor/ -run Integration
 
   integration-edgecase:
     name: edge-cases (privileged)
@@ -73,8 +79,5 @@ jobs:
       - name: Run edge case tests
         run: |
           docker run --rm --privileged --memory=6g --cpus=4 cadestro-agent-test-debian \
-            /go/bin/gotestsum \
-              --format testdox \
-              --format-hide-empty-pkg \
-              -- -p 1 -tags=integration -count=1 -timeout=10m \
-              ./agent/internal/executor/ -run Integration -run EdgeCase
+            go test -p 1 -tags=integration -count=1 -timeout=10m \
+            ./agent/internal/executor/ -run Integration -run EdgeCase

@@ -7,17 +7,17 @@ The agent runs as root on managed devices and delegates OS work to the [SDK](../
 | Tier | Selector | Where it runs |
 |---|---|---|
 | Unit + arch | `go test -race ./...` (no tags) | host, every PR (`.github/workflows/agent.yml`) |
-| Integration | `//go:build integration` files, functions named `TestIntegration_*` | 4-distro container matrix (`.github/workflows/agent-integration.yml`) |
+| Integration | `//go:build integration` files, functions named `TestIntegration_*` | Debian 12/13, Fedora, openSUSE, and Arch containers (`.github/workflows/agent-integration.yml`) |
 | Privileged edge | same tag, functions named `TestEdgeCase_*` | privileged container lane |
 
 Rules the CI enforces (self-discovering guards in `internal/archtest/`):
 - Every integration-tagged test must live in a package the workflow tests **and** match a `-run` selector (`TestIntegration_*` / `TestEdgeCase_*`) — anything else never runs anywhere and the guard fails the build.
-- Executor tests that touch the OS belong in the integration tier; unit tests use the seams (`FakeRunner`, `SetNowForTest`, backend fakes) — see `docs/container-test-strategy.md` for the full strategy and the dormant-test trap it prevents.
+- Executor tests that touch the OS belong in the integration tier; unit tests use the seams (`FakeRunner`, `SetNowForTest`, backend fakes). The implemented container matrix and selectors live in `.github/workflows/agent-integration.yml` and `agent/test/`.
 
 ## Running the container lanes locally
 
 ```bash
-# Distro matrix lane (debian; swap the Dockerfile suffix for fedora/opensuse/archlinux)
+# Distro matrix lane (Debian defaults to bookworm; CI also runs trixie)
 cd .. && docker build -f agent/test/Dockerfile.integration -t cadestro-agent-test .
 docker run --rm cadestro-agent-test \
   go test -p 1 -tags=integration -count=1 -timeout=10m ./agent/internal/executor/ -run Integration

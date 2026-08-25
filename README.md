@@ -94,10 +94,10 @@ history is a single squashed baseline; once a schema is released, later
 changes are new migrations with tested `Up` and `Down` sections.
 → [upgrades](docs/upgrade.md)
 
-<!-- docref: begin src=.github/workflows/agent-integration.yml#@distro-matrix:5b369588,.github/workflows/sdk.yml#@sdk-distro-matrix:7cafa43b -->
+<!-- docref: begin src=.github/workflows/agent-integration.yml#@distro-matrix:129c904f,.github/workflows/sdk.yml#@sdk-distro-matrix:425aa2ed -->
 **Tested on**, in CI, against real system state in containers: the agent's
-executor on Debian, Fedora, openSUSE, and Arch; the system capability layer on
-Fedora, AlmaLinux, Arch, and openSUSE in addition to its Debian base lanes.
+executor on Debian 12, Debian 13, Fedora, openSUSE, and Arch; the system
+capability layer on Debian 12 and 13, Fedora, AlmaLinux, Arch, and openSUSE.
 Other distributions may work; these are the ones a merge cannot break silently.
 <!-- docref: end -->
 

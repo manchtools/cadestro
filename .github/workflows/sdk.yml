@@ -272,7 +272,7 @@ jobs:
             go test -p 1 -tags=container -count=1 -v ${{ matrix.path }} -run Container
 
   container-tests-distro:
-    name: Container Tests (${{ matrix.distro }})
+    name: Container Tests (${{ matrix.label || matrix.distro }})
     runs-on: ubuntu-latest
     # docref: begin sdk-distro-matrix
     strategy:
@@ -283,16 +283,26 @@ jobs:
           - { distro: almalinux, notify: ./sdk/sys/notify/, walltool: wall }
           - { distro: arch,      notify: ./sdk/sys/notify/, walltool: wall }
           - { distro: opensuse,  notify: '',                walltool: '' }
+          - { distro: debian,   suite: trixie, notify: '',    walltool: '', label: debian/trixie }
     # docref: end sdk-distro-matrix
     steps:
       - uses: actions/checkout@v5
 
       - name: Build base image
-        run: docker build -f sdk/test/Dockerfile.${{ matrix.distro }} --target base -t cadestro-base .
+        run: |
+          build_args=()
+          if [ -n "${{ matrix.suite }}" ]; then
+            build_args+=(--build-arg "DEBIAN_SUITE=${{ matrix.suite }}")
+          fi
+          docker build "${build_args[@]}" -f sdk/test/Dockerfile.${{ matrix.distro }} --target base -t cadestro-base .
 
       - name: Assert base tool surface (no vacuous skip)
         run: |
-          for tool in cryptsetup nft ip lsblk useradd runuser env smartctl gpg flatpak fuser openssl ${{ matrix.walltool }}; do
+          tools="cryptsetup nft ip lsblk useradd runuser env smartctl gpg flatpak fuser openssl update-ca-certificates ${{ matrix.walltool }}"
+          if [ "${{ matrix.suite }}" = trixie ]; then
+            tools="apt-get fuser cryptsetup nft ip lsblk useradd runuser env smartctl gpg openssl update-ca-certificates"
+          fi
+          for tool in $tools; do
             if ! docker run --rm --memory=6g --cpus=4 cadestro-base sh -c "command -v $tool >/dev/null 2>&1"; then
               echo "::error::tool '$tool' absent from the ${{ matrix.distro }} base image — its container test would skip VACUOUSLY"
               exit 1

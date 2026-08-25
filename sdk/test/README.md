@@ -53,7 +53,7 @@ the "platforms" model (Molecule platforms / Kitchen). Coverage is **empirical**:
 we run every capability on every distro and let the failures define the work,
 rather than predicting from code.
 
-| Capability | Debian | Fedora | EL (Alma/Rocky) | Arch | openSUSE |
+| Capability | Debian 12/13 | Fedora | EL (Alma/Rocky) | Arch | openSUSE |
 |------------|:--:|:--:|:--:|:--:|:--:|
 | pkg, repo, encryption, firewall, netconfig, terminal, smart, reboot, desktop, inventory | ✅ | ✅ | ✅ | ✅ | ✅ |
 | catrust | ✅ ca-certificates | ✅ p11-kit | ✅ p11-kit | ✅ p11-kit | ✅ suse-ca-certificates |
@@ -68,7 +68,7 @@ notify broadcast path cannot run there.
 identically on every distro, so it is covered once on Debian (the upstream .deb).
 Its rpm/AUR packaging elsewhere is fragile in CI and buys no behavioural coverage.
 
-These two are the documented matrix gaps; everything else runs on all five families.
+These two are the documented matrix gaps; Debian 12 is the full state matrix and Debian 13 adds a full base-stage portability lane. Everything else runs on all five families.
 
 Each distro has a `test/Dockerfile.<distro>` (same multi-stage shape; the Go
 toolchain is copied from the canonical `golang` image so the compiler is

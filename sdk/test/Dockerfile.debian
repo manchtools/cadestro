@@ -16,7 +16,8 @@
 
 
 
-FROM golang:1.26-bookworm AS base
+ARG DEBIAN_SUITE=bookworm
+FROM golang:1.26-${DEBIAN_SUITE} AS base
 
 
 
