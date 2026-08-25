@@ -1,5 +1,5 @@
 <script lang="ts">
-
+	import { untrack } from 'svelte';
 	import IdentityRow from '$lib/components/create/identity-row.svelte';
 	import { toast } from 'svelte-sonner';
 	import { base as basePath } from '$app/paths';
@@ -44,7 +44,9 @@
 		onsaved: () => Promise<void> | void;
 	} = $props();
 
-	const setsById = new Map<string, ActionSet>(library.flatMap((s) => s.id ? [[s.id.value, s] as const] : []));
+	const setsById = new Map<string, ActionSet>(
+		untrack(() => library.flatMap((s) => (s.id ? [[s.id.value, s] as const] : [])))
+	);
 
 	interface Body {
 		name: string;
@@ -106,7 +108,7 @@
 			.map((s) => ({ id: typeof s.id === 'string' ? s.id : s.id?.value ?? '', name: s.name, memberCount: s.memberCount }))
 	);
 
-	const claimed = bindBuilderContext(`definition:${defId}`, () => {
+	const claimed = bindBuilderContext(untrack(() => `definition:${defId}`), () => {
 
 		if (committing || parked) return null;
 		return {

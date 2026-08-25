@@ -1,5 +1,5 @@
 <script lang="ts">
-
+	import { untrack } from 'svelte';
 	import IdentityRow from '$lib/components/create/identity-row.svelte';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type ActionSet, type ManagedAction } from '$lib/sdk';
@@ -61,7 +61,9 @@
 		removed: string[];
 	}
 
-	const byId = new Map<string, ManagedAction>(library.flatMap((a) => a.id ? [[a.id.value, a] as const] : []));
+	const byId = new Map<string, ManagedAction>(
+		untrack(() => library.flatMap((a) => (a.id ? [[a.id.value, a] as const] : [])))
+	);
 
 	function serverBody(): Body {
 		const steps: StepDraft[] = [];
@@ -143,7 +145,7 @@
 	);
 
 	const availableActions = $derived(
-		library.filter((a) => !steps.some((s) => (s.actionId ?? '') === (a.id ?? '')))
+		library.filter((a) => !steps.some((s) => (s.actionId ?? '') === (a.id?.value ?? '')))
 	);
 
 	const existingEntries = $derived<PaletteEntry[]>(
@@ -153,7 +155,7 @@
 		})
 	);
 
-	const claimed = bindBuilderContext(`action-set:${setId}`, () => {
+	const claimed = bindBuilderContext(untrack(() => `action-set:${setId}`), () => {
 
 		if (committing || parked) return null;
 		const blocked = errorCount > 0;

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { apiClient } from '$lib/sdk';
 	import { setUserLoaders, apiUserLoaders } from './forms/user-loader-context.svelte';
@@ -46,12 +47,14 @@
 
 	setUserLoaders(apiUserLoaders);
 
-	let step = $state<'select-type' | 'configure'>(initialType ? 'configure' : 'select-type');
+	let step = $state<'select-type' | 'configure'>(
+		untrack(() => (initialType ? 'configure' : 'select-type'))
+	);
 
 	let name = $state('');
 	let description = $state('');
 
-	let actionType = $state<string>(initialType ?? '');
+	let actionType = $state<string>(untrack(() => initialType ?? ''));
 	let desiredState = $state<string>('0');
 	let timeoutSeconds = $state(300);
 	let saving = $state(false);

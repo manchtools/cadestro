@@ -1,5 +1,5 @@
 <script lang="ts">
-
+	import { untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$lib/navigation';
 	import { apiClient, useDraft } from '$lib/sdk';
@@ -39,7 +39,7 @@
 	let parked = $state(false);
 	let scheduleOpen = $state(false);
 
-	let atWall = $state(draft.typeValue === null);
+	let atWall = $state(untrack(() => draft.typeValue === null));
 
 	const typeValue = $derived(draft.typeValue);
 	const formKey = $derived(typeValue ? formKeyForTypeValue(typeValue) : null);

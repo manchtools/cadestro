@@ -1,5 +1,5 @@
 <script lang="ts">
-
+	import { untrack } from 'svelte';
 	import type { Component } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { apiClient, type ManagedAction } from '$lib/sdk';
@@ -48,11 +48,13 @@
 
 	setUserLoaders(apiUserLoaders);
 
-	let base = $state<StepDraft | null>(stepFromAction(action, 0));
+	let base = $state<StepDraft | null>(untrack(() => stepFromAction(action, 0)));
 
-	let step = $state<StepDraft | null>(base ? (JSON.parse(JSON.stringify(base)) as StepDraft) : null);
+	let step = $state<StepDraft | null>(
+		untrack(() => (base ? (JSON.parse(JSON.stringify(base)) as StepDraft) : null))
+	);
 
-	let baseline = $state(base ? JSON.stringify($state.snapshot(base)) : '');
+	let baseline = $state(untrack(() => (base ? JSON.stringify($state.snapshot(base)) : '')));
 
 	let committing = $state(false);
 	let parked = $state(false);
@@ -79,7 +81,7 @@
 				: getActionTypeLabel(action.type))
 	);
 
-	const claimed = bindBuilderContext(`action:${action.id}`, () => {
+	const claimed = bindBuilderContext(untrack(() => `action:${action.id?.value ?? ''}`), () => {
 
 		if (!step || committing || parked) return null;
 		const blocked = issues.first !== null;
