@@ -12,8 +12,6 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// fakeSender records every TerminalOutput / TerminalStateChange so
-// the tests can assert against it without an actual SDK Client.
 type fakeSender struct {
 	mu      sync.Mutex
 	outputs []*pb.TerminalOutput
@@ -45,9 +43,7 @@ func (f *fakeSender) lastState() *pb.TerminalStateChange {
 
 func newTestHandler(t *testing.T) (*Handler, *fakeSender) {
 	t.Helper()
-	// Default to a TTY-enabled store so existing tests exercise the
-	// full start path without being blocked by the toggle gate. Tests
-	// that want to exercise the gate itself use newTestHandlerWithTTY.
+
 	return newTestHandlerWithTTY(t, true)
 }
 
@@ -69,19 +65,11 @@ func newTestHandlerWithTTY(t *testing.T, ttyEnabled bool) (*Handler, *fakeSender
 	}
 	sender := &fakeSender{}
 	h.SetTerminalSender(sender)
-	// SetTerminalSender lazily starts the sweep loop; without this the
-	// goroutine outlives the test (#173 — the F004 comment in the
-	// production code warns about exactly this).
+
 	t.Cleanup(h.StopTerminalSweeper)
 	return h, sender
 }
 
-// addTestSession injects a fake active session into the registry
-// without going through OnTerminalStart, so tests can exercise
-// registry behaviour (limits, lookup, idle sweep, close) without
-// needing real sudo/usermod/PTY access. The session is created in
-// the active state so the idle sweeper picks it up the same way it
-// would for a real running session.
 func addTestSession(h *Handler, id, ttyUser string, lastActivity time.Time) *terminalSession {
 	ts := &terminalSession{
 		id:           id,
@@ -157,7 +145,7 @@ func TestTerminal_CloseIsIdempotent(t *testing.T) {
 	addTestSession(h, "01ABC", "cadestro-tty-test", time.Now())
 
 	h.closeTerminal(context.Background(), "01ABC", "")
-	// Second close should be a clean no-op (no panic, no error path).
+
 	h.closeTerminal(context.Background(), "01ABC", "")
 
 	if got := len(h.terminals); got != 0 {
@@ -167,8 +155,7 @@ func TestTerminal_CloseIsIdempotent(t *testing.T) {
 
 func TestTerminal_SweepIdle_ClosesStaleSessions(t *testing.T) {
 	h, _ := newTestHandler(t)
-	// Force a tight idle window so the test runs without sleeping
-	// for the default 30 minutes.
+
 	h.mu.Lock()
 	h.terminalIdleTimeout = 50 * time.Millisecond
 	h.mu.Unlock()
@@ -244,10 +231,6 @@ func TestTerminal_SetTerminalSender_DoesNotResetExistingValues(t *testing.T) {
 	}
 }
 
-// failTerminalStart should send STATE_ERROR via the supplied sender.
-// The validation/limit/duplicate paths in OnTerminalStart all funnel
-// through this helper, passing the sender they snapshotted at the
-// start of the call so the helper never has to re-acquire h.mu.
 func TestTerminal_FailStart_EmitsErrorState(t *testing.T) {
 	h, sender := newTestHandler(t)
 	h.failTerminalStart(context.Background(), sender, "01ABC", "test failure")
@@ -267,16 +250,11 @@ func TestTerminal_FailStart_EmitsErrorState(t *testing.T) {
 	}
 }
 
-// OnTerminalStart must reject any TTY username that does not start
-// with the dedicated cadestro-tty- prefix, even when the username is
-// otherwise syntactically valid. This guards against the agent ever
-// operating on an arbitrary system account if the control server's
-// resolution is buggy or compromised.
 func TestTerminal_Start_RejectsNonPrefixedUsername(t *testing.T) {
 	h, sender := newTestHandler(t)
 	err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
 		SessionId: &pb.SessionId{Value: "01ABC"},
-		TtyUser:   "alice", // valid syntax, NOT a cadestro-tty-* user
+		TtyUser:   "alice",
 		Cols:      80,
 		Rows:      24,
 	})
@@ -293,16 +271,12 @@ func TestTerminal_Start_RejectsNonPrefixedUsername(t *testing.T) {
 	if !strings.Contains(last.Error, "invalid tty username") {
 		t.Errorf("error = %q, want substring 'invalid tty username'", last.Error)
 	}
-	// The session must NOT have been registered, so a subsequent
-	// limit check still has room.
+
 	if got := len(h.terminals); got != 0 {
 		t.Errorf("registry should be empty, got %d entries", got)
 	}
 }
 
-// OnTerminalStart must reject all sessions when the device-local TTY
-// toggle is off. The rejection uses an opaque error message so the
-// server cannot distinguish "disabled" from other failure modes.
 func TestTerminal_Start_RejectsWhenTTYDisabled(t *testing.T) {
 	h, sender := newTestHandlerWithTTY(t, false)
 	err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
@@ -329,15 +303,11 @@ func TestTerminal_Start_RejectsWhenTTYDisabled(t *testing.T) {
 	}
 }
 
-// A handler constructed without a store must fail-closed — any
-// TerminalStart request is rejected. This protects against a wiring
-// regression where the handler is created before the store.
 func TestTerminal_Start_RejectsWhenStoreMissing(t *testing.T) {
 	h := &Handler{
 		logger:      slog.Default(),
 		connectedCh: make(chan struct{}),
 		now:         time.Now,
-		// intentionally no store
 	}
 	sender := &fakeSender{}
 	h.SetTerminalSender(sender)
@@ -363,10 +333,6 @@ func TestTerminal_Start_RejectsWhenStoreMissing(t *testing.T) {
 	}
 }
 
-// closeTerminal on a session that's still in the starting state
-// must transition it to stopping (not delete it from the registry —
-// OnTerminalStart owns cleanup of partial state). The session must
-// have its cancel func invoked so any in-flight sudo call wakes up.
 func TestTerminal_CloseDuringStart_MarksStoppingButLeavesRegistryEntry(t *testing.T) {
 	h, _ := newTestHandler(t)
 
@@ -392,27 +358,21 @@ func TestTerminal_CloseDuringStart_MarksStoppingButLeavesRegistryEntry(t *testin
 
 	h.closeTerminal(context.Background(), "01ABC", "user stopped")
 
-	// State must be stopping.
 	if !ts.isStopping() {
 		t.Error("expected session state = stopping after close-during-start")
 	}
-	// Cancel must have been invoked.
+
 	select {
 	case <-cancelCalled:
 	default:
 		t.Error("expected ts.cancel to have been called")
 	}
-	// Registry entry must still be present so OnTerminalStart can see
-	// the state on its next isStopping() check and clean up.
+
 	if h.lookupTerminal("01ABC") == nil {
 		t.Error("registry entry must still be present until Start cleans up")
 	}
 }
 
-// closeTerminal on an active session must delete it from the
-// registry and proceed with the full cleanup path. (Mirror of the
-// existing TestTerminal_CloseRemovesFromRegistry test, but explicit
-// about the new state-aware path.)
 func TestTerminal_CloseDuringActive_RemovesFromRegistry(t *testing.T) {
 	h, _ := newTestHandler(t)
 	addTestSession(h, "01ABC", "cadestro-tty-test", time.Now())
@@ -424,10 +384,6 @@ func TestTerminal_CloseDuringActive_RemovesFromRegistry(t *testing.T) {
 	}
 }
 
-// SetTerminalSender's race-safe snapshot path must be used by
-// OnTerminalStart. We cannot trivially exercise the race itself in a
-// unit test, but we can confirm that snapshotTerminalSender returns
-// the most recently installed value under the lock.
 func TestTerminal_SnapshotTerminalSender_ReturnsLatest(t *testing.T) {
 	h := &Handler{
 		logger:      slog.Default(),
@@ -451,10 +407,6 @@ func TestTerminal_SnapshotTerminalSender_ReturnsLatest(t *testing.T) {
 	}
 }
 
-// anySessionForUserExcept correctly returns true when another active
-// session for the same TTY user exists, and false otherwise. This
-// powers the OnTerminalStart cleanup path's decision about whether
-// to revert the user's shell.
 func TestTerminal_AnySessionForUserExcept(t *testing.T) {
 	h, _ := newTestHandler(t)
 	addTestSession(h, "a", "cadestro-tty-alice", time.Now())

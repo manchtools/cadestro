@@ -1,4 +1,3 @@
-// Package store owns the agent's durable SQLite state.
 package store
 
 import (
@@ -30,7 +29,6 @@ const (
 	binaryProtoPrefix = byte(0x00)
 )
 
-// Store serializes access to the agent's local durable state.
 type Store struct {
 	db      *sql.DB
 	queries *generated.Queries
@@ -38,7 +36,6 @@ type Store struct {
 	now     func() time.Time
 }
 
-// StoredAction is the minimal view used to resolve overlapping LUKS policies.
 type StoredAction struct {
 	ID             string
 	Action         *pb.Action
@@ -49,8 +46,6 @@ type StoredAction struct {
 
 func New(dataDir string) (*Store, error) { return open(dataDir, true) }
 
-// OpenExisting opens a store initialized by the agent service without running
-// migrations from a CLI helper process.
 func OpenExisting(dataDir string) (*Store, error) {
 	dbPath := filepath.Join(dataDir, "agent.db")
 	if _, err := os.Stat(dbPath); err != nil {
@@ -180,7 +175,6 @@ func clampInterval(computed, now time.Time, interval time.Duration) time.Time {
 	return computed
 }
 
-// LuksState is the device-local state that makes key rotation restart-safe.
 type LuksState struct {
 	ActionID       string
 	DevicePath     string
@@ -264,7 +258,6 @@ func (s *Store) AddLuksPassphraseHash(ctx context.Context, actionID, hash string
 	return tx.Commit()
 }
 
-// LpsUserState records password-rotation state without retaining plaintext.
 type LpsUserState struct {
 	ActionID      string
 	Username      string

@@ -7,40 +7,10 @@ import (
 	"testing"
 )
 
-// protoJSONAllowlist lists stdlib-encoding/json call sites whose operand is
-// proto-package-typed but is NOT a wire-format proto message marshalling
-// concern (typically a proto ENUM, which is a plain int32 and encodes
-// identically under stdlib json and protojson). Each entry is justified;
-// assertNoStale fails the build if one stops matching.
-// Keyed by "<module-rel path> :: <rendered call expression>".
 var protoJSONAllowlist = map[string]string{}
 
-// protoPkgPathSuffix identifies the generated protobuf package regardless of
-// the import alias a file chooses (conventionally none — the bare package
-// name cadestrov1). It must track the
-// module that hosts the generated code: matched as a suffix, a stale value
-// matches nothing, and this guard's matches-zero check is what turns that
-// into a failure instead of a silent pass.
 const protoPkgPathSuffix = "/contract/gen/go/cadestro/v1"
 
-// TestNoStdlibJSONOfProtoMessage forbids passing a generated protobuf type to
-// the standard library encoding/json (Marshal / MarshalIndent / Unmarshal, and
-// the inline json.NewEncoder(w).Encode / json.NewDecoder(r).Decode forms).
-// Proto messages MUST be (de)serialised with google.golang.org/protobuf's
-// protojson: stdlib json only works by snake-case-struct-tag luck and silently
-// corrupts oneofs, well-known types (Timestamp/Duration), int64 (string in
-// protojson), and enums (name vs number) on any future field. WS1b#5 closed the
-// pm.CommandOutput sites; this guard stops the smell from returning.
-//
-// Heuristic (documented per the archtest design constraints): a value is
-// "proto-typed" when it is a composite literal of a proto type (cadestrov1.Foo{} /
-// &cadestrov1.Foo{}) or a local variable declared with a proto type (var v cadestrov1.Foo /
-// v := cadestrov1.Foo{} / v := &cadestrov1.Foo{}), possibly addressed (&v). The proto import
-// alias is self-discovered from the import path, not hardcoded. The
-// field-selector shape (json.Marshal(x.ProtoField)) and indirection through a
-// helper are not resolvable without type information and are a documented blind
-// spot; the common message-(de)serialisation shapes are covered. Benign cases
-// (e.g. marshalling a proto enum) go in the guarded protoJSONAllowlist.
 func TestNoStdlibJSONOfProtoMessage(t *testing.T) {
 	root := moduleRoot(t)
 	files := walkGoFiles(t, root, func(string) bool { return true })
@@ -59,7 +29,7 @@ func TestNoStdlibJSONOfProtoMessage(t *testing.T) {
 		}
 		jsonAlias := importAliasFor(gf.ast, "encoding/json")
 		if jsonAlias == "" {
-			continue // file never touches encoding/json
+			continue
 		}
 		for _, decl := range gf.ast.Decls {
 			fn, ok := decl.(*ast.FuncDecl)
@@ -100,9 +70,6 @@ func TestNoStdlibJSONOfProtoMessage(t *testing.T) {
 	allow.assertNoStale(t)
 }
 
-// protoImportAliases returns the set of local names by which f imports the
-// generated protobuf package (path suffix protoPkgPathSuffix). Self-discovered
-// from the import block so the guard is not tied to any one alias choice.
 func protoImportAliases(f *ast.File) map[string]bool {
 	out := map[string]bool{}
 	for _, imp := range f.Imports {
@@ -113,11 +80,7 @@ func protoImportAliases(f *ast.File) map[string]bool {
 		if imp.Name != nil {
 			out[imp.Name.Name] = true
 		} else {
-			// Unaliased import: pure-AST parsing can't resolve the package's
-			// declared name. The generated protobuf package is `package cadestrov1`,
-			// but register the last path segment `v1` too so neither possible
-			// identifier bypasses the guard. Both are scoped to this exact
-			// import path, so there is no collision with other /v1 packages.
+
 			out["cadestrov1"] = true
 			out["v1"] = true
 		}
@@ -125,9 +88,6 @@ func protoImportAliases(f *ast.File) map[string]bool {
 	return out
 }
 
-// importAliasFor returns the local name f imports path under, or "" if not
-// imported. An unaliased import resolves to the last path segment (correct for
-// encoding/json -> "json").
 func importAliasFor(f *ast.File, path string) string {
 	for _, imp := range f.Imports {
 		if unquoteLit(imp.Path) != path {
@@ -144,18 +104,12 @@ func importAliasFor(f *ast.File, path string) string {
 	return ""
 }
 
-// jsonSerdeTarget reports whether call is a stdlib encoding/json
-// (de)serialisation and returns the operand whose type matters:
-//   - json.Marshal(x) / json.MarshalIndent(x, ...) -> x
-//   - json.Unmarshal(b, x)                         -> x
-//   - json.NewEncoder(w).Encode(x)                 -> x
-//   - json.NewDecoder(r).Decode(x)                 -> x
 func jsonSerdeTarget(call *ast.CallExpr, jsonAlias string) (ast.Expr, bool) {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok {
 		return nil, false
 	}
-	// Package-qualified json.Func(...) forms.
+
 	if id, ok := sel.X.(*ast.Ident); ok && id.Name == jsonAlias {
 		switch sel.Sel.Name {
 		case "Marshal", "MarshalIndent":
@@ -169,7 +123,7 @@ func jsonSerdeTarget(call *ast.CallExpr, jsonAlias string) (ast.Expr, bool) {
 		}
 		return nil, false
 	}
-	// Chained json.NewEncoder(w).Encode(x) / json.NewDecoder(r).Decode(x).
+
 	if (sel.Sel.Name == "Encode" || sel.Sel.Name == "Decode") && len(call.Args) >= 1 {
 		if inner, ok := sel.X.(*ast.CallExpr); ok {
 			if innerSel, ok := inner.Fun.(*ast.SelectorExpr); ok {
@@ -183,9 +137,6 @@ func jsonSerdeTarget(call *ast.CallExpr, jsonAlias string) (ast.Expr, bool) {
 	return nil, false
 }
 
-// protoTypedLocals returns the set of local variable names in fn whose declared
-// type is a proto message — via an explicit type (var v cadestrov1.Foo / var v *cadestrov1.Foo)
-// or a composite-literal initialiser (v := cadestrov1.Foo{} / v := &cadestrov1.Foo{}).
 func protoTypedLocals(fn *ast.FuncDecl, aliases map[string]bool) map[string]bool {
 	out := map[string]bool{}
 	if len(aliases) == 0 {
@@ -226,8 +177,6 @@ func protoTypedLocals(fn *ast.FuncDecl, aliases map[string]bool) map[string]bool
 	return out
 }
 
-// isProtoTypeExpr reports whether a TYPE expression denotes a proto type
-// (cadestrov1.Foo) or pointer to one (*cadestrov1.Foo), qualified by a proto import alias.
 func isProtoTypeExpr(e ast.Expr, aliases map[string]bool) bool {
 	switch x := e.(type) {
 	case *ast.StarExpr:
@@ -239,8 +188,6 @@ func isProtoTypeExpr(e ast.Expr, aliases map[string]bool) bool {
 	return false
 }
 
-// exprIsProtoComposite reports whether a VALUE expression is a proto composite
-// literal cadestrov1.Foo{...} or &cadestrov1.Foo{...}.
 func exprIsProtoComposite(e ast.Expr, aliases map[string]bool) bool {
 	switch x := e.(type) {
 	case *ast.UnaryExpr:
@@ -255,9 +202,6 @@ func exprIsProtoComposite(e ast.Expr, aliases map[string]bool) bool {
 	return false
 }
 
-// exprIsProtoTyped reports whether a VALUE expression handed to encoding/json is
-// proto-typed: a proto composite literal, or a (possibly &-addressed) local
-// variable recorded as proto-typed.
 func exprIsProtoTyped(e ast.Expr, aliases, protoLocals map[string]bool) bool {
 	switch x := e.(type) {
 	case *ast.UnaryExpr:

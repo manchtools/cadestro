@@ -10,32 +10,20 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/network"
 )
 
-// wifiConnectionName returns the managed connection name for an action.
-// All Cadestro WiFi profiles are prefixed so they're distinguishable
-// from user-managed NetworkManager connections.
 func wifiConnectionName(actionID string) string {
 	return "cadestro-wifi-" + actionID
 }
 
-// wifiCertPath returns the directory for EAP-TLS certificates for an action.
 func wifiCertPath(actionID string) string {
 	return filepath.Join(network.CertBaseDir, actionID)
 }
 
-// executeWifi manages WiFi connection profiles via NetworkManager.
-// PRESENT: creates or updates the connection profile (delegated to the SDK).
-// ABSENT: deletes the connection profile and any certificate files.
 func (e *Executor) executeWifi(ctx context.Context, params *pb.WifiParams, state pb.DesiredState, actionID, psk, clientKey string) (*pb.CommandOutput, bool, error) {
 	e.ensureDeps()
 	if params == nil {
 		return nil, false, fmt.Errorf("wifi params required")
 	}
-	// The action ID is spliced into a filesystem path
-	// (network.CertBaseDir/<id> for EAP-TLS certificates) and the
-	// cadestro-wifi-<id> NetworkManager connection name. Validate it the same
-	// way the sudo/ssh/sshd executors do — empty was the only case
-	// checked before, leaving traversal/separator characters
-	// ("../../etc", "a/b") free to escape CertBaseDir.
+
 	if err := validateActionIDForFilesystem(actionID); err != nil {
 		return nil, false, err
 	}
@@ -44,14 +32,7 @@ func (e *Executor) executeWifi(ctx context.Context, params *pb.WifiParams, state
 	certDir := wifiCertPath(actionID)
 
 	if state == pb.DesiredState_DESIRED_STATE_ABSENT {
-		// Audit F055: previously always reported `changed=true`, even
-		// when the connection did not exist before this call. That
-		// surfaced spurious "wifi changed" events to the server on
-		// every re-apply of an already-absent action. Probe with
-		// ConnectionExists first so the result reflects reality.
-		// Pattern matches the DNF/Zypper repository ABSENT branches
-		// in action_repository.go which also short-circuit when the
-		// resource is already gone.
+
 		existed, existsErr := e.deps.network.ConnectionExists(ctx, conName)
 		if existsErr != nil {
 			e.logger.Warn("wifi ABSENT: ConnectionExists failed; conservatively reporting changed=true",
@@ -98,7 +79,6 @@ func (e *Executor) executeWifi(ctx context.Context, params *pb.WifiParams, state
 	return &pb.CommandOutput{ExitCode: 0, Stdout: stdout}, changed, nil
 }
 
-// wifiAuthFromProto maps the proto auth type enum to the SDK enum.
 func wifiAuthFromProto(t pb.WifiAuthType) network.AuthType {
 	switch t {
 	case pb.WifiAuthType_WIFI_AUTH_TYPE_PSK:

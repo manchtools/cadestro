@@ -1,4 +1,3 @@
-// Package main is the entry point for the cadestrod agent.
 package main
 
 import (
@@ -15,9 +14,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/osquery"
 )
 
-// newOsqueryRegistry builds an osquery Querier over a Direct runner — this CLI
-// subcommand runs ad-hoc as the invoking admin, so no privilege escalation is
-// needed. New fails closed with ErrNotInstalled when osqueryi is absent.
 func newOsqueryRegistry() (osquery.Querier, error) {
 	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
@@ -26,14 +22,10 @@ func newOsqueryRegistry() (osquery.Querier, error) {
 	return osquery.New(r)
 }
 
-// isNotInstalled reports whether err signals that osquery is not installed,
-// matching the sentinel even when it is wrapped (WS16 #13).
 func isNotInstalled(err error) bool {
 	return errors.Is(err, osquery.ErrNotInstalled)
 }
 
-// runQuery executes a local osquery table query and prints results.
-// Usage: cadestrod query <table> [--json]
 func runQuery(args []string) {
 	if len(args) == 0 {
 		printQueryUsage()
@@ -43,20 +35,17 @@ func runQuery(args []string) {
 	tableName := args[0]
 	jsonOutput := false
 
-	// Check for --json flag
 	for _, arg := range args[1:] {
 		if arg == "--json" || arg == "-j" {
 			jsonOutput = true
 		}
 	}
 
-	// Special case: list tables
 	if tableName == "tables" || tableName == "--list" || tableName == "-l" {
 		printAvailableTables()
 		return
 	}
 
-	// Create registry (requires osquery to be installed)
 	registry, err := newOsqueryRegistry()
 	if err != nil {
 		if isNotInstalled(err) {
@@ -106,8 +95,7 @@ func printQueryUsage() {
 }
 
 func printAvailableTables() {
-	// newOsqueryRegistry fails closed with ErrNotInstalled when osqueryi is
-	// absent, so the installed check and the registry build are one step.
+
 	registry, err := newOsqueryRegistry()
 	if err != nil {
 		if isNotInstalled(err) {
@@ -151,7 +139,6 @@ func printQueryResultsTable(rows []osquery.Row) {
 		return
 	}
 
-	// Collect all unique keys across all rows
 	keySet := make(map[string]bool)
 	for _, row := range rows {
 		for k := range row {
@@ -159,17 +146,14 @@ func printQueryResultsTable(rows []osquery.Row) {
 		}
 	}
 
-	// Sort keys for consistent output
 	keys := make([]string, 0, len(keySet))
 	for k := range keySet {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
-	// Use tabwriter for aligned output
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
-	// Print header
 	for i, k := range keys {
 		if i > 0 {
 			fmt.Fprint(w, "\t")
@@ -178,7 +162,6 @@ func printQueryResultsTable(rows []osquery.Row) {
 	}
 	fmt.Fprintln(w)
 
-	// Print separator
 	for i, k := range keys {
 		if i > 0 {
 			fmt.Fprint(w, "\t")
@@ -187,7 +170,6 @@ func printQueryResultsTable(rows []osquery.Row) {
 	}
 	fmt.Fprintln(w)
 
-	// Print rows
 	for _, row := range rows {
 		for i, k := range keys {
 			if i > 0 {

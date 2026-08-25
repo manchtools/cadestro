@@ -1,58 +1,41 @@
-# Stage 1: Get Go toolchain + pre-download modules
+
 FROM golang:1.26-bookworm AS go-builder
 WORKDIR /workspace
-# The agent and the two modules it replaces to: agent/go.mod redirects
-# github.com/manchtools/cadestro/{contract,sdk} at ../contract and ../sdk, so
-# copying agent/ alone leaves both replacement directories missing and
-# `go mod download` fails before a single test compiles.
+
 COPY contract/ ./contract/
 COPY sdk/ ./sdk/
 COPY agent/ ./agent/
-# go.work so `go test ./agent/...` works from /workspace (CI invokes gotestsum
-# from the container's default cwd). All three modules are listed: they are one
-# source tree here, and the workspace is what makes the sibling replacements
-# resolve as the committed code rather than as version queries.
+
 RUN printf 'go %s\n\nuse (\n\t./contract\n\t./sdk\n\t./agent\n)\n' "$(sed -n 's/^go //p' agent/go.mod)" > go.work
 RUN cd agent && go mod download
 RUN go install gotest.tools/gotestsum@latest
 
-# Stage 2: Arch Linux base with Go copied in
 FROM archlinux:latest
-
-# Agent runs as root in production (systemd User=root) — no cadestro
-# user, no sudoers drop-in. Integration tests run as root too.
 
 COPY --from=go-builder /usr/local/go /usr/local/go
 ENV PATH="/usr/local/go/bin:${PATH}"
 ENV GOPATH="/go"
 ENV GOMODCACHE="/go/pkg/mod"
 
-# Initialize pacman keyring (required in Docker)
 RUN pacman-key --init && pacman-key --populate archlinux
 
-# Full system sync required before installing on Arch
 RUN pacman -Syu --noconfirm \
     sudo \
     gnupg \
     openssh \
     && pacman -Scc --noconfirm
 
-# sshd_config.d directory + host keys for sshd -t validation
 RUN mkdir -p /etc/ssh/sshd_config.d && ssh-keygen -A
 
-# Ensure Include directive exists in sshd_config for sshd_config.d
 RUN grep -q 'Include /etc/ssh/sshd_config.d' /etc/ssh/sshd_config || \
     echo 'Include /etc/ssh/sshd_config.d/*.conf' >> /etc/ssh/sshd_config
 
-# LPS state directory (root-owned, matches production)
 RUN mkdir -p /var/lib/cadestro/lps
 
-# sshd privilege separation directory (needed by sshd -t)
 RUN mkdir -p /run/sshd
 
 WORKDIR /workspace
 
-# Copy pre-built workspace from builder
 COPY --from=go-builder /workspace ./
 COPY --from=go-builder /go/pkg/mod /go/pkg/mod
 COPY --from=go-builder /go/bin/gotestsum /go/bin/gotestsum

@@ -13,11 +13,6 @@ import (
 	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// recordingSSHFS is a minimal fs.Manager that records Mkdir calls and backs
-// ReadFile/Mkdir/WriteFile with the real (temp) filesystem so the rest of
-// setupSSHKeys — which uses package-level sysfs funcs (OpenRealDir,
-// ResolveOwnership, FchownNoFollow) against the real FS — still runs. Any other
-// Manager method panics on the nil embedded interface, keeping the fake honest.
 type recordingSSHFS struct {
 	sysfs.Manager
 	mkdirCalls []sshMkdirCall
@@ -57,17 +52,6 @@ func (f *recordingSSHFS) WriteFile(_ context.Context, path string, data []byte, 
 	return nil
 }
 
-// TestSetupSSHKeys_CreatesDotSSHViaFSManager pins the agent-side cleanup: ~/.ssh
-// is created through the SDK fs manager (fsMgr.Mkdir) — privilege-keyed like the
-// fsMgr.WriteFile that follows it — instead of a raw `sudo mkdir` shell-out.
-//
-// Critically it asserts MkdirOptions.Mode stays ZERO: setting a Mode would make
-// Mkdir chmod by PATH, which follows a user-planted ~/.ssh symlink (the exact
-// class the subsequent OpenRealDir + fd-chmod closes). The 0700 mode must be
-// applied through the O_NOFOLLOW FD, never the path.
-//
-// Runs non-root by using the current user (Username + numeric Gid) so the
-// FD-based Chown is a chown-to-self the kernel permits.
 func TestSetupSSHKeys_CreatesDotSSHViaFSManager(t *testing.T) {
 	cur, err := user.Current()
 	if err != nil {
@@ -84,7 +68,7 @@ func TestSetupSSHKeys_CreatesDotSSHViaFSManager(t *testing.T) {
 	const keyLine = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAtestkey user@host"
 	params := &pb.UserParams{
 		Username:          cur.Username,
-		Gid:               int32(gid), // homeGroupFor -> numeric gid -> chown-to-self
+		Gid:               int32(gid),
 		HomeDir:           home,
 		SshAuthorizedKeys: []string{keyLine},
 	}
@@ -100,7 +84,6 @@ func TestSetupSSHKeys_CreatesDotSSHViaFSManager(t *testing.T) {
 		t.Error("expected changed=true on first SSH key setup")
 	}
 
-	// Delegation: ~/.ssh was created via fsMgr.Mkdir exactly once, recursively.
 	if len(fake.mkdirCalls) != 1 {
 		t.Fatalf("expected exactly 1 fsMgr.Mkdir call, got %d (raw sudo mkdir not replaced?)", len(fake.mkdirCalls))
 	}
@@ -116,7 +99,6 @@ func TestSetupSSHKeys_CreatesDotSSHViaFSManager(t *testing.T) {
 		t.Errorf("Mkdir opts.Mode = %o, want 0 — perms must be set via the O_NOFOLLOW fd, not a symlink-following path chmod", mc.opts.Mode)
 	}
 
-	// Behaviour preserved: the key landed in authorized_keys at 0700 .ssh.
 	if got, rerr := os.ReadFile(filepath.Join(wantDir, "authorized_keys")); rerr != nil {
 		t.Fatalf("read authorized_keys: %v", rerr)
 	} else if !strings.Contains(string(got), keyLine) {

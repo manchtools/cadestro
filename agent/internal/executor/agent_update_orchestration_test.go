@@ -22,16 +22,10 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// agentScript builds a staged "agent binary" as a shell script that
-// answers `version`, `self-test`, and `install-unit` (recording the
-// invocation argv to "$0.install-unit", spec 27), so executeAgentUpdate
-// can be driven end-to-end without a real binary.
 func agentScript(version string, selfTestExit int) []byte {
 	return agentScriptUnitExit(version, selfTestExit, 0)
 }
 
-// agentScriptUnitExit is agentScript with a controllable install-unit
-// exit code, for the fail-open test.
 func agentScriptUnitExit(version string, selfTestExit, installUnitExit int) []byte {
 	return []byte(fmt.Sprintf(`#!/bin/sh
 case "$1" in
@@ -48,9 +42,6 @@ func sha256hex(b []byte) string {
 	return hex.EncodeToString(h[:])
 }
 
-// updateHarness wires an executor with an AgentUpdateConfig pointed at a
-// tmp "installed" binary, an httptest TLS server serving the staged
-// binary + a SHA256SUMS document, and a Shutdown spy.
 type updateHarness struct {
 	e            *Executor
 	binaryPath   string
@@ -60,7 +51,6 @@ type updateHarness struct {
 	shutdownOnce sync.Once
 }
 
-// newUpdateHarness serves `serveBody` at /agent and `sumsBody` at /sums.
 func newUpdateHarness(t *testing.T, runningVersion string, serveBody, sumsBody []byte) *updateHarness {
 	t.Helper()
 	if sumsBody == nil {
@@ -108,10 +98,8 @@ func newUpdateHarness(t *testing.T, runningVersion string, serveBody, sumsBody [
 
 	h := &updateHarness{binaryPath: binaryPath, oldBytes: oldBytes, srv: srv, shutdownCh: make(chan struct{})}
 	e := &Executor{logger: slog.Default(), now: time.Now}
-	e.httpClient = srv.Client() // e.httpClient still covers the agent's other fetches (GPG keys, repo metadata)
-	// Both the binary download (fetchArtifact -> remote.Fetch) and the checksum_url
-	// download (remote.FetchBytes) route through the package remoteHTTPClient seam;
-	// point it at the test TLS server.
+	e.httpClient = srv.Client()
+
 	prevRemoteClient := remoteHTTPClient
 	remoteHTTPClient = srv.Client()
 	t.Cleanup(func() { remoteHTTPClient = prevRemoteClient })
@@ -143,8 +131,7 @@ func (h *updateHarness) shutdownCalled() bool {
 	case <-h.shutdownCh:
 		return true
 	case <-time.After(4 * time.Second):
-		// NOT tightened (#174 proposed 500ms): the update path sleeps
-		// deliberately before shutdown, so a short timeout false-fails.
+
 		return false
 	}
 }
@@ -158,16 +145,11 @@ func (h *updateHarness) currentBinary(t *testing.T) []byte {
 	return b
 }
 
-// WS7 #6: a binary whose bytes do not hash to the signed manifest is
-// rejected; the swap is aborted, the live binary is
-// byte-identical, no .bak is created, Shutdown is not called.
 func TestExecuteAgentUpdate_ChecksumMismatchAbortsSwap(t *testing.T) {
 	genuine := agentScript("v2026.06.05", 0)
 	tampered := append([]byte{}, genuine...)
-	tampered[len(tampered)-2] ^= 0xff // flip a non-terminal byte
+	tampered[len(tampered)-2] ^= 0xff
 
-	// The signed manifest contains the GENUINE hash; the server serves
-	// TAMPERED bytes → mismatch (intent: signed hash binds content).
 	sums := []byte(sha256hex(genuine) + "  agent\n")
 	h := newUpdateHarness(t, "v2026.06.01", tampered, sums)
 	_, changed, err := h.e.executeAgentUpdate(context.Background(), h.params())
@@ -186,9 +168,8 @@ func TestExecuteAgentUpdate_ChecksumMismatchAbortsSwap(t *testing.T) {
 	}
 }
 
-// WS7 #6: a staged binary whose self-test fails keeps the current binary.
 func TestExecuteAgentUpdate_SelfTestFailKeepsBinary(t *testing.T) {
-	staged := agentScript("v2026.06.05", 1) // self-test exits non-zero
+	staged := agentScript("v2026.06.05", 1)
 	h := newUpdateHarness(t, "v2026.06.01", staged, nil)
 
 	_, changed, err := h.e.executeAgentUpdate(context.Background(), h.params())
@@ -203,8 +184,6 @@ func TestExecuteAgentUpdate_SelfTestFailKeepsBinary(t *testing.T) {
 	}
 }
 
-// WS7 #6 happy path: correct sha + passing self-test + newer version →
-// binary swapped, .bak holds old bytes, Shutdown invoked.
 func TestExecuteAgentUpdate_HappyPathSwapsAndShutsDown(t *testing.T) {
 	staged := agentScript("v2026.06.05", 0)
 	h := newUpdateHarness(t, "v2026.06.01", staged, nil)
@@ -231,11 +210,6 @@ func TestExecuteAgentUpdate_HappyPathSwapsAndShutsDown(t *testing.T) {
 	}
 }
 
-// TestExecuteAgentUpdate_RefreshesUnitFromNewBinary pins spec 27 AC 4:
-// after the swap + self-test and BEFORE the shutdown signal, the
-// updater invokes the NEW binary's install-unit with the running data
-// dir — so the respawn systemd performs starts the new binary under
-// the new unit.
 func TestExecuteAgentUpdate_RefreshesUnitFromNewBinary(t *testing.T) {
 	staged := agentScript("v2026.06.05", 0)
 	h := newUpdateHarness(t, "v2026.06.01", staged, nil)
@@ -259,10 +233,6 @@ func TestExecuteAgentUpdate_RefreshesUnitFromNewBinary(t *testing.T) {
 	}
 }
 
-// TestExecuteAgentUpdate_UnitInstallFailureIsFailOpen pins the second
-// half of AC 4: a failing install-unit never aborts a completed binary
-// swap — the update still succeeds and the shutdown fires (the new
-// binary's startup reconcile retries after the respawn).
 func TestExecuteAgentUpdate_UnitInstallFailureIsFailOpen(t *testing.T) {
 	staged := agentScriptUnitExit("v2026.06.05", 0, 1)
 	h := newUpdateHarness(t, "v2026.06.01", staged, nil)
@@ -279,15 +249,10 @@ func TestExecuteAgentUpdate_UnitInstallFailureIsFailOpen(t *testing.T) {
 	}
 }
 
-// An action without checksum_url has no signed integrity source and is
-// refused fail-closed (also enforced
-// server-side). The agent-update path uses downloadToFile, which has no
-// checksum chokepoint of its own.
 func TestExecuteAgentUpdate_RefusesNoIntegritySource(t *testing.T) {
 	staged := agentScript("v2026.06.05", 0)
 	h := newUpdateHarness(t, "v2026.06.01", staged, nil)
 
-	// No checksum_url.
 	noIntegrity := &pb.AgentUpdateParams{
 		Amd64: &pb.AgentUpdateArch{BinaryUrl: h.srv.URL + "/agent"},
 		Arm64: &pb.AgentUpdateArch{BinaryUrl: h.srv.URL + "/agent"},
@@ -304,13 +269,9 @@ func TestExecuteAgentUpdate_RefusesNoIntegritySource(t *testing.T) {
 	}
 }
 
-// The only update path verifies the publisher's signed checksum manifest.
-// This is what
-// lets binary_url/checksum_url track "latest" hands-off. A correct
-// checksum file + newer version → swap + shutdown.
 func TestExecuteAgentUpdate_SignedManifest(t *testing.T) {
 	staged := agentScript("v2026.06.05", 0)
-	// SHA256SUMS line for the binary served at /agent (filename "agent").
+
 	sums := []byte(sha256hex(staged) + "  agent\n")
 	h := newUpdateHarness(t, "v2026.06.01", staged, sums)
 
@@ -340,13 +301,11 @@ func TestExecuteAgentUpdate_SignedManifest(t *testing.T) {
 	}
 }
 
-// A checksum_url whose SHA256SUMS does NOT match the downloaded binary is
-// rejected (no swap).
 func TestExecuteAgentUpdate_ChecksumURLMismatchRejected(t *testing.T) {
 	staged := agentScript("v2026.06.05", 0)
 	tampered := append([]byte{}, staged...)
 	tampered[len(tampered)-2] ^= 0xff
-	// SHA256SUMS vouches for the GENUINE bytes; the server serves TAMPERED.
+
 	sums := []byte(sha256hex(staged) + "  agent\n")
 	h := newUpdateHarness(t, "v2026.06.01", tampered, sums)
 
@@ -391,8 +350,6 @@ func TestExecuteAgentUpdate_ChecksumURLSignatureRejected(t *testing.T) {
 	}
 }
 
-// WS7 #2: an http binary_url is rejected at validateHTTPS before any
-// download (fail-closed ordering).
 func TestExecuteAgentUpdate_HTTPSourceRejected(t *testing.T) {
 	staged := agentScript("v2026.06.05", 0)
 	h := newUpdateHarness(t, "v2026.06.01", staged, nil)

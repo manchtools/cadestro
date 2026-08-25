@@ -1,22 +1,5 @@
 package executor
 
-// TerminalAdmin sudoers template coverage —
-// archived server#70.
-//
-// This file covers ONLY the two new server-managed templates added
-// alongside the new AdminAccessLevel enum values. The existing
-// generateLimitedSudoConfig / generateFullSudoConfig / generateCustomSudoConfig
-// generators are deliberately untouched by #70 and stay untested in
-// this PR — that's separate test-coverage work.
-//
-// The two new templates exist because the operator-authored
-// FULL/LIMITED templates assume a password-bearing account; cadestro-tty-*
-// accounts (#327) are passwordless, so the server's TerminalAdmin
-// reconciler points the two global AdminPolicy actions at these new
-// templates instead. The ADR (server/docs/adr/0000-terminal-admin-
-// threat-model.md) is the authoritative contract for what they must
-// reject.
-
 import (
 	"context"
 	"os"
@@ -33,19 +16,12 @@ import (
 
 const testTerminalAdminGroup = "cadestro-sudo-test"
 
-// =============================================================================
-// generateTerminalAdminLimitedSudoConfig — passwordless LIMITED.
-// =============================================================================
-
 func TestGenerateTerminalAdminLimitedSudoConfig_GroupInterpolation(t *testing.T) {
 	out := generateTerminalAdminLimitedSudoConfig(testTerminalAdminGroup)
 	assert.Contains(t, out, "%"+testTerminalAdminGroup+" ALL=",
 		"the passed group name must appear in every rule")
 }
 
-// ADR T1: every command rule must carry NOPASSWD so the passwordless
-// cadestro-tty-* account can use the allowlist at all. Without it the
-// template is unusable — the operator has no password to type.
 func TestGenerateTerminalAdminLimitedSudoConfig_NOPASSWD(t *testing.T) {
 	out := generateTerminalAdminLimitedSudoConfig(testTerminalAdminGroup)
 	for _, line := range strings.Split(out, "\n") {
@@ -53,32 +29,24 @@ func TestGenerateTerminalAdminLimitedSudoConfig_NOPASSWD(t *testing.T) {
 		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
 			continue
 		}
-		// Defaults lines and deny rules don't need NOPASSWD; only
-		// affirmative command grants do.
+
 		if !strings.HasPrefix(trimmed, "%"+testTerminalAdminGroup) {
 			continue
 		}
-		// A grant line is of the form `%group ALL=(ALL) <stuff>`. If
-		// the <stuff> starts with `!` it's a deny block and doesn't
-		// need NOPASSWD. Otherwise NOPASSWD: must appear before the
-		// command list.
+
 		runspec := strings.SplitN(trimmed, "ALL=(ALL)", 2)
 		if len(runspec) != 2 {
 			t.Fatalf("unexpected rule shape: %q", line)
 		}
 		body := strings.TrimSpace(runspec[1])
 		if strings.HasPrefix(body, "!") {
-			continue // deny rule
+			continue
 		}
 		assert.True(t, strings.HasPrefix(body, "NOPASSWD:"),
 			"affirmative grant must start with NOPASSWD: — %q", line)
 	}
 }
 
-// ADR T4: Defaults block must pin requiretty, env_reset, !lecture,
-// and timestamp_timeout=0. The last forces sudoers re-evaluation on
-// every sudo call so a fresh revocation lands immediately under
-// NOPASSWD.
 func TestGenerateTerminalAdminLimitedSudoConfig_DefaultsBlock(t *testing.T) {
 	out := generateTerminalAdminLimitedSudoConfig(testTerminalAdminGroup)
 	g := "%" + testTerminalAdminGroup
@@ -93,12 +61,9 @@ func TestGenerateTerminalAdminLimitedSudoConfig_DefaultsBlock(t *testing.T) {
 	}
 }
 
-// ADR T2: editor escapes (vim → :!bash etc.) MUST be denied — under
-// NOPASSWD a missed editor in the allowlist is unprompted root.
 func TestGenerateTerminalAdminLimitedSudoConfig_DeniesEditors(t *testing.T) {
 	out := generateTerminalAdminLimitedSudoConfig(testTerminalAdminGroup)
-	// Per ADR T2: vim, vi, vimdiff, view, nvim, emacs, emacsclient,
-	// nano, less, more, most, ed, ex, mc, joe, jed.
+
 	editors := []string{
 		"/usr/bin/vim", "/usr/bin/vi", "/usr/bin/vimdiff", "/usr/bin/view", "/usr/bin/nvim",
 		"/usr/bin/emacs", "/usr/bin/emacsclient",
@@ -113,7 +78,6 @@ func TestGenerateTerminalAdminLimitedSudoConfig_DeniesEditors(t *testing.T) {
 	}
 }
 
-// ADR T3: shell spawns must be denied.
 func TestGenerateTerminalAdminLimitedSudoConfig_DeniesShells(t *testing.T) {
 	out := generateTerminalAdminLimitedSudoConfig(testTerminalAdminGroup)
 	shells := []string{
@@ -127,8 +91,6 @@ func TestGenerateTerminalAdminLimitedSudoConfig_DeniesShells(t *testing.T) {
 	}
 }
 
-// ADR T5: persistence vectors (at, crontab, dpkg-divert,
-// update-alternatives) must be denied.
 func TestGenerateTerminalAdminLimitedSudoConfig_DeniesPersistenceVectors(t *testing.T) {
 	out := generateTerminalAdminLimitedSudoConfig(testTerminalAdminGroup)
 	vectors := []string{
@@ -143,14 +105,6 @@ func TestGenerateTerminalAdminLimitedSudoConfig_DeniesPersistenceVectors(t *test
 	}
 }
 
-// ADR L1/L5 + "Deny modifications to cadestrod and sudoers":
-// the agent-protection rules MUST actually deny. In sudoers(5) an EVEN
-// number of '!' operators cancels out (resolving to an ALLOW); only an
-// ODD number negates. So `!!/usr/bin/visudo` GRANTS visudo (sudoers
-// edit → trivial root) and `!!systemctl * cadestrod*` GRANTS
-// stopping/disabling the managed agent — the exact opposite of the
-// rule's stated purpose. No reading of the ADR wants visudo granted to
-// a LIMITED terminal admin, so a double-bang must never appear.
 func TestGenerateTerminalAdminLimitedSudoConfig_AgentProtectionIsRealDeny(t *testing.T) {
 	out := generateTerminalAdminLimitedSudoConfig(testTerminalAdminGroup)
 	assert.NotContains(t, out, "!!",
@@ -163,23 +117,12 @@ func TestGenerateTerminalAdminLimitedSudoConfig_AgentProtectionIsRealDeny(t *tes
 		"LIMITED template must deny the /usr/sbin/visudo path too")
 }
 
-// The legacy password-bearing LIMITED template carries the identical
-// double-bang bug; there `!!/usr/bin/visudo` actively ADDS visudo to
-// the allowlist (no earlier grant cancels it), so a limited admin with
-// their password can edit sudoers and become full root.
 func TestGenerateLimitedSudoConfig_AgentProtectionIsRealDeny(t *testing.T) {
 	out := generateLimitedSudoConfig(testTerminalAdminGroup)
 	assert.NotContains(t, out, "!!",
 		"double-bang grants the command it claims to deny — legacy LIMITED template must use a single '!'")
 }
 
-// ADR T4 pins the Defaults block to the TerminalAdmin group, not the
-// whole host. A bare `Defaults requiretty` / `timestamp_timeout=0`
-// line inside an /etc/sudoers.d drop-in applies host-globally to every
-// sudo invocation (cron jobs, systemd units, ansible), so deploying one
-// scoped policy would force requiretty on root's non-TTY sudo and strip
-// credential caching for every other admin. The Defaults must be
-// group-scoped: `Defaults:%<group> ...`.
 func TestTerminalAdminDefaults_ScopedToGroup_NotHostGlobal(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -199,25 +142,18 @@ func TestTerminalAdminDefaults_ScopedToGroup_NotHostGlobal(t *testing.T) {
 	}
 }
 
-// =============================================================================
-// generateTerminalAdminFullSudoConfig — passwordless FULL.
-// =============================================================================
-
 func TestGenerateTerminalAdminFullSudoConfig_GroupInterpolation(t *testing.T) {
 	out := generateTerminalAdminFullSudoConfig(testTerminalAdminGroup)
 	assert.Contains(t, out, "%"+testTerminalAdminGroup,
 		"the passed group name must appear in the rule")
 }
 
-// ADR: Full template grants ALL=(ALL:ALL) NOPASSWD: ALL.
 func TestGenerateTerminalAdminFullSudoConfig_NOPASSWD_ALL(t *testing.T) {
 	out := generateTerminalAdminFullSudoConfig(testTerminalAdminGroup)
 	assert.Contains(t, out, "%"+testTerminalAdminGroup+" ALL=(ALL:ALL) NOPASSWD: ALL",
 		"FULL template must grant ALL=(ALL:ALL) NOPASSWD: ALL")
 }
 
-// The Defaults block applies to FULL too — audit and TTY constraints
-// are the same regardless of access level.
 func TestGenerateTerminalAdminFullSudoConfig_DefaultsBlock(t *testing.T) {
 	out := generateTerminalAdminFullSudoConfig(testTerminalAdminGroup)
 	g := "%" + testTerminalAdminGroup
@@ -232,14 +168,6 @@ func TestGenerateTerminalAdminFullSudoConfig_DefaultsBlock(t *testing.T) {
 	}
 }
 
-// =============================================================================
-// Switch wiring: the two new enum values route to the new generators.
-// =============================================================================
-
-// TestSetupSudoPolicy_RoutesTerminalAdminLimitedEnumToNewGenerator pins
-// the switch arm in setupSudoPolicy: the new enum value must select
-// the new generator, NOT the existing LIMITED template (which requires
-// a password and is unusable through cadestro-tty-* accounts).
 func TestSetupSudoPolicy_RoutesTerminalAdminLimitedEnumToNewGenerator(t *testing.T) {
 	out := contentForAccessLevel(t, pb.AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED)
 	want := generateTerminalAdminLimitedSudoConfig(testTerminalAdminGroup)
@@ -254,10 +182,6 @@ func TestSetupSudoPolicy_RoutesTerminalAdminFullEnumToNewGenerator(t *testing.T)
 		"AccessLevel=TERMINAL_ADMIN_FULL must select the new passwordless generator, not the existing FULL template")
 }
 
-// contentForAccessLevel exercises sudoConfigForParams (the dispatch
-// function the switch in setupSudoPolicy now uses) directly so the
-// test isn't entangled with the filesystem / group-membership work
-// the surrounding setupSudoPolicy does.
 func contentForAccessLevel(t *testing.T, level pb.AdminAccessLevel) string {
 	t.Helper()
 	params := &pb.AdminPolicyParams{
@@ -270,15 +194,6 @@ func contentForAccessLevel(t *testing.T, level pb.AdminAccessLevel) string {
 	}
 	return content
 }
-
-// =============================================================================
-// Integration: visudo -c -f accepts the generated content.
-//
-// Skipped when visudo isn't on PATH (CI containers may not install
-// the sudo package). When present, this catches any syntax error the
-// unit tests above wouldn't surface — a malformed Defaults line, an
-// unterminated rule, etc.
-// =============================================================================
 
 func TestSudoConfig_PassesVisudoCheck_TerminalAdminLimited(t *testing.T) {
 	requireVisudo(t)
@@ -311,8 +226,6 @@ func requireVisudoAccepts(t *testing.T, content string) {
 	}
 }
 
-// visudoCtx bounds a visudo invocation (#174): a hung visudo previously
-// blocked the test binary forever (no deadline on either call site).
 func visudoCtx(t *testing.T) context.Context {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

@@ -15,12 +15,6 @@ import (
 	"github.com/manchtools/cadestro/agent/internal/credentials"
 )
 
-// TestPeerAuthorized pins the enrollment-socket peer-credential decision:
-// only the agent's own uid (root under the shipped unit) may enroll. Every
-// other local uid — in particular an unprivileged caller against the root
-// agent — is refused. This is the reliable red/green surface for the guard:
-// a test process cannot connect as a foreign uid without privileges, so the
-// pure decision is unit-tested directly.
 func TestPeerAuthorized(t *testing.T) {
 	cases := []struct {
 		name             string
@@ -41,10 +35,6 @@ func TestPeerAuthorized(t *testing.T) {
 	}
 }
 
-// TestEnrollServer_SocketModeIsOwnerOnly pins that the enrollment socket is
-// created owner-only (0600). A world-accessible socket lets any local user
-// connect and enroll the root agent into an attacker-controlled control
-// plane during the installed-but-unenrolled window.
 func TestEnrollServer_SocketModeIsOwnerOnly(t *testing.T) {
 	socket := filepath.Join(t.TempDir(), "enroll.sock")
 	h := NewEnrollHandler("test-host", "dev", credentials.NewStore(t.TempDir()), slog.Default(), nil)
@@ -54,8 +44,6 @@ func TestEnrollServer_SocketModeIsOwnerOnly(t *testing.T) {
 	errCh := make(chan error, 1)
 	go func() { errCh <- srv.Start(ctx) }()
 
-	// Start chmods the socket to 0600 AFTER net.Listen creates it, so poll
-	// for the configured mode rather than stat'ing the pre-chmod file once.
 	waitForSocketMode(t, socket, 0o600)
 
 	cancel()
@@ -67,8 +55,6 @@ func TestEnrollServer_SocketModeIsOwnerOnly(t *testing.T) {
 	}
 }
 
-// waitForSocketMode blocks until the socket at path reaches want, then fails
-// at the deadline with the last observed mode for a clear message.
 func waitForSocketMode(t *testing.T, path string, want fs.FileMode) {
 	t.Helper()
 	deadline := time.Now().Add(2 * time.Second)

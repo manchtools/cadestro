@@ -5,34 +5,28 @@ import (
 	"testing"
 )
 
-// WS7 #7: compareAgentVersion parses vYYYY.MM.PP and orders releases.
-// Comparisons sourced from the documented scheme, not the parser.
 func TestCompareAgentVersion_Table(t *testing.T) {
 	cases := []struct {
 		a, b string
-		want int // sign of compare(a,b): -1 a<b, 0 equal, +1 a>b
+		want int
 	}{
 		{"v2026.06.01", "v2026.06.02", -1},
 		{"v2026.06.02", "v2026.06.01", 1},
 		{"v2026.06.01", "v2026.06.01", 0},
-		{"2026.06.01", "v2026.06.01", 0}, // leading v optional
+		{"2026.06.01", "v2026.06.01", 0},
 		{"v2026.10.00", "v2026.09.99", 1},
 		{"v2027.01.00", "v2026.12.31", 1},
 		{"v2026.06.10", "v2026.06.09", 1},
 
-		// Real release-tag scheme: 2-component cores (vYYYY.MM) and
-		// -rcN pre-release suffixes must compare (they are the actual tags
-		// operators run — the strict 3-numeric parser refused them, which
-		// is what broke self-update between RCs).
-		{"2026.07.01-rc3", "2026.07.01-rc4", -1}, // the reported failure: rc3 → rc4 is an UPGRADE
+		{"2026.07.01-rc3", "2026.07.01-rc4", -1},
 		{"2026.07.01-rc4", "2026.07.01-rc3", 1},
 		{"2026.07.01-rc4", "2026.07.01-rc4", 0},
-		{"2026.07.01-rc4", "2026.07.01", -1}, // a pre-release is older than its final release
+		{"2026.07.01-rc4", "2026.07.01", -1},
 		{"2026.07.01", "2026.07.01-rc4", 1},
-		{"2026.07.01-rc10", "2026.07.01-rc9", 1}, // rc numbers order numerically, not lexically
-		{"v2026.06", "v2026.06.00", 0},           // 2-part core == 3-part with .00 patch
-		{"v2026.06", "v2026.07.01-rc1", -1},      // 2026.06 predates any 2026.07 pre-release
-		{"v2026.06-rc1", "v2026.06", -1},         // pre-release older than release, 2-part core
+		{"2026.07.01-rc10", "2026.07.01-rc9", 1},
+		{"v2026.06", "v2026.06.00", 0},
+		{"v2026.06", "v2026.07.01-rc1", -1},
+		{"v2026.06-rc1", "v2026.06", -1},
 		{"v2026.06-rc1", "v2026.06-rc2", -1},
 	}
 	for _, tc := range cases {
@@ -46,10 +40,6 @@ func TestCompareAgentVersion_Table(t *testing.T) {
 		}
 	}
 
-	// Malformed → error (never silently treated as comparable). v2026.06 is
-	// NO LONGER here — a 2-component core is a valid release tag. Genuine
-	// garbage, a 1-component core, a >3-component core, non-numeric parts, and
-	// an empty pre-release suffix all still fail closed.
 	for _, bad := range []string{"", "garbage", "v2026", "v2026.06.01.02", "vYYYY.MM.PP", "2026-06-01", "2026.07.01-"} {
 		if _, err := compareAgentVersion("v2026.06.01", bad); err == nil {
 			t.Errorf("compareAgentVersion with malformed %q must error", bad)
@@ -68,12 +58,9 @@ func sign(n int) int {
 	}
 }
 
-// WS7 #7: a staged binary OLDER than the running version is refused
-// (anti-rollback), unchanged binary, no shutdown — unless allow_downgrade
-// is set in the control-authored action.
 func TestExecuteAgentUpdate_RefusesOlderVersion(t *testing.T) {
 	staged := agentScript("v2026.05.01", 0)
-	h := newUpdateHarness(t, "v2026.06.02", staged, nil) // running newer than staged
+	h := newUpdateHarness(t, "v2026.06.02", staged, nil)
 
 	_, changed, err := h.e.executeAgentUpdate(context.Background(), h.params())
 	if err == nil {
@@ -87,8 +74,6 @@ func TestExecuteAgentUpdate_RefusesOlderVersion(t *testing.T) {
 	}
 }
 
-// A malformed staged version is refused fail-closed (never treated as
-// newer).
 func TestExecuteAgentUpdate_RefusesMalformedVersion(t *testing.T) {
 	staged := agentScript("garbage", 0)
 	h := newUpdateHarness(t, "v2026.06.02", staged, nil)
@@ -102,12 +87,9 @@ func TestExecuteAgentUpdate_RefusesMalformedVersion(t *testing.T) {
 	}
 }
 
-// A malformed RUNNING version is also refused fail-closed — if the agent
-// cannot parse its own version it cannot prove the candidate is not a
-// downgrade, so it must not swap.
 func TestExecuteAgentUpdate_RefusesMalformedRunningVersion(t *testing.T) {
 	staged := agentScript("v2026.06.02", 0)
-	h := newUpdateHarness(t, "garbage", staged, nil) // running version unparseable
+	h := newUpdateHarness(t, "garbage", staged, nil)
 
 	_, changed, err := h.e.executeAgentUpdate(context.Background(), h.params())
 	if err == nil {
@@ -121,8 +103,6 @@ func TestExecuteAgentUpdate_RefusesMalformedRunningVersion(t *testing.T) {
 	}
 }
 
-// allow_downgrade in the control-authored action is the ONLY bypass: an older staged
-// version then proceeds (swaps + shuts down).
 func TestExecuteAgentUpdate_AllowDowngradeBypass(t *testing.T) {
 	staged := agentScript("v2026.05.01", 0)
 	h := newUpdateHarness(t, "v2026.06.02", staged, nil)

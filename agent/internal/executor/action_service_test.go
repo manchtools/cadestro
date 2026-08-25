@@ -8,9 +8,6 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// All tests in this file use NewExecutor(nil) — no real runner, no
-// binary dependencies, no container needed. They test pure validation.
-
 func TestExecuteService_RejectsNilParams(t *testing.T) {
 	e := NewExecutor(nil)
 	_, changed, err := e.executeService(context.Background(), nil)
@@ -40,7 +37,6 @@ func TestExecuteService_RejectsAgentOwnService(t *testing.T) {
 		t.Errorf("error should mention 'protected service', got %q", err)
 	}
 
-	// "cadestrod" without .service suffix is rejected at validation
 	params = &pb.ServiceParams{UnitName: "cadestrod"}
 	_, changed, err = e.executeService(context.Background(), params)
 	if err == nil {

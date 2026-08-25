@@ -1,4 +1,3 @@
-// Package executor provides thin wrappers around the SDK sys/fs package.
 package executor
 
 import (
@@ -10,13 +9,10 @@ import (
 	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// getFileOwnership retrieves the current owner:group of a file using stat.
 func getFileOwnership(path string) (owner, group string) {
 	return sysfs.GetOwnership(path)
 }
 
-// atomicWriteFile writes content to a file atomically with the specified
-// permissions. The fs Manager's WriteFile is atomic on every backend.
 func (e *Executor) atomicWriteFile(ctx context.Context, path, content, mode, owner, group string) error {
 	opts := sysfs.WriteOptions{Owner: owner, Group: group}
 	if mode != "" {
@@ -29,7 +25,6 @@ func (e *Executor) atomicWriteFile(ctx context.Context, path, content, mode, own
 	return e.deps.fs.WriteFile(ctx, path, []byte(content), opts)
 }
 
-// readFileWithSudo reads a file's contents through the fs Manager.
 func (e *Executor) readFileWithSudo(ctx context.Context, path string) (string, error) {
 	b, err := e.deps.fs.ReadFile(ctx, path)
 	if err != nil {
@@ -38,28 +33,11 @@ func (e *Executor) readFileWithSudo(ctx context.Context, path string) (string, e
 	return string(b), nil
 }
 
-// fileExistsWithSudo checks whether a path exists. A probe error is treated as
-// "absent" to preserve the boolean contract of the previous helper.
 func (e *Executor) fileExistsWithSudo(ctx context.Context, path string) bool {
 	ok, _ := e.deps.fs.Exists(ctx, path)
 	return ok
 }
 
-// statFile returns a path's FileMode. The SDK fs Manager exposes Exists (bool)
-// and ReadFile (bytes) but no metadata stat, so this is the single sanctioned
-// raw-stat chokepoint, used only by the executor's idempotency checks
-// (file/directory "already matches the desired mode/type?"). It deliberately
-// does NOT escalate: if a non-root agent cannot stat a privileged path, the
-// caller reads the error as "does not match" and falls through to the
-// privilege-routed write — the safe direction. Existence is reported through
-// the error (os.IsNotExist). The ctx is threaded so this can move onto the fs
-// Manager once it grows a metadata stat, without touching call sites.
-//
-// It uses Lstat and fails closed on a symlink: following one could report a
-// symlinked privileged path as an already-matching regular file/dir, so the
-// idempotency check would skip the guarded write and leave the link in place.
-// Returning an error makes the caller treat it as "does not match" and route
-// through the symlink-refusing write path instead.
 func statFile(ctx context.Context, path string) (os.FileMode, error) {
 	info, err := os.Lstat(path)
 	if err != nil {
@@ -71,22 +49,14 @@ func statFile(ctx context.Context, path string) (os.FileMode, error) {
 	return info.Mode(), nil
 }
 
-// removeFileStrict removes a file and returns any error.
 func (e *Executor) removeFileStrict(ctx context.Context, path string) error {
 	return e.deps.fs.Remove(ctx, path)
 }
 
-// createDirectory creates a directory through the fs Manager.
 func (e *Executor) createDirectory(ctx context.Context, path string, recursive bool) error {
 	return e.deps.fs.Mkdir(ctx, path, sysfs.MkdirOptions{Recursive: recursive})
 }
 
-// createDirectoryWithPermissions creates a directory and applies its mode
-// and ownership through the fd-based, no-follow helper (WS6 #5). The old
-// path-based chmod/chown re-resolved the path and would dereference a final-
-// component symlink swapped in after mkdir, redirecting a root chmod/chown onto
-// the target. Here the perms are applied via an O_NOFOLLOW|O_DIRECTORY fd, so a
-// swapped-in symlink aborts the operation (ELOOP) instead.
 func (e *Executor) createDirectoryWithPermissions(ctx context.Context, path, mode, owner, group string, recursive bool) error {
 	if err := e.deps.fs.Mkdir(ctx, path, sysfs.MkdirOptions{Recursive: recursive}); err != nil {
 		return fmt.Errorf("create directory: %w", err)
@@ -102,7 +72,7 @@ func (e *Executor) createDirectoryWithPermissions(ctx context.Context, path, mod
 			return err
 		}
 	}
-	perm := os.FileMode(0o755) // deterministic default when mode is unspecified
+	perm := os.FileMode(0o755)
 	if mode != "" {
 		v, err := strconv.ParseUint(mode, 8, 32)
 		if err != nil {
@@ -113,22 +83,14 @@ func (e *Executor) createDirectoryWithPermissions(ctx context.Context, path, mod
 	return sysfs.SetDirPermissionsNoFollow(path, perm, uid, gid)
 }
 
-// removeDirectory removes a directory and its contents.
 func (e *Executor) removeDirectory(ctx context.Context, path string) error {
 	return e.deps.fs.RemoveDir(ctx, path)
 }
 
-// userExists reports whether a user exists on the system, via the SDK user
-// Manager (the `id` lookup). The lookup error is propagated, not coerced to
-// "not found", so a caller can fail closed on "couldn't check" rather than
-// blindly creating or skipping.
 func (e *Executor) userExists(ctx context.Context, username string) (bool, error) {
 	return e.deps.user.Exists(ctx, username)
 }
 
-// groupExists reports whether a group exists on the system, via the SDK user
-// Manager (the `getent group` lookup). The lookup error is propagated, not
-// coerced to "not found".
 func (e *Executor) groupExists(ctx context.Context, groupName string) (bool, error) {
 	return e.deps.user.GroupExists(ctx, groupName)
 }

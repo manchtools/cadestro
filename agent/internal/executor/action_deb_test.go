@@ -7,9 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// debPackageNameFromURL is the ABSENT-path fallback used only when the
-// artifact can't be downloaded to read its authoritative Package field.
-// It parses the `<name>_<version>_<arch>.deb` Debian mirror convention.
 func TestDebPackageNameFromURL(t *testing.T) {
 	t.Run("standard name_version_arch.deb", func(t *testing.T) {
 		name, err := debPackageNameFromURL("https://repo.example.com/pool/m/myapp_1.2.3_amd64.deb")
@@ -29,9 +26,7 @@ func TestDebPackageNameFromURL(t *testing.T) {
 	})
 
 	t.Run("no underscore (non-standard filename) is rejected so we don't guess wrong", func(t *testing.T) {
-		// This is exactly the case the canonical (download + dpkg-deb)
-		// path handles and the URL heuristic cannot: the fallback must
-		// refuse rather than silently target the wrong package.
+
 		_, err := debPackageNameFromURL("https://x/y/myapp.deb")
 		assert.Error(t, err)
 	})

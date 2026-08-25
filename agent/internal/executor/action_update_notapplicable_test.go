@@ -62,10 +62,6 @@ func updateTestExecutor(t *testing.T, fake *upgradeFakeMgr) *Executor {
 	}
 }
 
-// TestExecuteUpdate_SecurityOnlyUnsupported_NotApplicable pins spec 23 AC 2
-// for the pacman class: security_only on a backend with no security-patch
-// scoping stays fail-closed (nothing upgraded) but classifies as
-// NOT_APPLICABLE with the reason, not FAILED.
 func TestExecuteUpdate_SecurityOnlyUnsupported_NotApplicable(t *testing.T) {
 	fake := &upgradeFakeMgr{backend: pkg.Pacman, securityUpgradeErr: pkg.ErrUnsupported}
 	e := updateTestExecutor(t, fake)
@@ -86,12 +82,6 @@ func TestExecuteUpdate_SecurityOnlyUnsupported_NotApplicable(t *testing.T) {
 	}
 }
 
-// TestExecuteUpdate_SecurityOnlyToolingMissing_NotApplicable pins the apt
-// class: the backend could scope to security updates but the tooling
-// (unattended-upgrades) is absent — the SDK fails closed with
-// ErrBackendUnavailable and the agent classifies NOT_APPLICABLE. hasUpdates
-// is true so this also proves the NA path forces changed=false rather than
-// inheriting updatesAvailable.
 func TestExecuteUpdate_SecurityOnlyToolingMissing_NotApplicable(t *testing.T) {
 	fake := &upgradeFakeMgr{
 		backend:            pkg.Apt,
@@ -110,9 +100,6 @@ func TestExecuteUpdate_SecurityOnlyToolingMissing_NotApplicable(t *testing.T) {
 	}
 }
 
-// TestExecuteUpdate_SecurityOnlyFalse_BackendErrorStaysFailed proves the NA
-// mapping is scoped to security-only requests: the same ErrBackendUnavailable
-// during a NORMAL update is a real failure, not inapplicability.
 func TestExecuteUpdate_SecurityOnlyFalse_BackendErrorStaysFailed(t *testing.T) {
 	fake := &upgradeFakeMgr{
 		backend:          pkg.Apt,
@@ -130,9 +117,6 @@ func TestExecuteUpdate_SecurityOnlyFalse_BackendErrorStaysFailed(t *testing.T) {
 	}
 }
 
-// TestExecuteUpdate_SecurityOnlySupported_Proceeds is the complementary
-// positive path (spec 23 AC 7): a capable backend performs the security-only
-// upgrade and nothing classifies as not-applicable.
 func TestExecuteUpdate_SecurityOnlySupported_Proceeds(t *testing.T) {
 	fake := &upgradeFakeMgr{backend: pkg.Dnf, hasSecurityUpdates: true}
 	e := updateTestExecutor(t, fake)
@@ -150,11 +134,6 @@ func TestExecuteUpdate_SecurityOnlySupported_Proceeds(t *testing.T) {
 	}
 }
 
-// TestSecurityOnlyNotApplicable_Decision pins the NA-eligibility decision,
-// including the CodeRabbit catch on this change: a reboot-scheduling
-// failure joined onto lastErr after the sentinel upgrade error means the
-// run had a REAL failure — it must stay FAILED, not be demoted to
-// NOT_APPLICABLE.
 func TestSecurityOnlyNotApplicable_Decision(t *testing.T) {
 	sentinel := pkg.ErrUnsupported
 	wrapped := fmt.Errorf("apt security upgrade: %w", sysexec.ErrBackendUnavailable)
@@ -184,11 +163,6 @@ func TestSecurityOnlyNotApplicable_Decision(t *testing.T) {
 	}
 }
 
-// TestExecuteAction_SecurityOnly_NotApplicableStatus pins the central
-// classification (spec 23 AC 2 end to end in the agent): the sentinel from
-// the update path surfaces as EXECUTION_STATUS_NOT_APPLICABLE on the
-// ActionResult — not FAILED — with the reason in the result error and
-// Changed=false.
 func TestExecuteAction_SecurityOnly_NotApplicableStatus(t *testing.T) {
 	fake := &upgradeFakeMgr{backend: pkg.Pacman, securityUpgradeErr: pkg.ErrUnsupported}
 	e := updateTestExecutor(t, fake)

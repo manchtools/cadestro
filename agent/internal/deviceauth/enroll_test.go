@@ -24,7 +24,6 @@ import (
 
 var testCAPin = strings.Repeat("0", 64)
 
-// mockRegisterService implements the Register RPC of ControlServiceHandler.
 type mockRegisterService struct {
 	cadestrov1connect.UnimplementedControlServiceHandler
 
@@ -38,9 +37,6 @@ func (m *mockRegisterService) Register(ctx context.Context, req *connect.Request
 	return nil, connect.NewError(connect.CodeUnimplemented, nil)
 }
 
-// startMockControlServer starts an httptest TLS control server (the
-// agent enforces https-only enrollment, so a plain-http test server
-// would be rejected by the gate before RegisterAgent runs).
 func startMockControlServer(t *testing.T, mock *mockRegisterService) *httptest.Server {
 	t.Helper()
 	mux := http.NewServeMux()
@@ -51,8 +47,6 @@ func startMockControlServer(t *testing.T, mock *mockRegisterService) *httptest.S
 	return srv
 }
 
-// trustServer returns the registerOpts that make sdk.RegisterAgent trust
-// the httptest TLS server's self-signed certificate.
 func trustServer(srv *httptest.Server) []sdk.ClientOption {
 	return []sdk.ClientOption{sdk.WithHTTPClient(srv.Client())}
 }
@@ -88,13 +82,11 @@ func TestEnroll_Success(t *testing.T) {
 	assert.Equal(t, "dev-123", resp.Msg.GetDeviceId().GetValue())
 	assert.Empty(t, resp.Msg.Error)
 
-	// Callback was called
 	require.NotNil(t, enrolledCreds)
 	assert.Equal(t, "dev-123", enrolledCreds.DeviceID)
 	assert.Equal(t, "https://gw.example.com:8443", enrolledCreds.AgentAddr)
 	assert.Equal(t, srv.URL, enrolledCreds.ControlAddr)
 
-	// Credentials saved to store
 	assert.True(t, credStore.Exists())
 	loaded, err := credStore.Load()
 	require.NoError(t, err)
@@ -116,7 +108,7 @@ func TestEnroll_MissingFields(t *testing.T) {
 }
 
 func TestEnroll_AlreadyEnrolled(t *testing.T) {
-	// Pre-populate credentials
+
 	credStore := credentials.NewStore(t.TempDir())
 	credStore.Save(&credentials.Credentials{
 		DeviceID:    "existing-device",
@@ -135,7 +127,7 @@ func TestEnroll_AlreadyEnrolled(t *testing.T) {
 		CaFingerprintPin: testCAPin,
 	}))
 	require.NoError(t, err)
-	assert.True(t, resp.Msg.Success) // Returns success with existing device ID
+	assert.True(t, resp.Msg.Success)
 	assert.Equal(t, "existing-device", resp.Msg.GetDeviceId().GetValue())
 	assert.Contains(t, resp.Msg.Error, "already enrolled")
 }
@@ -222,7 +214,6 @@ func TestEnrollServer_EndToEnd(t *testing.T) {
 
 	go enrollServer.Start(ctx)
 
-	// Wait for socket to be ready
 	require.Eventually(t, func() bool {
 		conn, err := net.Dial("unix", socketPath)
 		if err != nil {
@@ -232,7 +223,6 @@ func TestEnrollServer_EndToEnd(t *testing.T) {
 		return true
 	}, 2*time.Second, 10*time.Millisecond)
 
-	// Create client over unix socket
 	httpClient := &http.Client{
 		Transport: &http.Transport{
 			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
@@ -242,12 +232,10 @@ func TestEnrollServer_EndToEnd(t *testing.T) {
 	}
 	client := cadestrov1connect.NewDeviceAuthServiceClient(httpClient, "http://localhost")
 
-	// Check status: not enrolled
 	status, err := client.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.False(t, status.Msg.Enrolled)
 
-	// Enroll
 	resp, err := client.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 		ServerUrl: controlSrv.URL, Token: "test-token", CaFingerprintPin: caPin(t, caPEM),
 	}))
@@ -255,7 +243,6 @@ func TestEnrollServer_EndToEnd(t *testing.T) {
 	assert.True(t, resp.Msg.Success)
 	assert.Equal(t, "dev-e2e", resp.Msg.GetDeviceId().GetValue())
 
-	// Callback received
 	select {
 	case creds := <-enrollCh:
 		assert.Equal(t, "dev-e2e", creds.DeviceID)
@@ -263,7 +250,6 @@ func TestEnrollServer_EndToEnd(t *testing.T) {
 		t.Fatal("enrollment callback not received")
 	}
 
-	// Check status again: enrolled
 	status, err = client.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.True(t, status.Msg.Enrolled)

@@ -19,9 +19,6 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// withRemoteTestClient points the artifact fetch seam at the given TLS test
-// server for the duration of the test (HTTPConfig.Client is the SDK's injectable
-// transport; production leaves remoteHTTPClient nil).
 func withRemoteTestClient(t *testing.T, srv *httptest.Server) {
 	t.Helper()
 	prev := remoteHTTPClient
@@ -33,10 +30,6 @@ func appImageFetchExecutor() *Executor {
 	return &Executor{logger: slog.Default(), now: time.Now, repairFS: func(context.Context) bool { return true }}
 }
 
-// TestExecuteAppImage_InstallsViaRemoteFetch pins the A1 adoption: the AppImage
-// install downloads straight into the install dir via the SDK remote source
-// (replacing fs.WriteReader) and lands the file at exactly mode 0755 with the
-// downloaded bytes intact.
 func TestExecuteAppImage_InstallsViaRemoteFetch(t *testing.T) {
 	content := []byte("#!/bin/sh\necho appimage-ok\n")
 	sum := sha256.Sum256(content)
@@ -64,12 +57,6 @@ func TestExecuteAppImage_InstallsViaRemoteFetch(t *testing.T) {
 	assert.True(t, bytes.Equal(got, content), "placed bytes must match the download")
 }
 
-// TestExecuteAppImage_RemoteFetchMismatchPreservesExisting pins atomicity through
-// remote.Fetch: a download whose bytes don't match the action checksum must fail
-// WITHOUT clobbering an AppImage already installed at the target path. The action
-// checksum is a third value (matching neither the existing file nor the served
-// bytes) so the idempotency skip-check doesn't short-circuit and the download
-// genuinely runs and mismatches.
 func TestExecuteAppImage_RemoteFetchMismatchPreservesExisting(t *testing.T) {
 	installDir := t.TempDir()
 	dest := filepath.Join(installDir, "app.AppImage")

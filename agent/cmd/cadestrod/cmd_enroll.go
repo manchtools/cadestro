@@ -1,4 +1,3 @@
-// Package main is the entry point for the cadestrod agent.
 package main
 
 import (
@@ -19,18 +18,8 @@ import (
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
-// parseRegistrationURI parses a cadestro:// URI.
-// Format: cadestro://server:port?token=xxx&pin=sha256
-// Examples:
-//   - cadestro://control.example.com:8080?token=abc123&pin=<CA-SHA256>
-//
-// TLS verification is always enforced. The previous `skip-verify=true`
-// and `tls=false` query parameters were removed because bypassing
-// TLS during initial registration enables MITM attacks that can
-// substitute the control URL and a malicious certificate before the
-// agent has any trust anchor of its own.
 func parseRegistrationURI(rawURI string) (*registrationURI, error) {
-	// Replace cadestro:// with https:// for parsing.
+
 	normalizedURI := strings.Replace(rawURI, "cadestro://", "https://", 1)
 
 	parsed, err := url.Parse(normalizedURI)
@@ -38,7 +27,6 @@ func parseRegistrationURI(rawURI string) (*registrationURI, error) {
 		return nil, fmt.Errorf("invalid URI: %w", err)
 	}
 
-	// Token is required.
 	token := parsed.Query().Get("token")
 	if token == "" {
 		return nil, fmt.Errorf("token parameter is required in URI")
@@ -51,19 +39,11 @@ func parseRegistrationURI(rawURI string) (*registrationURI, error) {
 	return &registrationURI{
 		ServerURL: fmt.Sprintf("https://%s", parsed.Host),
 		Token:     token,
-		// Mandatory out-of-band CA fingerprint pin. Any tls=/skip-verify=
-		// query params are intentionally ignored — ServerURL is always
-		// normalized to https, there is no TLS-bypass path.
+
 		Pin: pin,
 	}, nil
 }
 
-// resolveEnrollToken resolves the registration token, preferring secure
-// delivery: a -token-file read from disk, then the CADESTRO_REGISTRATION_TOKEN
-// environment variable, and only as a last resort the -token argv flag —
-// which is warned against because process arguments are world-readable
-// via /proc/<pid>/cmdline (finding #3). Returns "" when no source
-// provided a token.
 func resolveEnrollToken(flagToken, tokenFile, envToken string) (string, error) {
 	if tokenFile != "" {
 		b, err := os.ReadFile(tokenFile)
@@ -82,10 +62,6 @@ func resolveEnrollToken(flagToken, tokenFile, envToken string) (string, error) {
 	return "", nil
 }
 
-// runEnroll handles the "enroll" subcommand.
-// Usage: cadestrod enroll -server=URL -token-file=PATH -pin=SHA256
-//
-//	cadestrod enroll 'cadestro://server:port?token=xxx&pin=<CA-SHA256>'
 func runEnroll(args []string) {
 	fs := flag.NewFlagSet("enroll", flag.ExitOnError)
 	token := fs.String("token", "", "Registration token (INSECURE on argv; prefer -token-file or CADESTRO_REGISTRATION_TOKEN)")
@@ -98,7 +74,6 @@ func runEnroll(args []string) {
 	caPin := *pin
 	fromURI := false
 
-	// Accept cadestro:// URI as positional arg
 	if fs.NArg() > 0 {
 		arg := fs.Arg(0)
 		if strings.HasPrefix(arg, "cadestro://") {
@@ -116,9 +91,6 @@ func runEnroll(args []string) {
 		}
 	}
 
-	// Resolve the token. The URI carries its own token; otherwise prefer
-	// the secure -token-file / CADESTRO_REGISTRATION_TOKEN sources over -token
-	// argv (which leaks via /proc/<pid>/cmdline, #3).
 	resolvedToken := *token
 	if !fromURI {
 		rt, err := resolveEnrollToken(*token, *tokenFile, os.Getenv("CADESTRO_REGISTRATION_TOKEN"))
@@ -140,11 +112,9 @@ func runEnroll(args []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	// Connect to the enrollment socket
 	httpClient := unixSocketHTTPClient(*socketPath)
 	client := cadestrov1connect.NewDeviceAuthServiceClient(httpClient, "http://localhost")
 
-	// Check enrollment status first
 	status, err := client.GetEnrollmentStatus(ctx, connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: cannot connect to agent enrollment socket at %s\n", *socketPath)
@@ -157,10 +127,6 @@ func runEnroll(args []string) {
 		return
 	}
 
-	// Enroll via the local socket. The SDK proto no longer carries
-	// a TLS-bypass field; agents always validate the server cert
-	// during enrollment. The CA fingerprint pin is verified
-	// server-side before the returned CA is trusted.
 	resp, err := client.Enroll(ctx, connect.NewRequest(&cadestrov1.EnrollRequest{
 		ServerUrl:        *server,
 		Token:            resolvedToken,
@@ -179,12 +145,6 @@ func runEnroll(args []string) {
 	fmt.Printf("Enrolled successfully. Device ID: %s\n", resp.Msg.GetDeviceId().GetValue())
 }
 
-// registrationURIRefusedByHandler reports whether the bare-binary / desktop
-// URI-handler path must REFUSE uri. luks operation URIs (cadestro://luks/…)
-// are handled upstream; any OTHER cadestro:// URI is a registration URI
-// (server+token) and must not auto-enroll from a URI handler — a browser link
-// could otherwise silently enroll the device into an attacker-controlled
-// backend. Enrollment is only allowed via the explicit `enroll` subcommand. (WS7)
 func registrationURIRefusedByHandler(uri string) bool {
 	return strings.HasPrefix(uri, "cadestro://") && !strings.HasPrefix(uri, "cadestro://luks/")
 }
@@ -192,10 +152,9 @@ func registrationURIRefusedByHandler(uri string) bool {
 type registrationURI struct {
 	ServerURL string
 	Token     string
-	Pin       string // required CA fingerprint pin
+	Pin       string
 }
 
-// unixSocketHTTPClient returns an HTTP client that dials the given unix socket.
 func unixSocketHTTPClient(socketPath string) *http.Client {
 	return &http.Client{
 		Transport: &http.Transport{

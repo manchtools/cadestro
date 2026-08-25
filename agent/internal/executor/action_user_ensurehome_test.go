@@ -11,10 +11,6 @@ import (
 	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 )
 
-// fakeExistsFS is a minimal fs.Manager that answers a single Exists probe with a
-// fixed result and records the path it was asked about. Every other method
-// panics on the nil embedded interface, keeping the fake honest about exactly
-// what ensureHomeIfMissing touches.
 type fakeExistsFS struct {
 	sysfs.Manager
 	ok          bool
@@ -27,7 +23,6 @@ func (f *fakeExistsFS) Exists(_ context.Context, path string) (bool, error) {
 	return f.ok, f.err
 }
 
-// fakeEnsureHomeUser is a minimal user.Manager that records EnsureHome calls.
 type fakeEnsureHomeUser struct {
 	sysuser.Manager
 	calls []ensureHomeCall
@@ -50,14 +45,6 @@ func swapHomeMgrs(t *testing.T, e *Executor, fs *fakeExistsFS, usr *fakeEnsureHo
 	e.deps.user = usr
 }
 
-// TestEnsureHomeIfMissing_ProbeErrorFailsClosed is the core fail-closed
-// assertion: when fsMgr.Exists cannot determine whether the home exists (an
-// I/O / permission error, NOT a clean "no such file"), the state is
-// indeterminate. ensureHomeIfMissing must surface a warning and skip
-// EnsureHome — NOT treat the error as "missing" and create the home. Swallowing
-// the probe error (the prior `ok, _ := fsMgr.Exists(...)` form) would invert an
-// unknown into a confident "create it", running EnsureHome on every reconcile
-// cycle and reporting changed=true forever.
 func TestEnsureHomeIfMissing_ProbeErrorFailsClosed(t *testing.T) {
 	fs := &fakeExistsFS{err: errors.New("permission denied")}
 	usr := &fakeEnsureHomeUser{}
@@ -79,9 +66,6 @@ func TestEnsureHomeIfMissing_ProbeErrorFailsClosed(t *testing.T) {
 	}
 }
 
-// TestEnsureHomeIfMissing_MissingCreatesWithOwnershipAndMode pins the repair
-// path: a confirmed-absent home is created via the idempotent EnsureHome with
-// the resolved group and a 0700 mode, and the call reports changed=true.
 func TestEnsureHomeIfMissing_MissingCreatesWithOwnershipAndMode(t *testing.T) {
 	fs := &fakeExistsFS{ok: false}
 	usr := &fakeEnsureHomeUser{}
@@ -113,9 +97,6 @@ func TestEnsureHomeIfMissing_MissingCreatesWithOwnershipAndMode(t *testing.T) {
 	}
 }
 
-// TestEnsureHomeIfMissing_PresentIsIdempotent: a home that already exists must
-// not trigger EnsureHome and must report no change (re-applied action stays
-// idempotent).
 func TestEnsureHomeIfMissing_PresentIsIdempotent(t *testing.T) {
 	fs := &fakeExistsFS{ok: true}
 	usr := &fakeEnsureHomeUser{}
@@ -134,8 +115,6 @@ func TestEnsureHomeIfMissing_PresentIsIdempotent(t *testing.T) {
 	}
 }
 
-// TestEnsureHomeIfMissing_NoCreateHomeSkipsProbe: when create_home is false the
-// agent honours the proto and does not even probe — no home management at all.
 func TestEnsureHomeIfMissing_NoCreateHomeSkipsProbe(t *testing.T) {
 	fs := &fakeExistsFS{ok: false}
 	usr := &fakeEnsureHomeUser{}
@@ -157,9 +136,6 @@ func TestEnsureHomeIfMissing_NoCreateHomeSkipsProbe(t *testing.T) {
 	}
 }
 
-// TestEnsureHomeIfMissing_HomeDirResolution pins the home-path precedence:
-// explicit params.HomeDir wins; else the passwd entry (currentHome); else the
-// /home/<user> default.
 func TestEnsureHomeIfMissing_HomeDirResolution(t *testing.T) {
 	cases := []struct {
 		name        string
@@ -173,7 +149,7 @@ func TestEnsureHomeIfMissing_HomeDirResolution(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			fs := &fakeExistsFS{ok: true} // present -> just exercise the path resolution + probe
+			fs := &fakeExistsFS{ok: true}
 			usr := &fakeEnsureHomeUser{}
 			e := NewExecutor(nil)
 			swapHomeMgrs(t, e, fs, usr)

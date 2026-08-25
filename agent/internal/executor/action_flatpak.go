@@ -1,4 +1,3 @@
-// Package executor provides implementations for action executors.
 package executor
 
 import (
@@ -17,12 +16,6 @@ func (e *Executor) executeFlatpak(ctx context.Context, params *pb.FlatpakParams,
 		return nil, false, fmt.Errorf("flatpak params required")
 	}
 
-	// Validate app-id and remote BEFORE the flatpak lookup or any
-	// dispatch (WS8 finding 7). Both reach `flatpak install` as operands,
-	// so a flag-shaped value (`--system`, `--from=…`) must be rejected up
-	// front. Validating before the lookup also means a malformed action
-	// is rejected on every host, not silently skipped on one without
-	// flatpak.
 	if params.GetAppId().GetValue() == "" {
 		return nil, false, fmt.Errorf("flatpak app_id is required")
 	}
@@ -30,7 +23,6 @@ func (e *Executor) executeFlatpak(ctx context.Context, params *pb.FlatpakParams,
 		return nil, false, fmt.Errorf("invalid flatpak app_id: %w", err)
 	}
 
-	// Default to flathub if no remote specified
 	remote := params.Remote
 	if remote == "" {
 		remote = "flathub"
@@ -62,11 +54,7 @@ func (e *Executor) executeFlatpakSystem(ctx context.Context, params *pb.FlatpakP
 	if err != nil {
 		return nil, false, fmt.Errorf("build flatpak manager: %w", err)
 	}
-	// The system path fails closed on a failed install-state probe: it is a
-	// single operation with no fan-out to stay resilient for, so surfacing the
-	// flatpak failure beats blindly attempting an install or falsely reporting
-	// "already absent". (The per-user path below instead treats a probe error as
-	// "not installed", so one user's failure doesn't abort the whole fan-out.)
+
 	installed, err := mgr.IsInstalled(ctx, params.GetAppId().GetValue())
 	if err != nil {
 		return nil, false, fmt.Errorf("check flatpak %s installed: %w", params.GetAppId().GetValue(), err)
@@ -79,9 +67,7 @@ func (e *Executor) executeFlatpakSystem(ctx context.Context, params *pb.FlatpakP
 				ExitCode: 0,
 				Stdout:   fmt.Sprintf("flatpak %s is already installed", params.GetAppId().GetValue()),
 			}
-			// Converge the pin even when already installed — a pin requested
-			// after install, or lost out-of-band, must still be applied. A pin
-			// failure is a real failure.
+
 			if params.Pin {
 				changed, pinErr := ensureFlatpakPinned(ctx, mgr, params.GetAppId().GetValue())
 				if pinErr != nil {
@@ -106,10 +92,6 @@ func (e *Executor) executeFlatpakSystem(ctx context.Context, params *pb.FlatpakP
 			return out, false, fmt.Errorf("flatpak install failed: %w", instErr)
 		}
 
-		// Pin if requested (mask prevents updates). Pinning is part of the
-		// requested state, so a pin failure surfaces as a real error — the
-		// install is durable but the action did not reach the desired state
-		// (mirrors action_package.go).
 		if params.Pin {
 			if _, pinErr := ensureFlatpakPinned(ctx, mgr, params.GetAppId().GetValue()); pinErr != nil {
 				if out == nil {
@@ -133,8 +115,6 @@ func (e *Executor) executeFlatpakSystem(ctx context.Context, params *pb.FlatpakP
 			return out, false, err
 		}
 
-		// Unmask before uninstall — best-effort; can fail benignly if the app
-		// was never pinned, so log at Debug for correlation only.
 		if _, err := mgr.Unpin(ctx, params.GetAppId().GetValue()); err != nil {
 			e.logger.Debug("flatpak ABSENT: unmask before uninstall failed (often expected if not pinned)",
 				"app_id", params.GetAppId().GetValue(), "error", err)
@@ -146,23 +126,6 @@ func (e *Executor) executeFlatpakSystem(ctx context.Context, params *pb.FlatpakP
 	return nil, false, fmt.Errorf("unknown desired state: %v", state)
 }
 
-// executeFlatpakPerUser implements the per-user install/uninstall path (#79).
-// The PRESENT branch installs for every currently signed-in graphical session;
-// the ABSENT branch uninstalls from every account on the box that has the app
-// under ~/.local/share/flatpak/. The asymmetry is deliberate: install requires a
-// live session (we want the new app visible immediately to a user at the
-// keyboard), uninstall must reach dormant accounts to actually converge the
-// policy.
-//
-// Each session/user gets its own flatpak Manager built via newPerUserFlatpak, so
-// the --user operations run AS that user through the SDK rather than the agent
-// hand-assembling runuser command lines.
-//
-// Empty-set policy (no signed-in users for PRESENT, no installs to remove for
-// ABSENT) is "log Warn, return success no-op" rather than fail — pre-fix the
-// action would have silently installed into /root/.local/share/flatpak, so
-// success-no-op is strictly better and keeps the action retry-friendly until a
-// session appears.
 func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.FlatpakParams, state pb.DesiredState, remote string) (*pb.CommandOutput, bool, error) {
 	switch state {
 	case pb.DesiredState_DESIRED_STATE_PRESENT:
@@ -208,12 +171,9 @@ func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.Flatpak
 				continue
 			}
 
-			// An IsInstalled probe error is treated as "not installed" (mirrors
-			// the prior `flatpak info` check, which collapsed to a bool): proceed
-			// to install, which surfaces any real failure per-user below.
 			if installed, _ := umgr.IsInstalled(ctx, params.GetAppId().GetValue()); installed {
 				line(fmt.Sprintf("flatpak %s already installed; skipped", params.GetAppId().GetValue()))
-				// Converge the pin even when already installed.
+
 				if params.Pin {
 					changed, pinErr := ensureFlatpakPinned(ctx, umgr, params.GetAppId().GetValue())
 					if pinErr != nil {
@@ -245,9 +205,7 @@ func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.Flatpak
 
 			if params.Pin {
 				if _, pinErr := ensureFlatpakPinned(ctx, umgr, params.GetAppId().GetValue()); pinErr != nil {
-					// Pin is part of the requested state: record it as a failure
-					// (firstFailure) so the action reports FAILED, not a silent
-					// success with the app left unpinned.
+
 					if firstFailure == nil {
 						firstFailure = fmt.Errorf("user %s: install succeeded but %w", s.Username, pinErr)
 					}
@@ -297,8 +255,6 @@ func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.Flatpak
 				continue
 			}
 
-			// Mask removal is best-effort, same rationale as the system-wide
-			// path. Log only if loud.
 			if _, err := umgr.Unpin(ctx, params.GetAppId().GetValue()); err != nil {
 				e.logger.Debug("flatpak ABSENT: per-user unmask before uninstall failed (often expected if not pinned)",
 					"user", u.Username, "app_id", params.GetAppId().GetValue(), "error", err)
@@ -322,19 +278,13 @@ func (e *Executor) executeFlatpakPerUser(ctx context.Context, params *pb.Flatpak
 	return nil, false, fmt.Errorf("unknown desired state: %v", state)
 }
 
-// ensureFlatpakPinned converges the pin (mask) state for appID through the given
-// flatpak Manager: it pins the app if it isn't already pinned and reports whether
-// it changed anything. A pin failure is returned as a real error — pinning is
-// part of the requested desired state (mirrors action_package.go's
-// ensurePackagePinned contract), so a failed pin must NOT be reported as success.
-// IsPinned makes the pin converge on an already-installed-but-unpinned app.
 func ensureFlatpakPinned(ctx context.Context, mgr *packageSDK.FlatpakManager, appID string) (bool, error) {
 	pinned, err := mgr.IsPinned(ctx, appID)
 	if err != nil {
 		return false, fmt.Errorf("check pin %s: %w", appID, err)
 	}
 	if pinned {
-		return false, nil // already pinned, nothing to do
+		return false, nil
 	}
 	if _, err := mgr.Pin(ctx, appID); err != nil {
 		return false, fmt.Errorf("pin (mask) %s: %w", appID, err)

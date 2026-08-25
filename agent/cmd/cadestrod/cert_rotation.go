@@ -19,9 +19,6 @@ func presentPendingCertificate(pending, fallbackActive bool) bool {
 	return pending && !fallbackActive
 }
 
-// configureAgentMTLS selects the credential for the next stream and reports
-// whether a pending credential failed before a connection was attempted. The
-// caller then retries with the active credential on the normal reconnect path.
 func configureAgentMTLS(creds *credentials.Credentials, fallbackActive bool) (sdk.ClientOption, bool, bool, error) {
 	usingPending := presentPendingCertificate(len(creds.PendingCertificate) > 0, fallbackActive)
 	presentedCertificate := creds.Certificate
@@ -77,7 +74,6 @@ func certificateRenewalDue(cert *x509.Certificate, now time.Time) bool {
 	return !now.Before(cert.NotBefore.Add(time.Duration(float64(cert.NotAfter.Sub(cert.NotBefore)) * .8)))
 }
 
-// applyRenewal records B beside A. CA trust remains pinned at enrollment.
 func applyRenewal(creds *credentials.Credentials, result *sdk.RenewCertificateResult) error {
 	if len(result.Certificate) == 0 {
 		return fmt.Errorf("renewal returned an empty certificate")
@@ -89,8 +85,6 @@ func applyRenewal(creds *credentials.Credentials, result *sdk.RenewCertificateRe
 	return nil
 }
 
-// renewCertificateIfDue is called by the existing connection/sync cadence;
-// there is no second rotation goroutine or timer state to coordinate.
 func renewCertificateIfDue(ctx context.Context, credStore *credentials.Store, creds *credentials.Credentials, hostname string, logger *slog.Logger, now func() time.Time, force bool) (bool, error) {
 	block, _ := pem.Decode(creds.Certificate)
 	if block == nil {

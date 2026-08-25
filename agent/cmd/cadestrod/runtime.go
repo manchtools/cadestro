@@ -1,4 +1,3 @@
-// Package main is the entry point for the cadestrod agent.
 package main
 
 import (
@@ -17,17 +16,6 @@ import (
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// runAgent connects to the control and processes messages.
-// The agent continues to run scheduled actions even when disconnected.
-// If securityAlert is non-nil, it will be sent to the server after connection.
-// reloadCredsForReconnect returns the latest credentials from disk,
-// falling back to `current` if the reload fails. Renewal is checked on the
-// existing sync cadence and persists a two-certificate bundle, but runAgent
-// holds an in-memory copy loaded once at startup; without reloading it
-// before each reconnect, a reconnect that happens after the old cert
-// expired would keep presenting the stale (expired) cert and fail the
-// mTLS handshake forever, even though a valid renewed cert already sits
-// on disk. A transient reload error must NOT drop the working creds.
 func reloadCredsForReconnect(credStore *credentials.Store, current *credentials.Credentials, logger *slog.Logger) *credentials.Credentials {
 	reloaded, err := credStore.Load()
 	if err != nil {
@@ -48,26 +36,13 @@ func waitForWelcome(ctx context.Context, cancel context.CancelFunc, wait func(co
 }
 
 func runAgent(ctx context.Context, credStore *credentials.Store, creds *credentials.Credentials, hostname string, h *handler.Handler, sched *scheduler.Scheduler, syncTrigger <-chan struct{}, securityAlert *pendingSecurityAlert, luksDaemon *luksd.Daemon, logger *slog.Logger, now func() time.Time) {
-	// Current sync interval (can be updated by server). Owned by
-	// runAgent — periodicSync receives its initial value as a
-	// stack-local copy and any subsequent updates over a channel.
-	// The previous shape (`*time.Duration` shared between this loop
-	// and periodicSync) was a write-from-two-goroutines race that
-	// `go test -race` did not catch because no test exercises this
-	// loop. Audit F002.
+
 	syncInterval := defaultSyncInterval
 
-	// Exponential backoff for reconnection
 	currentBackoff := randomBackoff()
 
-	// First connection uses the creds passed in (freshly loaded in
-	// main); every reconnect reloads from disk to pick up a rotated
-	// certificate before building the mTLS client.
 	firstConnect := true
 	fallbackActive := false
-
-	// The server checks the presented certificate serial at every handshake and
-	// before every privileged frame.
 
 	for {
 		if !firstConnect {
@@ -75,33 +50,20 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 		}
 		firstConnect = false
 
-		// Reset handler connection state for new connection
 		h.ResetConnection()
 
-		// rc10: refuse anything but https://host for the stream path. The only
-		// h2c use in this binary is the local unix-socket enrollment client,
-		// never a remote endpoint. A non-https (or malformed) AgentAddr means
-		// either a dev-leftover creds file or a tampered redirect — both are
-		// reasons to fail fast rather than silently skip mTLS on the live fleet.
-		// Shared predicate with cmd_selftest.go so the guard cannot drift
-		// (closes the HasPrefix case/opaque/hostless gaps).
 		if err := requireHTTPSAgentAddr(creds.AgentAddr); err != nil {
 			logger.Error("refusing stream URL — re-enrol against an https:// control server or delete the cached credentials",
 				"agent_addr", creds.AgentAddr, "error", err)
 			os.Exit(1)
 		}
-		// Create a child context for this connection session
+
 		sessionCtx, cancelSession := context.WithCancel(ctx)
 
-		// Validate control against the CA this device enrolled with — not the
-		// system roots. The agent host is served through a TCP-passthrough router
-		// precisely so control presents its own CA-signed certificate here.
 		mtlsOpt, usingPending, pendingConfigFailed, err := configureAgentMTLS(creds, fallbackActive)
 		if err != nil {
 			if pendingConfigFailed {
-				// A corrupt or stale B is a failed B attempt, not a reason to
-				// brick the agent. Fall back to A and let the normal cadence
-				// recover/reissue the pending successor.
+
 				logger.Warn("pending certificate unusable; falling back to active certificate", "error", err)
 				fallbackActive = true
 				cancelSession()
@@ -122,17 +84,10 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 			sdk.WithAuth(creds.DeviceID, ""),
 		)
 
-		// Prepare connection-scoped senders. They become visible to action and
-		// token handling only after Welcome confirms the stream is ready.
 		luksStore := &clientLuksKeyStore{client: client, executor: h.Executor()}
 
-		// Wire the terminal sender so the handler's terminal session
-		// goroutines can push TerminalOutput / TerminalStateChange
-		// frames back via the SDK Client. The first call also starts
-		// the idle-session sweeper goroutine.
 		h.SetTerminalSender(client)
 
-		// Start stream in background (opens connection, heartbeats, receives)
 		streamDone := make(chan error, 1)
 		go func() {
 			defer cancelSession()
@@ -143,8 +98,7 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 		staged := false
 		if connected {
 			if !usingPending {
-				// A has authenticated successfully; recover any locally staged
-				// successor from this stable connection.
+
 				fallbackActive = false
 				var renewErr error
 				staged, renewErr = renewCertificateIfDue(sessionCtx, credStore, creds, hostname, logger, now, len(creds.PendingCertificate) > 0)
@@ -155,8 +109,7 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 				}
 			}
 			if usingPending {
-				// Welcome is sent only after Hello is authenticated and the
-				// server has promoted the pending serial.
+
 				creds.Certificate = append([]byte(nil), creds.PendingCertificate...)
 				creds.PendingCertificate = nil
 				if err := credStore.Save(creds); err != nil {
@@ -164,8 +117,7 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 				}
 			}
 			if staged {
-				// The next session must present B; the current A session has no
-				// reason to run sync against its canceled context.
+
 			} else {
 				h.Executor().SetLuksKeyStore(luksStore)
 				h.Executor().SetLpsPasswordStore(&clientLpsPasswordStore{client: client})
@@ -185,10 +137,6 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 			}
 		}
 
-		// Start periodic sync goroutine (also listens for instant sync
-		// triggers). It reports any server-driven interval changes
-		// back over intervalUpdatesOut so the parent loop can carry
-		// the latest value forward into the next reconnect.
 		intervalUpdatesOut := make(chan time.Duration, 1)
 		syncDone := make(chan struct{})
 		go func() {
@@ -211,29 +159,21 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 			periodicSync(sessionCtx, client, sched, syncInterval, intervalUpdatesOut, syncTrigger, logger, beforeSync)
 		}()
 
-		// Start result sender goroutine to send scheduled execution results to server
 		resultsDone := make(chan struct{})
 		go func() {
 			defer close(resultsDone)
 			sendScheduledResults(sessionCtx, client, sched, logger)
 		}()
 
-		// Wait for the stream to end. Drain any interval updates the
-		// child reports during the session so the parent's
-		// `syncInterval` carries the latest value into the next
-		// reconnect attempt.
 		connStart := now()
 		streamErr := waitForStreamEnd(streamDone, intervalUpdatesOut, &syncInterval)
 		err = streamErr
-		// Alternate after every failed attempt: B failure selects A; A
-		// failure (including a lost Welcome after server promotion) selects B.
+
 		fallbackActive = fallbackAfterConnection(len(creds.PendingCertificate) > 0, usingPending, connected)
 
-		// Stop the goroutines and clear connection-dependent state
 		cancelSession()
 		h.Executor().SetLuksKeyStore(nil)
-		// Clearing this makes LPS rotation refuse to change a password while
-		// disconnected, rather than rotate one it cannot report.
+
 		h.Executor().SetLpsPasswordStore(nil)
 		if luksDaemon != nil {
 			luksDaemon.ClearSession()
@@ -241,14 +181,8 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 		<-syncDone
 		<-resultsDone
 
-		// Release the prior client's idle keep-alive connections before the next
-		// reconnect builds a fresh client (WS13 #8). Without this, each reconnect
-		// leaks a transport's idle-connection pool — a slow file-descriptor /
-		// socket leak over a long-lived agent's reconnect loop.
 		client.CloseIdleConnections()
 
-		// Drain any interval-update the child sent after the stream
-		// closed but before sessionCtx propagated. Non-blocking.
 		select {
 		case updated := <-intervalUpdatesOut:
 			syncInterval = updated
@@ -260,7 +194,6 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 			return
 		}
 
-		// Reset backoff if the connection was stable (lasted longer than the backoff interval)
 		if now().Sub(connStart) > currentBackoff {
 			currentBackoff = randomBackoff()
 		}
@@ -270,7 +203,6 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 			"backoff", currentBackoff.String(),
 		)
 
-		// Wait with exponential backoff before reconnecting
 		select {
 		case <-ctx.Done():
 			logger.Info("agent stopped during backoff")
@@ -278,7 +210,6 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 		case <-time.After(currentBackoff):
 		}
 
-		// Increase backoff for next attempt (with cap)
 		currentBackoff = time.Duration(float64(currentBackoff) * backoffFactor)
 		if currentBackoff > maxBackoff {
 			currentBackoff = maxBackoff
@@ -286,11 +217,6 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 	}
 }
 
-// waitForStreamEnd blocks until the SDK stream goroutine sends an
-// error on streamDone. While waiting it consumes any interval updates
-// reported by periodicSync, writing the latest value into *interval so
-// runAgent can carry it into the next reconnect attempt. Extracted so
-// the wait loop avoids labeled-break and stays a plain `for { select }`.
 func waitForStreamEnd(streamDone <-chan error, intervalUpdatesOut <-chan time.Duration, interval *time.Duration) error {
 	for {
 		select {
@@ -302,8 +228,6 @@ func waitForStreamEnd(streamDone <-chan error, intervalUpdatesOut <-chan time.Du
 	}
 }
 
-// periodicSync refreshes stream state on the current server-provided interval
-// and when an operator requests an immediate refresh.
 func periodicSync(
 	ctx context.Context,
 	client *sdk.Client,
@@ -330,10 +254,7 @@ func periodicSync(
 			syncInterval = newInterval
 			ticker.Reset(syncInterval)
 			logger.Info("sync interval updated", "new_interval", syncInterval.String())
-			// Best-effort report back to runAgent — drop when full
-			// because the channel is buffered with 1 slot and a
-			// stale pending update would just be overwritten by
-			// the next one anyway.
+
 			select {
 			case intervalUpdatesOut <- syncInterval:
 			default:
@@ -354,8 +275,6 @@ func periodicSync(
 	}
 }
 
-// sendScheduledResults consumes the scheduler's Results channel and sends execution results to the server.
-// This ensures that results from scheduled actions are reported back.
 func sendScheduledResults(ctx context.Context, client *sdk.Client, sched *scheduler.Scheduler, logger *slog.Logger) {
 	for {
 		select {
@@ -377,8 +296,6 @@ func sendScheduledResults(ctx context.Context, client *sdk.Client, sched *schedu
 	}
 }
 
-// syncStateFromControl requests current device policy on the already-established control stream.
-// Returns the effective sync interval from the server (0 means use default).
 func syncStateFromControl(ctx context.Context, client *sdk.Client, sched *scheduler.Scheduler, logger *slog.Logger) time.Duration {
 	logger.Info("synchronizing state from control")
 
@@ -388,11 +305,6 @@ func syncStateFromControl(ctx context.Context, client *sdk.Client, sched *schedu
 		return 0
 	}
 
-	// Apply the resolved maintenance window from the same response so the
-	// scheduler's next tick already gates by
-	// the new window — and persisted via the scheduler so an agent
-	// restart inside an active freeze keeps deferring instead of
-	// blasting through queued work. See archived server#58.
 	sched.SetMaintenanceWindow(ctx, result.MaintenanceWindow)
 	if result.DesiredPolicy != nil {
 		if err := sched.ReconcilePolicy(ctx, result.DesiredPolicy); err != nil {
@@ -400,7 +312,6 @@ func syncStateFromControl(ctx context.Context, client *sdk.Client, sched *schedu
 		}
 	}
 
-	// Convert sync interval from minutes to duration
 	var syncInterval time.Duration
 	if result.SyncIntervalMinutes > 0 {
 		syncInterval = time.Duration(result.SyncIntervalMinutes) * time.Minute
@@ -413,8 +324,6 @@ func syncStateFromControl(ctx context.Context, client *sdk.Client, sched *schedu
 	return syncInterval
 }
 
-// syncPendingResults sends any unsynced execution results to the server.
-// This is called on connection to sync results that were stored while offline.
 func syncPendingResults(ctx context.Context, sched *scheduler.Scheduler, client *sdk.Client, logger *slog.Logger) {
 	results, err := sched.GetPendingResults(ctx)
 	if err != nil {
@@ -456,10 +365,8 @@ func sendResult(ctx context.Context, client *sdk.Client, action *cadestrov1.Acti
 	}
 }
 
-// sendSecurityAlert sends a security alert to the server for audit logging.
-// This is called in a goroutine after connection is established.
 func sendSecurityAlert(ctx context.Context, client *sdk.Client, alert *pendingSecurityAlert, logger *slog.Logger) {
-	// Wait a moment to ensure connection is established
+
 	select {
 	case <-ctx.Done():
 		return
@@ -471,7 +378,6 @@ func sendSecurityAlert(ctx context.Context, client *sdk.Client, alert *pendingSe
 		"message", alert.message,
 	)
 
-	// Map alert type string to proto enum
 	var alertType cadestrov1.SecurityAlertType
 	switch alert.alertType {
 	case "server_reassignment_attempt":

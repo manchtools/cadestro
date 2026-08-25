@@ -13,21 +13,11 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// testExecutorTmpDirs collects the per-executor temp dirs newTestExecutor
-// creates (it has no *testing.T, so t.Cleanup is unavailable); TestMain
-// removes them after the run (#174 — they previously leaked on disk).
 var (
 	testExecutorTmpDirsMu sync.Mutex
 	testExecutorTmpDirs   []string
 )
 
-// TestMain fail-closes the whole integration suite: these tests mutate real host
-// state — create/delete users, write outside the test tree, install packages,
-// remount, and (historically) issue a real `shutdown`. They are meant to run
-// ONLY inside a disposable container, which is exactly how CI drives them
-// (`docker run ... -tags=integration`). Running them on a developer's machine
-// has rebooted a workstation. Refuse to run unless we are clearly in a throwaway
-// environment, or the operator has explicitly opted in.
 func TestMain(m *testing.M) {
 	if !disposableHost() {
 		fmt.Fprintln(os.Stderr,
@@ -46,9 +36,6 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// disposableHost reports whether destructive integration tests are safe to run
-// here: inside a container (Docker's /.dockerenv or Podman's /run/.containerenv),
-// or when the operator explicitly opted in via CADESTRO_ALLOW_DESTRUCTIVE_TESTS=1.
 func disposableHost() bool {
 	if os.Getenv("CADESTRO_ALLOW_DESTRUCTIVE_TESTS") == "1" {
 		return true
@@ -61,14 +48,8 @@ func disposableHost() bool {
 	return false
 }
 
-// checkCmdSuccess runs an unprivileged command and reports whether it exited 0.
-// It lives here (not in production cmd.go) because production code detects
-// installed packages and user/group existence through the SDK — pkg.Manager and
-// sys/user — so the only remaining callers are the tag-gated integration tests,
-// which use it to assert real on-host state.
 func checkCmdSuccess(name string, args ...string) bool {
-	// Bound the probe so a wedged command (e.g. a package manager blocked on a
-	// lock) fails the check instead of hanging the whole integration suite.
+
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	r, err := executorRunner.Run(ctx, sysexec.Command{Name: name, Args: args})

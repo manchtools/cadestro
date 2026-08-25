@@ -11,26 +11,12 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// applyBackendOverrides is the single point where operator-supplied backend
-// strings become the resolved privilege backend that main builds the one
-// process-wide exec.Runner from. The reworked SDK has no global backend state,
-// so the resolved backend is RETURNED (not installed into a global) and these
-// tests assert on the return value. Every branch still matters:
-//
-//   - A valid known value must resolve to the matching backend and succeed.
-//   - An unknown value must fail instead of silently changing privilege model.
-//   - A known value whose binary is missing must fail fast at startup, not
-//     paper over the error until first privileged call.
 func TestApplyBackendOverrides_PrivilegeBackend(t *testing.T) {
-	// Force a non-root euid so "empty defaults to sudo" is deterministic even
-	// when this runs under root (e.g. the privileged CI job) — the empty
-	// default is euid-coupled and would otherwise resolve to the root backend.
+
 	origEuid := geteuidFn
 	t.Cleanup(func() { geteuidFn = origEuid })
 	geteuidFn = func() int { return 1000 }
 
-	// Build a PATH where every backend binary we care about exists as an empty
-	// executable, so LookPath succeeds without actually running any of them.
 	fakeBin := fakePathWith(t, "sudo", "doas", "systemctl", "cryptsetup")
 
 	cases := []struct {
@@ -65,12 +51,8 @@ func TestApplyBackendOverrides_PrivilegeBackend(t *testing.T) {
 	}
 }
 
-// The agent must refuse to start when the selected privilege backend has no
-// binary on PATH. Running forward past this check would surface as a cryptic
-// "command not found" on the first privileged call, long after the cause.
 func TestApplyBackendOverrides_MissingPrivilegeBinaryIsFatal(t *testing.T) {
-	// PATH that contains everything EXCEPT doas. systemctl is present so the
-	// service-backend check passes; we're isolating the privilege-backend failure.
+
 	fakeBin := fakePathWith(t, "sudo", "systemctl", "cryptsetup")
 	t.Setenv("PATH", fakeBin)
 
@@ -83,17 +65,10 @@ func TestApplyBackendOverrides_MissingPrivilegeBinaryIsFatal(t *testing.T) {
 	}
 }
 
-// The empty-string privilege default is security-relevant: it must pick the
-// no-escalation root backend when the agent runs as root (uid 0) and sudo
-// otherwise. Drive both branches deterministically via the geteuidFn seam so a
-// normal non-root CI run still proves the root default. setPrivilegeBackend now
-// returns the resolved backend (no global to read back).
 func TestSetPrivilegeBackend_EmptyDefault_BranchesOnEuid(t *testing.T) {
 	origEuid := geteuidFn
 	t.Cleanup(func() { geteuidFn = origEuid })
 
-	// fake sudo so the non-root branch's LookPath("sudo") succeeds regardless of
-	// the host PATH.
 	t.Setenv("PATH", fakePathWith(t, "sudo"))
 
 	t.Run("euid 0 selects the root backend (no escalation tool)", func(t *testing.T) {
@@ -119,10 +94,6 @@ func TestSetPrivilegeBackend_EmptyDefault_BranchesOnEuid(t *testing.T) {
 	})
 }
 
-// An EXPLICIT root backend must be refused on a non-root process. Otherwise it
-// would build a usable Direct runner under a non-root agent, bypassing the
-// fail-closed path and running privileged commands unescalated (e.g. a
-// logind/polkit reboot). At euid 0 it is accepted (no escalation tool).
 func TestSetPrivilegeBackend_RootBackend_RequiresRootEuid(t *testing.T) {
 	origEuid := geteuidFn
 	t.Cleanup(func() { geteuidFn = origEuid })
@@ -146,16 +117,14 @@ func TestSetPrivilegeBackend_RootBackend_RequiresRootEuid(t *testing.T) {
 	})
 }
 
-// systemctl is a required agent capability; there is no runtime service-backend
-// selector or fallback.
 func TestApplyBackendOverrides_RequiresSystemd(t *testing.T) {
-	// Non-root so the empty privilege default lands on sudo (present in PATH).
+
 	origEuid := geteuidFn
 	t.Cleanup(func() { geteuidFn = origEuid })
 	geteuidFn = func() int { return 1000 }
 
 	t.Run("missing systemctl is fatal", func(t *testing.T) {
-		t.Setenv("PATH", fakePathWith(t, "sudo", "cryptsetup")) // no systemctl
+		t.Setenv("PATH", fakePathWith(t, "sudo", "cryptsetup"))
 		_, err := applyBackendOverrides(&Config{}, discardLogger())
 		if err == nil {
 			t.Fatal("expected a fatal error when systemctl is missing")
@@ -173,9 +142,6 @@ func TestApplyBackendOverrides_RequiresSystemd(t *testing.T) {
 	})
 }
 
-// fakePathWith creates empty executables for each named tool in a temp dir and
-// returns the tempdir so callers can set PATH to it. The files are mode 0o755 so
-// exec.LookPath accepts them. Cleaned up automatically via t.TempDir().
 func fakePathWith(t *testing.T, tools ...string) string {
 	t.Helper()
 	dir := t.TempDir()

@@ -10,11 +10,6 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// TestExecuteAppImage_RejectsBeforeWriteAndRemount pins WS7/WS8 parity with
-// rpm/deb: installing an AppImage with a non-https URL or an empty/whitespace
-// checksum is refused BEFORE any privileged filesystem remount or download — an
-// unverified binary is never fetched. The recording repairFS seam proves no
-// remount ran. (ABSENT removal needs no checksum — see the sibling test.)
 func TestExecuteAppImage_RejectsBeforeWriteAndRemount(t *testing.T) {
 	validHex := strings.Repeat("a", 64)
 	cases := []struct {
@@ -27,8 +22,7 @@ func TestExecuteAppImage_RejectsBeforeWriteAndRemount(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			// A resolvable install dir so it is the verification guard — not a
-			// path-resolution failure — that rejects the install.
+
 			tc.p.InstallPath = t.TempDir()
 			var remountCalls int
 			e := &Executor{logger: slog.Default(), now: time.Now, repairFS: func(context.Context) bool {
@@ -46,9 +40,6 @@ func TestExecuteAppImage_RejectsBeforeWriteAndRemount(t *testing.T) {
 	}
 }
 
-// TestExecuteAppImage_AbsentDoesNotRequireChecksum pins that the checksum guard
-// is PRESENT-only: removing an AppImage needs no checksum (parity with the
-// DEB guard, which is also install-only).
 func TestExecuteAppImage_AbsentDoesNotRequireChecksum(t *testing.T) {
 	e := &Executor{logger: slog.Default(), now: time.Now}
 	out, changed, err := e.executeAppImage(context.Background(),

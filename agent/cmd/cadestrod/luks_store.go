@@ -1,4 +1,3 @@
-// Package main is the entry point for the cadestrod agent.
 package main
 
 import (
@@ -10,7 +9,6 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// clientLuksKeyStore adapts sdk.Client to the executor.LuksKeyStore interface.
 type clientLuksKeyStore struct {
 	client   *sdk.Client
 	executor *executor.Executor
@@ -42,8 +40,6 @@ func (s *clientLuksKeyStore) ValidateLuksToken(ctx context.Context, token string
 	return s.client.ValidateLuksToken(ctx, token)
 }
 
-// clientLpsPasswordStore sends password rotations over the agent's
-// authenticated control stream.
 type clientLpsPasswordStore struct {
 	client *sdk.Client
 }

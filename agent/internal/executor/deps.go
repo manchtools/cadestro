@@ -14,9 +14,6 @@ import (
 	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 )
 
-// executorDeps is the concrete capability set owned by one Executor. Keeping
-// these managers together makes construction atomic and prevents a later
-// Executor from changing an existing executor's command routing.
 type executorDeps struct {
 	desktop desktop.Manager
 	service sysservice.Manager
@@ -43,9 +40,6 @@ func newExecutorDeps(runner sysexec.Runner) executorDeps {
 	}
 }
 
-// ensureDeps keeps zero-value Executor literals safe while preserving any
-// explicitly injected manager. Complete NewExecutor instances return without
-// touching the once; only partial test literals use its synchronized path.
 func (e *Executor) ensureDeps() {
 	if e.deps.desktop != nil && e.deps.service != nil && e.deps.network != nil && e.deps.user != nil && e.deps.fs != nil && e.deps.encrypt != nil && e.deps.notify != nil {
 		return

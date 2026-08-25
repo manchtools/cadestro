@@ -8,7 +8,6 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// TestExecuteSsh_RejectsNilParams verifies nil SSH params are rejected.
 func TestExecuteSsh_RejectsNilParams(t *testing.T) {
 	e := NewExecutor(nil)
 	_, changed, err := e.executeSsh(context.Background(), nil, pb.DesiredState_DESIRED_STATE_PRESENT, "test1234")
@@ -23,7 +22,6 @@ func TestExecuteSsh_RejectsNilParams(t *testing.T) {
 	}
 }
 
-// TestExecuteSsh_RejectsEmptyUsers verifies that an empty user list is rejected.
 func TestExecuteSsh_RejectsEmptyUsers(t *testing.T) {
 	e := NewExecutor(nil)
 	params := &pb.SshParams{}
@@ -36,8 +34,6 @@ func TestExecuteSsh_RejectsEmptyUsers(t *testing.T) {
 	}
 }
 
-// TestExecuteSsh_RejectsInvalidUsername verifies that non-alphanumeric or empty
-// usernames are rejected by sysuser.IsValidName BEFORE any group creation.
 func TestExecuteSsh_RejectsInvalidUsername(t *testing.T) {
 	e := NewExecutor(nil)
 	invalidUsers := []string{
@@ -57,10 +53,6 @@ func TestExecuteSsh_RejectsInvalidUsername(t *testing.T) {
 	}
 }
 
-// TestExecuteSsh_RejectsEmptyActionID verifies that an empty action ID is
-// rejected by validateActionIDForFilesystem. The action ID is used to derive
-// the group name and config path — an empty one would produce an empty group
-// name, which is invalid.
 func TestExecuteSsh_RejectsEmptyActionID(t *testing.T) {
 	e := NewExecutor(nil)
 	params := &pb.SshParams{Users: []string{"alice"}}
@@ -73,8 +65,6 @@ func TestExecuteSsh_RejectsEmptyActionID(t *testing.T) {
 	}
 }
 
-// TestExecuteSsh_RejectsTooLongActionID verifies that action IDs exceeding
-// maxActionIDForFilesystem are rejected.
 func TestExecuteSsh_RejectsTooLongActionID(t *testing.T) {
 	e := NewExecutor(nil)
 	params := &pb.SshParams{Users: []string{"alice"}}
@@ -88,9 +78,6 @@ func TestExecuteSsh_RejectsTooLongActionID(t *testing.T) {
 	}
 }
 
-// TestExecuteSsh_RejectsUnsafeCharsInActionID verifies that action IDs with
-// non-alphanumeric characters are rejected — these could produce path-
-// meaningful group names or config file names.
 func TestExecuteSsh_RejectsUnsafeCharsInActionID(t *testing.T) {
 	e := NewExecutor(nil)
 	params := &pb.SshParams{Users: []string{"alice"}}
@@ -110,10 +97,6 @@ func TestExecuteSsh_RejectsUnsafeCharsInActionID(t *testing.T) {
 	}
 }
 
-// TestShortGroupName_FitsIn32Chars verifies that shortGroupName produces names
-// that fit within the Linux 32-character group-name limit. Names that don't
-// fit are truncated with a hash suffix, never silently truncated in a
-// collision-prone way.
 func TestShortGroupName_FitsIn32Chars(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -121,7 +104,7 @@ func TestShortGroupName_FitsIn32Chars(t *testing.T) {
 		actionID string
 	}{
 		{"short id fits", "cadestro-ssh-", "01J123456789"},
-		{"exact fit", "cadestro-ssh-", strings.Repeat("a", 19)}, // 13+19=32
+		{"exact fit", "cadestro-ssh-", strings.Repeat("a", 19)},
 		{"overflow with hash", "cadestro-ssh-", strings.Repeat("a", 50)},
 		{"long prefix with long id", "cadestro-sudo-verylongprefix-", "01J1234567890123456789"},
 	}
@@ -136,8 +119,6 @@ func TestShortGroupName_FitsIn32Chars(t *testing.T) {
 	}
 }
 
-// TestShortGroupName_Deterministic verifies that the same actionID+prefix
-// always produces the same group name (no random component).
 func TestShortGroupName_Deterministic(t *testing.T) {
 	prefix := "cadestro-ssh-"
 	id := "01J1234567890123456789"
@@ -149,11 +130,9 @@ func TestShortGroupName_Deterministic(t *testing.T) {
 	}
 }
 
-// TestShortGroupName_DifferentIDsProduceDifferentNames verifies that two
-// distinct action IDs produce distinct group names (no collision).
 func TestShortGroupName_DifferentIDsProduceDifferentNames(t *testing.T) {
 	prefix := "cadestro-ssh-"
-	// Two IDs sharing a long common prefix — truncation hazard.
+
 	id1 := "01JARXABCDEFGHIJKLMNOP1234"
 	id2 := "01JARXABCDEFGHIJKLMNOP5678"
 	n1 := shortGroupName(prefix, id1)
@@ -163,8 +142,6 @@ func TestShortGroupName_DifferentIDsProduceDifferentNames(t *testing.T) {
 	}
 }
 
-// TestGenerateSshGroupConfig_ContainsMatchGroup verifies that the generated
-// sshd_config content contains the expected Match Group directive.
 func TestGenerateSshGroupConfig_ContainsMatchGroup(t *testing.T) {
 	got := generateSshGroupConfig("cadestro-ssh-test1234", &pb.SshParams{
 		AllowPubkey:   true,
@@ -184,8 +161,6 @@ func TestGenerateSshGroupConfig_ContainsMatchGroup(t *testing.T) {
 	}
 }
 
-// TestGenerateSshGroupConfig_BothAllowed verifies that when both pubkey and
-// password are allowed, both directives appear as "yes".
 func TestGenerateSshGroupConfig_BothAllowed(t *testing.T) {
 	got := generateSshGroupConfig("cadestro-ssh-test1234", &pb.SshParams{
 		AllowPubkey:   true,
@@ -199,8 +174,6 @@ func TestGenerateSshGroupConfig_BothAllowed(t *testing.T) {
 	}
 }
 
-// TestValidateActionIDForFilesystem_RejectsEmpty verifies empty action ID
-// rejection.
 func TestValidateActionIDForFilesystem_RejectsEmpty(t *testing.T) {
 	err := validateActionIDForFilesystem("")
 	if err == nil {
@@ -208,8 +181,6 @@ func TestValidateActionIDForFilesystem_RejectsEmpty(t *testing.T) {
 	}
 }
 
-// TestValidateActionIDForFilesystem_RejectsUnsafeChars verifies rejection
-// of path-meaningful characters.
 func TestValidateActionIDForFilesystem_RejectsUnsafeChars(t *testing.T) {
 	unsafe := []string{
 		"a/b",

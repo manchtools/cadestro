@@ -9,32 +9,8 @@ import (
 	"testing"
 )
 
-// integrationWorkflow is the repository-root workflow that runs the agent's
-// integration lanes. It lives above this module because GitHub honours
-// workflows only at the repository root; a module-local copy is a file nothing
-// executes.
 var integrationWorkflow = filepath.Join(".github", "workflows", "agent-integration.yml")
 
-// TestCIRunsEveryIntegrationTest guards the hand-wired integration lanes in
-// .github/workflows/agent-integration.yml against failing open (audit A-06,
-// issue #171 — the agent port of archived server#482's self-discovering
-// guard).
-//
-// The agent's split differs from the server's: the unit workflow runs a
-// plain `go test ./...`, so PACKAGE-level coverage is complete by
-// construction. The dormant-test trap here is TAG- and NAME-level:
-//
-//   - a `//go:build integration` file in a package the workflow never
-//     passes to `go test -tags=integration` silently never compiles in CI;
-//   - an integration-tagged Test function whose name matches none of the
-//     workflow's `-run` selectors (the distro matrix runs `-run
-//     Integration`; the privileged lane's last `-run` wins, selecting
-//     `EdgeCase`) silently never executes anywhere.
-//
-// This guard discovers every integration-tagged test file, then asserts
-// (a) its package appears as a ./agent/<pkg>/ argument in the workflow and
-// (b) every Test function in it matches at least one -run selector.
-// TestMain is exempt: it is the per-package harness, not a selected test.
 func TestCIRunsEveryIntegrationTest(t *testing.T) {
 	root := moduleRoot(t)
 
@@ -57,8 +33,6 @@ func TestCIRunsEveryIntegrationTest(t *testing.T) {
 		t.Fatalf("matches-zero guard: extracted no -run selectors from %s; the parser is broken", integrationWorkflow)
 	}
 
-	// Stale-list direction: a workflow package argument whose directory no
-	// longer exists is the same rot in reverse.
 	for _, p := range pkgs {
 		if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(p.dir))); err != nil {
 			t.Errorf("%s references ./agent/%s/ but that directory does not exist (stale lane entry)", integrationWorkflow, p.dir)
@@ -82,31 +56,11 @@ func TestCIRunsEveryIntegrationTest(t *testing.T) {
 	}
 }
 
-// inRepoModules are the repository modules the agent consumes, mapped to the
-// sibling directory each one must resolve from. A `replace` pointing anywhere
-// else — an external checkout, a git URL, a published version — means the
-// agent is being built against code this repository does not contain.
 var inRepoModules = map[string]string{
 	"github.com/manchtools/cadestro/contract": "../contract",
 	"github.com/manchtools/cadestro/sdk":      "../sdk",
 }
 
-// TestIntegrationCIUsesTheInRepoModules asserts that the agent resolves the
-// contract and the SDK from this repository and from nowhere else.
-//
-// This guard used to assert the opposite shape — that go.mod pinned a
-// published SDK version and that NO replace directive overrode it — because
-// the SDK was a separate repository, where an override meant CI silently
-// tested unreviewed code. Here the relative replace IS the reviewed
-// resolution: the modules are in the tree, compiled from it, and reviewed in
-// the same commit. What must not happen is the reverse, so the assertion is
-// inverted rather than dropped: every in-repo module is required, replaced,
-// and replaced with exactly its sibling directory.
-//
-// A missing replace is a failure too, not a neutral state. Without it the
-// v0.0.0 placeholder becomes a real version query, and the build either fails
-// or — worse, should such a version ever be published — succeeds against
-// something that is not this tree.
 func TestIntegrationCIUsesTheInRepoModules(t *testing.T) {
 	root := moduleRoot(t)
 	goMod, err := os.ReadFile(filepath.Join(root, "go.mod"))
@@ -134,9 +88,6 @@ func TestIntegrationCIUsesTheInRepoModules(t *testing.T) {
 		}
 	}
 
-	// The integration lanes must not reintroduce an out-of-tree resolution of
-	// their own. These markers name the mechanisms that did it before: a
-	// branch-override mode, and a clone of a separate SDK repository.
 	files := []string{
 		filepath.Join(root, "go.mod"),
 		filepath.Join(repositoryRoot(t), integrationWorkflow),
@@ -163,23 +114,6 @@ func TestIntegrationCIUsesTheInRepoModules(t *testing.T) {
 	}
 }
 
-// replaceDirectives returns the replacement target of every `replace`
-// directive in goMod whose left-hand module path is exactly module.
-//
-// It parses the directive structure rather than scanning for the substring
-// "replace <path>", because the go command accepts BOTH
-//
-//	replace github.com/manchtools/cadestro/sdk v0.0.0 => ../sdk
-//
-// and the parenthesised block form
-//
-//	replace (
-//	    github.com/manchtools/cadestro/sdk v0.0.0 => ../sdk
-//	)
-//
-// which resolve the module identically while a same-line substring scan sees
-// only the first (issue #204). Comments are stripped first, so a
-// commented-out directive — which the build ignores — is not reported.
 func replaceDirectives(goMod, module string) []string {
 	var out []string
 	inBlock := false
@@ -215,8 +149,6 @@ func replaceDirectives(goMod, module string) []string {
 	return out
 }
 
-// stripGoModComment removes a `//` line comment. go.mod has no block
-// comments, so a line comment is the only form to handle.
 func stripGoModComment(line string) string {
 	if i := strings.Index(line, "//"); i >= 0 {
 		return line[:i]
@@ -224,10 +156,6 @@ func stripGoModComment(line string) string {
 	return line
 }
 
-// afterGoModKeyword reports whether line opens with keyword as a whole token
-// and returns the remainder. It rejects a merely-prefixed identifier such as
-// `replacements`, and accepts `replace(` because go.mod's lexer treats the
-// parenthesis as its own token.
 func afterGoModKeyword(line, keyword string) (string, bool) {
 	rest, ok := strings.CutPrefix(line, keyword)
 	if !ok || rest == "" {
@@ -239,9 +167,6 @@ func afterGoModKeyword(line, keyword string) (string, bool) {
 	return strings.TrimSpace(rest), true
 }
 
-// replaceTarget parses one `<old> [version] => <new> [version]` entry and
-// returns the replacement target when the old side names module. The old-side
-// version is optional, and the path may be quoted.
 func replaceTarget(entry, module string) (string, bool) {
 	oldSide, newSide, ok := strings.Cut(entry, "=>")
 	if !ok {
@@ -257,14 +182,6 @@ func replaceTarget(entry, module string) (string, bool) {
 	return strings.TrimSpace(newSide), true
 }
 
-// TestReplaceDirectivesSeesEveryReplaceForm pins the detector against the
-// forms the go command actually accepts. The block-form rows are the
-// regression: a same-line substring scan reports a go.mod with no replace at
-// all while the module is fully redirected (issue #204).
-//
-// The `replace (` / module-path / version split across three lines is
-// deliberately absent — the go command rejects it as a parse error, so it is
-// not a bypass this guard has to cover.
 func TestReplaceDirectivesSeesEveryReplaceForm(t *testing.T) {
 	const sdkModulePath = "github.com/manchtools/cadestro/sdk"
 	const header = "module github.com/manchtools/cadestro/agent\n\ngo 1.25.12\n\nrequire " + sdkModulePath + " v0.0.0\n\n"
@@ -350,9 +267,6 @@ func TestReplaceDirectivesSeesEveryReplaceForm(t *testing.T) {
 	}
 }
 
-// discoverIntegrationTaggedFiles maps module-relative _test.go files that
-// carry the `integration` build tag to their declared Test function names.
-// vendor/, testdata/, and hidden directories are skipped.
 func discoverIntegrationTaggedFiles(t *testing.T, root string) map[string][]string {
 	t.Helper()
 	testFn := regexp.MustCompile(`^func (Test[A-Za-z0-9_]*)\(`)
@@ -407,8 +321,6 @@ func discoverIntegrationTaggedFiles(t *testing.T, root string) map[string][]stri
 	return out
 }
 
-// buildTagHasIntegration reports whether a //go:build line references the
-// integration tag as a positive term (not `!integration`).
 func buildTagHasIntegration(line string) bool {
 	expr := strings.TrimSpace(strings.TrimPrefix(line, "//go:build"))
 	for _, tok := range strings.FieldsFunc(expr, func(r rune) bool {
@@ -421,20 +333,11 @@ func buildTagHasIntegration(line string) bool {
 	return false
 }
 
-// workflowPkg is one `./agent/<dir>/` package argument from the workflow.
-// Recursive records whether it carried the `/...` suffix — a non-recursive
-// argument tests ONLY that directory, so it must not count as covering
-// subpackages (CR catch: prefix-matching a non-recursive entry would
-// reintroduce the exact silent-gap this guard exists to close).
 type workflowPkg struct {
 	dir       string
 	recursive bool
 }
 
-// workflowPkgPattern matches the `./agent/internal/executor/` and
-// `./agent/internal/executor/...` style package arguments the workflow
-// passes to `go test` (the repo is checked out into the `agent/`
-// sub-directory).
 var workflowPkgPattern = regexp.MustCompile(`\./agent/([A-Za-z0-9_/-]+?)/?(\.\.\.)?(\s|\\|$)`)
 
 func extractWorkflowPackages(workflow string) []workflowPkg {
@@ -450,10 +353,6 @@ func extractWorkflowPackages(workflow string) []workflowPkg {
 	return out
 }
 
-// runSelectorPattern matches `-run <regex>` occurrences. Multiple -run flags
-// on one go test command mean the LAST wins, so treating every occurrence as
-// an active selector is the permissive union across lanes — still strict
-// enough to catch the real failure mode (a test matching NO selector).
 var runSelectorPattern = regexp.MustCompile(`-run[= ]([^\s\\]+)`)
 
 func extractRunSelectors(workflow string) []string {
@@ -484,7 +383,7 @@ func matchesAnySelector(fn string, selectors []string) bool {
 	for _, s := range selectors {
 		re, err := regexp.Compile(s)
 		if err != nil {
-			continue // an uncompilable selector can't select anything
+			continue
 		}
 		if re.MatchString(fn) {
 			return true

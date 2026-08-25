@@ -13,8 +13,6 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// fakeActionStore returns a fixed set of stored actions for conflict
-// resolution tests.
 type fakeActionStore struct {
 	actions []*store.StoredAction
 	err     error
@@ -39,9 +37,6 @@ func encAction(id string, minWords int32, complexity pb.LpsPasswordComplexity, s
 	}
 }
 
-// WS6 #7: resolveLuksConflict picks the winner deterministically:
-// highest min_words → highest complexity → oldest assignment. A weaker
-// policy must NEVER win, and ABSENT / non-ENCRYPTION actions are excluded.
 func TestResolveLuksConflict_WinnerSelection(t *testing.T) {
 	t0 := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	none := pb.LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_UNSPECIFIED
@@ -97,8 +92,7 @@ func TestResolveLuksConflict_WinnerSelection(t *testing.T) {
 			strongAbsent,
 			pkg,
 		})
-		// Only one live ENCRYPTION candidate → it wins despite the
-		// stronger ABSENT one being present.
+
 		winner, err := resolveLuksConflict(context.Background(), e.getActionStore(), "live")
 		require.NoError(t, err)
 		assert.Equal(t, "live", winner)
@@ -117,8 +111,7 @@ func TestResolveLuksConflict_WinnerSelection(t *testing.T) {
 			encAction("mid", 5, none, present, t0),
 			encAction("strong", 8, complex, present, t0),
 		})
-		// Even when THIS action is the strong one, query as the weak one:
-		// the winner must be the strongest, never the caller by default.
+
 		winner, err := resolveLuksConflict(context.Background(), e.getActionStore(), "weak")
 		require.NoError(t, err)
 		assert.Equal(t, "strong", winner)

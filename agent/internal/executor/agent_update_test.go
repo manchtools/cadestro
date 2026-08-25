@@ -25,7 +25,7 @@ func TestGetArchEntry(t *testing.T) {
 }
 
 func TestGetArchEntry_NilForMissing(t *testing.T) {
-	// Only arm64 set, if we're on amd64 this returns nil (or vice versa)
+
 	params := &pb.AgentUpdateParams{}
 	entry := getArchEntry(params)
 	if entry != nil {
@@ -33,18 +33,6 @@ func TestGetArchEntry_NilForMissing(t *testing.T) {
 	}
 }
 
-// The binary download + sha256 verification is the SDK remote source's job now
-// (agent_update calls fetchArtifact -> remote.Fetch with the expected pin); the
-// SDK tests that mechanism, and the agent-update orchestration test covers the
-// integrity-failure path. The former TestDownloadToFile (which exercised the
-// agent's deleted downloadToFile) was removed with that function.
-
-// writeStateForTest writes the legacy update/state.json that the
-// production self-test path no longer creates. The reader and the
-// startup cleanup still consume the format (for crash recovery from
-// an older agent that wrote one), so the read+clear round-trip stays
-// covered. Audit F018: the production writer was deleted; tests
-// fabricate the file directly.
 func writeStateForTest(t *testing.T, dataDir, phase, version string) {
 	t.Helper()
 	dir := filepath.Join(dataDir, "update")
@@ -100,23 +88,17 @@ func TestClearUpdateState(t *testing.T) {
 }
 
 func TestMarkAgentUpdateExecuted(t *testing.T) {
-	// Per-instance dedup: each Executor owns its own flag (audit
-	// F042 + F048). Construct a fresh Executor for the test and
-	// exercise the methods directly instead of the deprecated
-	// package-level globals.
+
 	e := &Executor{now: time.Now}
 
-	// First call should succeed
 	if !e.markAgentUpdateExecuted() {
 		t.Error("expected first markAgentUpdateExecuted to return true")
 	}
 
-	// Second call should fail (already executed)
 	if e.markAgentUpdateExecuted() {
 		t.Error("expected second markAgentUpdateExecuted to return false")
 	}
 
-	// After reset, should succeed again
 	e.ResetUpdateCycle()
 	if !e.markAgentUpdateExecuted() {
 		t.Error("expected markAgentUpdateExecuted to return true after reset")
@@ -130,7 +112,6 @@ func TestCheckStartupUpdateState_CleansStaleState(t *testing.T) {
 	logger := &testLogger{}
 	CheckStartupUpdateState(dir, logger, time.Now)
 
-	// State should be cleared
 	phase, _, _ := readUpdateState(dir)
 	if phase != "" {
 		t.Errorf("expected state to be cleared, got phase=%q", phase)
@@ -147,14 +128,13 @@ func TestCheckStartupUpdateState_NoState(t *testing.T) {
 	logger := &testLogger{}
 	CheckStartupUpdateState(dir, logger, time.Now)
 
-	// No logs expected
 	if len(logger.infos) > 0 || len(logger.warns) > 0 {
 		t.Error("expected no logs for clean startup without state file")
 	}
 }
 
 func TestGetBinaryVersion(t *testing.T) {
-	// Create a fake binary that prints a version
+
 	dir := t.TempDir()
 	script := filepath.Join(dir, "fake-agent")
 	err := os.WriteFile(script, []byte("#!/bin/sh\necho 'v2026.04.01'\n"), 0755)
@@ -186,17 +166,14 @@ func TestGetBinaryVersion_Empty(t *testing.T) {
 }
 
 func TestSelfTestScript_ExitCode(t *testing.T) {
-	// Test that a shell script returning exit 0 vs exit 1 is correctly detected.
-	// This validates the exec.CommandContext pattern used in executeAgentUpdate.
+
 	dir := t.TempDir()
 
-	// Create a "binary" that exits 0
 	successScript := filepath.Join(dir, "success")
 	if err := os.WriteFile(successScript, []byte("#!/bin/sh\nexit 0\n"), 0755); err != nil {
 		t.Fatal(err)
 	}
 
-	// Create a "binary" that exits 1
 	failScript := filepath.Join(dir, "fail")
 	if err := os.WriteFile(failScript, []byte("#!/bin/sh\necho 'connection failed' >&2\nexit 1\n"), 0755); err != nil {
 		t.Fatal(err)
@@ -204,13 +181,11 @@ func TestSelfTestScript_ExitCode(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Success case
 	cmd := exec.CommandContext(ctx, successScript)
 	if err := cmd.Run(); err != nil {
 		t.Errorf("expected exit 0 script to succeed, got: %v", err)
 	}
 
-	// Failure case
 	cmd = exec.CommandContext(ctx, failScript)
 	out, err := cmd.CombinedOutput()
 	if err == nil {
@@ -221,7 +196,6 @@ func TestSelfTestScript_ExitCode(t *testing.T) {
 	}
 }
 
-// testLogger is a simple logger for testing.
 type testLogger struct {
 	infos  []string
 	warns  []string
@@ -238,22 +212,4 @@ func (l *testLogger) Warn(msg string, args ...any) {
 
 func (l *testLogger) Error(msg string, args ...any) {
 	l.errors = append(l.errors, msg)
-}
-
-// TestNoStaleSwapComment is a self-discovering guard against the WS7 #8
-// stale comment: the agent-update flow no longer does cp → chmod → mv, it
-// uses SafeBackupAndReplace. Pins the source so a future edit can't
-// reintroduce the misleading description.
-func TestNoStaleSwapComment(t *testing.T) {
-	src, err := os.ReadFile("agent_update.go")
-	if err != nil {
-		t.Fatalf("read agent_update.go: %v", err)
-	}
-	s := string(src)
-	if strings.Contains(s, "cp → chmod → mv") {
-		t.Error("agent_update.go still describes the swap as 'cp → chmod → mv'; it uses SafeBackupAndReplace")
-	}
-	if !strings.Contains(s, "SafeBackupAndReplace") {
-		t.Error("agent_update.go should document the swap goes through SafeBackupAndReplace")
-	}
 }

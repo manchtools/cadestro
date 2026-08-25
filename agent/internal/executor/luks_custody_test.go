@@ -14,7 +14,6 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// fakeLuksKeyStore is a recording LuksKeyStore for custody tests.
 type fakeLuksKeyStore struct {
 	getKeyFunc   func(ctx context.Context, actionID string) (string, error)
 	storeKeyFunc func(ctx context.Context, actionID, devicePath, passphrase string, reason pb.RotationReason) error
@@ -39,19 +38,10 @@ func (f *fakeLuksKeyStore) StoreKey(ctx context.Context, actionID, devicePath, p
 	return nil
 }
 
-// WS6 #13: setupLuks read local state with `localState, _ :=`, swallowing
-// the error. A read failure (anything other than "no rows") would then be
-// mistaken for "first run", causing the agent to re-take ownership / add
-// keys against a volume it may already manage — exactly the destructive
-// outcome the state row exists to prevent. setupLuks must fail closed.
-//
-// Driven via a CLOSED store so GetLuksState returns a real non-ErrNoRows
-// error; the test asserts setupLuks propagates it rather than proceeding
-// to volume detection / ownership.
 func TestSetupLuks_GetLuksStateError_FailsClosed(t *testing.T) {
 	st, err := store.New(t.TempDir())
 	require.NoError(t, err)
-	require.NoError(t, st.Close()) // subsequent queries error (not ErrNoRows)
+	require.NoError(t, st.Close())
 
 	e := &Executor{logger: slog.Default(), now: time.Now}
 	e.SetStore(st)
@@ -115,11 +105,6 @@ func TestExecuteLuksActionSkipsConflictBeforeOpeningPSK(t *testing.T) {
 		"the losing policy must be skipped without reading its PSK")
 }
 
-// WS6 #3 (lockout safety): when the server is unreachable, takeOwnership
-// must NOT proceed to manage keys — the PSK may already have been consumed
-// by a prior run and StoreKey will also fail, so adding/removing slots
-// risks locking the volume out. It must return an error before any key
-// management (no StoreKey).
 func TestTakeOwnership_FailsClosedWhenServerUnreachable(t *testing.T) {
 	st, err := store.New(t.TempDir())
 	require.NoError(t, err)

@@ -1,19 +1,3 @@
-// Package credentials provides secure storage for agent credentials.
-// Credentials are encrypted at rest using AES-256-GCM with a key derived
-// from the machine ID (Argon2id) and a per-store random salt, written
-// 0600 in a 0700 owner-only directory.
-//
-// At-rest threat model (WS10): the agent runs as root, so the
-// credentials.enc + salt files are 0600 in a 0700 root-owned directory —
-// no unprivileged local user can read them. The machine-id KDF binds the
-// ciphertext to the host (it will not decrypt if copied to another
-// machine). It is NOT, however, protection against OFFLINE theft of the
-// disk/backup: the machine-id lives on the same disk, so an attacker with
-// raw disk access has both. **Full-disk encryption is the at-rest
-// protection for that threat** — a same-disk key file would add no real
-// defense, so it is intentionally not used (accepted residual). The
-// fail-closed guards below ensure the store cannot be FORGED by a
-// non-owner (a group/world-writable directory is refused).
 package credentials
 
 import (
@@ -36,61 +20,44 @@ import (
 )
 
 const (
-	// Argon2id parameters (RFC 9106 recommendations)
 	argonTime    = 1
-	argonMemory  = 64 * 1024 // 64 MB
+	argonMemory  = 64 * 1024
 	argonThreads = 4
-	argonKeyLen  = 32 // AES-256
+	argonKeyLen  = 32
 
 	saltLen  = 32
-	nonceLen = 12 // GCM standard nonce size
+	nonceLen = 12
 
 	credentialsFile = "credentials.enc"
 	saltFile        = "salt"
 
-	// Default data directory
 	DefaultDataDir = "/var/lib/cadestro"
 
-	// credentialsMagicV1 identifies the only accepted on-disk format.
-	// Agents are re-enrolled instead of carrying format compatibility code.
 	credentialsMagicV1 = "cadestrocred:v1:"
 )
 
-// Credentials holds the agent's identity and certificates.
 type Credentials struct {
 	DeviceID    string `json:"device_id"`
 	CACert      []byte `json:"ca_cert"`
 	Certificate []byte `json:"certificate"`
-	// PendingCertificate is the successor issued by control. The active
-	// certificate remains usable until a Hello made with this certificate is
-	// accepted, after which the agent clears this field.
+
 	PendingCertificate []byte `json:"pending_certificate,omitempty"`
-	// PendingPrivateKey and PendingCSR are the encrypted, durable enrollment
-	// identity. They remain until the final credentials are committed so a
-	// response lost after server commit can be retried with the same key.
+
 	PendingPrivateKey []byte `json:"pending_private_key,omitempty"`
 	PendingCSR        []byte `json:"pending_csr,omitempty"`
 	PrivateKey        []byte `json:"private_key"`
-	// AgentAddr is control's direct mTLS listener — a different host from
-	// ControlAddr,
-	// because the edge routes the two by SNI (one terminates TLS for the web,
-	// one passes it through).
+
 	AgentAddr string `json:"agent_addr"`
-	// ControlAddr is where the agent enrolled and re-registers: control's
-	// public API host.
+
 	ControlAddr string `json:"control_addr,omitempty"`
 }
 
-// Store manages encrypted credential storage.
 type Store struct {
 	dataDir string
 	fs      sdkfs.Manager
-	fsErr   error // deferred fs-manager construction error, surfaced fail-closed on write
+	fsErr   error
 }
 
-// NewStore creates a new credential store. Writes go through the SDK fs Manager
-// over a Direct runner: the agent runs as root and owns its data directory, so
-// no privilege escalation is needed; WriteFile is atomic (temp + rename).
 func NewStore(dataDir string) *Store {
 	if dataDir == "" {
 		dataDir = DefaultDataDir
@@ -110,8 +77,6 @@ func NewStore(dataDir string) *Store {
 	return s
 }
 
-// writeFile atomically writes data at 0600 through the Direct fs Manager,
-// surfacing any deferred construction error fail-closed.
 func (s *Store) writeFile(path string, data []byte) error {
 	if s.fsErr != nil {
 		return s.fsErr
@@ -119,18 +84,11 @@ func (s *Store) writeFile(path string, data []byte) error {
 	return s.fs.WriteFile(context.Background(), path, data, sdkfs.WriteOptions{Mode: 0600})
 }
 
-// Exists checks if credentials exist.
 func (s *Store) Exists() bool {
 	_, err := os.Stat(filepath.Join(s.dataDir, credentialsFile))
 	return err == nil
 }
 
-// requireOwnerOnlyDir fails closed if the credential-store directory is
-// group- or world-writable: a writable store dir lets a non-owner forge
-// the salt/ciphertext (and thus the agent's identity). World-readable is
-// tolerated — the secret files themselves are 0600 — but writable is
-// not. WS10 #1/#2 (the honest forgeable-store guard; the KDF itself is
-// machine-id + FDE per the package doc).
 func requireOwnerOnlyDir(dir string) error {
 	info, err := os.Stat(dir)
 	if err != nil {
@@ -145,15 +103,12 @@ func requireOwnerOnlyDir(dir string) error {
 	return nil
 }
 
-// Save encrypts and saves credentials to disk.
 func (s *Store) Save(creds *Credentials) error {
-	// Ensure data directory exists with secure permissions
+
 	if err := os.MkdirAll(s.dataDir, 0700); err != nil {
 		return fmt.Errorf("create data directory: %w", err)
 	}
-	// Tighten an existing dir to 0700 (MkdirAll does not narrow an
-	// already-present directory), then fail closed if it is still
-	// group/world-writable (e.g. someone re-loosened it).
+
 	if err := os.Chmod(s.dataDir, 0700); err != nil {
 		return fmt.Errorf("secure data directory: %w", err)
 	}
@@ -161,39 +116,27 @@ func (s *Store) Save(creds *Credentials) error {
 		return err
 	}
 
-	// Generate or load salt
 	salt, err := s.loadOrCreateSalt()
 	if err != nil {
 		return fmt.Errorf("load/create salt: %w", err)
 	}
 
-	// Derive encryption key
 	key, err := s.deriveKey(salt)
 	if err != nil {
 		return fmt.Errorf("derive key: %w", err)
 	}
 
-	// Serialize credentials
 	plaintext, err := json.Marshal(creds)
 	if err != nil {
 		return fmt.Errorf("marshal credentials: %w", err)
 	}
 
-	// Encrypt and prepend the required format marker.
 	ciphertext, err := encrypt(key, plaintext)
 	if err != nil {
 		return fmt.Errorf("encrypt credentials: %w", err)
 	}
 	ciphertext = append([]byte(credentialsMagicV1), ciphertext...)
 
-	// Write encrypted credentials atomically. A direct os.WriteFile
-	// leaves a partially written file on crash / full disk / power
-	// loss, which corrupts the agent's enrollment and forces a
-	// re-enroll. Temp-file + fsync + rename is the standard
-	// cure — rename is atomic within a single filesystem, the
-	// fsync before rename ensures the new contents are on disk
-	// before the directory entry is swapped, and the parent-dir
-	// fsync afterwards flushes the directory entry itself.
 	credPath := filepath.Join(s.dataDir, credentialsFile)
 	if err := s.writeFile(credPath, ciphertext); err != nil {
 		return fmt.Errorf("write credentials: %w", err)
@@ -202,28 +145,23 @@ func (s *Store) Save(creds *Credentials) error {
 	return nil
 }
 
-// Load decrypts and loads credentials from disk.
 func (s *Store) Load() (*Credentials, error) {
-	// Fail closed if the store directory is forgeable (group/world-
-	// writable) — a non-owner could have swapped the salt/ciphertext.
+
 	if err := requireOwnerOnlyDir(s.dataDir); err != nil {
 		return nil, err
 	}
 
-	// Load salt
 	saltPath := filepath.Join(s.dataDir, saltFile)
 	salt, err := os.ReadFile(saltPath)
 	if err != nil {
 		return nil, fmt.Errorf("read salt: %w", err)
 	}
 
-	// Derive decryption key
 	key, err := s.deriveKey(salt)
 	if err != nil {
 		return nil, fmt.Errorf("derive key: %w", err)
 	}
 
-	// Read encrypted credentials
 	credPath := filepath.Join(s.dataDir, credentialsFile)
 	ciphertext, err := os.ReadFile(credPath)
 	if err != nil {
@@ -235,13 +173,11 @@ func (s *Store) Load() (*Credentials, error) {
 	}
 	ciphertext = ciphertext[len(credentialsMagicV1):]
 
-	// Decrypt
 	plaintext, err := decrypt(key, ciphertext)
 	if err != nil {
 		return nil, fmt.Errorf("decrypt credentials: %w", err)
 	}
 
-	// Deserialize
 	var creds Credentials
 	if err := json.Unmarshal(plaintext, &creds); err != nil {
 		return nil, fmt.Errorf("unmarshal credentials: %w", err)
@@ -250,7 +186,6 @@ func (s *Store) Load() (*Credentials, error) {
 	return &creds, nil
 }
 
-// Delete removes stored credentials.
 func (s *Store) Delete() error {
 	credPath := filepath.Join(s.dataDir, credentialsFile)
 	saltPath := filepath.Join(s.dataDir, saltFile)
@@ -265,25 +200,18 @@ func (s *Store) Delete() error {
 	return nil
 }
 
-// DataDir returns the data directory path.
 func (s *Store) DataDir() string {
 	return s.dataDir
 }
 
-// loadOrCreateSalt loads existing salt or creates a new one.
 func (s *Store) loadOrCreateSalt() ([]byte, error) {
 	saltPath := filepath.Join(s.dataDir, saltFile)
 
-	// Try to load existing salt
 	salt, err := os.ReadFile(saltPath)
 	if err == nil && len(salt) == saltLen {
 		return salt, nil
 	}
-	// A PRESENT salt file with the wrong length is corruption, not
-	// first-boot (#173): silently regenerating destroyed the forensic
-	// signal AND guaranteed the paired credentials.enc could never
-	// decrypt again — fail loudly so the operator sees the corruption
-	// and re-enrolls deliberately.
+
 	if err == nil {
 		return nil, fmt.Errorf("salt file %s is corrupt (%d bytes, want %d) — refusing to regenerate; delete it together with %s to re-enroll", saltPath, len(salt), saltLen, credentialsFile)
 	}
@@ -291,15 +219,11 @@ func (s *Store) loadOrCreateSalt() ([]byte, error) {
 		return nil, fmt.Errorf("read salt: %w", err)
 	}
 
-	// Generate new salt
 	salt = make([]byte, saltLen)
 	if _, err := rand.Read(salt); err != nil {
 		return nil, fmt.Errorf("generate salt: %w", err)
 	}
 
-	// Save salt atomically — the salt is paired with the encrypted
-	// credentials and a corrupt salt is just as fatal as a corrupt
-	// credentials.enc.
 	if err := s.writeFile(saltPath, salt); err != nil {
 		return nil, fmt.Errorf("write salt: %w", err)
 	}
@@ -307,32 +231,23 @@ func (s *Store) loadOrCreateSalt() ([]byte, error) {
 	return salt, nil
 }
 
-// deriveKey derives an encryption key from the machine ID and salt.
 func (s *Store) deriveKey(salt []byte) ([]byte, error) {
 	machineID, err := getMachineID()
 	if err != nil {
 		return nil, fmt.Errorf("get machine ID: %w", err)
 	}
 
-	// Derive key using Argon2id
 	key := argon2.IDKey(machineID, salt, argonTime, argonMemory, argonThreads, argonKeyLen)
 	return key, nil
 }
 
-// getMachineID reads the machine ID from the system. It is a package var
-// (not a plain func) so tests can inject a synthetic machine ID to prove
-// the cross-machine binding (credentials saved under one machine ID do
-// not decrypt under another).
 var getMachineID = func() ([]byte, error) {
-	// The raw file bytes, including the trailing newline, are the Argon2id
-	// password for the current credential format.
-	// Try /etc/machine-id first (systemd)
+
 	id, err := os.ReadFile("/etc/machine-id")
 	if err == nil && len(id) > 0 {
 		return id, nil
 	}
 
-	// Fallback to /var/lib/dbus/machine-id
 	id, err = os.ReadFile("/var/lib/dbus/machine-id")
 	if err == nil && len(id) > 0 {
 		return id, nil
@@ -341,16 +256,11 @@ var getMachineID = func() ([]byte, error) {
 	return nil, errors.New("machine ID not found")
 }
 
-// MachineIDAvailable reports whether a machine ID can be read on this host.
-// Credential save/load (and cert rotation, which round-trips through the
-// credential store) need it for the KDF binding, so cmd-level tests use this to
-// skip cleanly on machine-id-less hosts rather than hard-failing.
 func MachineIDAvailable() bool {
 	_, err := getMachineID()
 	return err == nil
 }
 
-// encrypt encrypts plaintext using AES-256-GCM.
 func encrypt(key, plaintext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -367,12 +277,10 @@ func encrypt(key, plaintext []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	// Prepend nonce to ciphertext
 	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
 	return ciphertext, nil
 }
 
-// decrypt decrypts ciphertext using AES-256-GCM.
 func decrypt(key, ciphertext []byte) ([]byte, error) {
 	if len(ciphertext) < nonceLen {
 		return nil, errors.New("ciphertext too short")

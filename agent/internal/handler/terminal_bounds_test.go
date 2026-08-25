@@ -13,19 +13,8 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// WS15 #6 — terminal Cols/Rows bounds before the uint16 narrowing.
-//
-// terminal.go narrows req.Cols/req.Rows (uint32) to uint16 with no bounds
-// check, so 65536 becomes 0 and 65537 becomes 1 — a 0x0 / 1x1 PTY. The wire
-// intent (proto validate tag, NOT consulted by Receive) is "0 < dim <= 65535".
-// Sourced from intent ("a PTY dimension is a positive value <= 65535"), the
-// agent must REJECT an out-of-range dimension, never silently truncate it.
-
 const dimsErrFragment = "invalid terminal dimensions"
 
-// TestValidateDims is the source-of-truth, table-driven binding for the
-// dimension contract. "wrong" cases come from the intent (zero is absent; a
-// value > 65535 wraps under uint16), not from the validate tag.
 func TestValidateDims(t *testing.T) {
 	cases := []struct {
 		name       string
@@ -56,11 +45,6 @@ func TestValidateDims(t *testing.T) {
 	}
 }
 
-// TestOnTerminalStart_ColsRowsBounds drives the REAL OnTerminalStart with the
-// TTY gate enabled. Out-of-range dims must produce a STATE_ERROR whose reason
-// names the dimension failure, BEFORE any PTY allocation. An in-range dim must
-// pass the dims check (it then fails later at user provisioning with a
-// non-dims reason — proving the dims gate let it through).
 func TestOnTerminalStart_ColsRowsBounds(t *testing.T) {
 	const sessID = "01HSTARTBOUNDS00000000000"
 
@@ -69,7 +53,7 @@ func TestOnTerminalStart_ColsRowsBounds(t *testing.T) {
 		err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
 			SessionId: &pb.SessionId{Value: sessID},
 			TtyUser:   terminal.TTYUsernamePrefix + "bounds",
-			Cols:      65536, // ≡ 0 after uint16
+			Cols:      65536,
 			Rows:      24,
 		})
 		if err != nil {
@@ -83,7 +67,7 @@ func TestOnTerminalStart_ColsRowsBounds(t *testing.T) {
 		err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
 			SessionId: &pb.SessionId{Value: sessID},
 			TtyUser:   terminal.TTYUsernamePrefix + "bounds",
-			Cols:      65537, // ≡ 1 after uint16
+			Cols:      65537,
 			Rows:      24,
 		})
 		if err != nil {
@@ -119,12 +103,10 @@ func TestOnTerminalStart_ColsRowsBounds(t *testing.T) {
 		}
 		last := sender.lastState()
 		if last == nil {
-			// No error state at all means it proceeded past dims (and past
-			// provisioning) — also acceptable: the dims gate did not reject.
+
 			return
 		}
-		// It is expected to fail at user provisioning; it must NOT be the
-		// dims rejection — that would mean a valid 80x24 was wrongly refused.
+
 		if strings.Contains(strings.ToLower(last.Error), dimsErrFragment) {
 			t.Fatalf("in-range 80x24 was rejected as bad dimensions: %q", last.Error)
 		}
@@ -145,10 +127,6 @@ func assertDimsRejected(t *testing.T, sender *fakeSender) {
 	}
 }
 
-// TestOnTerminalResize_ColsRowsBounds drives the REAL OnTerminalResize against
-// a real active session, asserting Resize is never reached with a truncated
-// value for Cols/Rows >= 65536: an in-range resize succeeds, an out-of-range
-// resize is rejected as a clean no-op and the session stays resizable.
 func TestOnTerminalResize_ColsRowsBounds(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		t.Skip("PTY session test requires Linux")
@@ -160,8 +138,6 @@ func TestOnTerminalResize_ColsRowsBounds(t *testing.T) {
 
 	h, _ := newTestHandlerWithTTY(t, true)
 
-	// Start a real PTY as the current user (Open skips the setresuid when the
-	// target uid matches, so no sudo is needed).
 	tm, err := terminal.New()
 	if err != nil {
 		t.Skipf("cannot build terminal manager: %v", err)
@@ -194,8 +170,7 @@ func TestOnTerminalResize_ColsRowsBounds(t *testing.T) {
 		if err != nil {
 			t.Fatalf("out-of-range resize must be a non-fatal no-op, got: %v", err)
 		}
-		// The session must still be alive and resizable in-range, proving
-		// the bad resize did not wedge or 0-size the PTY.
+
 		if err := h.OnTerminalResize(context.Background(), &pb.TerminalResize{
 			SessionId: &pb.SessionId{Value: sessID}, Cols: 100, Rows: 30,
 		}); err != nil {

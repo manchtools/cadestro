@@ -11,12 +11,6 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// TestRunShellScript_RunAsRootFalseNoSessions pins the empty-set
-// policy for #79's shell fan-out: when RunAsRoot=false and nobody
-// is signed in, the action returns success no-op + a Warn rather
-// than the pre-fix "silently runs as the agent's UID (root)"
-// behavior. Without this guard an admin who turned off RunAsRoot
-// would still see effectively-root behavior with no diagnostic.
 func TestRunShellScript_RunAsRootFalseNoSessions(t *testing.T) {
 	sessions, err := desktopMgr.ActiveSessions(context.Background())
 	if err != nil {
@@ -46,20 +40,9 @@ func TestRunShellScript_RunAsRootFalseNoSessions(t *testing.T) {
 	}
 }
 
-// TestRunShellScript_RunAsRootFalseDispatchesToLoop is the
-// complement when sessions ARE present: verify the script actually
-// runs per-user and the streamed output is tagged with a
-// `[user=<name>] ` prefix so downstream log consumers can attribute
-// lines back to the right account. We don't pin the script's
-// stdout content — the goal is to pin the prefix shape and confirm
-// the dispatch reached the per-user runner at all.
 func TestRunShellScript_RunAsRootFalseDispatchesToLoop(t *testing.T) {
 	if os.Geteuid() != 0 {
-		// runuser requires root to switch users — without it the
-		// per-user fan-out fails before any script output reaches
-		// us. The agent runs as root in production so this test
-		// exercises real behavior in privileged CI; locally a
-		// developer sees a skip rather than a meaningless failure.
+
 		t.Skip("runuser requires root to switch users; run this test under privileged CI")
 	}
 	sessions, err := desktopMgr.ActiveSessions(context.Background())
@@ -72,21 +55,13 @@ func TestRunShellScript_RunAsRootFalseDispatchesToLoop(t *testing.T) {
 
 	e := NewExecutor(nil)
 	out, err := e.runShellScript(context.Background(), &pb.ShellParams{
-		// `id -un` prints the username; if the per-user fan-out
-		// works, the merged stdout will contain the desktop user's
-		// name, NOT root. That difference is the load-bearing
-		// behavioral pin for #79 — exactly the bug the fix
-		// addresses.
+
 		Script:    "id -un",
 		RunAsRoot: false,
 	}, "id -un")
 
 	if err != nil {
-		// Per-user execution can fail if runuser isn't available
-		// (extremely unusual) or if PAM rejects the impersonation —
-		// but the dispatch path is what we're pinning here, not the
-		// happy-path end-to-end execution. Surface the failure but
-		// don't abort the assertion below.
+
 		t.Logf("per-user shell execution returned error (still asserting dispatch shape): %v", err)
 	}
 	if out == nil {
@@ -100,13 +75,6 @@ func TestRunShellScript_RunAsRootFalseDispatchesToLoop(t *testing.T) {
 	}
 }
 
-// TestStripHomeAndUser pins the env-cleanup helper that runs before
-// per-user fan-out: HOME/USER from the agent's env baseline are
-// dropped because runAsUser sets per-user values via
-// desktop.EnvFor. Pin the absence so a future refactor doesn't
-// regress and start sending mismatched HOME/USER pairs (the
-// per-user one wins via Go's last-write-wins, but the duplicate is
-// noise in audit logs and confuses reviewers).
 func TestStripHomeAndUser(t *testing.T) {
 	in := []string{
 		"PATH=/usr/bin:/bin",

@@ -17,8 +17,6 @@ import (
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// countingStore counts Load() calls so the test can prove the costly
-// Argon2id-bearing Load is not run per request.
 type countingStore struct {
 	exists bool
 	loads  atomic.Int64
@@ -35,8 +33,6 @@ func newStatusHandler(store credentialStore) *EnrollHandler {
 	return &EnrollHandler{credStore: store, logger: slog.Default(), now: time.Now}
 }
 
-// flakyStore is a credentialStore whose Load result is controllable, so a test
-// can exercise the "credentials exist but Load fails" path.
 type flakyStore struct {
 	exists bool
 	creds  *credentials.Credentials
@@ -47,11 +43,6 @@ func (f *flakyStore) Exists() bool                            { return f.exists 
 func (f *flakyStore) Load() (*credentials.Credentials, error) { return f.creds, f.err }
 func (f *flakyStore) Save(*credentials.Credentials) error     { return nil }
 
-// TestGetEnrollmentStatus_LoadFailureNotCached pins WS9 #7: when credentials
-// EXIST but Load fails (a transient decrypt/IO error), status reports
-// not-enrolled and does NOT cache that result — so a later successful Load is
-// still observed as enrolled. A cached failure would pin "not enrolled" for the
-// whole process lifetime after one transient blip.
 func TestGetEnrollmentStatus_LoadFailureNotCached(t *testing.T) {
 	store := &flakyStore{exists: true, err: errors.New("decrypt failed")}
 	h := newStatusHandler(store)
@@ -60,8 +51,6 @@ func TestGetEnrollmentStatus_LoadFailureNotCached(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, resp.Msg.Enrolled, "a load failure must report not-enrolled")
 
-	// Recover: once Load succeeds the status must flip — proving the failure was
-	// not cached.
 	store.err = nil
 	store.creds = &credentials.Credentials{DeviceID: "dev-recovered"}
 	resp, err = h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
@@ -70,9 +59,6 @@ func TestGetEnrollmentStatus_LoadFailureNotCached(t *testing.T) {
 	assert.Equal(t, "dev-recovered", resp.Msg.GetDeviceId().GetValue())
 }
 
-// GetEnrollmentStatus must not run credStore.Load() (a 64 MiB Argon2id
-// derivation) more than once across many calls — the socket is 0666, so
-// per-call derivation is a local DoS.
 func TestGetEnrollmentStatus_LoadsAtMostOnce(t *testing.T) {
 	store := &countingStore{exists: true}
 	h := newStatusHandler(store)
@@ -81,15 +67,12 @@ func TestGetEnrollmentStatus_LoadsAtMostOnce(t *testing.T) {
 		resp, err := h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 		require.NoError(t, err)
 		assert.True(t, resp.Msg.Enrolled)
-	assert.Equal(t, "dev-cached", resp.Msg.GetDeviceId().GetValue())
+		assert.Equal(t, "dev-cached", resp.Msg.GetDeviceId().GetValue())
 	}
 	assert.LessOrEqual(t, store.loads.Load(), int64(1),
 		"Load (Argon2id) must run at most once across repeated status calls; got %d", store.loads.Load())
 }
 
-// A concurrent flood must also collapse to a single Load — the cache +
-// statusMu must serialize the first derivation, not let N goroutines all
-// derive before the cache is populated.
 func TestGetEnrollmentStatus_ConcurrentFloodLoadsOnce(t *testing.T) {
 	store := &countingStore{exists: true}
 	h := newStatusHandler(store)
@@ -107,7 +90,6 @@ func TestGetEnrollmentStatus_ConcurrentFloodLoadsOnce(t *testing.T) {
 		"a concurrent status flood must trigger exactly one Argon2id derivation")
 }
 
-// When not enrolled, Load must never run (Exists() is a cheap stat).
 func TestGetEnrollmentStatus_NotEnrolledNeverLoads(t *testing.T) {
 	store := &countingStore{exists: false}
 	h := newStatusHandler(store)

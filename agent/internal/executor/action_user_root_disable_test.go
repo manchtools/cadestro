@@ -12,9 +12,6 @@ import (
 	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 )
 
-// fakeRootDisableUser records the Lock/Modify traffic updateUser emits.
-// The embedded nil Manager panics on any unlisted method — the guard
-// that a new updateUser dependency shows up loudly here.
 type fakeRootDisableUser struct {
 	sysuser.Manager
 	info     sysuser.Info
@@ -39,10 +36,6 @@ func swapUserMgr(t *testing.T, e *Executor, m sysuser.Manager) {
 	e.deps.user = m
 }
 
-// #169 rider (operator decision 2026-07-08): disabling ROOT is
-// lock-only — the shell must stay untouched so `sudo -i` and key-based
-// root SSH keep working (Ubuntu's default posture). The lock is loud
-// in the journal.
 func TestUpdateUser_DisableRoot_LockOnlyKeepsShell(t *testing.T) {
 	fake := &fakeRootDisableUser{info: sysuser.Info{UID: 0, Shell: "/bin/bash", Locked: false}}
 	var logBuf bytes.Buffer
@@ -75,8 +68,6 @@ func TestUpdateUser_DisableRoot_LockOnlyKeepsShell(t *testing.T) {
 	}
 }
 
-// Regression pin for the existing offboarding semantics: a REGULAR
-// user disabled without an explicit shell still defaults to nologin.
 func TestUpdateUser_DisableRegularUser_StillDefaultsNologin(t *testing.T) {
 	fake := &fakeRootDisableUser{info: sysuser.Info{UID: 1000, Shell: "/bin/bash", Locked: false}}
 	e := NewExecutor(nil)
@@ -105,8 +96,6 @@ func TestUpdateUser_DisableRegularUser_StillDefaultsNologin(t *testing.T) {
 	}
 }
 
-// An explicit shell on a root-disable is still honored — the exemption
-// only removes the DEFAULT, not the operator's stated intent.
 func TestUpdateUser_DisableRoot_ExplicitShellHonored(t *testing.T) {
 	fake := &fakeRootDisableUser{info: sysuser.Info{UID: 0, Shell: "/bin/bash", Locked: false}}
 	e := NewExecutor(nil)
@@ -133,9 +122,6 @@ func TestUpdateUser_DisableRoot_ExplicitShellHonored(t *testing.T) {
 	}
 }
 
-// The exemption is keyed on UID 0, not the name "root": a renamed
-// superuser account (hardening setups, "toor", etc.) must get the same
-// lock-only treatment — no name list to maintain.
 func TestUpdateUser_DisableRenamedSuperuser_LockOnlyKeepsShell(t *testing.T) {
 	fake := &fakeRootDisableUser{info: sysuser.Info{UID: 0, Shell: "/bin/bash", Locked: false}}
 	var logBuf bytes.Buffer

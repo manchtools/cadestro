@@ -12,9 +12,6 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// recordingBaseRunner records each command the base runner receives — under
-// desktop.RunAsRunner that is the fully-wrapped `runuser …` command — so a test
-// can assert how per-user execution is built without a real runuser/root.
 type recordingBaseRunner struct{ cmds []sysexec.Command }
 
 func (r *recordingBaseRunner) Run(_ context.Context, c sysexec.Command) (sysexec.Result, error) {
@@ -29,11 +26,6 @@ func (r *recordingBaseRunner) Stream(_ context.Context, c sysexec.Command, _ sys
 
 func (r *recordingBaseRunner) Backend() sysexec.PrivilegeBackend { return sysexec.Direct }
 
-// TestRunAsUser_WorkingDirAndPerUserEnv pins the A4 adoption: per-user
-// script execution now goes through desktop.RunAsRunner, so the wrapped runuser
-// command carries the action's working directory (Command.Dir, now honored by
-// RunAsRunner), the per-user HOME/USER, and the curated per-user PATH (not the
-// agent root's). No hand-built runuser/env splicing remains in the agent.
 func TestRunAsUser_WorkingDirAndPerUserEnv(t *testing.T) {
 	prev := executorRunner
 	t.Cleanup(func() { executorRunner = prev })
@@ -42,7 +34,6 @@ func TestRunAsUser_WorkingDirAndPerUserEnv(t *testing.T) {
 
 	s := desktop.Session{Username: "alice", UID: 1000, Home: "/home/alice"}
 
-	// An explicit working directory must reach the wrapped runuser command.
 	_, err := runAsUser(context.Background(), s, nil, "/work/dir", "/bin/echo", []string{"hi"})
 	require.NoError(t, err)
 	require.Len(t, rec.cmds, 1)
@@ -55,7 +46,6 @@ func TestRunAsUser_WorkingDirAndPerUserEnv(t *testing.T) {
 	assert.Contains(t, joined, "PATH="+desktop.UserPath(s), "curated per-user PATH (not the agent root's)")
 	assert.Contains(t, joined, "alice", "command runs as the session user")
 
-	// An empty working directory defaults to the user's home.
 	rec.cmds = nil
 	_, err = runAsUser(context.Background(), s, nil, "", "/bin/echo", []string{"hi"})
 	require.NoError(t, err)

@@ -11,18 +11,12 @@ import (
 	"github.com/manchtools/cadestro/sdk/pkg"
 )
 
-// probeErrPkgManager fails the IsInstalled state probe, standing in for a
-// cancelled context or a backend lookup failure.
 type probeErrPkgManager struct{ pkg.Manager }
 
 func (probeErrPkgManager) IsInstalled(context.Context, string) (bool, error) {
 	return false, errors.New("backend probe failed")
 }
 
-// TestExecutePackage_FailsClosedOnProbeError pins that a failed package-state
-// probe fails the action CLOSED for both PRESENT and ABSENT, rather than
-// silently proceeding to a privileged install/remove against an unknown state
-// (CR finding: discarded IsInstalled errors at action_package.go:43/117).
 func TestExecutePackage_FailsClosedOnProbeError(t *testing.T) {
 	e := &Executor{logger: slog.Default(), now: time.Now, pkgBackend: pkg.Apt, pkgManager: probeErrPkgManager{}}
 	for _, state := range []pb.DesiredState{
@@ -34,13 +28,6 @@ func TestExecutePackage_FailsClosedOnProbeError(t *testing.T) {
 		}
 	}
 }
-
-// WS16 #3: PACKAGE/UPDATE actions previously got no default timeout (only
-// SHELL/SCRIPT_RUN did) and ran their package-manager operations under
-// context.Background, so a per-action timeout never bit. defaultTimeoutForAction
-// now covers package/update, and — in the reworked SDK — the pkg.Manager takes a
-// context on EVERY call, so the action ctx reaches the package-manager
-// subprocesses directly (no per-action manager rebuild).
 
 func TestDefaultTimeoutForAction(t *testing.T) {
 	cases := []struct {
@@ -65,11 +52,6 @@ func TestDefaultTimeoutForAction(t *testing.T) {
 	}
 }
 
-// fakePkgManager embeds pkg.Manager (every method nil-panics) and overrides only
-// IsInstalled, which the executePackage PRESENT path reaches first. It reports
-// the package already installed so executePackage returns at the version/pin
-// check with no privileged side effects, and captures the ctx it was called with
-// so a test can prove the action ctx propagates to the manager (WS16 #3).
 type fakePkgManager struct {
 	pkg.Manager
 	captured chan context.Context
@@ -85,11 +67,6 @@ func (f fakePkgManager) IsInstalled(ctx context.Context, _ string) (bool, error)
 	return true, nil
 }
 
-// TestExecutePackage_PassesActionContextToManager proves the action's
-// (timeout-bearing) context reaches the package manager's calls — not the
-// construction-time Background context — so a cancelled action ctx propagates to
-// the manager's subprocesses. The reworked SDK passes ctx per call, so we assert
-// the ctx the injected manager received IS the action ctx.
 func TestExecutePackage_PassesActionContextToManager(t *testing.T) {
 	capturedCh := make(chan context.Context, 1)
 	e := &Executor{
@@ -102,7 +79,7 @@ func TestExecutePackage_PassesActionContextToManager(t *testing.T) {
 	actionCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go func() {
-		// PACKAGE present, no version/pin → returns "already installed".
+
 		_, _, _ = e.executePackage(actionCtx, &pb.PackageParams{Name: "anything"}, pb.DesiredState_DESIRED_STATE_PRESENT)
 	}()
 
@@ -117,9 +94,6 @@ func TestExecutePackage_PassesActionContextToManager(t *testing.T) {
 		t.Fatal("manager was called with context.Background, not the action context (WS16 #3)")
 	}
 
-	// Cancelling the action context must propagate to the captured context —
-	// proving it is the action's ctx, which the backend uses for its subprocess
-	// deadlines.
 	cancel()
 	select {
 	case <-captured.Done():
@@ -128,10 +102,6 @@ func TestExecutePackage_PassesActionContextToManager(t *testing.T) {
 	}
 }
 
-// TestPkgManagerForCtx_CancelledCtx_FailsClosed pins that pkgManagerForCtx
-// returns nil (fail closed) once the action context is already cancelled, so a
-// wedged or expired action never starts a privileged package operation. With a
-// live ctx it returns the configured manager.
 func TestPkgManagerForCtx_CancelledCtx_FailsClosed(t *testing.T) {
 	mgr := fakePkgManager{}
 	e := &Executor{pkgManager: mgr}

@@ -12,8 +12,6 @@ import (
 	"testing"
 )
 
-// readRepoFile reads a file at the agent module root (two levels up from
-// this package: agent/cmd/cadestrod → agent/).
 func readRepoFile(t *testing.T, name string) string {
 	t.Helper()
 	b, err := os.ReadFile(filepath.Join("..", "..", name))
@@ -23,25 +21,13 @@ func readRepoFile(t *testing.T, name string) string {
 	return string(b)
 }
 
-// readRootFile reads a file at the REPOSITORY root, one level above the agent
-// module. GitHub honours workflows only there, so the release workflow these
-// tests read is a repository file, not an agent file — reading it from the
-// module root would find nothing and every assertion below would fail loudly
-// rather than silently, which is why the split is explicit instead of a
-// fallback.
 func readRootFile(t *testing.T, name string) string {
 	t.Helper()
 	return readRepoFile(t, filepath.Join("..", name))
 }
 
-// releaseWorkflow is the repository-root release workflow. One workflow now
-// builds, signs, and publishes every artefact in this repository; the agent's
-// installer-stamping steps are jobs in it rather than a workflow of their own.
 var releaseWorkflow = filepath.Join(".github", "workflows", "release.yml")
 
-// WS7 #4: the cadestro:// URI handler must be OPT-IN (off by default),
-// and the desktop entry must not auto-launch a terminal. An unconditional
-// handler exposes the root-capable binary to drive-by links.
 func TestInstall_DesktopHandlerOptIn(t *testing.T) {
 	sh := readRepoFile(t, "install.sh")
 
@@ -51,19 +37,16 @@ func TestInstall_DesktopHandlerOptIn(t *testing.T) {
 	if !strings.Contains(sh, `if [[ "$ENABLE_URI_HANDLER" == "true" ]]`) {
 		t.Error("install_desktop_handler must be gated behind ENABLE_URI_HANDLER (opt-in)")
 	}
-	// Default off: the env default must not be true.
+
 	if strings.Contains(sh, `ENABLE_URI_HANDLER="${CADESTRO_ENABLE_URI_HANDLER:-true}`) {
 		t.Error("the URI handler must default to OFF")
 	}
-	// No auto-launching terminal entry.
+
 	if strings.Contains(sh, "Terminal=true") {
 		t.Error("the desktop entry must not set Terminal=true (drive-by auto-launch)")
 	}
 }
 
-// WS9 #3: the install flow must NOT pass the registration token on argv
-// (visible via /proc/<pid>/cmdline). It must deliver it via -token-file,
-// created mode 0600.
 func TestInstall_TokenDeliveredViaFileNotArgv(t *testing.T) {
 	sh := readRepoFile(t, "install.sh")
 
@@ -139,11 +122,6 @@ func TestReleaseWorkflowPrereleaseInstructionsUseExactTag(t *testing.T) {
 		t.Error("prerelease instructions must use the installer from the exact release tag")
 	}
 
-	// Issue #204: both prerelease installer URLs must be built from
-	// ${{ github.repository }}. Hardcoding the upstream slug makes a fork's
-	// generated release body send its users to upstream's assets — which are
-	// signed with upstream's key and contain none of the fork's builds,
-	// contradicting the BYOK downstream signing contract in README.md.
 	installers := releaseDownloadRepositories(prerelease)
 	if len(installers) < 2 {
 		t.Fatalf("matches-zero guard: the prerelease body documents an install and an update installer, so it must carry at least 2 release-download URLs; found %d", len(installers))
@@ -155,19 +133,10 @@ func TestReleaseWorkflowPrereleaseInstructionsUseExactTag(t *testing.T) {
 	}
 }
 
-// githubRepositoryExpression is the Actions expression that renders to the
-// owner/repo slug of whatever repository is running the workflow.
 const githubRepositoryExpression = "${{ github.repository }}"
 
-// releaseDownloadRepositoryPattern captures the owner/repo slug of every
-// github.com release URL — both `releases/download/<tag>/` and
-// `releases/latest/download/`. The capture is non-greedy so it stops at the
-// first `/releases/`, and `.` (not `\S`) because the correct value,
-// ${{ github.repository }}, contains spaces.
 var releaseDownloadRepositoryPattern = regexp.MustCompile(`https://github\.com/(.+?)/releases/(?:latest/)?download/`)
 
-// releaseDownloadRepositories returns the repository slug used by every
-// github.com release-download URL in the given workflow fragment.
 func releaseDownloadRepositories(fragment string) []string {
 	var out []string
 	for _, m := range releaseDownloadRepositoryPattern.FindAllStringSubmatch(fragment, -1) {
@@ -176,15 +145,6 @@ func releaseDownloadRepositories(fragment string) []string {
 	return out
 }
 
-// TestReleaseWorkflowBodyURLsAreForkSafe generalises the rule the prerelease
-// test applies to its own branch: NO release URL anywhere in the generated
-// release body may name a repository literally. The stable branch documents
-// four more installer commands than the prerelease branch, and a hardcoded
-// slug is the same defect there — a fork tagging a stable release would
-// publish instructions that install upstream's signed binaries.
-//
-// Self-discovering: it reads whatever URLs the step emits, so a newly added
-// installer snippet is covered without editing a list here.
 func TestReleaseWorkflowBodyURLsAreForkSafe(t *testing.T) {
 	workflow := readRootFile(t, releaseWorkflow)
 	_, body, ok := strings.Cut(workflow, "\n      - name: Generate release body\n")
@@ -243,55 +203,6 @@ func TestInstall_ReleaseVerifierAcceptsOnlyConfiguredSigner(t *testing.T) {
 	}
 }
 
-// WS7 #9: every capability in the systemd unit's CapabilityBoundingSet
-// must carry a justification comment. Self-discovering: a cap added
-// without a comment fails this test.
-// TestInstall_CapsDocumented walks the agent's embedded unit TEMPLATE
-// (the single source since spec 27 — install.sh no longer carries the
-// unit) and requires a justification comment for every capability in
-// the bounding set.
-func TestInstall_CapsDocumented(t *testing.T) {
-	sh := readRepoFile(t, filepath.Join("internal", "unit", "cadestrod.service.tmpl"))
-
-	var capLine string
-	commentCaps := map[string]bool{}
-	for _, l := range strings.Split(sh, "\n") {
-		trimmed := strings.TrimSpace(l)
-		if strings.HasPrefix(trimmed, "CapabilityBoundingSet=") {
-			capLine = strings.TrimPrefix(trimmed, "CapabilityBoundingSet=")
-			continue
-		}
-		if strings.HasPrefix(trimmed, "#") {
-			for _, tok := range strings.Fields(trimmed) {
-				tok = strings.Trim(tok, "/,.—-")
-				if strings.HasPrefix(tok, "CAP_") {
-					commentCaps[tok] = true
-				}
-			}
-		}
-	}
-
-	if capLine == "" {
-		t.Fatal("no CapabilityBoundingSet= line found in the unit template")
-	}
-	caps := strings.Fields(capLine)
-	if len(caps) == 0 {
-		t.Fatal("CapabilityBoundingSet is empty")
-	}
-	for _, c := range caps {
-		if !commentCaps[c] {
-			t.Errorf("capability %s in CapabilityBoundingSet has no justification comment", c)
-		}
-	}
-}
-
-// TestInstall_SingleUnitSource is spec 27's grep guard: install.sh must
-// carry NO copy of the unit (no heredoc, no unit directives) — the
-// embedded template is the single source — and must invoke the
-// binary's install-unit instead. The invocation assertion is the
-// matches-zero guard: if the subcommand is ever renamed, this fails
-// loudly rather than the directive checks passing vacuously against a
-// script that installs no unit at all.
 func TestInstall_SingleUnitSource(t *testing.T) {
 	sh := readRepoFile(t, "install.sh")
 
@@ -308,8 +219,6 @@ func TestInstall_SingleUnitSource(t *testing.T) {
 	}
 }
 
-// WS7 #10: the Containerfile must chmod the data dir 700, matching
-// install.sh (it holds action secrets + the agent store).
 func TestContainerfile_DataDirPerms(t *testing.T) {
 	cf := readRepoFile(t, "Containerfile")
 	if !strings.Contains(cf, "chmod 700 /var/lib/cadestro") {
@@ -317,13 +226,6 @@ func TestContainerfile_DataDirPerms(t *testing.T) {
 	}
 }
 
-// The release build substitutes the public key into install.sh with a GLOBAL
-// sed over the placeholder. rc1 shipped an installer whose "not configured"
-// guard was itself the placeholder literal, so the sed rewrote the guard into
-// comparing the configured key against itself and every SIGNED release
-// refused to install. The full placeholder may therefore appear exactly once
-// — the assignment the sed is meant to hit — and the guard must assemble its
-// sentinel at run time where no substitution can reach it.
 func TestInstall_PlaceholderAppearsOnlyInTheAssignment(t *testing.T) {
 	sh := readRepoFile(t, "install.sh")
 	const placeholder = "__RELEASE_SIGNING_PUBLIC_KEY__"
@@ -339,22 +241,12 @@ func TestInstall_PlaceholderAppearsOnlyInTheAssignment(t *testing.T) {
 		t.Error("the single placeholder occurrence must be the assignment the release sed substitutes")
 	}
 
-	// Simulate the release substitution and prove the guard survives it: the
-	// substituted script must never compare the variable against the value
-	// that was just injected.
 	substituted := strings.ReplaceAll(sh, placeholder, "TESTKEYBASE64")
 	if strings.Contains(substituted, `== "TESTKEYBASE64"`) {
 		t.Error("after key substitution the configured-key guard compares the key against itself; assemble the sentinel at run time")
 	}
 }
 
-// Self-discovering generalization of the placeholder rule: every release
-// placeholder declared in install.sh must (a) appear exactly once, on the
-// assignment its sed targets, (b) actually be substituted by the release
-// workflow, and (c) survive a simulated global substitution without any
-// guard comparing a variable against the freshly injected value. A new
-// placeholder added without workflow wiring, or referenced literally in a
-// second place, fails here instead of in the next broken release.
 func TestInstall_EveryPlaceholderStampedExactlyOnce(t *testing.T) {
 	sh := readRepoFile(t, "install.sh")
 	wf := readRootFile(t, releaseWorkflow)

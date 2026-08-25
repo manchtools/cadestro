@@ -20,8 +20,6 @@ import (
 	"github.com/manchtools/cadestro/agent/internal/credentials"
 )
 
-// failingStore wraps a real store but fails Save — for the
-// save-fail-closed test (#14).
 type failingStore struct {
 	credentialStore
 	saveErr error
@@ -79,11 +77,6 @@ func TestEnroll_RetryReusesPendingIdentityAfterResponseLoss(t *testing.T) {
 	assert.Empty(t, loaded.PendingPrivateKey)
 }
 
-// TestEnroll_RateLimitRejectsSixthInWindow pins the brute-force guard
-// (#6): five attempts in the window reach the network; the sixth is
-// rejected BEFORE any registration call (guard-before-work). Registration
-// is made to fail so each of the first five is a genuine attempt rather
-// than enrolling and short-circuiting the rest.
 func TestEnroll_RateLimitRejectsSixthInWindow(t *testing.T) {
 	var registerCalls int32
 	mock := &mockRegisterService{
@@ -98,7 +91,7 @@ func TestEnroll_RateLimitRejectsSixthInWindow(t *testing.T) {
 	h := NewEnrollHandler("test-host", "dev", credStore, slog.Default(), nil)
 	h.registerOpts = trustServer(srv)
 	fixed := time.Now()
-	h.now = func() time.Time { return fixed } // all attempts land in one window
+	h.now = func() time.Time { return fixed }
 
 	for i := 0; i < 5; i++ {
 		resp, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
@@ -117,12 +110,6 @@ func TestEnroll_RateLimitRejectsSixthInWindow(t *testing.T) {
 	assert.EqualValues(t, 5, atomic.LoadInt32(&registerCalls), "the 6th attempt must not reach the network")
 }
 
-// TestEnroll_RateLimitSlidingWindowEviction pins WS9 #6: the limiter is a
-// SLIDING window, not a permanent lockout — attempts older than the window are
-// evicted, so once the window passes enrollment is allowed again. (The
-// within-window rejection is covered by TestEnroll_RateLimitRejectsSixthInWindow;
-// this covers the eviction side, and also that FAILED attempts consume budget,
-// since all six here fail registration yet still trip the limit.)
 func TestEnroll_RateLimitSlidingWindowEviction(t *testing.T) {
 	var registerCalls int32
 	mock := &mockRegisterService{
@@ -138,15 +125,12 @@ func TestEnroll_RateLimitSlidingWindowEviction(t *testing.T) {
 	now := time.Now()
 	h.now = func() time.Time { return now }
 
-	// Exhaust the window: 5 reach (and fail) registration, the 6th is rate-limited.
 	for i := 0; i < 6; i++ {
 		_, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{ServerUrl: srv.URL, Token: "tok", CaFingerprintPin: testCAPin}))
 		require.NoError(t, err)
 	}
 	require.EqualValues(t, 5, atomic.LoadInt32(&registerCalls), "only 5 attempts may reach the network within one window")
 
-	// Advance past the 1-minute window: the prior attempts are evicted, so a
-	// fresh attempt is allowed through to registration again.
 	now = now.Add(61 * time.Second)
 	resp, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{ServerUrl: srv.URL, Token: "tok", CaFingerprintPin: testCAPin}))
 	require.NoError(t, err)
@@ -154,11 +138,6 @@ func TestEnroll_RateLimitSlidingWindowEviction(t *testing.T) {
 	assert.EqualValues(t, 6, atomic.LoadInt32(&registerCalls), "a fresh attempt after the window must reach registration")
 }
 
-// TestEnroll_ConcurrentSerializesToOneRegistration pins WS9 #12: enrollMu
-// serializes the enrollment body, so concurrent Enroll calls (all within the
-// rate-limit budget) cannot each pass the Exists() check and register duplicate
-// devices — the first registers and saves, and the rest short-circuit. Without
-// the lock this would race to N registrations / a corrupt Save.
 func TestEnroll_ConcurrentSerializesToOneRegistration(t *testing.T) {
 	var registerCalls int32
 	caPEM := genTestCAPEM(t)
@@ -179,7 +158,7 @@ func TestEnroll_ConcurrentSerializesToOneRegistration(t *testing.T) {
 	h := NewEnrollHandler("test-host", "dev", credStore, slog.Default(), nil)
 	h.registerOpts = trustServer(srv)
 
-	const n = 5 // within the 5/min budget, so all reach the serialized body
+	const n = 5
 	var wg sync.WaitGroup
 	errCh := make(chan error, n)
 	for i := 0; i < n; i++ {
@@ -195,8 +174,7 @@ func TestEnroll_ConcurrentSerializesToOneRegistration(t *testing.T) {
 	}
 	wg.Wait()
 	close(errCh)
-	// Surface enroll errors (#174): a handler failure previously produced
-	// a confusing registerCalls-count mismatch instead of the real cause.
+
 	for err := range errCh {
 		t.Errorf("Enroll: %v", err)
 	}
@@ -206,8 +184,6 @@ func TestEnroll_ConcurrentSerializesToOneRegistration(t *testing.T) {
 	assert.True(t, credStore.Exists(), "the single enrollment must have saved credentials")
 }
 
-// TestEnroll_RejectsMissingMTLSCerts pins fail-closed when the server
-// omits a cert (#13): no creds saved, status not primed.
 func TestEnroll_RejectsMissingMTLSCerts(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -248,9 +224,6 @@ func TestEnroll_RejectsMissingMTLSCerts(t *testing.T) {
 	}
 }
 
-// TestEnroll_BindsOutboundRegisterRequest pins that the agent sends its
-// token, hostname, and version, and a valid self-signed CSR whose key it
-// keeps (#8) — the "private key never leaves the agent" contract.
 func TestEnroll_BindsOutboundRegisterRequest(t *testing.T) {
 	var captured *cadestrov1.RegisterRequest
 	caPEM := genTestCAPEM(t)
@@ -288,8 +261,6 @@ func TestEnroll_BindsOutboundRegisterRequest(t *testing.T) {
 	require.NoError(t, csr.CheckSignature(), "CSR signature must verify")
 }
 
-// TestEnroll_SaveFailureFailsClosed pins #14: a Save error fails the
-// enrollment closed — no callback, status not primed.
 func TestEnroll_SaveFailureFailsClosed(t *testing.T) {
 	caPEM := genTestCAPEM(t)
 	srv := startMockControlServer(t, caReturningMock(caPEM))

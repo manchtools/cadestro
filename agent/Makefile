@@ -1,13 +1,5 @@
-# Cadestro Agent — dev deploy Makefile
-#
-# Usage:
-#   make deploy SSH=user@testserver                    # build + deploy + restart
-#   make deploy SSH=user@testserver KEY=~/.ssh/id_ed25519  # with specific key
-#   make build                                         # just cross-compile
-#   make logs  SSH=user@testserver                     # tail remote journal
-#   make status SSH=user@testserver                    # check service status
 
-# ── Configuration ──────────────────────────────────────────────
+
 SSH         ?= user@testserver
 KEY         ?=
 GOARCH      ?= amd64
@@ -43,7 +35,6 @@ sqlc-generate:
 sqlc-check: sqlc-generate
 	git diff --exit-code internal/store/generated
 
-# ── Targets ────────────────────────────────────────────────────
 .PHONY: build deploy install logs status restart stop sqlc-generate sqlc-check \
     test-integration-debian test-integration-fedora \
     test-integration-opensuse test-integration-archlinux test-integration-all \
@@ -111,7 +102,6 @@ test-integration-all:
 	$(MAKE) test-integration-opensuse
 	$(MAKE) test-integration-archlinux
 
-# Edge case tests in privileged Debian container (disk-full, read-only FS, etc.)
 test-integration-edgecase:
 	$(CONTAINER_CMD) build -f test/Dockerfile.integration -t cadestro-agent-test-debian ../
 	$(CONTAINER_CMD) run --rm --privileged $(CONTAINER_LIMITS) cadestro-agent-test-debian $(TEST_CMD) -run EdgeCase

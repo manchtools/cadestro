@@ -14,34 +14,18 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// installShutdownStub makes `shutdown` resolve to a HARMLESS stub on a fully
-// isolated PATH, so scheduleRebootAfterUpdate can be driven through a REAL
-// runner without any risk of rebooting the host. The stub records its argv to a
-// file and exits with exitCode; the real /sbin/shutdown is unreachable because
-// PATH is replaced (not appended) with only the stub dir.
-//
-// The hard guard is load-bearing: it FATALs unless `shutdown` resolves inside
-// the stub dir, so a PATH mistake can never reach the real binary. This is why a
-// real reboot is impossible here even though a real runner runs a real exec —
-// the earlier version of this test used a real runner against the REAL shutdown
-// and rebooted a developer's workstation (see action_reboot_test.go).
-//
-// Returns the argv-log path so a test can assert the exact command the SDK
-// reboot Manager built (`shutdown -r +1 <message>`).
 func installShutdownStub(t *testing.T, exitCode int) (argvLog string) {
 	t.Helper()
 	stubDir := t.TempDir()
 	argvLog = filepath.Join(stubDir, "argv")
-	// POSIX single-quote the redirect target (%q is Go, not shell, quoting).
+
 	quotedArgvLog := "'" + strings.ReplaceAll(argvLog, "'", `'\''`) + "'"
 	stub := fmt.Sprintf("#!/bin/sh\nprintf '%%s\\n' \"$@\" > %s\nexit %d\n", quotedArgvLog, exitCode)
 	if err := os.WriteFile(filepath.Join(stubDir, "shutdown"), []byte(stub), 0o755); err != nil {
 		t.Fatalf("write shutdown stub: %v", err)
 	}
-	t.Setenv("PATH", stubDir) // full replacement: only the stub is reachable
+	t.Setenv("PATH", stubDir)
 
-	// Refuse to run unless `shutdown` resolves INSIDE the stub dir. This is the
-	// safety net that makes a real reboot impossible.
 	p, err := osexec.LookPath("shutdown")
 	if err != nil || filepath.Dir(p) != stubDir {
 		t.Fatalf("refusing to run: `shutdown` must resolve inside the stub dir, got %q (%v)", p, err)
@@ -49,10 +33,6 @@ func installShutdownStub(t *testing.T, exitCode int) (argvLog string) {
 	return argvLog
 }
 
-// newRebootExecutor builds an Executor over a REAL Direct runner. Paired with
-// installShutdownStub, the runner exercises the real exec path (LookPath, forced
-// LC_ALL=C env, escalation wrapping, streaming, exit-code handling) against the
-// harmless stub.
 func newRebootExecutor(t *testing.T) *Executor {
 	t.Helper()
 	r, err := sysexec.NewRunner(sysexec.Direct)
@@ -68,12 +48,9 @@ type countingNotify struct{ count *int }
 func (n countingNotify) NotifyAll(context.Context, string, string) error             { *n.count++; return nil }
 func (n countingNotify) NotifyUsers(context.Context, []string, string, string) error { return nil }
 
-// TestScheduleRebootAfterUpdate drives scheduleRebootAfterUpdate through a real
-// runner against a stubbed `shutdown` (installShutdownStub), covering both the
-// success and failure paths without touching a real reboot.
 func TestScheduleRebootAfterUpdate(t *testing.T) {
 	t.Run("schedules the reboot and notifies on success", func(t *testing.T) {
-		argvLog := installShutdownStub(t, 0) // real runner reaches a stub that exits 0
+		argvLog := installShutdownStub(t, 0)
 		notified := 0
 		e := newRebootExecutor(t)
 		e.deps.notify = countingNotify{count: &notified}
@@ -88,15 +65,12 @@ func TestScheduleRebootAfterUpdate(t *testing.T) {
 		if !strings.Contains(out.String(), "Scheduled reboot") {
 			t.Errorf("output = %q, want the scheduled-reboot line", out.String())
 		}
-		// The REAL runner built and ran the command — assert the argv the SDK
-		// reboot Manager constructed reached `shutdown` as `-r +1 <message>`.
+
 		argv, err := os.ReadFile(argvLog)
 		if err != nil {
 			t.Fatalf("read stub argv: %v", err)
 		}
-		// The stub logged one arg per line; assert the first two positionally
-		// (-r then +1) rather than by substring, so a message containing "-r"
-		// can't satisfy the check.
+
 		args := strings.Split(strings.TrimSuffix(string(argv), "\n"), "\n")
 		wantArgs := []string{"-r", "+1", "System update requires reboot"}
 		if !reflect.DeepEqual(args, wantArgs) {
@@ -105,7 +79,7 @@ func TestScheduleRebootAfterUpdate(t *testing.T) {
 	})
 
 	t.Run("schedule failure returns an error and suppresses notify", func(t *testing.T) {
-		installShutdownStub(t, 1) // stub `shutdown` exits nonzero → Schedule fails
+		installShutdownStub(t, 1)
 		notified := 0
 		e := newRebootExecutor(t)
 		e.deps.notify = countingNotify{count: &notified}
@@ -143,12 +117,11 @@ func TestScheduleRebootAfterUpdate(t *testing.T) {
 	})
 
 	t.Run("fails closed without a privilege runner", func(t *testing.T) {
-		// No runner at all → scheduleRebootAfterUpdate returns before any exec,
-		// so no stub is needed (and nothing can run).
+
 		notified := 0
 
 		var out strings.Builder
-		e := &Executor{} // runner is nil — the NewExecutor(nil) unit-test convention
+		e := &Executor{}
 		err := e.scheduleRebootAfterUpdate(context.Background(), &out)
 		if err == nil {
 			t.Fatal("a reboot with no privilege runner must fail closed, not fall through to the global Direct runner")

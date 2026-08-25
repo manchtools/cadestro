@@ -10,26 +10,23 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// TestRequireVerifiedArtifact pins the MITM-hardening contract for a
-// download-and-install artifact: https only, and a non-empty checksum
-// (fail-closed — never install an unverified binary).
 func TestRequireVerifiedArtifact(t *testing.T) {
 	validHex := strings.Repeat("a", 64)
 	if err := requireVerifiedArtifact("https://x/x.rpm", validHex); err != nil {
 		t.Errorf("valid https+checksum rejected: %v", err)
 	}
-	// Uppercase / surrounding whitespace is a valid sha256 (operators paste it).
+
 	if err := requireVerifiedArtifact("https://x/x.rpm", "  "+strings.Repeat("A", 64)+"  "); err != nil {
 		t.Errorf("valid uppercase checksum rejected: %v", err)
 	}
 	bad := []struct{ url, sum string }{
-		{"http://x/x.rpm", validHex}, // non-https → MITM
+		{"http://x/x.rpm", validHex},
 		{"ftp://x/x.rpm", validHex},
-		{"https://x/x.rpm", ""},                      // empty checksum → unverified
-		{"https://x/x.rpm", "   "},                   // whitespace-only checksum
-		{"https://x/x.rpm", "abc123"},                // too short → malformed
-		{"https://x/x.rpm", strings.Repeat("a", 63)}, // wrong length → malformed
-		{"https://x/x.rpm", strings.Repeat("z", 64)}, // non-hex chars → malformed
+		{"https://x/x.rpm", ""},
+		{"https://x/x.rpm", "   "},
+		{"https://x/x.rpm", "abc123"},
+		{"https://x/x.rpm", strings.Repeat("a", 63)},
+		{"https://x/x.rpm", strings.Repeat("z", 64)},
 	}
 	for _, tc := range bad {
 		if err := requireVerifiedArtifact(tc.url, tc.sum); err == nil {
@@ -38,10 +35,6 @@ func TestRequireVerifiedArtifact(t *testing.T) {
 	}
 }
 
-// TestExecuteRpm_RejectsBeforeRemount pins that a non-https URL or an
-// absent checksum is rejected BEFORE any privileged filesystem
-// remount/repair — no temp file, no sudo side effect. Hermetic: the
-// guard runs before the `rpm` lookup, so no rpm binary is required.
 func TestExecuteRpm_RejectsBeforeRemount(t *testing.T) {
 	validHex := strings.Repeat("a", 64)
 	cases := []struct {

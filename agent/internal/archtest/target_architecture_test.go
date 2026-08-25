@@ -18,10 +18,7 @@ func TestAgentUsesOneFreshManifestSchema(t *testing.T) {
 			migrations = append(migrations, entry.Name())
 		}
 	}
-	// The agent's schema is rooted in ONE fresh, manifest-native baseline.
-	// os.ReadDir sorts by name, so requiring that baseline FIRST rejects a
-	// second baseline, a renamed one, and anything numbered ahead of it.
-	//
+
 	if len(migrations) != 1 || migrations[0] != "001_initial_schema.sql" {
 		t.Fatalf("agent schema must contain exactly 001_initial_schema.sql, got %v", migrations)
 	}

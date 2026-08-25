@@ -9,7 +9,6 @@ import (
 	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 )
 
-// executeGroup manages Linux groups and their members.
 func (e *Executor) executeGroup(ctx context.Context, params *pb.GroupParams, state pb.DesiredState) (*pb.CommandOutput, bool, error) {
 	e.ensureDeps()
 	if params == nil {
@@ -33,18 +32,15 @@ func (e *Executor) executeGroup(ctx context.Context, params *pb.GroupParams, sta
 	}
 }
 
-// setupGroup creates a group if needed and syncs its membership.
 func (e *Executor) setupGroup(ctx context.Context, params *pb.GroupParams) (*pb.CommandOutput, bool, error) {
 	var output strings.Builder
 	changed := false
 
-	// Resolve existence once (fail closed if the lookup itself errors).
 	exists, err := e.groupExists(ctx, params.Name)
 	if err != nil {
 		return nil, false, fmt.Errorf("check group %s: %w", params.Name, err)
 	}
 
-	// Check idempotency: group exists and members match
 	if exists && e.sudoGroupMembersMatch(ctx, params.Name, params.Members) {
 		output.WriteString(fmt.Sprintf("group %s already up to date\n", params.Name))
 		return &pb.CommandOutput{
@@ -57,7 +53,6 @@ func (e *Executor) setupGroup(ctx context.Context, params *pb.GroupParams) (*pb.
 		return out, false, err
 	}
 
-	// Create group if it doesn't exist
 	if !exists {
 		opts := sysuser.GroupCreateOptions{System: params.SystemGroup}
 		if params.Gid > 0 {
@@ -70,7 +65,6 @@ func (e *Executor) setupGroup(ctx context.Context, params *pb.GroupParams) (*pb.
 		changed = true
 	}
 
-	// Sync group membership
 	if memberChanged, err := e.syncGroupMembers(ctx, params.Name, params.Members, &output); err != nil {
 		return &pb.CommandOutput{ExitCode: 1, Stdout: output.String(), Stderr: err.Error()}, memberChanged, err
 	} else if memberChanged {
@@ -83,7 +77,6 @@ func (e *Executor) setupGroup(ctx context.Context, params *pb.GroupParams) (*pb.
 	}, changed, nil
 }
 
-// removeGroup removes a group and all its members.
 func (e *Executor) removeGroup(ctx context.Context, groupName string) (*pb.CommandOutput, bool, error) {
 	var output strings.Builder
 

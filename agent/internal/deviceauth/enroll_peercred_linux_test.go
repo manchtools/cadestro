@@ -12,10 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestPeerCredListener_AcceptsSameUIDPeer is the positive control: a
-// connection from THIS process (uid == os.Getuid() == the authorized
-// selfUID) must be admitted by the guarded listener. It relies on the Linux
-// SO_PEERCRED implementation of peerUIDOf, so it is Linux-only.
 func TestPeerCredListener_AcceptsSameUIDPeer(t *testing.T) {
 	socket := filepath.Join(t.TempDir(), "peer.sock")
 	base, err := net.Listen("unix", socket)

@@ -10,12 +10,6 @@ import (
 	"time"
 )
 
-// WS16 #5: live terminal sessions were not torn down on agent shutdown — the
-// cadestro-tty shell stayed activated and the temp home leaked. CloseAllTerminals
-// reverts every live session.
-
-// registerLiveSession injects an active session with a real temp home and a
-// cancel spy, mirroring addTestSession but with the teardown-observable fields.
 func registerLiveSession(t *testing.T, h *Handler, id, ttyUser string, cancelled *int32) string {
 	t.Helper()
 	tempHome := filepath.Join(t.TempDir(), "home-"+id)
@@ -48,7 +42,6 @@ func TestCloseAllTerminals_RevertsLiveSessions(t *testing.T) {
 
 	h.CloseAllTerminals(context.Background())
 
-	// Registry must be empty — every live session was closed.
 	h.mu.Lock()
 	n := len(h.terminals)
 	h.mu.Unlock()
@@ -56,12 +49,10 @@ func TestCloseAllTerminals_RevertsLiveSessions(t *testing.T) {
 		t.Errorf("registry has %d sessions after CloseAllTerminals, want 0", n)
 	}
 
-	// Each session's ctx must have been cancelled (so its pump goroutine unblocks).
 	if atomic.LoadInt32(&cancelledA) != 1 || atomic.LoadInt32(&cancelledB) != 1 {
 		t.Error("CloseAllTerminals did not cancel every session context")
 	}
 
-	// Temp homes must be removed.
 	for _, home := range []string{homeA, homeB} {
 		if _, err := os.Stat(home); !os.IsNotExist(err) {
 			t.Errorf("temp home %s not removed (stat err=%v)", home, err)
@@ -71,7 +62,7 @@ func TestCloseAllTerminals_RevertsLiveSessions(t *testing.T) {
 
 func TestCloseAllTerminals_NoSessions_IsNoOp(t *testing.T) {
 	h, _ := newTestHandler(t)
-	// Must not panic with an empty/unset registry.
+
 	h.CloseAllTerminals(context.Background())
 
 	h.mu.Lock()
@@ -92,9 +83,9 @@ func TestCloseAllTerminals_AlreadyStopping_NotDoubleReverted(t *testing.T) {
 	ts := &terminalSession{
 		id:       "01ARZ3NDEKTSV4RRFFQ69G5FAX",
 		ttyUser:  "cadestro-tty-stop",
-		state:    sessionStateStopping, // already being torn down elsewhere
+		state:    sessionStateStopping,
 		tempHome: tempHome,
-		cancel:   func() {}, // real func: a regression calling it must not nil-panic (#174)
+		cancel:   func() {},
 		now:      time.Now,
 	}
 	h.mu.Lock()
@@ -103,16 +94,11 @@ func TestCloseAllTerminals_AlreadyStopping_NotDoubleReverted(t *testing.T) {
 
 	h.CloseAllTerminals(context.Background())
 
-	// A session already in the stopping state must NOT be torn down again:
-	// its temp home stays (the in-flight teardown owns it).
 	if _, err := os.Stat(tempHome); err != nil {
 		t.Errorf("a stopping session must not be double-reverted; temp home gone: %v", err)
 	}
 }
 
-// TestMain_ShutdownClosesLiveTerminals is a self-discovering guard: the agent
-// main shutdown path must invoke CloseAllTerminals, or a session left open at
-// shutdown leaks its activated shell. Fails if the caller is removed.
 func TestMain_ShutdownClosesLiveTerminals(t *testing.T) {
 	src, err := os.ReadFile("../../cmd/cadestrod/main.go")
 	if err != nil {

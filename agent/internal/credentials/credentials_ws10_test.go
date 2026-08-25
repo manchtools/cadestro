@@ -7,8 +7,6 @@ import (
 	"testing"
 )
 
-// TestSavePermissions pins WS10 #2: the secret-bearing files are 0600 and
-// the store directory is 0700 after Save.
 func TestSavePermissions(t *testing.T) {
 	requireMachineID(t)
 	dir := t.TempDir()
@@ -35,9 +33,6 @@ func TestSavePermissions(t *testing.T) {
 	}
 }
 
-// TestLoadSubstitutedSaltFails pins WS10 #6: replacing the salt yields a
-// different derived key, so Load fails (GCM auth). Distinct from the
-// missing-salt and tag-flip cases.
 func TestLoadSubstitutedSaltFails(t *testing.T) {
 	requireMachineID(t)
 	dir := t.TempDir()
@@ -58,8 +53,6 @@ func TestLoadSubstitutedSaltFails(t *testing.T) {
 	}
 }
 
-// TestLoadCrossMachineFails pins WS10 #1's machine-binding intent: creds
-// saved under one machine ID do not decrypt under another.
 func TestLoadCrossMachineFails(t *testing.T) {
 	dir := t.TempDir()
 	store := NewStore(dir)
@@ -78,18 +71,15 @@ func TestLoadCrossMachineFails(t *testing.T) {
 	}
 }
 
-// TestLoadTruncatedCiphertextTooShort pins WS10 #6: a credentials.enc
-// whose post-magic body is shorter than the nonce surfaces the explicit
-// "ciphertext too short" rejection, not an opaque GCM error.
 func TestLoadTruncatedCiphertextTooShort(t *testing.T) {
 	requireMachineID(t)
 	dir := t.TempDir()
 	store := NewStore(dir)
-	if err := store.Save(sampleCreds()); err != nil { // creates a valid salt
+	if err := store.Save(sampleCreds()); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 
-	short := append([]byte(credentialsMagicV1), []byte("xx")...) // 2 bytes < nonceLen
+	short := append([]byte(credentialsMagicV1), []byte("xx")...)
 	if err := os.WriteFile(filepath.Join(dir, credentialsFile), short, 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -99,9 +89,6 @@ func TestLoadTruncatedCiphertextTooShort(t *testing.T) {
 	}
 }
 
-// TestRefusesWritableStoreDir pins WS10 #1/#2 fail-closed guard: a
-// group/world-writable store directory (forgeable by a non-owner) is
-// refused on Load.
 func TestRefusesWritableStoreDir(t *testing.T) {
 	requireMachineID(t)
 	dir := t.TempDir()
@@ -113,7 +100,7 @@ func TestRefusesWritableStoreDir(t *testing.T) {
 	if err := os.Chmod(dir, 0o777); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = os.Chmod(dir, 0o700) }) // let t.TempDir clean up
+	t.Cleanup(func() { _ = os.Chmod(dir, 0o700) })
 
 	_, err := store.Load()
 	if err == nil || !strings.Contains(err.Error(), "writable") {
@@ -121,12 +108,10 @@ func TestRefusesWritableStoreDir(t *testing.T) {
 	}
 }
 
-// TestSaveTightensLooseDir pins that Save narrows a pre-existing loose
-// directory to 0700 (self-heal) rather than failing.
 func TestSaveTightensLooseDir(t *testing.T) {
 	requireMachineID(t)
 	dir := t.TempDir()
-	if err := os.Chmod(dir, 0o775); err != nil { // group-writable
+	if err := os.Chmod(dir, 0o775); err != nil {
 		t.Fatal(err)
 	}
 	store := NewStore(dir)

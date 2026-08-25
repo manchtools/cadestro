@@ -7,12 +7,6 @@ import (
 
 var ttyTestContext = context.Background()
 
-// IsTTYEnabled's accept-list is exercised DIRECTLY via SetSetting (not via
-// SetTTYEnabled, which only ever writes the canonical "1"/"0") so the test
-// isn't circular: it pins the exact set of truthy spellings a manual sqlite
-// edit might use. The disable set is sourced from intent (wrong-but-plausible
-// values), not from the switch under test, so an under-specified accept-list
-// would be caught.
 func TestIsTTYEnabled_AcceptListExactBothDirections(t *testing.T) {
 	enable := []string{"1", "true", "TRUE", " enabled ", "yes", "On"}
 	disable := []string{"0", "", "garbage", "2", "disabled", "tru", "enabled!"}
@@ -81,7 +75,6 @@ func TestTTY_EnableDisableRoundtrip(t *testing.T) {
 	}
 	defer st.Close()
 
-	// Enable
 	if err := st.SetTTYEnabled(ttyTestContext, true); err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +86,6 @@ func TestTTY_EnableDisableRoundtrip(t *testing.T) {
 		t.Error("expected enabled after SetTTYEnabled(true)")
 	}
 
-	// Idempotent enable
 	if err := st.SetTTYEnabled(ttyTestContext, true); err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +94,6 @@ func TestTTY_EnableDisableRoundtrip(t *testing.T) {
 		t.Error("expected enabled after second SetTTYEnabled(true)")
 	}
 
-	// Disable
 	if err := st.SetTTYEnabled(ttyTestContext, false); err != nil {
 		t.Fatal(err)
 	}
@@ -114,7 +105,6 @@ func TestTTY_EnableDisableRoundtrip(t *testing.T) {
 		t.Error("expected disabled after SetTTYEnabled(false)")
 	}
 
-	// Idempotent disable
 	if err := st.SetTTYEnabled(ttyTestContext, false); err != nil {
 		t.Fatal(err)
 	}
@@ -127,7 +117,6 @@ func TestTTY_EnableDisableRoundtrip(t *testing.T) {
 func TestTTY_PersistsAcrossReopen(t *testing.T) {
 	dir := t.TempDir()
 
-	// Open, enable, close
 	st, err := New(dir)
 	if err != nil {
 		t.Fatal(err)
@@ -139,7 +128,6 @@ func TestTTY_PersistsAcrossReopen(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Reopen, verify still enabled
 	st2, err := New(dir)
 	if err != nil {
 		t.Fatal(err)

@@ -12,12 +12,6 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// WS6 #8: the critical-file denylist had zero rejection coverage. This is
-// a self-discovering exhaustiveness check: every entry currently in the
-// slice must be recognised, the slice must be non-empty (guard against it
-// being silently emptied), and — sourced from INTENT, not the slice — the
-// account/auth/boot-critical files MUST be denied. If someone drops
-// /etc/shadow from criticalFiles, the mustDeny loop fails.
 func TestIsCriticalFile_DenylistExhaustive(t *testing.T) {
 	require.NotEmpty(t, criticalFiles, "criticalFiles must not be empty")
 
@@ -25,8 +19,6 @@ func TestIsCriticalFile_DenylistExhaustive(t *testing.T) {
 		assert.Truef(t, isCriticalFile(f), "listed critical file %q must be recognised", f)
 	}
 
-	// Sourced from intent (account/auth/boot/identity state), independent
-	// of the slice's current contents.
 	mustDeny := []string{
 		"/etc/passwd", "/etc/shadow", "/etc/group", "/etc/gshadow",
 		"/etc/sudoers", "/etc/fstab", "/etc/ssh/sshd_config",
@@ -35,23 +27,14 @@ func TestIsCriticalFile_DenylistExhaustive(t *testing.T) {
 		assert.Truef(t, isCriticalFile(f), "intent-critical file %q must be denied", f)
 	}
 
-	// Managed config under a drop-in dir is the point of the file action;
-	// it must NOT be treated as critical.
 	assert.False(t, isCriticalFile("/etc/foo.d/bar.conf"))
 	assert.False(t, isCriticalFile("/opt/myapp/app.conf"))
 
-	// resolv.conf is commonly a symlink to /run/...; the cleaned path must
-	// still be caught.
 	assert.True(t, isCriticalFile("/etc/resolv.conf"))
 }
 
-// WS6 #8: protected-path predicate covers the system directories (now via the
-// SDK's sysfs.IsProtectedPath), every immediate child of / (e.g. /lost+found),
-// and the critical files, but NOT managed config two levels down.
 func TestIsProtectedPath_DirsAndTopLevelChildren(t *testing.T) {
-	// Whole-directory protection is delegated to sysfs.IsProtectedPath; spot-check
-	// a representative set, including /snap, which the SDK list adds over the
-	// agent's former hard-coded list.
+
 	for _, p := range []string{"/", "/etc", "/usr", "/var", "/home", "/root", "/boot", "/opt", "/tmp", "/snap"} {
 		assert.Truef(t, isProtectedPath(p), "system directory %q must be protected", p)
 	}
@@ -63,9 +46,6 @@ func TestIsProtectedPath_DirsAndTopLevelChildren(t *testing.T) {
 	assert.False(t, isProtectedPath("/opt/myapp/data"))
 }
 
-// WS6 #8: drive the REAL executeFile (not the helpers) to prove the guard
-// runs on the action path. ABSENT on a critical file must refuse with
-// changed=false.
 func TestExecuteFile_ABSENT_RefusesCriticalFile(t *testing.T) {
 	e := &Executor{logger: slog.Default(), now: time.Now}
 
@@ -78,7 +58,6 @@ func TestExecuteFile_ABSENT_RefusesCriticalFile(t *testing.T) {
 	}
 }
 
-// PRESENT overwrite of a critical file must refuse with changed=false.
 func TestExecuteFile_PRESENT_RefusesOverwriteOfSudoers(t *testing.T) {
 	e := &Executor{logger: slog.Default(), now: time.Now}
 

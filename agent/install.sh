@@ -1,45 +1,13 @@
 #!/bin/bash
-#
-# Cadestro Agent Installation Script
-#
-# Downloads the agent binary, installs it as a systemd service, and optionally
-# registers with a control server — all in one step.
-#
-# One-liner install (stable):
-#   curl -fsSL https://github.com/manchtools/cadestro/releases/latest/download/install.sh | sudo bash -s -- -s https://your-server.example.com -t YOUR_TOKEN -p CA_SHA256
-#
-# One-liner install (prerelease):
-#   curl -fsSL https://github.com/manchtools/cadestro/releases/latest/download/install.sh | sudo bash -s -- --pre -s https://your-server.example.com -t YOUR_TOKEN -p CA_SHA256
-#
-# Usage:
-#   sudo ./install.sh [OPTIONS]
-#
-# Options:
-#   -t, --token TOKEN       Registration token for initial setup
-#   -s, --server URL        Control server URL (e.g., https://control.example.com:8081)
-#   -p, --pin SHA256        Required control CA fingerprint supplied with the token
-#   -v, --version VERSION   Version to install (default: latest)
-#   --pre                   Install the latest prerelease (release candidate) version
-#   -d, --data-dir DIR      Data directory (default: /var/lib/cadestro)
-#   -b, --binary PATH       Path to the agent binary (default: /usr/local/bin/cadestrod)
-#   --skip-download         Skip downloading the binary (use existing binary at --binary path)
-#   --uninstall             Remove the agent and all configuration
-#   -h, --help              Show this help message
-#
 
 set -e
 
 GITHUB_REPO="manchtools/cadestro"
-# Replaced with the base64-encoded PKIX Ed25519 public key by the protected
-# release workflow. A source-tree installer deliberately fails closed: only a
-# release artifact carries the pinned value.
+
 RELEASE_SIGNING_PUBLIC_KEY="__RELEASE_SIGNING_PUBLIC_KEY__"
 
-# Stamped by the release workflow exactly like the key above; the source tree
-# keeps the raw placeholder and the run-time default stays "latest".
 INSTALLER_RELEASE_VERSION="__INSTALLER_RELEASE_VERSION__"
 
-# Default values
 DATA_DIR="/var/lib/cadestro"
 BINARY_PATH="/usr/local/bin/cadestrod"
 SERVICE_NAME="cadestrod"
@@ -49,17 +17,13 @@ CA_FINGERPRINT_PIN=""
 SKIP_DOWNLOAD=""
 PRE_RELEASE=""
 VERSION="latest"
-# WS7 #4: the cadestro:// desktop URI handler is OPT-IN and OFF by
-# default — an unconditional handler exposes the root-capable binary to
-# drive-by browser links. Enable with --enable-uri-handler or
-# CADESTRO_ENABLE_URI_HANDLER=true.
+
 ENABLE_URI_HANDLER="${CADESTRO_ENABLE_URI_HANDLER:-false}"
 
-# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 log_info() {
     echo -e "${GREEN}[INFO]${NC} $1" >&2
@@ -96,19 +60,15 @@ Options:
   -h, --help              Show this help message
 
 Examples:
-  # Download, install and register (one-liner)
+
   curl -fsSL https://github.com/${GITHUB_REPO}/releases/latest/download/install.sh | sudo bash -s -- -s https://cadestro.example.com -t abc123 -p CA_SHA256
 
-  # Install the latest prerelease version
   sudo ./install.sh --pre -s https://cadestro.example.com -t abc123 -p CA_SHA256
 
-  # Install a specific version
   sudo ./install.sh -v v2026.2.0 -s https://cadestro.example.com -t abc123 -p CA_SHA256
 
-  # Install with existing binary (skip download)
   sudo ./install.sh --skip-download -s https://cadestro.example.com -t abc123 -p CA_SHA256
 
-  # Uninstall completely
   sudo ./install.sh --uninstall
 EOF
 }
@@ -203,11 +163,6 @@ resolve_latest_prerelease() {
         exit 1
     fi
 
-    # Extract tag_name from the first release where prerelease is true.
-    # tr splits on commas first so the match works on BOTH pretty-printed
-    # (one key per line) and compact/minified JSON (#173 — the old
-    # /"prerelease": true/ line-match silently found nothing in a
-    # compact response and aborted with "No prerelease found").
     local tag
     tag=$(echo "$response" | tr ',' '\n' | awk -F'"' '/"tag_name"/{tag=$4} /"prerelease": *true/{print tag; exit}' | tr -dc 'a-zA-Z0-9._-')
 
@@ -243,12 +198,6 @@ download_binary() {
         return
     fi
 
-    # A release installer installs its own release when no version was named:
-    # GitHub's "latest" alias resolves only non-prereleases, so a project that
-    # currently ships prereleases resolves it to an ancient stable whose
-    # assets do not match this installer. -v and --pre keep their meaning.
-    # The sentinel is assembled at run time for the same reason as the key
-    # guard below: the release sed must never rewrite this comparison.
     local version_sentinel="__INSTALLER_RELEASE_VERSION"
     version_sentinel="${version_sentinel}__"
     if [[ "$VERSION" == "latest" ]] && [[ -z "$PRE_RELEASE" ]] \
@@ -258,7 +207,6 @@ download_binary() {
         log_info "No version named; installing this installer's release: ${VERSION}"
     fi
 
-    # Resolve version for --pre flag
     if [[ -n "$PRE_RELEASE" ]] && [[ "$VERSION" == "latest" ]]; then
         VERSION=$(resolve_latest_prerelease)
         log_info "Latest prerelease: ${VERSION}"
@@ -281,12 +229,6 @@ download_binary() {
     log_info "Detected architecture: ${arch}"
     log_info "Downloading agent from ${download_url}..."
 
-    # Download to a sibling tmp file inside the destination directory
-    # so the final `mv` is an atomic rename inside the same filesystem.
-    # Clobbering BINARY_PATH directly with a partial download — the
-    # previous behaviour — could leave the host with a truncated or
-    # malicious binary if the transfer was interrupted or the release
-    # endpoint was compromised.
     local dest_dir
     dest_dir=$(dirname "$BINARY_PATH")
     mkdir -p "$dest_dir"
@@ -295,14 +237,7 @@ download_binary() {
     tmp_sums=$(mktemp "${dest_dir}/.SHA256SUMS.XXXXXX")
     tmp_signature=$(mktemp "${dest_dir}/.SHA256SUMS.sig.XXXXXX")
     tmp_public=$(mktemp "${dest_dir}/.release-signing-public.XXXXXX")
-    # Trap via a named function so the tmp paths are expanded
-    # inside the function body (where normal "$var" quoting
-    # handles spaces / quotes cleanly) rather than spliced into
-    # the trap command string at registration time. An earlier
-    # shape used `trap "rm -f '${tmp_binary}' '${tmp_sums}'"`,
-    # which would break if BINARY_PATH's directory ever contained
-    # a single quote — unlikely on a typical deploy host, but a
-    # gratuitous shell-quoting fragility we can just drop.
+
     cleanup_download_tmp() {
         rm -f "$tmp_binary" "$tmp_sums" "$tmp_signature" "$tmp_public"
     }
@@ -339,11 +274,6 @@ download_binary() {
         exit 1
     fi
 
-    # The sentinel is assembled at run time so the release build's GLOBAL
-    # placeholder substitution can never rewrite this comparison. rc1 shipped
-    # with the literal placeholder here: the sed replaced it with the real
-    # key, the guard compared the key against itself, and every SIGNED
-    # release refused to install precisely because the key WAS configured.
     local placeholder_sentinel="__RELEASE_SIGNING_PUBLIC_KEY"
     placeholder_sentinel="${placeholder_sentinel}__"
     if [[ "$RELEASE_SIGNING_PUBLIC_KEY" == "$placeholder_sentinel" ]] || \
@@ -364,8 +294,6 @@ download_binary() {
     fi
     log_info "Publisher signature verified."
 
-    # Only the authenticated manifest may supply the expected binary hash.
-    # A missing or mismatched entry ends the install before BINARY_PATH moves.
     local expected_sha actual_sha
     expected_sha=$(awk -v f="$binary_name" '$2 == f || $2 == "*" f { print $1; exit }' "$tmp_sums")
     if [[ -z "$expected_sha" ]]; then
@@ -387,9 +315,7 @@ download_binary() {
     log_info "SHA256 verified."
 
     chmod 0755 "$tmp_binary"
-    # mv across the same filesystem is atomic, so a crash here never
-    # leaves BINARY_PATH in a partially-written state. The trap above
-    # handles the case where the mv itself fails.
+
     if ! mv -f "$tmp_binary" "$BINARY_PATH"; then
         log_error "Failed to install binary to ${BINARY_PATH}."
         exit 1
@@ -410,15 +336,6 @@ create_directories() {
 install_systemd_service() {
     log_info "Installing systemd service..."
 
-    # The unit file ships INSIDE the agent binary as the single source
-    # of truth (spec 27): the binary renders it (including the
-    # RestrictRealtime systemd-version conditional, which used to live
-    # here), validates it, writes it atomically to
-    # /etc/systemd/system/${SERVICE_NAME}.service, and reloads systemd.
-    # This script only triggers the first placement — systemd cannot
-    # start the service before a unit exists — and the running agent
-    # reconciles the unit against its embedded copy at every startup,
-    # so a binary update updates the unit.
     "$BINARY_PATH" install-unit --data-dir="$DATA_DIR"
 }
 
@@ -436,19 +353,13 @@ enroll_agent() {
 
     log_info "Enrolling agent with server via socket..."
 
-    # Deliver the token via a 0600 file, NOT on argv: process arguments
-    # are world-readable via /proc/<pid>/cmdline, so `-token=…` would leak
-    # the registration token to any local user for the life of the call.
     local token_file
     token_file="$(mktemp)"
     chmod 600 "$token_file"
-    # Remove the token file on any return path (success, failure, signal).
+
     trap 'rm -f "$token_file"' RETURN
     printf '%s' "$REGISTRATION_TOKEN" > "$token_file"
 
-    # Build the enrollment command as an array so arguments are passed
-    # one-per-element and bash does not word-split, glob, or re-tokenise
-    # user-supplied values such as SERVER_URL.
     local -a enroll_cmd=(
         "$BINARY_PATH"
         "enroll"
@@ -457,7 +368,6 @@ enroll_agent() {
         "-pin=$CA_FINGERPRINT_PIN"
     )
 
-    # Wait for the enrollment socket to become available (agent needs to start first)
     local max_wait=10
     local waited=0
     while [[ ! -S "/run/cadestro/enroll.sock" ]] && [[ $waited -lt $max_wait ]]; do
@@ -470,7 +380,6 @@ enroll_agent() {
         return
     fi
 
-    # Enroll via socket — no sudo needed, any user can connect
     if "${enroll_cmd[@]}"; then
         log_info "Agent enrolled successfully"
     else
@@ -488,14 +397,11 @@ enable_and_start_service() {
     systemctl start "$SERVICE_NAME"
     log_info "Service started"
 
-    # If not yet enrolled, the agent will listen on the enrollment socket
-    # and wait for enrollment via: cadestrod enroll -server=URL -token-file=PATH -pin=CA_SHA256
 }
 
 uninstall() {
     log_info "Uninstalling Cadestro Agent..."
 
-    # Stop and disable service
     if systemctl is-active --quiet "$SERVICE_NAME" 2>/dev/null; then
         log_info "Stopping service..."
         systemctl stop "$SERVICE_NAME"
@@ -506,20 +412,17 @@ uninstall() {
         systemctl disable "$SERVICE_NAME"
     fi
 
-    # Remove service file
     if [[ -f "/etc/systemd/system/${SERVICE_NAME}.service" ]]; then
         log_info "Removing service file..."
         rm -f "/etc/systemd/system/${SERVICE_NAME}.service"
         systemctl daemon-reload
     fi
 
-    # Remove desktop handler
     if [[ -f "/usr/share/applications/cadestrod.desktop" ]]; then
         log_info "Removing desktop handler..."
         rm -f "/usr/share/applications/cadestrod.desktop"
     fi
 
-    # Ask about data directory
     if [[ -d "$DATA_DIR" ]]; then
         read -p "Remove data directory $DATA_DIR? This will delete agent credentials! [y/N] " -n 1 -r
         echo
@@ -534,13 +437,6 @@ uninstall() {
     log_info "Uninstall complete"
 }
 
-# install_desktop_handler registers the cadestro:// URI scheme so a
-# browser link can launch `cadestrod luks set-passphrase`. It is
-# OPT-IN (--enable-uri-handler / CADESTRO_ENABLE_URI_HANDLER=true) and
-# OFF by default: an unconditional handler exposes the root-capable binary
-# to drive-by links (WS7 #4). The entry sets Terminal=false so a malicious
-# link cannot silently auto-spawn a terminal; operators who enable the
-# handler get a non-auto-launching entry.
 install_desktop_handler() {
     local desktop_file="/usr/share/applications/cadestrod.desktop"
 
@@ -559,20 +455,12 @@ EOF
 
     chmod 644 "$desktop_file"
 
-    # Register the URI scheme handler
     if command -v xdg-mime &>/dev/null; then
         xdg-mime default cadestrod.desktop x-scheme-handler/cadestro 2>/dev/null || true
     fi
 
     log_info "Desktop URI handler installed"
 }
-
-# The agent runs as root and exposes an in-process LUKS daemon socket
-# at /run/cadestro/luks.sock (created at runtime under the unit's
-# RuntimeDirectory=cadestro). The unprivileged `cadestrod luks
-# set-passphrase` client sends only {token, passphrase} to that socket;
-# the root agent performs the cryptsetup work with its own credentials,
-# authorized by the server-issued device-bound, single-use token.
 
 show_status() {
     echo ""
@@ -614,25 +502,15 @@ main() {
     parse_args "$@"
     check_root
 
-    # Download (and atomically stage) the new binary BEFORE stopping the
-    # running agent. download_binary fetches to a temp file in the
-    # destination dir and renames it into place, so replacing the file
-    # does not disturb the still-running process (it holds the old
-    # inode). If the download fails under `set -e`, the script aborts
-    # while the existing agent is still running, instead of leaving the
-    # device offline with a healthy agent stopped and no new binary.
     download_binary
 
-    # Now stop the old instance so enable_and_start_service below brings
-    # up the freshly-installed binary.
     stop_service_if_running
 
     log_info "Starting Cadestro Agent installation..."
 
     create_directories
     install_systemd_service
-    # WS7 #4: opt-in only — the URI handler exposes the root-capable binary
-    # to drive-by cadestro:// links, so it is not installed by default.
+
     if [[ "$ENABLE_URI_HANDLER" == "true" ]]; then
         install_desktop_handler
     else

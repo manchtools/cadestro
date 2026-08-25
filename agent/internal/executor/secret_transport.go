@@ -7,8 +7,6 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// copySecret keeps the plaintext lifetime explicit at the authenticated mTLS
-// boundary. At-rest encryption belongs to the control sink.
 func copySecret(value []byte) ([]byte, error) {
 	if len(value) == 0 {
 		return nil, errors.New("secret is empty")

@@ -12,9 +12,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/osquery"
 )
 
-// ctxCapturingOsquery records the context handed to each osquery call so a
-// test can prove the request context is propagated rather than dropped to a
-// fresh context.Background().
 type ctxCapturingOsquery struct {
 	lastTableCtx context.Context
 }
@@ -31,13 +28,6 @@ func (f *ctxCapturingOsquery) QueryTable(ctx context.Context, _ string) ([]osque
 
 type inventoryCtxKey string
 
-// TestSupplementWithOsquery_PropagatesRequestContext proves inventory osquery
-// collection honours the caller's context. A RequestInventory frame flows
-// OnRequestInventory(ctx) -> CollectInventory(ctx) -> supplementWithOsquery;
-// before the fix that last hop dropped the ctx and rooted context.Background()
-// for every osquery QueryTable, so the RPC's deadline/cancellation never
-// reached osquery. This is the NIS2 / spec-12 "no context.Background() in a
-// request path" invariant for the inventory path.
 func TestSupplementWithOsquery_PropagatesRequestContext(t *testing.T) {
 	h := NewHandler(slog.Default(), executor.NewExecutor(nil), nil, make(chan struct{}, 1))
 	oq := &ctxCapturingOsquery{}

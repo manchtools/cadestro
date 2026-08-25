@@ -6,9 +6,6 @@ import (
 	"testing"
 )
 
-// TestStore_NoBareErrNoRowsComparison is a self-discovering guard: store.go
-// must compare sql.ErrNoRows via errors.Is, never ==, so a wrapped sentinel is
-// handled. Guards against a vacuous pass on an empty/missing file.
 func TestStore_NoBareErrNoRowsComparison(t *testing.T) {
 	src, err := os.ReadFile("store.go")
 	if err != nil {

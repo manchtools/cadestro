@@ -14,12 +14,6 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// =============================================================================
-// Container-bound tests that exercise real SDK managers against the host
-// =============================================================================
-
-// TestIntegration_DirectoryCreateAndRemove verifies that executeDirectory
-// with PRESENT creates a directory with correct mode and ABSENT removes it.
 func TestIntegration_DirectoryCreateAndRemove(t *testing.T) {
 	e := newTestExecutor()
 	root := t.TempDir()
@@ -36,14 +30,12 @@ func TestIntegration_DirectoryCreateAndRemove(t *testing.T) {
 	assert.True(t, info.IsDir())
 	assert.Equal(t, os.FileMode(0o750), info.Mode().Perm())
 
-	// Idempotent
 	_, changed, err = e.executeDirectory(context.Background(),
 		&pb.DirectoryParams{Path: target, Mode: "0750"},
 		pb.DesiredState_DESIRED_STATE_PRESENT)
 	require.NoError(t, err)
 	assert.False(t, changed)
 
-	// ABSENT
 	_, changed, err = e.executeDirectory(context.Background(),
 		&pb.DirectoryParams{Path: target},
 		pb.DesiredState_DESIRED_STATE_ABSENT)
@@ -53,7 +45,6 @@ func TestIntegration_DirectoryCreateAndRemove(t *testing.T) {
 	_, statErr = os.Stat(target)
 	assert.True(t, os.IsNotExist(statErr))
 
-	// ABSENT again: idempotent
 	_, changed, err = e.executeDirectory(context.Background(),
 		&pb.DirectoryParams{Path: target},
 		pb.DesiredState_DESIRED_STATE_ABSENT)
@@ -61,10 +52,8 @@ func TestIntegration_DirectoryCreateAndRemove(t *testing.T) {
 	assert.False(t, changed)
 }
 
-// TestIntegration_DirectoryRefusesSymlinkOnCreate verifies that
-// createDirectoryWithPermissions refuses a symlink swap (ELOOP).
 func TestIntegration_DirectoryRefusesSymlinkOnCreate(t *testing.T) {
-	_ = newTestExecutor() // injects the real fs Manager into package vars
+	_ = newTestExecutor()
 	root := t.TempDir()
 
 	victim := filepath.Join(root, "victim")
@@ -81,10 +70,8 @@ func TestIntegration_DirectoryRefusesSymlinkOnCreate(t *testing.T) {
 		"symlink target's mode must be unchanged")
 }
 
-// TestIntegration_DirectoryRefusesSymlinkOnRemove verifies that removeDirectory
-// aborts on a symlinked target.
 func TestIntegration_DirectoryRefusesSymlinkOnRemove(t *testing.T) {
-	_ = newTestExecutor() // injects the real fs Manager into package vars
+	_ = newTestExecutor()
 	root := t.TempDir()
 
 	victim := filepath.Join(root, "victim")
@@ -98,8 +85,6 @@ func TestIntegration_DirectoryRefusesSymlinkOnRemove(t *testing.T) {
 	assert.NoError(t, statErr, "symlink target must not be removed")
 }
 
-// TestIntegration_FileCreateAndRemove exercises executeFile PRESENT/ABSENT
-// through a real fs Manager.
 func TestIntegration_FileCreateAndRemove(t *testing.T) {
 	e := newTestExecutor()
 	root := t.TempDir()
@@ -117,14 +102,12 @@ func TestIntegration_FileCreateAndRemove(t *testing.T) {
 	require.NoError(t, readErr)
 	assert.Equal(t, content, string(data))
 
-	// Idempotent
 	_, changed, err = e.executeFile(context.Background(),
 		&pb.FileParams{Path: target, Content: content, Mode: "0644"},
 		pb.DesiredState_DESIRED_STATE_PRESENT)
 	require.NoError(t, err)
 	assert.False(t, changed)
 
-	// ABSENT
 	_, changed, err = e.executeFile(context.Background(),
 		&pb.FileParams{Path: target},
 		pb.DesiredState_DESIRED_STATE_ABSENT)
@@ -134,7 +117,6 @@ func TestIntegration_FileCreateAndRemove(t *testing.T) {
 	assert.True(t, os.IsNotExist(statErr))
 }
 
-// TestIntegration_FileManagedBlock exercises the ManagedBlock append/remove flow.
 func TestIntegration_FileManagedBlock(t *testing.T) {
 	e := newTestExecutor()
 	root := t.TempDir()
@@ -153,7 +135,6 @@ func TestIntegration_FileManagedBlock(t *testing.T) {
 	assert.Contains(t, string(data), initial)
 	assert.Contains(t, string(data), block)
 
-	// ABSENT with ManagedBlock: remove block
 	_, changed, err = e.executeFile(context.Background(), params, pb.DesiredState_DESIRED_STATE_ABSENT)
 	require.NoError(t, err)
 	assert.True(t, changed)
@@ -163,14 +144,9 @@ func TestIntegration_FileManagedBlock(t *testing.T) {
 	assert.NotContains(t, string(data), block)
 }
 
-// TestIntegration_ServiceManagerWriteUnitDelegates verifies that executeService
-// delegates unit-file writing to the SDK service Manager and rejects invalid
-// unit names BEFORE any filesystem access. This exercises the full
-// executor→serviceMgr→ValidateUnitName path with a real systemd Manager.
 func TestIntegration_ServiceManagerWriteUnitDelegates(t *testing.T) {
 	e := newTestExecutor()
 
-	// A unit name with path separators must be rejected by ValidateUnitName
 	params := &pb.ServiceParams{UnitName: "../../etc/cron.d/evil.service", UnitContent: "[Service]\nExecStart=/bin/true\n"}
 	_, _, err := e.executeService(context.Background(), params)
 	if err == nil {
@@ -178,8 +154,6 @@ func TestIntegration_ServiceManagerWriteUnitDelegates(t *testing.T) {
 	}
 }
 
-// TestIntegration_ShellScriptRunsThroughRealRunner verifies that runShellScript
-// dispatches through a real Direct runner and executes /bin/true.
 func TestIntegration_ShellScriptRunsThroughRealRunner(t *testing.T) {
 	e := newTestExecutor()
 
@@ -189,7 +163,6 @@ func TestIntegration_ShellScriptRunsThroughRealRunner(t *testing.T) {
 	require.NotNil(t, out)
 	assert.Equal(t, int32(0), out.ExitCode)
 
-	// Script that fails
 	out, err = e.runShellScript(context.Background(),
 		&pb.ShellParams{RunAsRoot: true}, "exit 42")
 	require.NoError(t, err)

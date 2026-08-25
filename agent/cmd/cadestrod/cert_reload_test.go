@@ -23,15 +23,8 @@ func testCreds(cert string) *credentials.Credentials {
 	}
 }
 
-// reloadCredsForReconnect must return the cert currently ON DISK so a
-// reconnect picks up a certificate staged by the renewal cadence, rather
-// than the stale in-memory copy that would fail the handshake once
-// expired.
 func TestReloadCredsForReconnect_PicksUpRotatedCert(t *testing.T) {
-	// store.Save derives its at-rest key from the machine ID; on a host without
-	// /etc/machine-id (or /var/lib/dbus/machine-id) it cannot save. Skip cleanly
-	// rather than hard-fail via require.NoError below — matching the
-	// requireMachineID guard the internal/credentials tests use.
+
 	if !credentials.MachineIDAvailable() {
 		t.Skip("no machine-id on this host; credential save/load is unavailable")
 	}
@@ -39,11 +32,9 @@ func TestReloadCredsForReconnect_PicksUpRotatedCert(t *testing.T) {
 	dir := t.TempDir()
 	store := credentials.NewStore(dir)
 
-	// Initial enrollment cert on disk and in memory.
 	inMemory := testCreds("OLD-CERT")
 	require.NoError(t, store.Save(inMemory))
 
-	// Renewal persists a new cert to disk.
 	require.NoError(t, store.Save(testCreds("NEW-CERT")))
 
 	got := reloadCredsForReconnect(store, inMemory, slog.Default())
@@ -51,14 +42,12 @@ func TestReloadCredsForReconnect_PicksUpRotatedCert(t *testing.T) {
 		"reconnect must use the rotated cert from disk, not the stale in-memory one")
 }
 
-// A transient reload failure must not drop the working credentials —
-// the agent keeps using the in-memory copy and tries again next time.
 func TestReloadCredsForReconnect_FallsBackOnError(t *testing.T) {
 	dir := t.TempDir()
 	store := credentials.NewStore(dir)
 
 	inMemory := testCreds("WORKING-CERT")
-	// No creds file on disk (and remove the dir so Load fails hard).
+
 	require.NoError(t, os.RemoveAll(filepath.Join(dir)))
 
 	got := reloadCredsForReconnect(store, inMemory, slog.Default())

@@ -13,8 +13,6 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// failingBaseRunner cannot run anything: the interpreter is missing, the
-// privilege backend refuses, the binary is not executable.
 type failingBaseRunner struct{}
 
 func (failingBaseRunner) Run(_ context.Context, _ sysexec.Command) (sysexec.Result, error) {
@@ -27,10 +25,6 @@ func (failingBaseRunner) Stream(_ context.Context, _ sysexec.Command, _ sysexec.
 
 func (failingBaseRunner) Backend() sysexec.PrivilegeBackend { return sysexec.Direct }
 
-// A compliance-classified action is detection-only. With no detection script
-// there is nothing to detect, so the agent must fail closed: the pre-fix
-// empty-detection branch ran params.Script instead, executing exactly the
-// remediation body the compliance path forbids.
 func TestComplianceShellWithoutDetectionScriptFailsClosed(t *testing.T) {
 	prev := executorRunner
 	t.Cleanup(func() { executorRunner = prev })
@@ -46,8 +40,6 @@ func TestComplianceShellWithoutDetectionScriptFailsClosed(t *testing.T) {
 		RunAsRoot:       true,
 	})
 
-	// Asserted before the error so a regression reports BOTH symptoms: the
-	// remediation body reaching the runner is the severe half.
 	assert.Empty(t, rec.cmds,
 		"the compliance path must never dispatch a script when detection is empty")
 	require.Error(t, err, "a compliance action without a detection script must fail closed")
@@ -56,8 +48,6 @@ func TestComplianceShellWithoutDetectionScriptFailsClosed(t *testing.T) {
 	assert.False(t, changed)
 }
 
-// The accepted compliance shape: detection runs, and only detection. An
-// execution script on the same action is reported on, never run.
 func TestComplianceShellRunsDetectionOnly(t *testing.T) {
 	prev := executorRunner
 	t.Cleanup(func() { executorRunner = prev })
@@ -88,9 +78,6 @@ func TestComplianceShellRunsDetectionOnly(t *testing.T) {
 	assert.False(t, changed)
 }
 
-// A detection script that could not run at all is not evidence of compliance.
-// The reported result is what control stores as the device's compliance state,
-// so the compliant flag must stay false however the run failed.
 func TestComplianceShellReportsNotCompliantWhenDetectionCannotRun(t *testing.T) {
 	prev := executorRunner
 	t.Cleanup(func() { executorRunner = prev })

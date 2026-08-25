@@ -5,18 +5,6 @@ import (
 	"testing"
 )
 
-// TestExecuteReboot_FailsClosedWithoutRunner pins the guard for a real incident:
-// an executor built without a privilege runner (NewExecutor(nil), the
-// unit-test convention) must REFUSE to schedule a reboot rather than fall back
-// to the process-global Direct runner and issue a real `shutdown -r +5`. A
-// handler test that dispatched a REBOOT action through such an executor
-// once rebooted a developer's workstation (systemd-logind grants reboot to an
-// active desktop session via polkit, no sudo needed).
-//
-// Running this test must NEVER reboot the host: the guard returns before any
-// reboot command is built. Removing the guard would make executeReboot shell out
-// for real here, so this test cannot be red-checked by reverting the fix without
-// risking a real reboot — the assertion below is the safe pin.
 func TestExecuteReboot_FailsClosedWithoutRunner(t *testing.T) {
 	e := NewExecutor(nil)
 	if e.runner != nil {

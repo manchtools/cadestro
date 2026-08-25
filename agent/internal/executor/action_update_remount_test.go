@@ -9,11 +9,6 @@ import (
 	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// fakeRemountFS is a minimal fs.Manager that serves a fixed mount table and
-// records RemountRW targets. It embeds the interface so any OTHER method (none
-// are called by repairFilesystem) panics on the nil embedded value — keeping the
-// fake honest about exactly what the code under test uses, and decoupling the
-// test from the SDK's findmnt/mount argv.
 type fakeRemountFS struct {
 	sysfs.Manager
 	mounts     []sysfs.MountInfo
@@ -30,19 +25,14 @@ func (f *fakeRemountFS) RemountRW(ctx context.Context, target string) error {
 	return f.remountErr
 }
 
-// TestRepairFilesystem_RemountsOnlyReadOnlyBlockDevices pins the agent's remount
-// policy: a read-only REAL block-device mount (/dev/*) is remounted rw, while a
-// read-only VIRTUAL mount (proc/sysfs/tmpfs) is left alone — those are
-// legitimately ro and remounting them is wrong — and a writable block device is
-// untouched.
 func TestRepairFilesystem_RemountsOnlyReadOnlyBlockDevices(t *testing.T) {
 	fake := &fakeRemountFS{mounts: []sysfs.MountInfo{
-		{Source: "/dev/sda1", Target: "/", FSType: "ext4", ReadOnly: true},      // remount
-		{Source: "/dev/sda2", Target: "/usr", FSType: "ext4", ReadOnly: true},   // remount
-		{Source: "/dev/sda3", Target: "/home", FSType: "ext4", ReadOnly: false}, // writable -> skip
-		{Source: "proc", Target: "/proc", FSType: "proc", ReadOnly: true},       // virtual ro -> skip
-		{Source: "sysfs", Target: "/sys", FSType: "sysfs", ReadOnly: true},      // virtual ro -> skip
-		{Source: "tmpfs", Target: "/run", FSType: "tmpfs", ReadOnly: true},      // virtual ro -> skip
+		{Source: "/dev/sda1", Target: "/", FSType: "ext4", ReadOnly: true},
+		{Source: "/dev/sda2", Target: "/usr", FSType: "ext4", ReadOnly: true},
+		{Source: "/dev/sda3", Target: "/home", FSType: "ext4", ReadOnly: false},
+		{Source: "proc", Target: "/proc", FSType: "proc", ReadOnly: true},
+		{Source: "sysfs", Target: "/sys", FSType: "sysfs", ReadOnly: true},
+		{Source: "tmpfs", Target: "/run", FSType: "tmpfs", ReadOnly: true},
 	}}
 	e := NewExecutor(nil)
 	e.logger = slog.Default()
@@ -62,9 +52,6 @@ func TestRepairFilesystem_RemountsOnlyReadOnlyBlockDevices(t *testing.T) {
 	}
 }
 
-// TestRepairFilesystem_RemountFailureReportsNotAllOk pins that a failed remount
-// of a read-only block device makes repairFilesystem return false, so the action
-// does not proceed as if the filesystem were writable.
 func TestRepairFilesystem_RemountFailureReportsNotAllOk(t *testing.T) {
 	e := NewExecutor(nil)
 	e.logger = slog.Default()

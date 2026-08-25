@@ -6,10 +6,6 @@ import (
 	"time"
 )
 
-// #173 review finding: removeTerminal only deleted the map entry and
-// never cancelled the session context — every start-abort after
-// registration (abortFail / abortStopped route through cleanup →
-// removeTerminal) leaked its sessionCtx. removeTerminal must cancel.
 func TestRemoveTerminal_CancelsSessionContext(t *testing.T) {
 	h := &Handler{}
 	sessionCtx, cancel := context.WithCancel(context.Background())
@@ -28,6 +24,5 @@ func TestRemoveTerminal_CancelsSessionContext(t *testing.T) {
 		t.Fatal("session must be removed from the registry")
 	}
 
-	// Unknown ids stay a no-op.
 	h.removeTerminal("does-not-exist")
 }

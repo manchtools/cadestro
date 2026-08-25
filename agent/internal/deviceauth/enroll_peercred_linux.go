@@ -10,9 +10,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// peerUIDOf reads the connecting process's uid from the kernel via
-// SO_PEERCRED. It works only for unix-domain connections; anything else
-// fails closed.
 func peerUIDOf(conn net.Conn) (int, error) {
 	sc, ok := conn.(syscall.Conn)
 	if !ok {

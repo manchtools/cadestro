@@ -10,20 +10,14 @@ import (
 	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 )
 
-// sanitizeSudoGroupName creates a valid Linux group name from the action ID.
-// Linux group names: max 32 chars. cadestro-sudo- (14 chars) + up to 18 chars of action ID.
-// For longer action IDs, falls back to a hash-suffix scheme to keep
-// the mapping unique — see shortGroupName.
 func sanitizeSudoGroupName(actionID string) string {
 	return shortGroupName("cadestro-sudo-", actionID)
 }
 
-// sudoersFilePath returns the path for a sudoers drop-in file.
 func sudoersFilePath(actionID string) string {
 	return fmt.Sprintf("/etc/sudoers.d/cadestro-sudo-%s", strings.ToLower(actionID))
 }
 
-// executeSudo manages sudoers policies via /etc/sudoers.d/ drop-in files.
 func (e *Executor) executeSudo(ctx context.Context, params *pb.AdminPolicyParams, state pb.DesiredState, actionID string) (*pb.CommandOutput, bool, error) {
 	e.ensureDeps()
 	if params == nil {
@@ -44,28 +38,21 @@ func (e *Executor) executeSudo(ctx context.Context, params *pb.AdminPolicyParams
 	}
 }
 
-// setupSudoPolicy creates or updates a sudo policy: group, sudoers file, and user membership.
 func (e *Executor) setupSudoPolicy(ctx context.Context, params *pb.AdminPolicyParams, groupName, sudoersPath string) (*pb.CommandOutput, bool, error) {
 	var output strings.Builder
 	changed := false
 
-	// Validate usernames
 	for _, u := range params.Users {
 		if !sysuser.IsValidName(u) {
 			return nil, false, fmt.Errorf("invalid username: %q", u)
 		}
 	}
 
-	// Generate sudoers content. The switch is extracted into
-	// sudoConfigForParams so unit tests can pin the enum → template
-	// mapping without touching the filesystem / group-membership
-	// work this function does next.
 	content, err := sudoConfigForParams(params, groupName)
 	if err != nil {
 		return nil, false, err
 	}
 
-	// Check idempotency: file content + group membership
 	fileMatches := e.configMatchesDesired(ctx, sudoersPath, content)
 	membersMatch := e.sudoGroupMembersMatch(ctx, groupName, params.Users)
 	if fileMatches && membersMatch {
@@ -80,7 +67,6 @@ func (e *Executor) setupSudoPolicy(ctx context.Context, params *pb.AdminPolicyPa
 		return out, false, err
 	}
 
-	// Ensure group exists
 	gExists, err := e.groupExists(ctx, groupName)
 	if err != nil {
 		return nil, false, fmt.Errorf("check group %s: %w", groupName, err)
@@ -93,7 +79,6 @@ func (e *Executor) setupSudoPolicy(ctx context.Context, params *pb.AdminPolicyPa
 		changed = true
 	}
 
-	// Write and validate sudoers file
 	if !fileMatches {
 		if out, err := e.writeAndValidateConfig(ctx, sudoersPath, content, "0440", "root", "root", "visudo", "-c", "-f", sudoersPath); err != nil {
 			return out, false, err
@@ -102,7 +87,6 @@ func (e *Executor) setupSudoPolicy(ctx context.Context, params *pb.AdminPolicyPa
 		changed = true
 	}
 
-	// Sync group membership
 	if memberChanged, err := e.syncGroupMembers(ctx, groupName, params.Users, &output); err != nil {
 		return &pb.CommandOutput{ExitCode: 1, Stdout: output.String(), Stderr: err.Error()}, memberChanged, err
 	} else if memberChanged {
@@ -115,17 +99,16 @@ func (e *Executor) setupSudoPolicy(ctx context.Context, params *pb.AdminPolicyPa
 	}, changed, nil
 }
 
-// removeSudoPolicy removes a sudo policy: sudoers file, group membership, and group.
 func (e *Executor) removeSudoPolicy(ctx context.Context, groupName, sudoersPath string, _ []string) (*pb.CommandOutput, bool, error) {
 	var output strings.Builder
 
 	changed, err := e.removeGroupWithConfig(ctx, groupName, sudoersPath, &output)
 	if err != nil {
 		if !changed {
-			// Config file removal failed — fatal
+
 			return nil, false, err
 		}
-		// Config removed but group deletion failed — non-fatal warning
+
 		output.WriteString(fmt.Sprintf("warning: %v\n", err))
 	}
 
@@ -139,21 +122,6 @@ func (e *Executor) removeSudoPolicy(ctx context.Context, groupName, sudoersPath 
 	}, changed, nil
 }
 
-// =============================================================================
-// Sudoers config generators
-// =============================================================================
-
-// sudoConfigForParams maps an AdminPolicyParams to the sudoers content
-// that setupSudoPolicy will write to disk. Extracted from
-// setupSudoPolicy so unit tests can pin the enum → template mapping
-// without standing up the surrounding filesystem / group-membership
-// work.
-//
-// The two TERMINAL_ADMIN_* arms route to passwordless templates
-// designed for cadestro-tty-* accounts (see archived server#70).
-// The pre-existing FULL/LIMITED/CUSTOM arms are unchanged — operator-
-// authored AdminPolicy actions continue to behave exactly as they did
-// before this PR.
 func sudoConfigForParams(params *pb.AdminPolicyParams, groupName string) (string, error) {
 	switch params.AccessLevel {
 	case pb.AdminAccessLevel_ADMIN_ACCESS_LEVEL_FULL:
@@ -174,21 +142,6 @@ func sudoConfigForParams(params *pb.AdminPolicyParams, groupName string) (string
 	}
 }
 
-// terminalAdminDefaultsBlock is the Defaults block both TERMINAL_ADMIN
-// templates emit at the top of their sudoers fragment. Per the ADR's
-// T4: requiretty pins TTY-stream input audit; env_reset stops
-// LD_PRELOAD / BASH_ENV / PATH propagation; !lecture skips the
-// operator-confusing first-time prompt; timestamp_timeout=0 forces
-// sudoers re-evaluation on every sudo call so a fresh revocation lands
-// immediately under NOPASSWD.
-//
-// The Defaults are scoped to the group (`Defaults:%group`), NOT bare.
-// A bare `Defaults` line in an /etc/sudoers.d drop-in applies host-
-// globally to every sudo invocation on the box — so a bare requiretty
-// would break root's non-TTY sudo (cron, systemd units, ansible) and a
-// bare timestamp_timeout=0 would strip credential caching for every
-// other admin. The ADR's threat model only concerns the TerminalAdmin
-// group, so the per-group binding is the correct scope.
 func terminalAdminDefaultsBlock(groupName string) string {
 	g := "%" + groupName
 	return strings.Join([]string{
@@ -199,11 +152,6 @@ func terminalAdminDefaultsBlock(groupName string) string {
 	}, "\n")
 }
 
-// terminalAdminLimitedDenyBlocks are the !-deny rules the LIMITED
-// template emits to close ADR T2 (editor escapes), T3 (shell spawns),
-// and T5 (persistence vectors). Under NOPASSWD an escape vector in
-// the allowlist is unprompted root, so the deny rules are mandatory,
-// not advisory.
 func terminalAdminLimitedDenyBlocks(groupName string) []string {
 	return []string{
 		"",
@@ -231,12 +179,6 @@ func terminalAdminLimitedDenyBlocks(groupName string) []string {
 	}
 }
 
-// generateTerminalAdminLimitedSudoConfig is the LIMITED template for
-// the server's TerminalAdmin reconciler (#70). The allowlist mirrors
-// the existing generateLimitedSudoConfig content (package management,
-// systemd, network, disk, containers, diagnostics, agent-protection
-// denies) but every rule carries NOPASSWD: and the editor/shell/
-// persistence deny blocks land on top.
 func generateTerminalAdminLimitedSudoConfig(groupName string) string {
 	lines := []string{
 		"# Managed by Cadestro — do not edit manually",
@@ -279,10 +221,6 @@ func generateTerminalAdminLimitedSudoConfig(groupName string) string {
 	return strings.Join(lines, "\n") + "\n"
 }
 
-// generateTerminalAdminFullSudoConfig is the FULL template for
-// TerminalAdmin (#70). Single ALL=(ALL:ALL) NOPASSWD: ALL grant
-// preceded by the same Defaults block as the Limited template — the
-// Defaults block applies regardless of access level.
 func generateTerminalAdminFullSudoConfig(groupName string) string {
 	lines := []string{
 		"# Managed by Cadestro — do not edit manually",
@@ -344,7 +282,7 @@ func generateLimitedSudoConfig(groupName string) string {
 }
 
 func generateCustomSudoConfig(groupName, customConfig string) string {
-	// Replace {group} placeholder with actual group name
+
 	resolved := strings.ReplaceAll(customConfig, "{group}", groupName)
 	lines := []string{
 		"# Managed by Cadestro - do not edit manually",
@@ -355,35 +293,24 @@ func generateCustomSudoConfig(groupName, customConfig string) string {
 	return strings.Join(lines, "\n") + "\n"
 }
 
-// =============================================================================
-// Group membership helpers
-// =============================================================================
-
-// addUserToGroup adds a user to a supplementary group.
 func (e *Executor) addUserToGroup(ctx context.Context, username, groupName string) error {
 	return e.deps.user.AddToGroup(ctx, username, groupName)
 }
 
-// removeUserFromGroup removes a user from a supplementary group.
 func (e *Executor) removeUserFromGroup(ctx context.Context, username, groupName string) error {
 	return e.deps.user.RemoveFromGroup(ctx, username, groupName)
 }
 
-// getGroupMembers returns the members of a group (empty on lookup failure,
-// matching the previous helper's contract). It honors the action context so a
-// hung backend lookup is bounded by the action's cancellation/timeout.
 func (e *Executor) getGroupMembers(ctx context.Context, groupName string) []string {
 	members, _ := e.deps.user.GroupMembers(ctx, groupName)
 	return members
 }
 
-// userInGroup checks if a user is a member of the specified group.
 func (e *Executor) userInGroup(ctx context.Context, username, groupName string) bool {
 	members, _ := e.deps.user.GroupMembers(ctx, groupName)
 	return slices.Contains(members, username)
 }
 
-// sudoGroupMembersMatch checks if the current group members match the desired list.
 func (e *Executor) sudoGroupMembersMatch(ctx context.Context, groupName string, desiredUsers []string) bool {
 	members, _ := e.deps.user.GroupMembers(ctx, groupName)
 	return sysuser.MembersMatch(members, desiredUsers)

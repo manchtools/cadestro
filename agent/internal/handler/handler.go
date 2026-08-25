@@ -1,4 +1,3 @@
-// Package handler implements the stream handler for the agent.
 package handler
 
 import (
@@ -23,17 +22,10 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/osquery"
 )
 
-// heartbeatQueryTimeout bounds each BuildHeartbeat osquery round-trip;
-// heartbeats are advisory metrics, never worth wedging the stream for.
 const heartbeatQueryTimeout = 10 * time.Second
 
-// streamValidator rejects malformed messages at the agent boundary before any
-// privileged work. Control also validates before dispatch.
 var streamValidator = protovalidate.GlobalValidator
 
-// handlerRunner is the unprivileged runner OnLogQuery shells out through (the
-// agent runs as root; journalctl reads run directly, matching the prior
-// unprivileged sysexec.Run behaviour).
 var handlerRunner = func() sysexec.Runner {
 	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
@@ -42,34 +34,26 @@ var handlerRunner = func() sysexec.Runner {
 	return r
 }()
 
-// Handler implements the SDK StreamHandler interface.
 type Handler struct {
 	logger       *slog.Logger
 	executor     *executor.Executor
-	osquery      osquery.Querier // nil if osquery is not installed
+	osquery      osquery.Querier
 	store        *store.Store
-	syncTrigger  chan<- struct{} // triggers a full sync
-	mu           sync.Mutex      // protects connectedCh, connectedSet and the terminal* fields below
-	connectedCh  chan struct{}   // closed when welcome is received and connection is ready
-	connectedSet bool            // tracks if connectedCh has been closed
+	syncTrigger  chan<- struct{}
+	mu           sync.Mutex
+	connectedCh  chan struct{}
+	connectedSet bool
 
-	// Remote terminal session state. terminals is the live registry,
-	// guarded by mu. terminalSender is the SDK Client (or any
-	// TerminalSender) injected at startup via SetTerminalSender; it
-	// must be set before the SDK dispatch loop delivers the first
-	// TerminalStart message. The sweeper goroutine is started lazily
-	// on the first SetTerminalSender call.
 	terminalSender         TerminalSender
 	terminals              map[string]*terminalSession
 	terminalLimit          int
 	terminalIdleTimeout    time.Duration
 	terminalSweeperStarted bool
-	terminalSweeperStop    chan struct{} // closed by StopTerminalSweeper to stop the sweep loop
+	terminalSweeperStop    chan struct{}
 
-	now func() time.Time // clock seam; defaults to time.Now, overridden in tests
+	now func() time.Time
 }
 
-// NewHandler creates a new stream handler.
 func NewHandler(logger *slog.Logger, exec *executor.Executor, st *store.Store, syncTrigger chan<- struct{}) *Handler {
 	return &Handler{
 		logger:      logger,
@@ -99,9 +83,6 @@ func (h *Handler) OnRebootDevice(ctx context.Context, _ *pb.RebootDeviceCommand)
 	return h.executor.Reboot(ctx)
 }
 
-// getOsquery returns the osquery registry, initializing it lazily on first use.
-// If osquery was not found previously, it re-checks so that osquery installed
-// after the agent started is detected without requiring a restart.
 func (h *Handler) getOsquery() osquery.Querier {
 	h.mu.Lock()
 	if h.osquery != nil {
@@ -111,10 +92,6 @@ func (h *Handler) getOsquery() osquery.Querier {
 	}
 	h.mu.Unlock()
 
-	// Construct OUTSIDE the lock (#173): osquery.New probes the host;
-	// holding h.mu across it blocked every other handler operation
-	// (welcome/terminal/session bookkeeping) behind a slow probe. Two
-	// concurrent probes are benign — the loser's registry is dropped.
 	registry, err := osquery.New(handlerRunner)
 	if err != nil {
 		return nil
@@ -129,11 +106,9 @@ func (h *Handler) getOsquery() osquery.Querier {
 	return h.osquery
 }
 
-// OnWelcome handles the welcome message from the server.
 func (h *Handler) OnWelcome(ctx context.Context, welcome *pb.Welcome) error {
 	h.logger.Info("received welcome from server", "server_version", welcome.ServerVersion)
 
-	// Signal that connection is ready for sending messages
 	h.mu.Lock()
 	if !h.connectedSet {
 		close(h.connectedCh)
@@ -144,8 +119,6 @@ func (h *Handler) OnWelcome(ctx context.Context, welcome *pb.Welcome) error {
 	return nil
 }
 
-// WaitConnected waits for the connection to be ready (welcome received).
-// Returns immediately if already connected, or blocks until connected or context is cancelled.
 func (h *Handler) WaitConnected(ctx context.Context) error {
 	h.mu.Lock()
 	ch := h.connectedCh
@@ -158,8 +131,6 @@ func (h *Handler) WaitConnected(ctx context.Context) error {
 	}
 }
 
-// ResetConnection resets the connection state for reconnection.
-// Must be called before each new connection attempt.
 func (h *Handler) ResetConnection() {
 	h.mu.Lock()
 	if h.connectedSet {
@@ -169,28 +140,13 @@ func (h *Handler) ResetConnection() {
 	h.mu.Unlock()
 }
 
-// maxLogOutputBytes caps each stream-line preview at 256 bytes
-// (audit F-32). Sized to fit a typical "command failed" line + a
-// short diagnostic header without spilling secret-bearing payloads
-// into journald.
 const maxLogOutputBytes = 256
 
-// sanitizeForLog returns a log-safe rendering of an action's
-// stdout/stderr stream: redacts AES-GCM ciphertext markers
-// (`enc:v1:...`) and truncates the result to maxLogOutputBytes.
-// The redaction is a static prefix scan — the same prefix the
-// control server's internal/crypto.Encrypt produces — so any
-// secret-at-rest blob that makes it into agent output never
-// transits journald in plaintext.
 func sanitizeForLog(s string) string {
 	if s == "" {
 		return s
 	}
-	// Redact AES-GCM ciphertext blobs. The encryptor emits the
-	// fixed `enc:v1:` prefix followed by base64 — we replace the
-	// whole token (prefix + base64 chars) with [REDACTED-ENC]
-	// rather than only the prefix, so partial leakage of the
-	// base64 body doesn't slip through.
+
 	if strings.Contains(s, "enc:v1:") {
 		s = redactEncMarkers(s)
 	}
@@ -200,9 +156,6 @@ func sanitizeForLog(s string) string {
 	return s
 }
 
-// redactEncMarkers replaces every `enc:v1:<base64...>` run with
-// `[REDACTED-ENC]`. Base64 chars are A-Z / a-z / 0-9 / + / / / =.
-// We stop the run at any other character or end of string.
 func redactEncMarkers(s string) string {
 	const marker = "enc:v1:"
 	var out strings.Builder
@@ -215,7 +168,7 @@ func redactEncMarkers(s string) string {
 		}
 		out.WriteString(s[:idx])
 		out.WriteString("[REDACTED-ENC]")
-		// Skip the marker plus the base64 run.
+
 		i := idx + len(marker)
 		for i < len(s) && isBase64Char(s[i]) {
 			i++
@@ -231,18 +184,15 @@ func isBase64Char(b byte) bool {
 		b == '+' || b == '/' || b == '='
 }
 
-// OnQuery handles OS queries from the server.
 func (h *Handler) OnQuery(ctx context.Context, query *pb.OSQuery) (*pb.OSQueryResult, error) {
 	queryID := query.GetQueryId().GetValue()
 	h.logger.Info("received query", "query_id", queryID, "table", query.Table)
 
-	// Validate at the boundary before executing privileged work.
 	if err := streamValidator.Validate(query); err != nil {
 		h.logger.Warn("rejecting invalid query", "query_id", queryID, "error", err)
 		return &pb.OSQueryResult{QueryId: query.GetQueryId(), Success: false, Error: err.Error()}, nil
 	}
 
-	// Check if osquery is available (lazy init — detects installs without restart)
 	oq := h.getOsquery()
 	if oq == nil {
 		h.logger.Warn("osquery not available", "query_id", queryID)
@@ -267,53 +217,38 @@ func (h *Handler) OnQuery(ctx context.Context, query *pb.OSQuery) (*pb.OSQueryRe
 	return result, nil
 }
 
-// OnError handles error messages from the server.
 func (h *Handler) OnError(ctx context.Context, err *pb.Error) error {
 	h.logger.Error("received error from server", "code", err.Code, "message", err.Message)
 	return nil
 }
 
-// BuildHeartbeat creates a heartbeat message with current system metrics.
 func (h *Handler) BuildHeartbeat() *pb.Heartbeat {
 	hb := &pb.Heartbeat{}
 
-	// Skip metrics collection if osquery is not available
 	oq := h.getOsquery()
 	if oq == nil {
 		return hb
 	}
 
-	// Bound the osquery round-trips (#173): BuildHeartbeat has no caller
-	// context (SDK heartbeat-callback shape), and an unbounded
-	// context.Background() let a hung osquery wedge heartbeat
-	// construction indefinitely.
 	ctx, cancel := context.WithTimeout(context.Background(), heartbeatQueryTimeout)
 	defer cancel()
 
-	// Get uptime
 	if result, _ := queryOsquery(ctx, oq, &pb.OSQuery{QueryId: &pb.QueryId{Value: "hb"}, Table: "uptime"}); result != nil && result.Success && len(result.Rows) > 0 {
 		if sec, err := strconv.ParseInt(result.Rows[0].Data["total_seconds"], 10, 64); err == nil {
 			hb.Uptime = durationpb.New(time.Duration(sec) * time.Second)
 		}
 	}
 
-	// Get memory usage
 	if result, _ := queryOsquery(ctx, oq, &pb.OSQuery{QueryId: &pb.QueryId{Value: "hb"}, Table: "memory_info"}); result != nil && result.Success && len(result.Rows) > 0 {
 		data := result.Rows[0].Data
 		total, totalErr := strconv.ParseInt(data["memory_total"], 10, 64)
 		free, freeErr := strconv.ParseInt(data["memory_free"], 10, 64)
 		if totalErr != nil || freeErr != nil {
-			// Audit F029: previously silent — a malformed osquery
-			// row caused MemoryPercent to silently retain the prior
-			// value or zero. Debug-only so a steady-state agent
-			// doesn't flood logs.
+
 			slog.Debug("heartbeat: memory_info parse failed",
 				"memory_total_err", totalErr, "memory_free_err", freeErr)
 		} else if total > 0 {
-			// Only compute MemoryPercent when BOTH values parsed
-			// cleanly — otherwise free defaults to 0 (CR catch on
-			// PR #81) and we'd report 100% used on every heartbeat
-			// for an agent whose osquery is missing memory_free.
+
 			hb.MemoryPercent = float32(100 * (total - free) / total)
 		}
 	}
@@ -321,8 +256,6 @@ func (h *Handler) BuildHeartbeat() *pb.Heartbeat {
 	return hb
 }
 
-// OnRevokeLuksDeviceKey handles a LUKS device-bound key revocation request from the server.
-// Implements sdk.LuksHandler.
 func (h *Handler) OnRevokeLuksDeviceKey(ctx context.Context, req *pb.RevokeLuksDeviceKey) (bool, string) {
 	actionID := req.GetActionId().GetValue()
 	h.logger.Info("received LUKS device key revocation", "action_id", actionID)
@@ -336,25 +269,15 @@ func (h *Handler) OnRevokeLuksDeviceKey(ctx context.Context, req *pb.RevokeLuksD
 	return success, errMsg
 }
 
-// OnLogQuery handles a remote journalctl log query from the server.
-// Implements sdk.LogQueryHandler.
 func (h *Handler) OnLogQuery(ctx context.Context, query *pb.LogQuery) (*pb.LogQueryResult, error) {
 	queryID := query.GetQueryId().GetValue()
 	h.logger.Info("received log query", "query_id", queryID, "unit", query.Unit)
 
-	// Validate at the boundary before executing privileged work.
 	if err := streamValidator.Validate(query); err != nil {
 		h.logger.Warn("rejecting invalid log query", "query_id", queryID, "error", err)
 		return &pb.LogQueryResult{QueryId: query.GetQueryId(), Success: false, Error: err.Error()}, nil
 	}
 
-	// The journalctl invocation — including the line cap, the priority
-	// allow-list, the grep length cap + ReDoS guard, and the -k kernel filter —
-	// is owned by the SDK sys/log source (it ported the agent's grep-guard
-	// verbatim). Build the query and let it validate + run. handlerRunner is the
-	// agent's Direct runner: the SDK marks the journalctl command Escalate:true,
-	// which is a no-op on Direct (the agent already runs as root), so behaviour is
-	// unchanged.
 	src, err := syslog.New(syslog.Journald, handlerRunner)
 	if err != nil {
 		h.logger.Warn("log query setup failed", "query_id", queryID, "error", err)
@@ -370,15 +293,13 @@ func (h *Handler) OnLogQuery(ctx context.Context, query *pb.LogQuery) (*pb.LogQu
 		Lines:    int(query.Lines),
 	})
 	if err != nil {
-		// Surfaces both the SDK's validation rejections (invalid priority,
-		// over-cap/pathological grep) and journalctl's own failure (the
-		// CommandError carries stderr).
+
 		h.logger.Warn("log query failed", "query_id", queryID, "error", err)
 		return &pb.LogQueryResult{QueryId: query.QueryId, Success: false, Error: err.Error()}, nil
 	}
 
 	logs := strings.Join(lines, "\n")
-	// Truncate to 1MB if needed (keep the tail).
+
 	if len(logs) > 1<<20 {
 		logs = logs[len(logs)-(1<<20):]
 	}
@@ -391,26 +312,14 @@ func (h *Handler) OnLogQuery(ctx context.Context, query *pb.LogQuery) (*pb.LogQu
 	}, nil
 }
 
-// OnRequestInventory handles a SERVER-originated inventory collection request.
-// Implements sdk.InventoryHandler. All
-// inventory collection is server-initiated over this path (manual refresh and
-// the spec-22 server-side scheduler); the agent has no periodic collector of
-// its own.
 func (h *Handler) OnRequestInventory(ctx context.Context, req *pb.RequestInventory) *pb.DeviceInventory {
 	return h.CollectInventory(ctx)
 }
 
-// CollectInventory gathers device inventory from two sources:
-// 1. SDK inventory package — always available, provides baseline system info
-// 2. osquery — optional, provides richer data (packages, USB, PCI, etc.)
-//
-// When both are available, osquery tables override the SDK baseline for tables
-// that exist in both (system_info, os_version, block_devices, interface_details).
 func (h *Handler) CollectInventory(ctx context.Context) *pb.DeviceInventory {
-	// Phase 1: Collect baseline from SDK (always available, no dependencies)
+
 	tables := h.collectBaselineInventory(ctx)
 
-	// Phase 2: Supplement/override with osquery if available
 	oq := h.getOsquery()
 	if oq != nil {
 		h.supplementWithOsquery(ctx, oq, tables)
@@ -420,7 +329,6 @@ func (h *Handler) CollectInventory(ctx context.Context) *pb.DeviceInventory {
 		return nil
 	}
 
-	// Convert map to slice for proto
 	result := make([]*pb.InventoryTable, 0, len(tables))
 	for _, t := range tables {
 		result = append(result, t)
@@ -430,8 +338,6 @@ func (h *Handler) CollectInventory(ctx context.Context) *pb.DeviceInventory {
 	return &pb.DeviceInventory{Tables: result}
 }
 
-// collectBaselineInventory uses the SDK inventory package to gather basic
-// system information without osquery. Returns tables in osquery-compatible format.
 func (h *Handler) collectBaselineInventory(ctx context.Context) map[string]*pb.InventoryTable {
 	tables := make(map[string]*pb.InventoryTable)
 
@@ -441,7 +347,6 @@ func (h *Handler) collectBaselineInventory(ctx context.Context) map[string]*pb.I
 		return tables
 	}
 
-	// system_info + kernel_info (single System call)
 	if sysInfo, err := inv.System(ctx); err == nil {
 		tables["system_info"] = &pb.InventoryTable{
 			TableName: "system_info",
@@ -464,7 +369,6 @@ func (h *Handler) collectBaselineInventory(ctx context.Context) map[string]*pb.I
 		h.logger.Debug("baseline system_info unavailable", "error", err)
 	}
 
-	// os_version
 	if osInfo, err := inv.OS(); err == nil {
 		tables["os_version"] = &pb.InventoryTable{
 			TableName: "os_version",
@@ -479,7 +383,6 @@ func (h *Handler) collectBaselineInventory(ctx context.Context) map[string]*pb.I
 		h.logger.Debug("baseline os_version unavailable", "error", err)
 	}
 
-	// block_devices
 	if disks, err := inv.Disks(ctx); err == nil {
 		var rows []*pb.OSQueryRow
 		for _, d := range disks {
@@ -500,7 +403,6 @@ func (h *Handler) collectBaselineInventory(ctx context.Context) map[string]*pb.I
 		h.logger.Debug("baseline block_devices unavailable", "error", err)
 	}
 
-	// interface_details + interface_addresses
 	if ifaces, err := inv.NetworkInterfaces(ctx); err == nil {
 		var detailRows, addrRows []*pb.OSQueryRow
 		for _, iface := range ifaces {
@@ -535,15 +437,6 @@ func (h *Handler) collectBaselineInventory(ctx context.Context) map[string]*pb.I
 	return tables
 }
 
-// supplementWithOsquery queries osquery for richer inventory data and overrides
-// baseline tables where osquery provides the same data.
-// inventoryCoreTables and inventoryPackageTables are the FIXED, hardcoded set
-// of osquery tables CollectInventory may query. They are never derived from a
-// server-supplied request (a RequestInventory carries no table field) — this is
-// what bounds the blast radius of an inventory request. Declared at package
-// scope so a test can read them and assert that CollectInventory queries
-// exactly this union (self-discovering: adding a table here keeps the test
-// green; querying a table NOT here fails it).
 var (
 	inventoryCoreTables = []string{
 		"system_info",
@@ -564,10 +457,9 @@ var (
 )
 
 func (h *Handler) supplementWithOsquery(ctx context.Context, oq osquery.Querier, baseline map[string]*pb.InventoryTable) {
-	// osquery tables that override baseline
+
 	coreTables := inventoryCoreTables
 
-	// Package tables (best-effort)
 	packageTables := inventoryPackageTables
 
 	for _, tableName := range coreTables {
@@ -576,7 +468,7 @@ func (h *Handler) supplementWithOsquery(ctx context.Context, oq osquery.Querier,
 			h.logger.Debug("osquery table unavailable", "table", tableName, "error", err)
 			continue
 		}
-		// Only override baseline if osquery returned data
+
 		if len(rows) > 0 {
 			baseline[tableName] = &pb.InventoryTable{
 				TableName: tableName,
@@ -600,10 +492,6 @@ func (h *Handler) supplementWithOsquery(ctx context.Context, oq osquery.Querier,
 
 }
 
-// queryOsquery keeps the wire envelope at the agent boundary while the SDK
-// capability stays transport-neutral. Structured query fields other than the
-// table/raw SQL were historically ignored by the osquery implementation; keep
-// that behavior while using its native row type.
 func queryOsquery(ctx context.Context, oq osquery.Querier, query *pb.OSQuery) (*pb.OSQueryResult, error) {
 	var (
 		rows []osquery.Row
@@ -631,7 +519,6 @@ func osqueryRowsToProto(rows []osquery.Row) []*pb.OSQueryRow {
 	return converted
 }
 
-// Executor returns the executor for direct use.
 func (h *Handler) Executor() *executor.Executor {
 	return h.executor
 }

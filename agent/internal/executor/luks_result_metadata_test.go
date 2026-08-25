@@ -15,17 +15,6 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// CHARTER — an ENCRYPTION result must carry no metadata.
-//
-// Control refuses any ActionResult with a non-empty metadata map, and the
-// agent's outbox marks a frame synced as soon as the local send returns. A
-// LUKS result that stamps metadata onto itself is therefore either discarded
-// outright or replayed forever — the result never reaches control either way.
-// device_path already reaches control through StoreLuksKey, so there is
-// nothing on this path for metadata to carry.
-
-// fakeDetectEncManager adds first-run volume detection to the recorded-no-op
-// manager, which is what setupLuks needs before it can take ownership.
 type fakeDetectEncManager struct {
 	fakeEncManager
 	devicePath string
@@ -35,11 +24,6 @@ func (f *fakeDetectEncManager) DetectVolumeByKey(context.Context, sysexec.Secret
 	return sysenc.Volume{DevicePath: f.devicePath}, nil
 }
 
-// newLuksExecutor wires the SUCCESS path: the key store echoes back whatever
-// the agent stored, so ownership completes its round-trip verification and
-// setupLuks reaches the metadata it builds at the end. A key store that
-// cannot answer GetKey aborts before that point and would make an
-// "empty metadata" assertion pass for the wrong reason.
 func newLuksExecutor(t *testing.T, devicePath string) *Executor {
 	t.Helper()
 	st, err := store.New(t.TempDir())
@@ -87,8 +71,7 @@ func TestExecuteEncryptionActionReportsNoResultMetadata(t *testing.T) {
 		}},
 	})
 	require.NotNil(t, result)
-	// The action has to have SUCCEEDED, or "no metadata" would be satisfied
-	// by an action that never reached the point where metadata was built.
+
 	require.Equal(t, pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS, result.Status, result.Error)
 	assert.Empty(t, result.Metadata,
 		"a result control refuses is lost on send or replayed on every reconnect")

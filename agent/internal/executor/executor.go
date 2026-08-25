@@ -1,4 +1,3 @@
-// Package executor provides implementations for action executors.
 package executor
 
 import (
@@ -21,31 +20,14 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// Repository configuration validation (name grammar, per-backend URL/baseurl
-// shape, control-char/newline rejection on every field, gpgkey ref) is owned by
-// the SDK's repo.Manager.Validate, which executeRepository calls as its
-// pre-flight gate. The agent no longer re-derives the field regexes here.
-
-// maxScriptSize is the maximum allowed size for shell scripts (1 MiB).
 const maxScriptSize = 1 << 20
 
-// maxFileContentSize is the maximum allowed size for file content (10 MiB).
 const maxFileContentSize = 10 << 20
 
-// defaultScriptTimeout is applied when no timeout is specified for script actions.
 const defaultScriptTimeout int32 = 3600
 
-// defaultPackageTimeout bounds PACKAGE/UPDATE actions that carry no explicit
-// timeout. Without it these ran under an unbounded context, so a wedged
-// apt/dnf operation (mirror outage, lock contention) could pin the action
-// forever (WS16 #3). 30 minutes is generous for a slow mirror + large upgrade
-// set yet refuses to hang indefinitely.
 const defaultPackageTimeout int32 = 1800
 
-// defaultTimeoutForAction returns the timeout (seconds) to apply to an action
-// when the operator set one (requested > 0 wins) or a default ceiling for the
-// long-running action classes. 0 means "no timeout" (the previous behaviour
-// for non-script, non-package actions).
 func defaultTimeoutForAction(actionType pb.ActionType, requested int32) int32 {
 	if requested > 0 {
 		return requested
@@ -60,60 +42,33 @@ func defaultTimeoutForAction(actionType pb.ActionType, requested int32) int32 {
 	}
 }
 
-// Executor handles the execution of actions.
 type Executor struct {
 	httpClient *http.Client
-	pkgManager pkg.Manager // nil when no supported package manager is present
-	pkgBackend pkg.Backend // the detected backend driving pkgManager (zero when nil)
-	// runner is the privilege runner this executor was constructed with, or nil
-	// when NewExecutor was called without one (the unit-test convention,
-	// NewExecutor(nil)). The destructive reboot path uses it DIRECTLY and
-	// fails closed when it is nil — never the process-global Direct default — so
-	// a test that dispatches a REBOOT through a no-runner executor can never
-	// issue a real `shutdown` on the host (it once rebooted a workstation).
+	pkgManager pkg.Manager
+	pkgBackend pkg.Backend
+
 	runner       sysexec.Runner
 	deps         executorDeps
 	depsOnce     sync.Once
 	logger       *slog.Logger
-	mu           sync.RWMutex // protects luksKeyStore, lpsStore, store, actionStore
+	mu           sync.RWMutex
 	luksKeyStore LuksKeyStore
 	lpsStore     LpsPasswordStore
 	store        *store.Store
 	actionStore  ActionStore
 	updateCfg    *AgentUpdateConfig
-	// Per-cycle AGENT_UPDATE dedup. Audit F042 + F048: previously
-	// package-level globals which made parallel tests serialise on
-	// one mutex and let a future second Executor share state with
-	// production. Now scoped per-instance.
+
 	agentUpdateExecutedMu sync.Mutex
 	agentUpdateExecuted   bool
 
-	// Per-action LUKS rotation-timestamp persistence failure counter.
-	// Tracks consecutive SetLuksLastRotatedAt failures per action ID
-	// so the agent escalates from Warn to Error after
-	// luksTimestampFailureThreshold consecutive failures (#80). The
-	// failure mode it surfaces — silent rotation hot-loop or rotation
-	// never starting because the timestamp never persists — was easy
-	// to miss when buried in journald Warn-level lines.
 	luksTimestampFailMu    sync.Mutex
 	luksTimestampFailCount map[string]int
 
-	now func() time.Time // clock seam; defaults to time.Now, overridden in tests
+	now func() time.Time
 
-	// repairFS is a seam over repairFilesystem so tests can record
-	// whether a privileged remount/repair was attempted (proving that a
-	// malformed/rejected action never reaches the privileged side
-	// effects). nil in production → requireWritableFS calls the real
-	// e.repairFilesystem.
 	repairFS func(ctx context.Context) bool
 }
 
-// pkgManagerForCtx returns the package manager for this action. The reworked SDK
-// Manager takes a context on every call, so the per-action timeout reaches the
-// package-manager subprocesses directly — there is no longer a per-action
-// manager to rebuild. It returns nil (fail closed) once the action context is
-// already cancelled, so a wedged or expired action never starts a privileged
-// package operation.
 func (e *Executor) pkgManagerForCtx(ctx context.Context) pkg.Manager {
 	if ctx.Err() != nil {
 		return nil
@@ -121,29 +76,19 @@ func (e *Executor) pkgManagerForCtx(ctx context.Context) pkg.Manager {
 	return e.pkgManager
 }
 
-// NewExecutor creates a new action executor. Transport authentication and
-// integrity are supplied by the direct mTLS connection; actions are plain
-// contract messages and carry no second application signature. runner is the
-// privilege-backend runner the package manager dispatches through; a nil runner leaves the package
-// manager unset (package actions fail) — used by unit tests that inject their
-// own pkg.Manager into e.pkgManager.
 func NewExecutor(runner sysexec.Runner) *Executor {
 	logger := slog.Default()
 	var (
 		mgr     pkg.Manager
 		backend pkg.Backend
 	)
-	// Build all host capability managers from this executor's runner. The
-	// resulting dependency set is immutable for the executor's lifetime.
+
 	deps := newExecutorDeps(runner)
 	switch {
 	case runner == nil:
 		logger.Warn("no privilege runner provided; package actions will fail")
 	default:
-		// Detect lists installed backends in priority order (native managers
-		// before flatpak); pick the first. An empty list means no supported
-		// package manager — operators need to know every package action will
-		// fail rather than silently no-op on boot (Audit F031).
+
 		if backends := pkg.Detect(); len(backends) == 0 {
 			logger.Warn("no supported package manager detected; package actions will fail")
 		} else {
@@ -172,75 +117,60 @@ func NewExecutor(runner sysexec.Runner) *Executor {
 	return e
 }
 
-// SetLuksKeyStore sets the LUKS key store for stream-based key operations.
 func (e *Executor) SetLuksKeyStore(ks LuksKeyStore) {
 	e.mu.Lock()
 	e.luksKeyStore = ks
 	e.mu.Unlock()
 }
 
-// SetLpsPasswordStore sets the LPS password store for stream-based rotation
-// reporting. Nil while disconnected, which makes the rotation path refuse to
-// change a password it could not report.
 func (e *Executor) SetLpsPasswordStore(ps LpsPasswordStore) {
 	e.mu.Lock()
 	e.lpsStore = ps
 	e.mu.Unlock()
 }
 
-// getLpsPasswordStore returns the LPS password store (thread-safe).
 func (e *Executor) getLpsPasswordStore() LpsPasswordStore {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.lpsStore
 }
 
-// SetStore sets the agent store for LUKS state persistence.
 func (e *Executor) SetStore(s *store.Store) {
 	e.mu.Lock()
 	e.store = s
 	e.mu.Unlock()
 }
 
-// SetUpdateConfig configures the agent self-update executor.
 func (e *Executor) SetUpdateConfig(cfg *AgentUpdateConfig) {
 	e.mu.Lock()
 	e.updateCfg = cfg
 	e.mu.Unlock()
 }
 
-// SetActionStore sets the action store for LUKS conflict resolution.
 func (e *Executor) SetActionStore(as ActionStore) {
 	e.mu.Lock()
 	e.actionStore = as
 	e.mu.Unlock()
 }
 
-// getLuksKeyStore returns the LUKS key store (thread-safe).
 func (e *Executor) getLuksKeyStore() LuksKeyStore {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.luksKeyStore
 }
 
-// getStore returns the agent store (thread-safe).
 func (e *Executor) getStore() *store.Store {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.store
 }
 
-// getActionStore returns the action store used for LUKS conflict
-// resolution (thread-safe). Audit F003: the LUKS executor used to
-// read e.actionStore directly, bypassing e.mu and racing against
-// SetActionStore — route the read through this accessor instead.
 func (e *Executor) getActionStore() ActionStore {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.actionStore
 }
 
-// ExecuteAction runs one manifest occurrence.
 func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.ActionResult {
 	env := action
 	start := e.now()
@@ -248,14 +178,9 @@ func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.Act
 	result := &pb.ActionResult{
 		ActionId: env.GetId(),
 		Status:   pb.ExecutionStatus_EXECUTION_STATUS_RUNNING,
-		Changed:  true, // Default to true; scheduler may override based on output comparison
+		Changed:  true,
 	}
 
-	// Apply a per-action timeout. Long-running classes (scripts, and — WS16 #3
-	// — package/update operations) get a default ceiling when none is set so
-	// they cannot run unbounded. parentCtx is kept so the result
-	// classification below can tell "the parent deadline fired" apart
-	// from "the per-action timeout fired" (CR catch on #179).
 	parentCtx := ctx
 	timeout := defaultTimeoutForAction(env.Type, env.GetTimeoutSeconds())
 	if timeout > 0 {
@@ -351,9 +276,7 @@ func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.Act
 		}
 	case pb.ActionType_ACTION_TYPE_ENCRYPTION:
 		var changed bool
-		// The encryption path reports no metadata: control refuses any
-		// ActionResult carrying it, and device_path already reaches control
-		// through StoreLuksKey.
+
 		output, changed, _, execErr = e.executeLuksAction(ctx, env.GetEncryption(), env.DesiredState, envActionID(env))
 		result.Changed = changed
 	case pb.ActionType_ACTION_TYPE_WIFI:
@@ -373,14 +296,10 @@ func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.Act
 	result.CompletedAt = timestamppb.New(completed)
 	result.Duration = durationpb.New(completed.Sub(start))
 
-	// Check context errors first - distinguish between timeout and cancellation
 	switch {
 	case errors.Is(ctx.Err(), context.DeadlineExceeded):
 		result.Status = pb.ExecutionStatus_EXECUTION_STATUS_TIMEOUT
-		// Distinguish the PARENT deadline from the per-action timeout —
-		// "timed out after N seconds" when the parent cancelled first
-		// (or when no action timeout existed at all) was a lie (#173 +
-		// CR catch on #179).
+
 		if errors.Is(parentCtx.Err(), context.DeadlineExceeded) {
 			result.Error = "action deadline exceeded (parent context)"
 		} else {
@@ -390,8 +309,7 @@ func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.Act
 		result.Status = pb.ExecutionStatus_EXECUTION_STATUS_FAILED
 		result.Error = "action cancelled"
 	case errors.Is(execErr, errNotApplicable):
-		// Spec 23: structural inapplicability is a first-class terminal
-		// outcome, not a failure. The reason travels in the result error.
+
 		result.Status = pb.ExecutionStatus_EXECUTION_STATUS_NOT_APPLICABLE
 		result.Error = execErr.Error()
 	case execErr != nil:
@@ -401,7 +319,6 @@ func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.Act
 		result.Status = pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS
 	}
 
-	// For shell/script actions, non-zero exit codes indicate failure
 	if result.Status == pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS {
 		if env.Type == pb.ActionType_ACTION_TYPE_SHELL || env.Type == pb.ActionType_ACTION_TYPE_SCRIPT_RUN {
 			if result.DetectionOutput != nil && result.DetectionOutput.ExitCode != 0 {
@@ -417,51 +334,12 @@ func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.Act
 	return result
 }
 
-// runShellScript executes a single shell script string using the shared interpreter,
-// environment, sudo, and working directory settings from ShellParams.
-//
-// RunAsRoot dispatches through sysexec.PrivilegedStreaming, which
-// goes through the SDK's privilege-backend resolution
-// (sudo/doas + -n flag + absolute-path + backend-installed check)
-// so the agent stays consistent with the rest of the SDK's
-// privilege contract instead of hard-coding "sudo -n".
-//
-// RunAsRoot=false fans the script out to every active graphical
-// desktop session via desktop.ActiveSessions + runAsUser
-// (#79). Pre-fix this branch silently ran the script as the agent's
-// own UID (root in production) — exactly the bug profile that
-// SystemWide=false suffered for Flatpak. The new contract: an
-// admin who explicitly turns RunAsRoot off gets a per-user
-// execution, NOT a "still root, just without going through sudo"
-// fallback. Empty-set policy matches the Flatpak path: log Warn
-// and return success no-op so the next reconciliation tick retries
-// once a user signs in.
 func (e *Executor) runShellScript(ctx context.Context, params *pb.ShellParams, script string) (*pb.CommandOutput, error) {
 	interpreter := params.Interpreter
 	if interpreter == "" {
 		interpreter = "/bin/sh"
 	}
 
-	// Build environment from a curated baseline plus only the
-	// caller-supplied entries that pass IsAllowedEnvVar. The
-	// previous shape (`os.Environ()` baseline + per-entry validation)
-	// defeated the guard: any dangerous variable already set in the
-	// agent's own environment (LD_PRELOAD, LD_LIBRARY_PATH, PATH
-	// hijacks, etc.) would leak through unchecked, because validation
-	// only ran for *new* additions. Empty `params.Environment` was
-	// even worse — `envVars` stayed nil, so the child silently
-	// inherited the *full* ambient environment.
-	//
-	// Neither PATH nor the locale family is set here. The reworked SDK
-	// Runner injects its own sanitized PATH (derived from the agent's
-	// environment, since envVars is non-empty) and FORCES the deterministic
-	// locale (LC_ALL=C/LANG=C/NO_COLOR=1) on every command — and REJECTS any
-	// attempt to set LANG/LC_*/LANGUAGE/NO_COLOR via Command.Env. This used
-	// to set `LANG=<host LANG>`, which made EVERY shell action fail with
-	// ErrReservedEnvVar once the agent moved onto the reworked Runner. PATH
-	// is likewise blocklisted and supplied by the Runner. HOME/USER keep
-	// `~`-expansion and user-context tools sane; anything else goes through
-	// `params.Environment` and the IsAllowedEnvVar gate.
 	envVars := []string{
 		"HOME=" + os.Getenv("HOME"),
 		"USER=" + os.Getenv("USER"),
@@ -484,20 +362,10 @@ func (e *Executor) runShellScript(ctx context.Context, params *pb.ShellParams, s
 		})
 		return toOutput(&r), err
 	}
-	// RunAsRoot=false → per-user fan-out.
+
 	return e.runShellScriptPerUser(ctx, params, interpreter, args, envVars)
 }
 
-// runShellScriptPerUser implements the RunAsRoot=false path: fans
-// the script over every active desktop session, prefixing each
-// streamed line with `[user=<name>] ` so the operator can attribute
-// output. Returns the merged output and the first per-user error
-// encountered (the loop continues on failure so one broken user
-// doesn't block the rest, matching the per-user Flatpak shape).
-//
-// The merged output's ExitCode is 0 if every user succeeded,
-// otherwise the first non-zero exit so the action result can still
-// drive the changed/failed bookkeeping in executeShell.
 func (e *Executor) runShellScriptPerUser(ctx context.Context, params *pb.ShellParams, interpreter string, args []string, envVars []string) (*pb.CommandOutput, error) {
 	sessions, err := e.deps.desktop.ActiveSessions(ctx)
 	if err != nil {
@@ -511,12 +379,6 @@ func (e *Executor) runShellScriptPerUser(ctx context.Context, params *pb.ShellPa
 		}, nil
 	}
 
-	// Strip HOME / USER from the caller-supplied env baseline —
-	// desktop.EnvFor sets the per-user values inside
-	// runAsUser, and a duplicate from envVars would only
-	// confuse readers (Go's exec.Cmd takes the last occurrence,
-	// which is the per-user one, but the duplicates make the env
-	// list noisy in audit logs).
 	extraEnv := stripHomeAndUser(envVars)
 
 	merged := &pb.CommandOutput{}
@@ -548,18 +410,6 @@ func (e *Executor) runShellScriptPerUser(ctx context.Context, params *pb.ShellPa
 	return merged, firstFailure
 }
 
-// stripHomeAndUser drops HOME=/USER= entries from envVars. The
-// per-user runner sets these from the session, and leaving the
-// agent-derived defaults in extraEnv would only add noise (Go's
-// exec.Cmd uses last-write-wins so the per-user value still wins,
-// but the duplicates clutter audit logs and confuse reviewers).
-//
-// Allocates a fresh backing array rather than aliasing envVars
-// (envVars[:0:0]) — the [:0:0] form has zero capacity so an append
-// immediately reallocates and the aliasing is moot in practice,
-// but a future tweak toward [:0] or [:0:n] would silently start
-// mutating the caller's slice. Pin "no aliasing" explicitly so the
-// hazard can't creep back in.
 func stripHomeAndUser(envVars []string) []string {
 	out := make([]string, 0, len(envVars))
 	for _, kv := range envVars {
@@ -571,18 +421,6 @@ func stripHomeAndUser(envVars []string) []string {
 	return out
 }
 
-// executeShell executes a shell action with detection/execution/verification flow.
-// Returns (executionOutput, detectionOutput, changed, error).
-//
-// Flow:
-//  0. is_compliance: detection-only. Run detection_script and report its
-//     findings; an empty detection_script fails closed and the execution
-//     script is never run.
-//  1. No detection_script: run script as-is (current behavior)
-//  2. Run detection_script. Exit 0 = compliant, skip execution.
-//  3. No script (detection-only): return non-compliant status
-//  4. Run script (remediation)
-//  5. Re-run detection_script to verify
 func (e *Executor) executeShell(ctx context.Context, params *pb.ShellParams) (*pb.CommandOutput, *pb.CommandOutput, bool, error) {
 	if params == nil {
 		return nil, nil, false, fmt.Errorf("shell params required")
@@ -594,11 +432,6 @@ func (e *Executor) executeShell(ctx context.Context, params *pb.ShellParams) (*p
 		return nil, nil, false, fmt.Errorf("detection script exceeds maximum size (%d bytes)", maxScriptSize)
 	}
 
-	// Compliance mode: run detection only, never execute remediation. This is
-	// evaluated FIRST and fails closed on an empty detection script — ordering
-	// it after the no-detection-script branch below made a compliance action
-	// with an empty detection script run its execution body, which is exactly
-	// what the compliance path forbids.
 	if params.GetIsCompliance() {
 		if params.DetectionScript == "" {
 			return nil, nil, false, fmt.Errorf("compliance action requires a non-empty detection script; refusing to run its execution script")
@@ -611,7 +444,6 @@ func (e *Executor) executeShell(ctx context.Context, params *pb.ShellParams) (*p
 		return nil, detectionOutput, false, nil
 	}
 
-	// No detection script — run execution script directly (original behavior)
 	if params.DetectionScript == "" {
 		if params.Script == "" {
 			return nil, nil, false, fmt.Errorf("at least one of script or detection_script is required")
@@ -620,33 +452,28 @@ func (e *Executor) executeShell(ctx context.Context, params *pb.ShellParams) (*p
 		return output, nil, true, err
 	}
 
-	// Step 1: Run detection script
 	e.logger.Debug("running detection script")
 	detectionOutput, err := e.runShellScript(ctx, params, params.DetectionScript)
 	if err != nil {
 		return nil, detectionOutput, false, fmt.Errorf("detection script error: %w", err)
 	}
 
-	// Step 2: If detection exits 0, system is compliant — skip execution
 	if detectionOutput.ExitCode == 0 {
 		e.logger.Debug("detection script passed (exit 0), system is compliant")
 		return nil, detectionOutput, false, nil
 	}
 
-	// Step 3: No execution script (detection-only) — report non-compliant
 	if params.Script == "" {
 		e.logger.Debug("detection script failed (non-zero), no execution script — reporting non-compliant")
 		return nil, detectionOutput, false, nil
 	}
 
-	// Step 4: Run execution/remediation script
 	e.logger.Debug("detection script failed (non-zero), running remediation script")
 	execOutput, execErr := e.runShellScript(ctx, params, params.Script)
 	if execErr != nil {
 		return execOutput, detectionOutput, true, execErr
 	}
 
-	// Step 5: Re-run detection script to verify remediation
 	e.logger.Debug("re-running detection script to verify remediation")
 	verifyOutput, verifyErr := e.runShellScript(ctx, params, params.DetectionScript)
 	if verifyErr != nil {

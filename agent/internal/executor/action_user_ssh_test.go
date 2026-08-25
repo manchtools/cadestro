@@ -10,18 +10,6 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// setupSSHKeys must refuse an authorized_keys entry that carries an embedded
-// newline (or carriage return) BEFORE it writes anything to disk. Without the
-// guard, a single control-authored action could smuggle extra authorized_keys lines —
-// additional principals, a command="…" override, a restrict= bypass — by
-// embedding "\nssh-rsa ATTACKER…" in one key value: the prefix check passes on
-// the first line and the appended lines land in the file unfiltered.
-//
-// The malicious payload is sourced from intent (a forged second key line), not
-// from the guard's own ContainsAny rule. The rejection happens in the
-// key-building loop, before the .ssh mkdir / SafeReplaceFile, so no
-// authorized_keys file is created — pointed at a temp HOME we assert exactly
-// that.
 func TestSetupSSHKeys_RejectsEmbeddedNewline(t *testing.T) {
 	cases := []struct {
 		name string
@@ -58,7 +46,7 @@ func TestSetupSSHKeys_RejectsEmbeddedNewline(t *testing.T) {
 			if changed {
 				t.Error("changed must be false when the key is refused")
 			}
-			// The splice must not have reached the filesystem.
+
 			authKeys := filepath.Join(home, ".ssh", "authorized_keys")
 			if _, statErr := os.Stat(authKeys); !os.IsNotExist(statErr) {
 				t.Errorf("authorized_keys must not be written on a refused key (stat err = %v)", statErr)

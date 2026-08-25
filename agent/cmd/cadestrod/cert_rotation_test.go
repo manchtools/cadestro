@@ -14,7 +14,7 @@ import (
 
 func TestCertificateRenewalDue_Computation(t *testing.T) {
 	nb := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	na := nb.Add(100 * 24 * time.Hour) // 100-day cert → renew at +80d
+	na := nb.Add(100 * 24 * time.Hour)
 	cert := &x509.Certificate{NotBefore: nb, NotAfter: na}
 
 	if certificateRenewalDue(cert, nb) {

@@ -8,9 +8,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/osquery"
 )
 
-// WS16 #13: the install-guidance branch must fire even when the
-// osquery.ErrNotInstalled sentinel is wrapped. isNotInstalled extracts the
-// predicate so it is testable and uses errors.Is.
 func TestIsNotInstalled(t *testing.T) {
 	if !isNotInstalled(osquery.ErrNotInstalled) {
 		t.Error("bare sentinel must be detected as not-installed")

@@ -14,17 +14,11 @@ import (
 	"github.com/manchtools/cadestro/agent/internal/store"
 )
 
-// These tests pin the ordering invariant: never rotate a credential that
-// cannot first be returned to control for the operator.
-
-// lpsRecorder observes both sides of the rotation in one ordered log, so a test
-// can assert not just that the password was reported and set, but that the
-// report came FIRST.
 type lpsRecorder struct {
 	mu        sync.Mutex
 	events    []string
 	reported  []*pb.LpsPasswordRotation
-	setCalls  []string // revealed plaintexts, in call order
+	setCalls  []string
 	storeErr  error
 	actionIDs []string
 }
@@ -41,8 +35,6 @@ func (r *lpsRecorder) StorePasswords(_ context.Context, actionID string, rotatio
 	return nil
 }
 
-// lpsRecorderUser is the sysuser fake, writing into the same log. Every
-// unlisted method panics via the embedded nil interface.
 type lpsRecorderUser struct {
 	sysuser.Manager
 	rec *lpsRecorder
@@ -58,8 +50,6 @@ func (f *lpsRecorderUser) SetPassword(_ context.Context, _ string, pw sysexec.Se
 }
 func (f *lpsRecorderUser) KillSessions(context.Context, string) error { return nil }
 
-// newLpsExecutor wires an executor with a store and the recorder installed on
-// both the user manager and the password store.
 func newLpsExecutor(t *testing.T, rec *lpsRecorder, wireStore bool) *Executor {
 	t.Helper()
 	e := NewExecutor(nil)
@@ -84,7 +74,7 @@ func (noopNotify) NotifyUsers(context.Context, []string, string, string) error {
 
 func runLps(t *testing.T, e *Executor, actionID string) (bool, map[string]string, error) {
 	t.Helper()
-	// Cancel the ctx so the 60s post-rotation grace returns immediately.
+
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	_, changed, metadata, err := e.executeLps(ctx, &pb.LpsParams{
@@ -95,11 +85,9 @@ func runLps(t *testing.T, e *Executor, actionID string) (bool, map[string]string
 	return changed, metadata, err
 }
 
-// With no route to control the action fails BEFORE any account is touched: a
-// disconnected agent cannot safely rotate a password it could not return.
 func TestExecuteLps_NotConnectedFailsClosedBeforeRotation(t *testing.T) {
 	rec := &lpsRecorder{}
-	e := newLpsExecutor(t, rec, false) // no password store wired
+	e := newLpsExecutor(t, rec, false)
 
 	_, _, err := runLps(t, e, "01HKACTION0000000000000000")
 	if err == nil {
@@ -113,9 +101,6 @@ func TestExecuteLps_NotConnectedFailsClosedBeforeRotation(t *testing.T) {
 	}
 }
 
-// The ordering itself, which is the whole point: the password reaches control
-// BEFORE it is applied locally. A test that only checked "both happened" would
-// pass on the reverse order, which is the order that strands a credential.
 func TestExecuteLps_ReportsBeforeSettingThePassword(t *testing.T) {
 	rec := &lpsRecorder{}
 	e := newLpsExecutor(t, rec, true)
@@ -153,8 +138,6 @@ func TestExecuteLps_ReportsBeforeSettingThePassword(t *testing.T) {
 		t.Errorf("reported under action %v, want %q", rec.actionIDs, actionID)
 	}
 
-	// The action result must carry no password. The credential travels only as
-	// a dedicated authenticated stream field.
 	for k, v := range metadata {
 		if strings.Contains(v, rec.setCalls[0]) {
 			t.Errorf("action metadata %q leaks the rotated password", k)
@@ -166,9 +149,6 @@ func TestExecuteLps_ReportsBeforeSettingThePassword(t *testing.T) {
 	}
 }
 
-// A report that control REJECTS must leave the account alone. This is the case
-// the old suite could not express: sealing failed only on local misconfiguration,
-// whereas a rejected report is a routine server-side outcome.
 func TestExecuteLps_ReportRejectedLeavesPasswordUnchanged(t *testing.T) {
 	rec := &lpsRecorder{storeErr: errors.New("control refused the rotation")}
 	e := newLpsExecutor(t, rec, true)

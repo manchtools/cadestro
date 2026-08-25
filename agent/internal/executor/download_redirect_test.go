@@ -14,9 +14,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/remote"
 )
 
-// crossOriginFixture serves payload from B and 302s A -> B/file. A and B listen
-// on different ports, so A -> B is a genuine cross-origin redirect (the exact
-// shape of GitHub's github.com -> release-assets.githubusercontent.com bounce).
 func crossOriginFixture(t *testing.T, payload []byte) string {
 	t.Helper()
 	srvB := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -30,11 +27,6 @@ func crossOriginFixture(t *testing.T, payload []byte) string {
 	return srvA.URL + "/file"
 }
 
-// TestFetchArtifact_RedirectPolicy is the regression test for the self-update
-// cross-origin failure: a download whose URL bounces to another host is refused
-// under RedirectSameOrigin and followed under RedirectCrossOrigin. remoteHTTPClient
-// is forced nil so the SDK's default client — and thus the policy under test — is
-// actually exercised (an injected client would own its own redirect policy).
 func TestFetchArtifact_RedirectPolicy(t *testing.T) {
 	prev := remoteHTTPClient
 	remoteHTTPClient = nil
@@ -45,13 +37,11 @@ func TestFetchArtifact_RedirectPolicy(t *testing.T) {
 	checksum := hex.EncodeToString(sum[:])
 	url := crossOriginFixture(t, payload)
 
-	// Same-origin policy refuses the host-changing hop (the buggy default).
 	dest := filepath.Join(t.TempDir(), "bin")
 	if err := fetchArtifact(context.Background(), url, dest, checksum, "0755", remote.RedirectSameOrigin); err == nil {
 		t.Fatal("RedirectSameOrigin must refuse the cross-origin redirect, got nil")
 	}
 
-	// Cross-origin policy follows it and the pin still verifies the bytes.
 	dest2 := filepath.Join(t.TempDir(), "bin")
 	if err := fetchArtifact(context.Background(), url, dest2, checksum, "0755", remote.RedirectCrossOrigin); err != nil {
 		t.Fatalf("RedirectCrossOrigin must follow the redirect: %v", err)
@@ -65,9 +55,6 @@ func TestFetchArtifact_RedirectPolicy(t *testing.T) {
 	}
 }
 
-// TestUpdateRedirectPolicy pins the operator-facing mapping: the self-update
-// action's allow_redirect flag selects cross-origin, and the default (false)
-// keeps the strict same-origin guard.
 func TestUpdateRedirectPolicy(t *testing.T) {
 	if got := updateRedirectPolicy(&pb.AgentUpdateParams{AllowRedirect: true}); got != remote.RedirectCrossOrigin {
 		t.Fatalf("AllowRedirect=true -> %v; want RedirectCrossOrigin", got)
@@ -80,8 +67,6 @@ func TestUpdateRedirectPolicy(t *testing.T) {
 	}
 }
 
-// TestRedirectForArtifact pins the package-download default: cross-origin only
-// when the artifact is sha256-pinned (the pin makes a host-changing hop safe).
 func TestRedirectForArtifact(t *testing.T) {
 	if got := redirectForArtifact("abc123"); got != remote.RedirectCrossOrigin {
 		t.Fatalf("pinned -> %v; want RedirectCrossOrigin", got)

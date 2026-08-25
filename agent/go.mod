@@ -18,15 +18,6 @@ require (
 	modernc.org/sqlite v1.55.0
 )
 
-// The contract and the SDK are modules of this repository, resolved from
-// their sibling directories. The v0.0.0 above is a placeholder the replace
-// makes unreachable — nothing fetches these, so no version is ever consulted,
-// and the agent compiles against the copy it is committed with.
-//
-// internal/archtest asserts this exactly: both modules required, both
-// replaced, each pointing at its sibling directory and nothing else. A
-// replace aimed anywhere out of tree is the defect that guard exists to
-// catch.
 replace github.com/manchtools/cadestro/contract => ../contract
 
 replace github.com/manchtools/cadestro/sdk => ../sdk

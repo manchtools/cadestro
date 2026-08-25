@@ -57,7 +57,6 @@ func (s *Store) resolveWorkID(ctx context.Context, id string) (string, error) {
 	return s.queries.ResolveWorkID(ctx, generated.ResolveWorkIDParams{WorkID: id, RunID: stringPtr(id)})
 }
 
-// ReconcilePolicy replaces assignment-derived manifests from authenticated Sync.
 func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) error {
 	if policy == nil {
 		return errors.New("reconcile policy: missing snapshot")
@@ -217,8 +216,6 @@ func (s *Store) GetManifestActions(ctx context.Context) ([]*StoredAction, error)
 	return actions, nil
 }
 
-// BeginManifestRun advances the manifest cursor before any side effect. An
-// interrupted run stays active and resumes from its durable occurrence states.
 func (s *Store) BeginManifestRun(ctx context.Context, work *ScheduledWork, startedAt time.Time) (time.Time, error) {
 	if work == nil || work.Manifest == nil || work.WorkID == "" {
 		return time.Time{}, errors.New("begin manifest run: missing work")
@@ -480,8 +477,6 @@ func (s *Store) MarkPendingResultSynced(ctx context.Context, id string) error {
 	return s.queries.MarkPendingResultSynced(ctx, id)
 }
 
-// RecoverInterruptedOccurrences resolves durable STARTED rows without ever
-// repeating their side effects.
 func (s *Store) RecoverInterruptedOccurrences(ctx context.Context) ([]PendingResult, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

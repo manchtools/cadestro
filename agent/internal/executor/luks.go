@@ -14,24 +14,15 @@ import (
 	"github.com/manchtools/cadestro/agent/internal/store"
 )
 
-// luksSecret wraps a key string the agent holds (a PSK or a key-store value) as
-// an exec.Secret for the encryption Manager, which keeps it off argv (cryptsetup
-// reads it via --key-file). NewMultilineSecret accepts arbitrary key material.
 func luksSecret(s string) sysexec.Secret { return sysexec.NewMultilineSecret(s) }
 
 func luksSecretBytes(b []byte) sysexec.Secret { return sysexec.NewMultilineSecret(string(b)) }
 
-// LuksKeyStore is the executor's narrow in-process key boundary. The runtime
-// adapter carries passphrases only over the authenticated mTLS stream.
 type LuksKeyStore interface {
 	GetKey(ctx context.Context, actionID string) (string, error)
 	StoreKey(ctx context.Context, actionID, devicePath, passphrase string, reason pb.RotationReason) error
 }
 
-// requireLuksStoreReady is the pre-mutation gate for the two store paths:
-// without a usable route to control the new passphrase could never be stored,
-// so bail BEFORE any LUKS slot is touched — a failed store after AddKey needs a
-// rollback, and a rollback that itself fails orphans a slot.
 func (e *Executor) requireLuksStoreReady() error {
 	if e.getLuksKeyStore() == nil {
 		return fmt.Errorf("no server connection; cannot store the new passphrase (fail closed, no cleartext-only rotation)")
@@ -39,23 +30,8 @@ func (e *Executor) requireLuksStoreReady() error {
 	return nil
 }
 
-// luksTimestampFailureThreshold is the consecutive-failure count after
-// which the agent escalates SetLuksLastRotatedAt persistence failures
-// from Warn to Error. Per #80 the operational risk is a silent
-// rotation hot-loop (post-rotation timestamp never persists, so the
-// next tick re-rotates) or rotation that never starts (initial
-// timestamp never persists, so every tick re-enters the init branch);
-// either case is easy to miss at Warn-level in journald and worth
-// surfacing at Error so journald-priority filters page operators.
 const luksTimestampFailureThreshold = 3
 
-// recordLuksTimestampFailure logs a SetLuksLastRotatedAt failure and
-// bumps the per-action consecutive-failure counter. The first
-// (luksTimestampFailureThreshold-1) failures log at Warn; from the
-// threshold-th failure onward the level escalates to Error so
-// journald-priority filters surface what would otherwise be a buried
-// hot-loop or stuck-rotation hazard (#80). The site label distinguishes
-// the initial-timestamp branch from the post-rotation branch in logs.
 func (e *Executor) recordLuksTimestampFailure(actionID, site string, err error) {
 	e.luksTimestampFailMu.Lock()
 	if e.luksTimestampFailCount == nil {
@@ -82,9 +58,6 @@ func (e *Executor) recordLuksTimestampFailure(actionID, site string, err error) 
 	)
 }
 
-// clearLuksTimestampFailures resets the per-action consecutive-failure
-// counter on a successful SetLuksLastRotatedAt write. Companion to
-// recordLuksTimestampFailure (#80).
 func (e *Executor) clearLuksTimestampFailures(actionID string) {
 	e.luksTimestampFailMu.Lock()
 	if e.luksTimestampFailCount != nil {
@@ -93,14 +66,6 @@ func (e *Executor) clearLuksTimestampFailures(actionID string) {
 	e.luksTimestampFailMu.Unlock()
 }
 
-// executeLuks manages LUKS disk encryption.
-//
-// Audit F003: every read of e.luksKeyStore / e.store / e.actionStore in
-// this file goes through the accessors (getLuksKeyStore / getStore /
-// getActionStore). Snapshotted once per call so the rest of the
-// function operates on a consistent view of the wired-in dependencies
-// instead of racing SetLuksKeyStore() / SetStore() / SetActionStore()
-// in runtime.go's reconnect loop.
 func (e *Executor) executeLuks(ctx context.Context, params *pb.EncryptionParams, state pb.DesiredState, actionID string, openPresharedKey func() ([]byte, error)) (*pb.CommandOutput, bool, map[string]string, error) {
 	e.ensureDeps()
 	if params == nil {
@@ -124,7 +89,6 @@ func (e *Executor) executeLuks(ctx context.Context, params *pb.EncryptionParams,
 	}
 }
 
-// removeLuksManagement handles ABSENT state — removes local state only, LUKS keys stay on device.
 func (e *Executor) removeLuksManagement(ctx context.Context, actionID string) (*pb.CommandOutput, bool, map[string]string, error) {
 	st := e.getStore()
 	if st == nil {
@@ -132,21 +96,14 @@ func (e *Executor) removeLuksManagement(ctx context.Context, actionID string) (*
 	}
 	localState, err := st.GetLuksState(ctx, actionID)
 	if err != nil {
-		// Sibling of the DeleteLuksState fail-closed below: a state
-		// lookup error here would otherwise be swallowed and the
-		// "no managed state" branch would report success, lying to
-		// the control plane about an ABSENT transition that never
-		// actually happened.
+
 		e.logger.Error("removeLuksManagement: failed to read local state",
 			"action_id", actionID, "error", err)
 		return nil, false, nil, fmt.Errorf("get luks state: %w", err)
 	}
 	if localState != nil {
 		if err := st.DeleteLuksState(ctx, actionID); err != nil {
-			// Reporting success here would mask an incomplete
-			// ABSENT transition: the action set claims the row is
-			// gone but the agent still has the managed-state entry
-			// and would re-rotate it on the next reconcile.
+
 			e.logger.Error("removeLuksManagement: failed to delete local state",
 				"action_id", actionID, "error", err)
 			return nil, false, nil, fmt.Errorf("delete luks state: %w", err)
@@ -163,33 +120,22 @@ func (e *Executor) removeLuksManagement(ctx context.Context, actionID string) (*
 	}, false, nil, nil
 }
 
-// setupLuks handles PRESENT state — detect volume, check conflicts, take ownership, rotate, reconcile device key.
 func (e *Executor) setupLuks(ctx context.Context, params *pb.EncryptionParams, actionID string, openPresharedKey func() ([]byte, error)) (*pb.CommandOutput, bool, map[string]string, error) {
 	e.ensureDeps()
 	st := e.getStore()
 	if st == nil {
 		return nil, false, nil, fmt.Errorf("agent store not configured")
 	}
-	// Snapshot the action store accessor once per F003 — concurrent
-	// SetActionStore must not change the value mid-execution.
+
 	as := e.getActionStore()
 
 	var output strings.Builder
 
-	// Load local state. WS6 #13: a read failure here must fail closed,
-	// not be mistaken for "first run". Swallowing the error (the previous
-	// `localState, _ :=`) would drive the agent to re-detect the volume
-	// and re-take ownership / re-add keys against a volume it may already
-	// manage — the exact destructive path the state row exists to prevent.
-	// Mirrors removeLuksManagement's fail-closed state read.
 	localState, err := st.GetLuksState(ctx, actionID)
 	if err != nil {
 		return nil, false, nil, fmt.Errorf("get luks state: %w", err)
 	}
 
-	// Resolve policy conflicts before opening the PSK. A losing action never
-	// reaches a LUKS operation and therefore has no reason to materialize its
-	// credential.
 	if as != nil {
 		winnerID, err := resolveLuksConflict(ctx, as, actionID)
 		if err != nil {
@@ -203,11 +149,10 @@ func (e *Executor) setupLuks(ctx context.Context, params *pb.EncryptionParams, a
 		}
 	}
 
-	// Determine device path
 	var devicePath string
 	var presharedKey []byte
 	if localState != nil && localState.OwnershipTaken && localState.DevicePath != "" {
-		// Subsequent run — use stored device path
+
 		devicePath = localState.DevicePath
 		isLuks, err := e.deps.encrypt.IsEncrypted(ctx, devicePath)
 		if err != nil {
@@ -227,10 +172,9 @@ func (e *Executor) setupLuks(ctx context.Context, params *pb.EncryptionParams, a
 		}
 		defer clear(presharedKey)
 
-		// First run — detect volume by PSK
 		vol, err := e.deps.encrypt.DetectVolumeByKey(ctx, luksSecretBytes(presharedKey))
 		if err != nil {
-			// Fall back to heuristic detection (PSK may have been removed by a partial prior run)
+
 			vol, err = e.deps.encrypt.DetectVolume(ctx)
 			if err != nil {
 				return nil, false, nil, fmt.Errorf("no LUKS-encrypted volumes detected on this device")
@@ -244,14 +188,13 @@ func (e *Executor) setupLuks(ctx context.Context, params *pb.EncryptionParams, a
 
 	changed := false
 
-	// Take ownership if not done yet
 	if localState == nil || !localState.OwnershipTaken {
 		if err := e.takeOwnership(ctx, params, actionID, devicePath, presharedKey); err != nil {
 			return nil, false, nil, fmt.Errorf("failed to take ownership: %w", err)
 		}
 		output.WriteString("LUKS: ownership taken, managed passphrase set\n")
 		changed = true
-		// Reload state after ownership
+
 		var reloadErr error
 		localState, reloadErr = st.GetLuksState(ctx, actionID)
 		if reloadErr != nil {
@@ -259,7 +202,6 @@ func (e *Executor) setupLuks(ctx context.Context, params *pb.EncryptionParams, a
 		}
 	}
 
-	// Check if rotation is due
 	if localState != nil && localState.OwnershipTaken {
 		rotated, err := e.checkAndRotate(ctx, params, localState, actionID, devicePath)
 		if err != nil {
@@ -268,11 +210,7 @@ func (e *Executor) setupLuks(ctx context.Context, params *pb.EncryptionParams, a
 		} else if rotated {
 			output.WriteString("LUKS: managed passphrase rotated\n")
 			changed = true
-			// Rotation persisted store state (at minimum LastRotatedAt);
-			// re-sync the in-memory snapshot so downstream consumers
-			// (reconcileDeviceKey, metadata) never act on a stale view
-			// (#174). Best-effort: the pre-rotation snapshot is still a
-			// valid fallback.
+
 			if reloaded, rerr := st.GetLuksState(ctx, actionID); rerr == nil && reloaded != nil {
 				localState = reloaded
 			} else if rerr != nil {
@@ -282,7 +220,6 @@ func (e *Executor) setupLuks(ctx context.Context, params *pb.EncryptionParams, a
 		}
 	}
 
-	// Reconcile device-bound key (slot 7)
 	if localState != nil {
 		keyChanged, err := e.reconcileDeviceKey(ctx, params, localState, actionID, devicePath)
 		if err != nil {
@@ -294,21 +231,12 @@ func (e *Executor) setupLuks(ctx context.Context, params *pb.EncryptionParams, a
 		}
 	}
 
-	// No result metadata. Control refuses any ActionResult with a non-empty
-	// metadata map, and the outbox marks a frame synced as soon as the local
-	// send returns — so a result that carried metadata was either dropped
-	// outright or replayed on every reconnect. device_path reaches control
-	// through StoreLuksKey, which is where it belongs.
 	return &pb.CommandOutput{
 		ExitCode: 0,
 		Stdout:   output.String(),
 	}, changed, nil, nil
 }
 
-// takeOwnership takes ownership of the LUKS volume by replacing the PSK with a managed passphrase.
-// Server-confirmed: the old key is only removed after the server confirms receipt of the new key.
-// If the server already has a working key (e.g. from a previous run with lost local state),
-// ownership is recovered without re-using the PSK.
 func (e *Executor) takeOwnership(ctx context.Context, params *pb.EncryptionParams, actionID, devicePath string, presharedKey []byte) error {
 	e.ensureDeps()
 	ks := e.getLuksKeyStore()
@@ -320,7 +248,6 @@ func (e *Executor) takeOwnership(ctx context.Context, params *pb.EncryptionParam
 		return fmt.Errorf("agent store not configured")
 	}
 
-	// Recovery: check if server already has a key for this action (state loss recovery).
 	existingKey, getKeyErr := ks.GetKey(ctx, actionID)
 	if getKeyErr == nil && existingKey != "" {
 		e.logger.Info("LUKS: server has stored key, testing against volume",
@@ -328,25 +255,17 @@ func (e *Executor) takeOwnership(ctx context.Context, params *pb.EncryptionParam
 		ok, testErr := e.deps.encrypt.VerifyPassphrase(ctx, devicePath, luksSecret(existingKey))
 		e.logger.Info("LUKS: test-passphrase result", "ok", ok, "error", testErr)
 		if testErr == nil && ok {
-			// No verifyKeyRoundTrip is needed here: the round-trip proves
-			// the server durably stored a key the agent
-			// just GENERATED; this key came FROM the server (GetKey) and
-			// was verified against the volume above, so both ends are
-			// already proven.
+
 			e.logger.Info("LUKS: recovered ownership from server-stored key", "action_id", actionID)
 			return st.SetLuksOwnershipTaken(ctx, actionID, devicePath)
 		}
 		e.logger.Warn("LUKS: server has key but it does not unlock the volume, proceeding with PSK",
 			"action_id", actionID, "test_error", testErr)
 	} else if getKeyErr != nil {
-		// Server unreachable — cannot verify existing keys or store new ones.
-		// Do NOT fall through to PSK because StoreKey will also fail,
-		// and the PSK may have already been consumed by a prior run.
+
 		return fmt.Errorf("server not reachable, cannot manage LUKS keys (retry when connected): %w", getKeyErr)
 	}
 
-	// Pre-mutation gate: without a route to control the store is doomed, so
-	// refuse before any slot is touched.
 	if err := e.requireLuksStoreReady(); err != nil {
 		return fmt.Errorf("take ownership: %w", err)
 	}
@@ -356,16 +275,12 @@ func (e *Executor) takeOwnership(ctx context.Context, params *pb.EncryptionParam
 		minWords = 5
 	}
 
-	// Generate managed passphrase. The agent's key-store layer handles keys as
-	// strings locally, so Reveal once here and re-wrap as a Secret at each
-	// encryption-Manager boundary below.
 	passSecret, err := sysenc.GeneratePassphrase(minWords)
 	if err != nil {
 		return fmt.Errorf("generate passphrase: %w", err)
 	}
 	passphrase := passSecret.Reveal()
 
-	// Add managed passphrase using PSK (both keys now valid)
 	e.logger.Info("LUKS: adding managed key using PSK",
 		"psk_len", len(presharedKey),
 		"new_key_len", len(passphrase))
@@ -373,9 +288,8 @@ func (e *Executor) takeOwnership(ctx context.Context, params *pb.EncryptionParam
 		return fmt.Errorf("add managed key: %w", err)
 	}
 
-	// Store on server — must succeed before removing the PSK.
 	if err := ks.StoreKey(ctx, actionID, devicePath, passphrase, pb.RotationReason_ROTATION_REASON_INITIAL); err != nil {
-		// Rollback: remove the managed key we just added
+
 		if rmErr := e.deps.encrypt.RemoveKey(ctx, devicePath, luksSecret(passphrase)); rmErr != nil {
 			e.logger.Error("LUKS: rollback failed — managed key remains in slot",
 				"action_id", actionID, "error", rmErr)
@@ -383,22 +297,17 @@ func (e *Executor) takeOwnership(ctx context.Context, params *pb.EncryptionParam
 		return fmt.Errorf("store key on server: %w", err)
 	}
 
-	// Round-trip verification: re-fetch the committed key from the server,
-	// verify it matches exactly, and test it against the volume.
 	if err := e.verifyKeyRoundTrip(ctx, actionID, devicePath, passphrase); err != nil {
 		return fmt.Errorf("round-trip verification failed, keeping both keys: %w", err)
 	}
 
-	// Verified — now safe to remove PSK
 	if err := e.deps.encrypt.RemoveKey(ctx, devicePath, luksSecretBytes(presharedKey)); err != nil {
 		e.logger.Warn("failed to remove PSK after ownership (both keys work)", "error", err)
 	}
 
-	// Update local state
 	return st.SetLuksOwnershipTaken(ctx, actionID, devicePath)
 }
 
-// checkAndRotate checks if a rotation is due and rotates the managed passphrase if needed.
 func (e *Executor) checkAndRotate(ctx context.Context, params *pb.EncryptionParams, localState *store.LuksState, actionID, devicePath string) (bool, error) {
 	e.ensureDeps()
 	ks := e.getLuksKeyStore()
@@ -410,18 +319,11 @@ func (e *Executor) checkAndRotate(ctx context.Context, params *pb.EncryptionPara
 		return false, fmt.Errorf("agent store not configured")
 	}
 
-	// Check if rotation interval has elapsed
 	if params.RotationIntervalDays > 0 {
-		// No previous rotation recorded — set the timestamp and skip.
+
 		if localState.LastRotatedAt.IsZero() {
 			if err := st.SetLuksLastRotatedAt(ctx, actionID, e.now().UTC()); err != nil {
-				// First-rotation timestamp persistence failed. Subsequent
-				// ticks re-enter this branch, so rotation would never
-				// start. #80 escalated the buried Warn to Error after a
-				// threshold; #173 goes further: fail the action LOUDLY so
-				// the server sees a failing execution instead of a green
-				// action whose rotation is silently parked forever. The
-				// escalation counter stays for log-side telemetry.
+
 				e.recordLuksTimestampFailure(actionID, "initial", err)
 				return false, fmt.Errorf("persist initial LUKS rotation timestamp (rotation cannot start until this succeeds): %w", err)
 			}
@@ -434,13 +336,10 @@ func (e *Executor) checkAndRotate(ctx context.Context, params *pb.EncryptionPara
 		}
 	}
 
-	// Pre-mutation gate: refuse a due rotation before touching any slot when
-	// the store could never succeed.
 	if err := e.requireLuksStoreReady(); err != nil {
 		return false, fmt.Errorf("rotate: %w", err)
 	}
 
-	// Get current key from server
 	currentKey, err := ks.GetKey(ctx, actionID)
 	if err != nil {
 		return false, fmt.Errorf("get current key: %w", err)
@@ -451,22 +350,18 @@ func (e *Executor) checkAndRotate(ctx context.Context, params *pb.EncryptionPara
 		minWords = 5
 	}
 
-	// Generate new passphrase (Reveal once for the string-based local key
-	// handling).
 	newPassSecret, err := sysenc.GeneratePassphrase(minWords)
 	if err != nil {
 		return false, fmt.Errorf("generate passphrase: %w", err)
 	}
 	newPassphrase := newPassSecret.Reveal()
 
-	// Add new key using old key (both valid)
 	if err := e.deps.encrypt.AddKey(ctx, devicePath, luksSecret(currentKey), luksSecret(newPassphrase), sysenc.AddKeyOptions{}); err != nil {
 		return false, fmt.Errorf("add new key: %w", err)
 	}
 
-	// Store on server — must succeed before removing the old key.
 	if err := ks.StoreKey(ctx, actionID, devicePath, newPassphrase, pb.RotationReason_ROTATION_REASON_SCHEDULED); err != nil {
-		// Rollback: remove the new key we just added
+
 		if rmErr := e.deps.encrypt.RemoveKey(ctx, devicePath, luksSecret(newPassphrase)); rmErr != nil {
 			e.logger.Error("LUKS: rotation rollback failed — new key remains in slot",
 				"action_id", actionID, "error", rmErr)
@@ -474,21 +369,14 @@ func (e *Executor) checkAndRotate(ctx context.Context, params *pb.EncryptionPara
 		return false, fmt.Errorf("store new key on server: %w", err)
 	}
 
-	// Round-trip verification: re-fetch the key from the server, verify it
-	// matches exactly, and test it against the volume.
 	if err := e.verifyKeyRoundTrip(ctx, actionID, devicePath, newPassphrase); err != nil {
 		return false, fmt.Errorf("round-trip verification failed, keeping both keys: %w", err)
 	}
 
-	// Verified — now safe to remove old key
 	if err := e.deps.encrypt.RemoveKey(ctx, devicePath, luksSecret(currentKey)); err != nil {
 		e.logger.Warn("failed to remove old key after rotation (both keys work)", "error", err)
 	}
 
-	// Record rotation time locally. If this fails persistently the
-	// next tick believes nothing rotated and re-rotates — a hot loop
-	// that churns LUKS slots. Track consecutive failures so the
-	// buried-Warn case escalates to Error after the threshold (#80).
 	if err := st.SetLuksLastRotatedAt(ctx, actionID, e.now().UTC()); err != nil {
 		e.recordLuksTimestampFailure(actionID, "post_rotation", err)
 	} else {
@@ -498,7 +386,6 @@ func (e *Executor) checkAndRotate(ctx context.Context, params *pb.EncryptionPara
 	return true, nil
 }
 
-// reconcileDeviceKey ensures LUKS slot 7 matches the desired device_bound_key_type.
 func (e *Executor) reconcileDeviceKey(ctx context.Context, params *pb.EncryptionParams, localState *store.LuksState, actionID, devicePath string) (bool, error) {
 	currentType := localState.DeviceKeyType
 	desiredType := "none"
@@ -513,26 +400,20 @@ func (e *Executor) reconcileDeviceKey(ctx context.Context, params *pb.Encryption
 		return false, nil
 	}
 
-	// Revoke current key if occupied
 	if currentType != "none" {
 		if err := e.revokeDeviceKeyInternal(ctx, localState, actionID); err != nil {
 			return false, fmt.Errorf("revoke current device key: %w", err)
 		}
 	}
 
-	// Enroll new key
 	switch desiredType {
 	case "tpm":
 		if err := e.enrollTpm(ctx, actionID, devicePath); err != nil {
 			return false, fmt.Errorf("enroll TPM: %w", err)
 		}
-		// enrollTpm persists device_key_type="tpm" on success.
+
 	case "user_passphrase":
-		// No key is enrolled here — the user sets the actual passphrase
-		// via the CLI token flow (cmd_luks.go records the hash). But the
-		// MODE must still be persisted, or localState stays "none" and
-		// every reconcile re-reports changed=true forever (never
-		// converging). enrollTpm persists its mode; mirror that here.
+
 		st := e.getStore()
 		if st == nil {
 			return false, fmt.Errorf("agent store not configured")
@@ -545,7 +426,6 @@ func (e *Executor) reconcileDeviceKey(ctx context.Context, params *pb.Encryption
 	return true, nil
 }
 
-// enrollTpm enrolls a TPM2 key for the LUKS volume.
 func (e *Executor) enrollTpm(ctx context.Context, actionID, devicePath string) error {
 	ks := e.getLuksKeyStore()
 	if ks == nil {
@@ -580,7 +460,6 @@ func (e *Executor) enrollTpm(ctx context.Context, actionID, devicePath string) e
 	return st.SetLuksDeviceKeyType(ctx, actionID, "tpm")
 }
 
-// revokeDeviceKeyInternal clears LUKS slot 7 (TPM or user passphrase).
 func (e *Executor) revokeDeviceKeyInternal(ctx context.Context, localState *store.LuksState, actionID string) error {
 	ks := e.getLuksKeyStore()
 	if ks == nil {
@@ -616,8 +495,6 @@ func (e *Executor) revokeDeviceKeyInternal(ctx context.Context, localState *stor
 	return st.SetLuksDeviceKeyType(ctx, actionID, "none")
 }
 
-// RevokeLuksDeviceKey handles the live request to revoke the device-bound key.
-// Called by the handler when a RevokeLuksDeviceKey stream message arrives.
 func (e *Executor) RevokeLuksDeviceKey(ctx context.Context, actionID string) (bool, string) {
 	st := e.getStore()
 	ks := e.getLuksKeyStore()
@@ -633,10 +510,10 @@ func (e *Executor) RevokeLuksDeviceKey(ctx context.Context, actionID string) (bo
 		return false, fmt.Sprintf("failed to load LUKS state: %v", err)
 	}
 	if localState == nil {
-		return true, "" // No state = nothing to revoke
+		return true, ""
 	}
 	if localState.DeviceKeyType == "none" {
-		return true, "" // Already revoked
+		return true, ""
 	}
 
 	if err := e.revokeDeviceKeyInternal(ctx, localState, actionID); err != nil {
@@ -645,16 +522,14 @@ func (e *Executor) RevokeLuksDeviceKey(ctx context.Context, actionID string) (bo
 	return true, ""
 }
 
-// resolveLuksConflict determines which LUKS action should manage the volume.
-// Returns the winning action ID. If this action is not the winner, it should fail.
 func resolveLuksConflict(ctx context.Context, as ActionStore, actionID string) (string, error) {
 	if as == nil {
-		// No action store wired: assume this action wins.
+
 		return actionID, nil
 	}
 	stored, err := as.GetStoredActions(ctx)
 	if err != nil {
-		return actionID, nil // Can't check, assume this action wins
+		return actionID, nil
 	}
 
 	type luksCandidate struct {
@@ -688,10 +563,6 @@ func resolveLuksConflict(ctx context.Context, as ActionStore, actionID string) (
 		return actionID, nil
 	}
 
-	// Pick winner: highest min_words → highest complexity → oldest.
-	// slices.MaxFunc with an explicit comparator is easier to read
-	// than the previous chained-if argmax, and adding a fourth
-	// tie-breaker becomes a single line. Audit F043.
 	winner := slices.MaxFunc(candidates, func(a, b luksCandidate) int {
 		if a.minWords != b.minWords {
 			return int(a.minWords - b.minWords)
@@ -699,9 +570,7 @@ func resolveLuksConflict(ctx context.Context, as ActionStore, actionID string) (
 		if a.complexity != b.complexity {
 			return int(a.complexity - b.complexity)
 		}
-		// Older assignment wins (smaller time = earlier). Return
-		// negative when a is older so MaxFunc selects b for "later"
-		// — invert because older should win.
+
 		if a.assignedAt.Before(b.assignedAt) {
 			return 1
 		}
@@ -714,10 +583,6 @@ func resolveLuksConflict(ctx context.Context, as ActionStore, actionID string) (
 	return winner.id, nil
 }
 
-// verifyKeyRoundTrip re-fetches the committed key from the server, verifies it
-// matches the expected passphrase exactly, then tests it against the LUKS
-// volume. A successful StoreKey response is transactionally visible, so any
-// mismatch is an error rather than eventual-consistency lag to retry.
 func (e *Executor) verifyKeyRoundTrip(ctx context.Context, actionID, devicePath, expectedKey string) error {
 	e.ensureDeps()
 	ks := e.getLuksKeyStore()
@@ -733,7 +598,6 @@ func (e *Executor) verifyKeyRoundTrip(ctx context.Context, actionID, devicePath,
 		return fmt.Errorf("server returned a different key than the committed value")
 	}
 
-	// Defense-in-depth: verify the key actually unlocks the volume.
 	ok, testErr := e.deps.encrypt.VerifyPassphrase(ctx, devicePath, luksSecret(storedKey))
 	if testErr != nil || !ok {
 		return fmt.Errorf("server-stored key does not unlock volume (test_ok=%v, err=%v)", ok, testErr)
@@ -743,7 +607,6 @@ func (e *Executor) verifyKeyRoundTrip(ctx context.Context, actionID, devicePath,
 	return nil
 }
 
-// ActionStore is the interface for accessing stored actions (for conflict resolution).
 type ActionStore interface {
 	GetStoredActions(ctx context.Context) ([]*store.StoredAction, error)
 }

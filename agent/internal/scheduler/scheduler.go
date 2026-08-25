@@ -1,4 +1,3 @@
-// Package scheduler executes durably received manifests on the agent.
 package scheduler
 
 import (
@@ -70,8 +69,6 @@ func New(ctx context.Context, st *store.Store, executor ActionExecutor, logger *
 
 func (s *Scheduler) Results() <-chan *ExecutionResult { return s.results }
 
-// ReconcilePolicy replaces assignment-derived work. Policy snapshots arrive
-// through authenticated Sync.
 func (s *Scheduler) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) error {
 	if err := s.store.ReconcilePolicy(ctx, policy); err != nil {
 		return err
@@ -214,7 +211,7 @@ func (s *Scheduler) executeManifest(ctx context.Context, work store.ScheduledWor
 		}
 		if prior, exists := states[occurrence.GetOccurrenceId().GetValue()]; exists && prior.State != store.OccurrencePending {
 			if prior.State == store.OccurrenceStarted {
-				return // a scheduled reboot is still waiting for its boot marker
+				return
 			}
 			aggregate, aggregateError = aggregateStatus(aggregate, aggregateError, prior.ResultStatus, prior.ResultError)
 			if prior.ResultStatus != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS &&
@@ -245,8 +242,7 @@ func (s *Scheduler) executeManifest(ctx context.Context, work store.ScheduledWor
 			result = s.executor.ExecuteAction(ctx, action)
 		}
 		if ctx.Err() != nil {
-			// Leave STARTED durable. Startup recovery will report INDETERMINATE
-			// and the next run cannot silently repeat the effect.
+
 			return
 		}
 		result.RunId = &pb.RunId{Value: work.RunID}
@@ -309,7 +305,6 @@ func (s *Scheduler) publish(result *ExecutionResult) {
 	}
 }
 
-// GetStoredActions supplies the LUKS conflict check from the manifest store.
 func (s *Scheduler) GetStoredActions(ctx context.Context) ([]*store.StoredAction, error) {
 	return s.store.GetManifestActions(ctx)
 }

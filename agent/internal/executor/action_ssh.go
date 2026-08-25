@@ -1,4 +1,3 @@
-// Package executor provides implementations for action executors.
 package executor
 
 import (
@@ -12,15 +11,6 @@ import (
 	sysuser "github.com/manchtools/cadestro/sdk/sys/user"
 )
 
-// shortGroupName builds a Linux-group-safe name from a prefix and an
-// actionID, enforcing the 32-character group-name limit. If
-// prefix+actionID fits, the actionID is used verbatim (preserving
-// human-readable naming for typical ULID-length inputs). If it would
-// overflow, the actionID is replaced with a short stable hash so two
-// IDs sharing a long common prefix can't collide on the same group.
-// The hash carries 32 bits of collision space — adequate per host
-// because the namespace is per-action and the group is unlinked when
-// the action is removed.
 func shortGroupName(prefix, actionID string) string {
 	const linuxGroupMax = 32
 	lower := strings.ToLower(actionID)
@@ -30,39 +20,19 @@ func shortGroupName(prefix, actionID string) string {
 	}
 	sum := sha256.Sum256([]byte(lower))
 	hashHex := hex.EncodeToString(sum[:])
-	// Reserve 1 char for separator, 8 chars for hash; the rest is
-	// readable prefix from the actionID itself.
+
 	const hashLen = 8
 	const sepLen = 1
 	keep := linuxGroupMax - len(prefix) - sepLen - hashLen
 	if keep < 1 {
-		// Pathological: prefix alone leaves no room for any hash.
-		// Caller should keep prefixes short; truncate the prefix in
-		// that case so the hash fits — name is no longer
-		// human-readable but stays collision-resistant.
+
 		return prefix[:linuxGroupMax-sepLen-hashLen] + "-" + hashHex[:hashLen]
 	}
 	return prefix + lower[:keep] + "-" + hashHex[:hashLen]
 }
 
-// maxActionIDForFilesystem caps the length of an actionID before it is
-// spliced into a filesystem path or Linux group name. getActionID
-// already enforces the same ceiling at the entry point, but the
-// per-action functions accept actionID as a parameter, so we re-check
-// here as defense in depth. Set the same as getActionID's limit to
-// avoid divergence: any ID accepted upstream is accepted here.
 const maxActionIDForFilesystem = 64
 
-// validateActionIDForFilesystem rejects an actionID that is empty,
-// too long, or contains any character outside the alphanumeric-safe
-// set. Action IDs flow into filesystem paths
-// (/etc/sudoers.d/<id>, /etc/ssh/sshd_config.d/<id>.conf, …) and into
-// Linux group names (cadestro-ssh-<id>, cadestro-sudo-<id>). The entry-point
-// getActionID enforces the same rule, but each action_*.go file
-// accepts actionID as a parameter and any future caller that bypasses
-// getActionID would otherwise smuggle path-meaningful characters
-// straight into a system path. Errors are split per failure mode so
-// callers can distinguish length issues from character issues.
 func validateActionIDForFilesystem(actionID string) error {
 	if actionID == "" {
 		return fmt.Errorf("action ID required for group/file naming")
@@ -76,27 +46,18 @@ func validateActionIDForFilesystem(actionID string) error {
 	return nil
 }
 
-// sshGroupName creates a valid Linux group name from the action ID for SSH access.
-// Linux group names: max 32 chars. cadestro-ssh- (13 chars) + up to 19 chars of action ID.
-// For longer action IDs, falls back to a hash-suffix scheme to keep
-// the mapping unique — naïve truncation could otherwise let two
-// distinct IDs sharing a 19-char prefix collide on the same group.
 func sshGroupName(actionID string) string {
 	return shortGroupName("cadestro-ssh-", actionID)
 }
 
-// sshConfigPath returns the path for an SSH config drop-in file.
 func sshConfigPath(actionID string) string {
 	return fmt.Sprintf("/etc/ssh/sshd_config.d/cadestro-ssh-%s.conf", strings.ToLower(actionID))
 }
 
-// sshEffectiveUsers returns the user list from params.
 func sshEffectiveUsers(params *pb.SshParams) []string {
 	return params.Users
 }
 
-// executeSsh configures SSH access via an sshd_config.d drop-in file with a Match Group directive.
-// Each action creates a Linux group cadestro-ssh-{actionId} and users are added to the group.
 func (e *Executor) executeSsh(ctx context.Context, params *pb.SshParams, state pb.DesiredState, actionID string) (*pb.CommandOutput, bool, error) {
 	e.ensureDeps()
 	if params == nil {
@@ -127,7 +88,6 @@ func (e *Executor) executeSsh(ctx context.Context, params *pb.SshParams, state p
 	}
 }
 
-// generateSshGroupConfig generates sshd_config content using Match Group.
 func generateSshGroupConfig(groupName string, params *pb.SshParams) string {
 	lines := []string{
 		"# Managed by Cadestro - do not edit manually",
@@ -147,15 +107,12 @@ func generateSshGroupConfig(groupName string, params *pb.SshParams) string {
 	return strings.Join(lines, "\n") + "\n"
 }
 
-// setupSshAccess creates or updates the SSH access group and sshd_config.d file.
 func (e *Executor) setupSshAccess(ctx context.Context, params *pb.SshParams, users []string, groupName, configPath string) (*pb.CommandOutput, bool, error) {
 	var output strings.Builder
 	changed := false
 
-	// Generate sshd config content
 	content := generateSshGroupConfig(groupName, params)
 
-	// Check idempotency: file content + group membership
 	fileMatches := e.configMatchesDesired(ctx, configPath, content)
 	membersMatch := e.sudoGroupMembersMatch(ctx, groupName, users)
 	if fileMatches && membersMatch {
@@ -170,7 +127,6 @@ func (e *Executor) setupSshAccess(ctx context.Context, params *pb.SshParams, use
 		return out, false, err
 	}
 
-	// Ensure group exists
 	gExists, err := e.groupExists(ctx, groupName)
 	if err != nil {
 		return nil, false, fmt.Errorf("check group %s: %w", groupName, err)
@@ -183,9 +139,8 @@ func (e *Executor) setupSshAccess(ctx context.Context, params *pb.SshParams, use
 		changed = true
 	}
 
-	// Write sshd config file with validation
 	if !fileMatches {
-		// Ensure /etc/ssh/sshd_config.d exists
+
 		if err := e.createDirectory(ctx, "/etc/ssh/sshd_config.d", true); err != nil {
 			return nil, false, fmt.Errorf("create sshd_config.d: %w", err)
 		}
@@ -197,7 +152,6 @@ func (e *Executor) setupSshAccess(ctx context.Context, params *pb.SshParams, use
 		e.reloadSshd(ctx, &output)
 	}
 
-	// Sync group membership
 	if memberChanged, err := e.syncGroupMembers(ctx, groupName, users, &output); err != nil {
 		return &pb.CommandOutput{ExitCode: 1, Stdout: output.String(), Stderr: err.Error()}, changed, err
 	} else if memberChanged {
@@ -210,7 +164,6 @@ func (e *Executor) setupSshAccess(ctx context.Context, params *pb.SshParams, use
 	}, changed, nil
 }
 
-// removeSshAccess removes the sshd_config.d file, group membership, and group.
 func (e *Executor) removeSshAccess(ctx context.Context, groupName, configPath string) (*pb.CommandOutput, bool, error) {
 	var output strings.Builder
 
@@ -222,7 +175,6 @@ func (e *Executor) removeSshAccess(ctx context.Context, groupName, configPath st
 		output.WriteString(fmt.Sprintf("warning: %v\n", err))
 	}
 
-	// Reload sshd after removing the config drop-in
 	if changed {
 		e.reloadSshd(ctx, &output)
 	}
@@ -237,7 +189,6 @@ func (e *Executor) removeSshAccess(ctx context.Context, groupName, configPath st
 	}, changed, nil
 }
 
-// configMatchesDesired checks if a config file already has the desired content.
 func (e *Executor) configMatchesDesired(ctx context.Context, path, desiredContent string) bool {
 	if !e.fileExistsWithSudo(ctx, path) {
 		return false
@@ -249,7 +200,6 @@ func (e *Executor) configMatchesDesired(ctx context.Context, path, desiredConten
 	return existing == desiredContent
 }
 
-// executeSshd configures the SSH daemon via sshd_config.d drop-in files.
 func (e *Executor) executeSshd(ctx context.Context, params *pb.SshdParams, state pb.DesiredState, actionID string) (*pb.CommandOutput, bool, error) {
 	e.ensureDeps()
 	if params == nil {
@@ -272,13 +222,6 @@ func (e *Executor) executeSshd(ctx context.Context, params *pb.SshdParams, state
 	}
 }
 
-// generateSshdGlobalConfig generates sshd_config content from directives.
-// Returns an error if any directive's key or value contains a newline,
-// carriage return, or NUL — these characters would split one directive
-// into multiple lines (or terminate the file early via NUL) and let a
-// crafted action smuggle arbitrary additional sshd directives past the
-// caller's intent. sshd_config has no escape syntax; fail loudly at
-// generation time.
 func generateSshdGlobalConfig(params *pb.SshdParams) (string, error) {
 	var lines []string
 	lines = append(lines, "# Managed by Cadestro - do not edit manually")
@@ -294,7 +237,6 @@ func generateSshdGlobalConfig(params *pb.SshdParams) (string, error) {
 	return strings.Join(lines, "\n") + "\n", nil
 }
 
-// setupSshdConfig creates or updates an sshd_config.d drop-in file and reloads sshd if changed.
 func (e *Executor) setupSshdConfig(ctx context.Context, params *pb.SshdParams, configPath string) (*pb.CommandOutput, bool, error) {
 	var output strings.Builder
 
@@ -303,7 +245,6 @@ func (e *Executor) setupSshdConfig(ctx context.Context, params *pb.SshdParams, c
 		return nil, false, err
 	}
 
-	// Check idempotency
 	if e.configMatchesDesired(ctx, configPath, content) {
 		output.WriteString(fmt.Sprintf("SSHD config already up to date: %s\n", configPath))
 		return &pb.CommandOutput{
@@ -316,7 +257,6 @@ func (e *Executor) setupSshdConfig(ctx context.Context, params *pb.SshdParams, c
 		return out, false, err
 	}
 
-	// Ensure /etc/ssh/sshd_config.d exists
 	if err := e.createDirectory(ctx, "/etc/ssh/sshd_config.d", true); err != nil {
 		return nil, false, fmt.Errorf("create sshd_config.d: %w", err)
 	}
@@ -334,7 +274,6 @@ func (e *Executor) setupSshdConfig(ctx context.Context, params *pb.SshdParams, c
 	}, true, nil
 }
 
-// removeSshdConfig removes an sshd_config.d drop-in file and reloads sshd.
 func (e *Executor) removeSshdConfig(ctx context.Context, configPath string) (*pb.CommandOutput, bool, error) {
 	var output strings.Builder
 

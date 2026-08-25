@@ -14,10 +14,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/repo"
 )
 
-// testRunnerForValidation builds a Direct runner for repo.Validate tests.
-// Validate runs no commands — it only validates field shapes — so a real
-// Direct runner is identical to FakeRunner here but avoids the test-only
-// dependency on exectest.
 func testRunnerForValidation(t *testing.T) sysexec.Runner {
 	t.Helper()
 	r, err := sysexec.NewRunner(sysexec.Direct)
@@ -25,16 +21,6 @@ func testRunnerForValidation(t *testing.T) sysexec.Runner {
 	return r
 }
 
-// Repository field validation is now owned by the SDK's repo.Manager.Validate;
-// executeRepository runs it (on the agent's repositoryFields mapping) as its
-// pre-flight gate. These tests drive that exact path: they prove the agent's
-// proto->repo mapping reaches repo.Validate and that injection is rejected, and
-// pin the agent-level decisions the SDK can't (ADR 0012 operator-choice gpgcheck;
-// which fields are validated at this gate vs. later in downloadAptKey).
-
-// validateRepoViaSDK builds the SDK repo.Manager for whichever backend the params
-// configure and validates the agent's field mapping through it — the path
-// executeRepository uses. The runner is a fake (Validate runs no commands).
 func validateRepoViaSDK(t *testing.T, p *pb.RepositoryParams) error {
 	t.Helper()
 	var backend pkg.Backend
@@ -56,9 +42,6 @@ func validateRepoViaSDK(t *testing.T, p *pb.RepositoryParams) error {
 	return mgr.Validate(e.repositoryFields(p))
 }
 
-// TestRepository_AcceptsRealistic pins that legitimate configurations pass the
-// SDK validation through the agent's mapping — a regression in the mapping or a
-// grammar over-tightening must not reject these.
 func TestRepository_AcceptsRealistic(t *testing.T) {
 	cases := map[string]*pb.RepositoryParams{
 		"apt": {Name: "r", Apt: &pb.AptRepository{
@@ -86,12 +69,6 @@ func TestRepository_AcceptsRealistic(t *testing.T) {
 	}
 }
 
-// TestRepository_RejectsBadBaseURLAndGpgKey pins the load-bearing security
-// properties through the delegation: dnf/zypper/pacman base URLs where ROOT
-// packages are fetched must be https, and a dnf/zypper gpgkey ref passed to
-// `rpm --import` must be a safe https/file/abs-path (never a flag, plaintext
-// http, or rpm's ext:: command transport). A future swap of the SDK call must
-// not silently drop these.
 func TestRepository_RejectsBadBaseURLAndGpgKey(t *testing.T) {
 	reject := []*pb.RepositoryParams{
 		{Name: "r", Dnf: &pb.DnfRepository{Baseurl: "http://m/r", Gpgcheck: true}},
@@ -109,11 +86,6 @@ func TestRepository_RejectsBadBaseURLAndGpgKey(t *testing.T) {
 	}
 }
 
-// TestRepository_AllowsOperatorChoiceGpgcheck pins ADR 0012 through the
-// delegation: gpgcheck is an OPERATOR CHOICE, not a hard gate. An https base URL
-// with gpgcheck=false (and no key) is a legitimate internal-mirror config and
-// must NOT be rejected. Guards against a future contributor (or SDK change)
-// re-introducing a refusal that would break real operators.
 func TestRepository_AllowsOperatorChoiceGpgcheck(t *testing.T) {
 	accept := []*pb.RepositoryParams{
 		{Name: "r", Dnf: &pb.DnfRepository{Baseurl: "https://m/r", Gpgcheck: false}},
@@ -127,8 +99,6 @@ func TestRepository_AllowsOperatorChoiceGpgcheck(t *testing.T) {
 	}
 }
 
-// protoFieldName extracts the snake_case proto field name from the generated
-// struct's `protobuf:"...,name=foo,..."` tag, or "" for proto-internal fields.
 func protoFieldName(f reflect.StructField) string {
 	for _, part := range strings.Split(f.Tag.Get("protobuf"), ",") {
 		if strings.HasPrefix(part, "name=") {
@@ -138,24 +108,8 @@ func protoFieldName(f reflect.StructField) string {
 	return ""
 }
 
-// TestRepository_SelfDiscoversEveryStringField is the self-discovering guard
-// (finding 4): reflection-walk every string / []string field of every repo
-// proto, inject a control-char value into exactly that field on an otherwise
-// VALID base config (so the SDK's required-field checks don't mask it), and
-// assert the agent's mapping + repo.Validate reject it. A newly-added proto
-// field that the agent forgets to map (repositoryFields) or that repo.Validate
-// forgets to guard makes this FAIL — it fails CLOSED: a field is "must be
-// guarded" unless consciously excluded with a justification.
 func TestRepository_SelfDiscoversEveryStringField(t *testing.T) {
-	// Excluded: fields NOT validated at the repo.Validate gate.
-	//   - apt.gpg_key:     ASCII-armored key blob written verbatim to a keyring
-	//                      file (legitimate multi-line content, not a config line).
-	//   - apt.gpg_key_url: the agent's OWN field (resolved by downloadAptKey, which
-	//                      validates it via sdk.ValidateHTTPSURL — see
-	//                      TestDownloadAptKey_RejectsNonHTTPS); it is not part of the
-	//                      repositoryFields mapping that reaches repo.Validate.
-	// NOT a fail-open allowlist: a new field is absent here by default and
-	// therefore REQUIRED to be mapped + guarded.
+
 	excluded := map[string]bool{
 		"apt.gpg_key":     true,
 		"apt.gpg_key_url": true,
@@ -163,7 +117,7 @@ func TestRepository_SelfDiscoversEveryStringField(t *testing.T) {
 
 	managers := []struct {
 		prefix string
-		base   func() proto.Message // a VALID config (required fields set)
+		base   func() proto.Message
 		wrap   func(proto.Message) *pb.RepositoryParams
 	}{
 		{"apt",
@@ -210,7 +164,6 @@ func TestRepository_SelfDiscoversEveryStringField(t *testing.T) {
 				continue
 			}
 
-			// Start from a VALID base, then poison exactly the field under test.
 			fresh := mgr.base()
 			fv := reflect.ValueOf(fresh).Elem().Field(i)
 			if isString {

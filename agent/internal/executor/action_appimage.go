@@ -1,4 +1,3 @@
-// Package executor provides implementations for action executors.
 package executor
 
 import (
@@ -17,12 +16,6 @@ import (
 	sysfs "github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// sha256File streams the file at path through sha256 and returns
-// the hex digest. Used by checksum-gated install paths so AppImage
-// (and any other large-file action) can verify identity without
-// buffering the entire payload — an io.ReadAll + sha256.Sum256
-// pattern would push tens-to-hundreds of megabytes through the
-// heap on every idempotency check.
 func sha256File(path string) (string, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -47,15 +40,6 @@ func (e *Executor) executeAppImage(ctx context.Context, params *pb.AppInstallPar
 		installPath = "/opt/appimages"
 	}
 
-	// Validate the download URL BEFORE deriving the on-disk
-	// filename. The previous shape ran filepath.Base(params.Url)
-	// directly, so a URL like "https://evil.example/../../etc/" or
-	// a malformed input could produce a path-meaningful filename
-	// and either escape installPath or land on an unexpected name.
-	// Require a parseable HTTPS URL with a non-empty host (WS7 #2:
-	// https-only — the previous code also allowed http://); derive the
-	// filename from a path segment that has no slashes or other directory
-	// components.
 	trimmedURL := strings.TrimSpace(params.Url)
 	if err := sdk.ValidateHTTPSURL(trimmedURL); err != nil {
 		return nil, false, fmt.Errorf("invalid appimage URL: %w", err)
@@ -65,18 +49,11 @@ func (e *Executor) executeAppImage(ctx context.Context, params *pb.AppInstallPar
 		return nil, false, fmt.Errorf("invalid appimage URL %q: %w", params.Url, err)
 	}
 	filename := filepath.Base(parsedURL.Path)
-	// Reject ".." too — filepath.Base of e.g. https://x.example/.. returns
-	// "..", which would land at the parent of installPath when joined.
+
 	if filename == "." || filename == ".." || filename == "/" || filename == "" || strings.ContainsAny(filename, `/\`) {
 		return nil, false, fmt.Errorf("appimage URL %q does not yield a usable filename", params.Url)
 	}
 
-	// Defense-in-depth (parity with rpm/deb): refuse to INSTALL an unverified
-	// artifact — require https + a non-empty checksum — before any path
-	// resolution, privileged remount, or download. The control server validator
-	// already mandates a checksum for AppInstallParams, so this is belt-and-
-	// suspenders, not a behaviour change for legitimate dispatches. ABSENT
-	// (removal) needs no checksum, so the guard is PRESENT-only.
 	if state == pb.DesiredState_DESIRED_STATE_PRESENT {
 		if err := requireVerifiedArtifact(params.Url, params.ChecksumSha256); err != nil {
 			return nil, false, err
@@ -85,7 +62,6 @@ func (e *Executor) executeAppImage(ctx context.Context, params *pb.AppInstallPar
 
 	fullPath := filepath.Join(installPath, filename)
 
-	// Resolve symlinks to prevent traversal attacks
 	resolvedPath, err := sysfs.ResolveAndValidatePath(fullPath)
 	if err != nil {
 		return nil, false, fmt.Errorf("invalid path: %w", err)
@@ -93,20 +69,10 @@ func (e *Executor) executeAppImage(ctx context.Context, params *pb.AppInstallPar
 
 	switch state {
 	case pb.DesiredState_DESIRED_STATE_PRESENT:
-		// Check if file already exists with correct checksum.
-		// Stream-hash the existing file rather than os.ReadFile +
-		// sha256.Sum256 — AppImages are routinely tens to hundreds
-		// of megabytes; buffering the entire payload to derive a
-		// hash that's compared once is wasteful and risks tipping
-		// the agent into OOM territory on small VMs.
+
 		if params.ChecksumSha256 != "" {
 			if actualHash, hashErr := sha256File(resolvedPath); hashErr == nil {
-				// EqualFold + TrimSpace: sha256File returns lowercase
-				// hex, but operators commonly paste uppercase hashes
-				// from `sha256sum` output / web pages / clipboard
-				// trimming. Without case-insensitive compare an
-				// uppercase-but-correct checksum forces a redownload
-				// on every run.
+
 				if strings.EqualFold(actualHash, strings.TrimSpace(params.ChecksumSha256)) {
 					return &pb.CommandOutput{
 						ExitCode: 0,
@@ -115,25 +81,17 @@ func (e *Executor) executeAppImage(ctx context.Context, params *pb.AppInstallPar
 				}
 			}
 		} else if ok, _ := e.deps.fs.Exists(ctx, resolvedPath); ok {
-			// No checksum specified, file exists
+
 			return &pb.CommandOutput{
 				ExitCode: 0,
 				Stdout:   fmt.Sprintf("appimage %s already installed", filename),
 			}, false, nil
 		}
 
-		// Repair filesystem if mounted read-only
 		if out, err := e.requireWritableFS(ctx); err != nil {
 			return out, false, err
 		}
 
-		// Download straight into the install dir via the SDK remote source: it
-		// streams the body to a temp IN the destination directory, verifies the
-		// sha256, fsyncs, and atomically renames onto resolvedPath at mode 0755 —
-		// no buffering of the (hundreds-of-MB) payload and no second copy, and a
-		// failed/mismatched download never clobbers an existing AppImage.
-		// requireVerifiedArtifact above already enforced https + a present
-		// checksum (remote accepts http too, so the agent keeps that gate).
 		if err := e.createDirectory(ctx, filepath.Dir(resolvedPath), true); err != nil {
 			return nil, false, fmt.Errorf("create directory: %w", err)
 		}
@@ -147,9 +105,7 @@ func (e *Executor) executeAppImage(ctx context.Context, params *pb.AppInstallPar
 		}, true, nil
 
 	case pb.DesiredState_DESIRED_STATE_ABSENT:
-		// Check if file already doesn't exist. Only short-circuit on a definite
-		// "absent" (no probe error); a probe error falls through to the remove,
-		// which surfaces the real failure rather than falsely reporting absence.
+
 		if ok, existErr := e.deps.fs.Exists(ctx, resolvedPath); existErr == nil && !ok {
 			return &pb.CommandOutput{
 				ExitCode: 0,
@@ -157,7 +113,6 @@ func (e *Executor) executeAppImage(ctx context.Context, params *pb.AppInstallPar
 			}, false, nil
 		}
 
-		// Repair filesystem if mounted read-only
 		if out, err := e.requireWritableFS(ctx); err != nil {
 			return out, false, err
 		}

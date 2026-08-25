@@ -15,13 +15,10 @@ import (
 	"github.com/manchtools/cadestro/agent/internal/store"
 )
 
-// LpsPasswordStore sends rotated passwords as dedicated fields over the
-// agent's authenticated control stream. Passwords never enter action metadata.
 type LpsPasswordStore interface {
 	StorePasswords(ctx context.Context, actionID string, rotations []*pb.LpsPasswordRotation) error
 }
 
-// lpsRotationReason maps the executor's reason strings to the wire enum.
 func lpsRotationReason(reason string) pb.RotationReason {
 	switch reason {
 	case "initial", "user_created":
@@ -35,7 +32,6 @@ func lpsRotationReason(reason string) pb.RotationReason {
 	}
 }
 
-// executeLps manages local user password rotation (Local Password Solution).
 func (e *Executor) executeLps(ctx context.Context, params *pb.LpsParams, state pb.DesiredState, actionID string) (*pb.CommandOutput, bool, map[string]string, error) {
 	e.ensureDeps()
 	if params == nil {
@@ -61,7 +57,6 @@ func (e *Executor) executeLps(ctx context.Context, params *pb.LpsParams, state p
 	}
 }
 
-// setupLpsPasswords checks if password rotation is needed for each user and rotates if so.
 func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, actionID string) (*pb.CommandOutput, bool, map[string]string, error) {
 	e.ensureDeps()
 	st := e.getStore()
@@ -69,26 +64,18 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 		return nil, false, nil, fmt.Errorf("agent store not configured")
 	}
 
-	// Fail closed BEFORE touching any account: without a live session to
-	// control we cannot report the rotated password, and rotating a credential
-	// we cannot return to the operator would strand it.
 	lpsStore := e.getLpsPasswordStore()
 	if lpsStore == nil {
 		return nil, false, nil, fmt.Errorf("LPS rotation requires a connection to the server (not connected)")
 	}
 	var output strings.Builder
 
-	// Load state from SQLite
 	userStates, err := st.GetLpsState(ctx, actionID)
 	if err != nil {
 		e.logger.Warn("failed to load LPS state, will treat as initial rotation", "action_id", actionID, "error", err)
 		userStates = make(map[string]*store.LpsUserState)
 	}
 
-	// Map the complexity enum to the SDK's boolean flag. COMPLEX enables
-	// special characters; ALPHANUMERIC uses letters and digits only.
-	// UNSPECIFIED is an invalid policy choice, but fail safely to the least
-	// surprising character set and log the authoring error.
 	if params.Complexity == pb.LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_UNSPECIFIED {
 		e.logger.Warn("LPS policy has no complexity set, defaulting to alphanumeric",
 			"action_id", actionID)
@@ -98,15 +85,12 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 		complexity = sysuser.ComplexityComplex
 	}
 
-	// reported counts passwords control has accepted; it drives the
-	// changed flag that used to be derived from the metadata batch.
 	reported := 0
 	var rotatedUsers []string
 	var anyError error
 
 	for _, username := range params.Usernames {
-		// Verify user exists (fail closed on a check error — record it and move
-		// on, matching this loop's other per-user error handling).
+
 		uExists, err := e.userExists(ctx, username)
 		if err != nil {
 			anyError = fmt.Errorf("check user %s: %w", username, err)
@@ -119,18 +103,14 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 			continue
 		}
 
-		// Get per-user state
 		storedState := userStates[username]
 
-		// Determine if rotation is needed
 		rotate, reason := e.shouldRotateLps(ctx, storedState, params, username, e.now().UTC())
 		if !rotate {
 			output.WriteString(fmt.Sprintf("LPS: %s — password up to date\n", username))
 			continue
 		}
 
-		// Generate new password. Clamp the length to the SDK's accepted
-		// range so out-of-bounds proto values don't fail the rotation.
 		requested := int(params.PasswordLength)
 		length := requested
 		if length < sysuser.MinPasswordLength {
@@ -152,19 +132,6 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 			continue
 		}
 
-		// Report the new password to control BEFORE setting it locally.
-		// password is an exec.Secret; Reveal() is the sanctioned plaintext
-		// access. Reporting first means a failure here leaves the account's
-		// password UNCHANGED — never rotate to a credential we cannot return
-		// to the operator, which is the whole point of LPS.
-		//
-		// This is STRONGER than the seal-era ordering, not a mirror of it: the
-		// seal only guaranteed the value COULD be reported, while the durable
-		// report rode the action result AFTER SetPassword — so a lost result
-		// left a password existing only on this device, locking the operator
-		// out unrecoverably. Report-first inverts the residual: on a failure
-		// after the ack, control is ahead of the device, the execution errors
-		// visibly, and the previous recorded password still opens the account.
 		plaintext := password.Reveal()
 		rotatedAt := e.now().UTC()
 		passwordBytes, err := copySecret([]byte(plaintext))
@@ -184,7 +151,6 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 			continue
 		}
 
-		// Set the password
 		if err := e.deps.user.SetPassword(ctx, username, password); err != nil {
 			anyError = fmt.Errorf("set password for %s: %w", username, err)
 			output.WriteString(fmt.Sprintf("LPS: %s — failed to set password: %v\n", username, err))
@@ -196,16 +162,10 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 		now := rotatedAt
 		output.WriteString(fmt.Sprintf("LPS: %s — rotated password (reason: %s)\n", username, reason))
 
-		// Update per-user state in SQLite. The drift hash is over the local
-		// plaintext (never leaves the device); the operator-facing record
-		// carries no credential copy.
 		hash := sha256.Sum256([]byte(plaintext))
 		hashStr := hex.EncodeToString(hash[:])
 		if err := st.SetLpsUserState(context.WithoutCancel(ctx), actionID, username, now, hashStr); err != nil {
-			// The password WAS rotated (a durable side effect), but if the
-			// rotation state fails to persist, last_rotated_at/password_hash stay
-			// stale and the NEXT cycle re-rotates. Surface it as an action error
-			// instead of reporting a clean success that hides the re-rotation.
+
 			e.logger.Error("failed to persist LPS rotation state; next cycle will re-rotate",
 				"action_id", actionID, "username", username, "error", err)
 			anyError = fmt.Errorf("rotated password for %s but failed to persist rotation state (will re-rotate next cycle): %w", username, err)
@@ -214,7 +174,6 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 		reported++
 	}
 
-	// Notify affected users and terminate sessions after a grace period
 	if len(rotatedUsers) > 0 {
 		e.notifyUsers(ctx, rotatedUsers, "Session Termination",
 			"Your password has been changed by Cadestro. All sessions will be terminated in 60 seconds. Please save your work.")
@@ -232,7 +191,6 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 		output.WriteString(fmt.Sprintf("LPS: terminated sessions for %d user(s)\n", len(rotatedUsers)))
 	}
 
-	// If no rotations occurred
 	if reported == 0 {
 		if anyError != nil {
 			return &pb.CommandOutput{
@@ -246,15 +204,12 @@ func (e *Executor) setupLpsPasswords(ctx context.Context, params *pb.LpsParams, 
 		}, false, nil, nil
 	}
 
-	// No metadata: each password was sent in its dedicated control-stream
-	// message, so action metadata must not carry a second copy.
 	return &pb.CommandOutput{
 		ExitCode: 0,
 		Stdout:   output.String(),
 	}, true, nil, anyError
 }
 
-// removeLpsManagement handles ABSENT state — stops managing, cleans up state.
 func (e *Executor) removeLpsManagement(ctx context.Context, actionID string) (*pb.CommandOutput, bool, map[string]string, error) {
 	st := e.getStore()
 	if st == nil {
@@ -262,10 +217,7 @@ func (e *Executor) removeLpsManagement(ctx context.Context, actionID string) (*p
 	}
 	userStates, err := st.GetLpsState(ctx, actionID)
 	if err != nil {
-		// Sibling of the DeleteLpsState fail-closed below. Treating
-		// a lookup failure as "no users to clean up" would let the
-		// next branch return success even though the agent never
-		// inspected its real local state.
+
 		e.logger.Error("removeLpsManagement: failed to read local state",
 			"action_id", actionID, "error", err)
 		return nil, false, nil, fmt.Errorf("get lps state: %w", err)
@@ -273,11 +225,7 @@ func (e *Executor) removeLpsManagement(ctx context.Context, actionID string) (*p
 
 	if len(userStates) > 0 {
 		if err := st.DeleteLpsState(ctx, actionID); err != nil {
-			// Mirror the LUKS ABSENT-transition fix: returning
-			// success here would tell the control plane the action
-			// set is removed while leaving the local state row
-			// intact, so the next reconcile re-rotates passwords
-			// for users that should already be unmanaged.
+
 			e.logger.Error("failed to delete LPS state", "action_id", actionID, "error", err)
 			return nil, false, nil, fmt.Errorf("delete lps state: %w", err)
 		}
@@ -293,23 +241,17 @@ func (e *Executor) removeLpsManagement(ctx context.Context, actionID string) (*p
 	}, false, nil, nil
 }
 
-// shouldRotateLps determines if a password rotation is needed for a user and returns the reason.
-// now is the caller's clock reading (UTC); injecting it keeps rotation decisions
-// deterministically testable with a fixed clock.
 func (e *Executor) shouldRotateLps(ctx context.Context, state *store.LpsUserState, params *pb.LpsParams, username string, now time.Time) (bool, string) {
 
-	// No state = first run
 	if state == nil {
 		return true, "initial"
 	}
 
-	// Scheduled rotation: interval expired
 	intervalDuration := time.Duration(params.RotationIntervalDays) * 24 * time.Hour
 	if now.Sub(state.LastRotatedAt) >= intervalDuration {
 		return true, "scheduled"
 	}
 
-	// Auth-based rotation: check if user authenticated since last rotation
 	if params.GracePeriodHours > 0 {
 		lastAuth, err := e.deps.user.LastLogin(ctx, username)
 		if err == nil && !lastAuth.IsZero() && lastAuth.After(state.LastRotatedAt) {
@@ -323,37 +265,16 @@ func (e *Executor) shouldRotateLps(ctx context.Context, state *store.LpsUserStat
 	return false, ""
 }
 
-// killUserSessions terminates all sessions and processes for a user.
-// This ensures the old password cannot be used after rotation.
-// Errors are logged at Warn but not returned — the user may have no
-// active sessions (the most common case), in which case both
-// loginctl and pkill exit non-zero. Operators triaging "the old
-// password still works after rotation" need the underlying error in
-// the journal to distinguish "no sessions present" from "loginctl /
-// pkill failed", so the discarded errors get logged with stage tags
-// instead of being silently swallowed.
 func (e *Executor) killUserSessions(ctx context.Context, username string) {
-	// Delegate to the SDK user Manager, which terminates systemd-logind sessions
-	// (loginctl terminate-user) and falls back to pkill -KILL -u, treating
-	// "no sessions / no processes" as success — only a genuine failure returns
-	// an error. Log it so operators can distinguish it from the benign case.
+
 	if err := e.deps.user.KillSessions(ctx, username); err != nil {
 		slog.Warn("killUserSessions: SDK KillSessions failed (may be benign — no active sessions/processes)",
 			"username", username, "error", err)
 	}
-	// Brief wait for processes to fully exit
+
 	time.Sleep(500 * time.Millisecond)
 }
 
-// reportUserCreatePassword sends a freshly created account's temporary password
-// to control so an operator can retrieve it, using the same stream and the same
-// message as an LPS rotation.
-//
-// Best-effort by design, and the one place in this file where that is the right
-// call: the account already exists and already has the password by the time
-// this runs, so refusing to report cannot un-create it. Every failure path
-// writes a line into the action output, because the operator's only recovery is
-// to notice and reset out of band.
 func (e *Executor) reportUserCreatePassword(ctx context.Context, username, actionID, plaintext string, output *strings.Builder) {
 	ps := e.getLpsPasswordStore()
 	if ps == nil {

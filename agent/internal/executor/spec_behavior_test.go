@@ -8,38 +8,13 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/remote"
 )
 
-// =============================================================================
-// SPEC: 11-sdk-spec.md — Invariant 7: ULIDs for all identifiers
-// =============================================================================
-
 func TestSpecSDK_ULIDNotUUID_Documented(t *testing.T) {
-	// The agent executor neither generates nor parses identifiers — it echoes
-	// the control-emitted ActionId (a ULID), proven by
-	// TestExecutor_ExecutesVerifiedEnvelopeParams. The "ULIDs for all
-	// identifiers" invariant is enforced where IDs are actually produced/checked:
-	//   - SDK ULID generation (ulidx) — tested in the sdk module.
-	//   - Agent terminal session-id: handler/terminal.go ulid.Parse rejects any
-	//     non-ULID session id (proto validate:"required,ulid") — tested in the
-	//     handler package.
-	// A tautological 26-vs-36 length check here asserted nothing about either,
-	// so this is an honest documentation pointer rather than a fake assertion.
-}
 
-// =============================================================================
-// SPEC: 12-agent-spec.md — Invariant 4: No secrets in logs or results
-// (sanitizeForLog lives in handler package — this test documents the contract;
-//  the behavioral tests are in handler/spec_behavior_test.go)
-// =============================================================================
+}
 
 func TestSpecAgent_NoSecretsInOutput_Documented(t *testing.T) {
-	// The handler's sanitizeForLog must redact "enc:v1:<base64>" markers.
-	// Contract: output containing "enc:v1:" must NOT appear in agent logs.
-	// Behavioral tests in handler/spec_behavior_test.go.
-}
 
-// =============================================================================
-// SPEC: 16-remote-allow-redirect.md — AC 11: pin-aware redirect policy
-// =============================================================================
+}
 
 func TestSpecRemoteRedirect_PinAware(t *testing.T) {
 	pin := "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
@@ -51,30 +26,14 @@ func TestSpecRemoteRedirect_PinAware(t *testing.T) {
 	}
 }
 
-// =============================================================================
-// SPEC: 12-agent-spec.md — Certificate renewal at 80% of lifetime.
-// =============================================================================
-
 func TestSpecAgent_CertRenewalTime_Documented(t *testing.T) {
-	// certificateRenewalDue in the main package must use the certificate's own
-	// validity window and become true at its 80% point. Behavioral tests live in
-	// cmd/cadestrod/cert_rotation_test.go.
-	_ = time.Hour // prove we can use time package
-}
 
-// =============================================================================
-// SPEC: 12-agent-spec.md — Dependencies: "Credential material zeroed after use"
-// =============================================================================
+	_ = time.Hour
+}
 
 func TestSpecAgent_CredentialZeroing_Documented(t *testing.T) {
-	// The spec invariant 8: "Credential material zeroed after use — secureZero()."
-	// The LUKS executor must scrub key material from memory after use.
-	// The LPS executor must not retain generated passwords beyond the result metadata.
-}
 
-// =============================================================================
-// SPEC: 16-remote-allow-redirect.md — AC 9: allow_redirect default behavior
-// =============================================================================
+}
 
 func TestSpecRemoteRedirect_AllowRedirectDefaultsSameOrigin(t *testing.T) {
 	policy := func(allowRedirect bool) remote.RedirectPolicy {
@@ -90,10 +49,6 @@ func TestSpecRemoteRedirect_AllowRedirectDefaultsSameOrigin(t *testing.T) {
 		t.Error("SPEC VIOLATION AC9: allow_redirect=true must allow cross-origin")
 	}
 }
-
-// =============================================================================
-// SPEC: 16-remote-allow-redirect.md — AC 1: https-only enforcement
-// =============================================================================
 
 func TestSpecRemoteRedirect_HTTPSOnlyBeforeFetch(t *testing.T) {
 	tests := []struct {
@@ -121,12 +76,6 @@ func TestSpecRemoteRedirect_HTTPSOnlyBeforeFetch(t *testing.T) {
 	}
 }
 
-// =============================================================================
-// SPEC: 12-agent-spec.md — "SQLite with WAL mode"
-// =============================================================================
-
 func TestSpecAgent_SQLiteWALRequired_Documented(t *testing.T) {
-	// Spec invariant 6: WAL mode enforced by pragma test in store package.
-	// The store.New/OpenExisting functions run PRAGMA journal_mode=WAL.
-	// Behavioral tests in internal/store/store_test.go.
+
 }

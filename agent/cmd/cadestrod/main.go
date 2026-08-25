@@ -1,4 +1,3 @@
-// Package main is the entry point for the cadestrod agent.
 package main
 
 import (
@@ -23,39 +22,29 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// version is set at build time via -ldflags.
 var version = "dev"
 
 const (
 	defaultHeartbeatInterval = 30 * time.Second
 	defaultSyncInterval      = 30 * time.Minute
 
-	// Exponential backoff constants for reconnection
 	minInitialBackoff = 5 * time.Second
 	maxInitialBackoff = 10 * time.Second
 	maxBackoff        = 5 * time.Minute
 	backoffFactor     = 2.0
 )
 
-// Config holds the agent configuration.
 type Config struct {
-	// Storage
 	DataDir string
 
-	// Logging
 	LogLevel  string
 	LogFormat string
 
-	// PrivilegeBackend is resolved from CADESTRO_PRIVILEGE_BACKEND at
-	// parseFlags time. Empty selects direct execution for the packaged root
-	// service and sudo for an explicit non-root invocation.
 	PrivilegeBackend string
 
-	// Pending security alert to send after connection (internal use)
 	pendingSecurityAlert *pendingSecurityAlert
 }
 
-// pendingSecurityAlert holds data for a security alert to be sent after connection.
 type pendingSecurityAlert struct {
 	alertType        string
 	message          string
@@ -64,7 +53,7 @@ type pendingSecurityAlert struct {
 }
 
 func main() {
-	// Check for subcommands before parsing flags
+
 	if len(os.Args) >= 2 {
 		switch os.Args[1] {
 		case "version", "--version", "-v":
@@ -90,38 +79,30 @@ func main() {
 
 	cfg := parseFlags()
 
-	// Setup logger
 	logger := logging.SetupLogger(cfg.LogLevel, cfg.LogFormat, os.Stdout)
 	slog.SetDefault(logger)
 	logger.Info("logger initialized", "level", cfg.LogLevel, "format", cfg.LogFormat)
 
-	// Select SDK pluggable backends before any privileged call fires. The
-	// packaged agent runs as root, so its empty privilege setting resolves to
-	// direct execution; explicit overrides support development invocations.
 	resolvedBackend, err := applyBackendOverrides(cfg, logger)
 	if err != nil {
 		logger.Error("backend validation failed", "error", err)
 		os.Exit(1)
 	}
-	// Build the one process-wide exec.Runner from the resolved privilege backend
-	// and inject it into every capability Manager (no global privilege state).
+
 	runner, err := sysexec.NewRunner(resolvedBackend)
 	if err != nil {
 		logger.Error("failed to build privilege runner", "error", err)
 		os.Exit(1)
 	}
 
-	// Clean up stale update state from a previous cycle (if any).
 	executor.CheckStartupUpdateState(cfg.DataDir, logger, time.Now)
 
-	// Get hostname
 	hostname, err := os.Hostname()
 	if err != nil {
 		logger.Error("failed to get hostname", "error", err)
 		os.Exit(1)
 	}
 
-	// Create context with signal handling
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -133,16 +114,10 @@ func main() {
 		cancel()
 	}()
 
-	// Spec 27: reconcile the on-disk systemd unit against the template
-	// embedded in THIS binary, so a binary update updates the unit and
-	// capability drift (agent#187) cannot recur. Fail-open, never
-	// restarts — a rewritten unit applies at the next restart/reboot.
 	reconcileUnitAtStartup(ctx, runner, logger, cfg.DataDir)
 
-	// Initialize credential store
 	credStore := credentials.NewStore(cfg.DataDir)
 
-	// Load or obtain credentials
 	var creds *credentials.Credentials
 	if credStore.Exists() {
 		logger.Info("loading stored credentials", "data_dir", credStore.DataDir())
@@ -159,8 +134,7 @@ func main() {
 		)
 
 	} else {
-		// No credentials — start the local enrollment socket and wait for the
-		// explicit, CA-pinned `enroll` command.
+
 		logger.Info("agent not enrolled, waiting for enrollment via socket",
 			"socket", deviceauth.EnrollSocketPath)
 
@@ -170,14 +144,6 @@ func main() {
 		})
 		enrollServer := deviceauth.NewEnrollServer(enrollHandler, deviceauth.EnrollSocketPath, logger)
 
-		// Start returns nil on graceful shutdown (http.ErrServerClosed is
-		// filtered), so anything on this channel is a REAL failure — a
-		// dead socket path, a permission error, a bind conflict. Without
-		// the error case below, main() blocked on this select until
-		// SIGTERM while enrollment could never arrive: under systemd the
-		// unit looked "running" with a broken enrollment socket (#173
-		// review finding). Exit non-zero instead so systemd restarts it
-		// and the failure is visible.
 		enrollErrCh := make(chan error, 1)
 		go func() {
 			if err := enrollServer.Start(ctx); err != nil {
@@ -199,7 +165,6 @@ func main() {
 		}
 	}
 
-	// Initialize the action store for offline persistence
 	actionStore, err := store.New(cfg.DataDir)
 	if err != nil {
 		logger.Error("failed to initialize action store", "error", err)
@@ -207,12 +172,6 @@ func main() {
 	}
 	defer actionStore.Close()
 
-	// Start the LUKS passphrase daemon. It listens on a
-	// world-connectable unix socket; an unprivileged user runs
-	// `cadestrod luks set-passphrase` and the root agent performs
-	// the cryptsetup work with its OWN credentials, authorized by the
-	// server-issued token. The control session is wired in per connection
-	// (SetSession/ClearSession) inside runAgent.
 	luksDaemon := luksd.NewDaemon(luksd.DefaultSocketPath, actionStore, luksd.NewSysencEnroller(), logger)
 	go func() {
 		if err := luksDaemon.Start(ctx); err != nil {
@@ -220,45 +179,20 @@ func main() {
 		}
 	}()
 
-	// Initialize the scheduler for autonomous action execution
 	exec := executor.NewExecutor(runner)
 	exec.SetStore(actionStore)
 	sched := scheduler.New(ctx, actionStore, exec, logger)
 	exec.SetActionStore(sched)
 
-	// Start the scheduler in a goroutine
 	go sched.Start(ctx)
 
-	// Create the live full-sync trigger.
 	syncTrigger := make(chan struct{}, 1)
 
-	// Create handler with scheduler integration
 	h := handler.NewHandler(logger, exec, actionStore, syncTrigger)
 
-	// Enable action-based agent self-update. The binary path is
-	// resolved at runtime via os.Executable() so the self-update
-	// targets the actually-running binary, not a hardcoded
-	// install location. Operators who install with `install.sh
-	// --binary /opt/bin/...` get correct in-place updates instead
-	// of a silently-wrong overwrite of /usr/local/bin/.
-	//
-	// Symlink note: os.Executable resolves symlinks on Linux, so
-	// if the agent was launched via a symlink chain (e.g.
-	// /usr/bin/cadestrod -> /opt/pm/current/bin/cadestrod)
-	// the self-update replaces the symlink TARGET, leaving the
-	// symlink itself intact. That matches the typical "rotate
-	// /opt/pm/current/" deployment pattern; if an operator
-	// instead intends "update by repointing the symlink" they
-	// should rely on package management rather than self-update.
 	binaryPath, err := os.Executable()
 	if err != nil {
-		// os.Executable can fail on platforms that don't expose
-		// /proc/self/exe symlink semantics. The previous behaviour
-		// silently fell back to /usr/local/bin/cadestrod
-		// — but on a non-standard install that hard-codes the
-		// wrong target and self-update would later overwrite some
-		// unrelated file. Refuse to enable self-update instead, so
-		// the operator notices and can intervene. Audit F046.
+
 		logger.Error("os.Executable failed; self-update DISABLED for this process",
 			"error", err,
 			"remediation", "run from a path where os.Executable can resolve /proc/self/exe, or disable self-update upstream")
@@ -271,11 +205,9 @@ func main() {
 		})
 	}
 
-	// Start certificate rotation goroutine
 	if creds.ControlAddr != "" {
 	}
 
-	// Run the agent
 	logger.Info("starting agent",
 		"control", creds.AgentAddr,
 		"device_id", creds.DeviceID,
@@ -285,34 +217,18 @@ func main() {
 
 	runAgent(ctx, credStore, creds, hostname, h, sched, syncTrigger, cfg.pendingSecurityAlert, luksDaemon, logger, time.Now)
 
-	// Join the scheduler goroutine BEFORE the deferred actionStore.Close()
-	// runs (WS14 #9). Stop() blocks until the Start loop returns; execution is
-	// synchronous in that loop, so any in-flight action's RecordExecution has
-	// committed to the store before we close it — no lost result / use-after-close
-	// on SIGTERM.
 	sched.Stop()
 
-	// Tear down any live terminal sessions (WS16 #5): a session left open at
-	// shutdown would leave its cadestro-tty shell activated and its temp home on
-	// disk. Use a fresh bounded ctx — the run ctx may already be cancelled by
-	// the shutdown signal, which would abort the usermod shell-revert.
 	teardownCtx, cancelTeardown := context.WithTimeout(context.Background(), 30*time.Second)
 	h.CloseAllTerminals(teardownCtx)
 	cancelTeardown()
 
-	// Stop background goroutines started during runAgent. The
-	// terminal sweeper would otherwise outlive the agent process in
-	// any non-os.Exit shutdown path (audit F004).
 	h.StopTerminalSweeper()
 }
 
 func parseFlags() *Config {
 	cfg := &Config{}
 
-	// Subcommands are dispatched in main() before flags are parsed, so the
-	// default flag usage (flags only) never mentions them. List them here so
-	// `cadestrod --help` shows the full surface (notably `tty`, which
-	// operators otherwise can't discover).
 	flag.Usage = func() {
 		out := flag.CommandLine.Output()
 		fmt.Fprintln(out, "cadestrod — Cadestro device agent")
@@ -338,7 +254,6 @@ func parseFlags() *Config {
 	flag.StringVar(&cfg.LogFormat, "log-format", "text", "Log format (text, json)")
 	flag.Parse()
 
-	// Check for URI as positional argument (for desktop integration)
 	if uri == "" && flag.NArg() > 0 {
 		arg := flag.Arg(0)
 		if strings.HasPrefix(arg, "cadestro://") {
@@ -346,25 +261,16 @@ func parseFlags() *Config {
 		}
 	}
 
-	// Route LUKS URIs to the LUKS subcommand (cadestro://luks/...)
 	if uri != "" && strings.HasPrefix(uri, "cadestro://luks/") {
-		runLuksURI(uri) // runLuksURI always exits
+		runLuksURI(uri)
 	}
 
-	// Any remaining cadestro:// URI here is a REGISTRATION URI (server+token)
-	// arriving via the bare-binary / desktop URI-handler path (luks URIs already
-	// exited above). REFUSE it (WS7): a browser-triggered
-	// cadestro://<server>?token=... must not silently enroll this device into
-	// an attacker-controlled backend. Enrollment must be an explicit,
-	// operator-initiated action via the `enroll` subcommand, which accepts the
-	// same URI.
 	if registrationURIRefusedByHandler(uri) {
 		fmt.Fprintln(os.Stderr, "refusing to enroll from a URI handler: enrollment must be explicit. Run:")
 		fmt.Fprintf(os.Stderr, "  cadestrod enroll '%s'\n", uri)
 		os.Exit(1)
 	}
 
-	// Allow environment variables to override
 	if v := os.Getenv("CADESTRO_DATA_DIR"); v != "" {
 		cfg.DataDir = v
 	}
@@ -373,5 +279,3 @@ func parseFlags() *Config {
 
 	return cfg
 }
-
-// registrationURI holds parsed registration URI data.

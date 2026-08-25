@@ -19,7 +19,6 @@ import (
 
 const fakeLeafPEM = "-----BEGIN CERTIFICATE-----\nleaf\n-----END CERTIFICATE-----\n"
 
-// genTestCAPEM creates a self-signed CA certificate (PEM) for pin tests.
 func genTestCAPEM(t *testing.T) []byte {
 	t.Helper()
 	return cryptotest.CAPEM(t, "test-ca")
@@ -70,8 +69,6 @@ func TestEnroll_CAPinRequiredBeforeRegistration(t *testing.T) {
 	assert.False(t, credStore.Exists())
 }
 
-// TestEnroll_CAPinMatchAccepted pins the mandatory OOB CA-pin happy path:
-// when the returned CA matches the pin, enrollment proceeds.
 func TestEnroll_CAPinMatchAccepted(t *testing.T) {
 	caPEM := genTestCAPEM(t)
 	wantFP := caPin(t, caPEM)
@@ -91,13 +88,10 @@ func TestEnroll_CAPinMatchAccepted(t *testing.T) {
 	assert.True(t, credStore.Exists())
 }
 
-// TestEnroll_CAPinMatchNormalized pins case-insensitive + colon-stripped
-// matching (operators paste from openssl: uppercase, colon-separated).
 func TestEnroll_CAPinMatchNormalized(t *testing.T) {
 	caPEM := genTestCAPEM(t)
 	fp := caPin(t, caPEM)
 
-	// Uppercase + colon-separated, as openssl prints it.
 	var b strings.Builder
 	up := strings.ToUpper(fp)
 	for i := 0; i < len(up); i += 2 {
@@ -122,8 +116,6 @@ func TestEnroll_CAPinMatchNormalized(t *testing.T) {
 	assert.True(t, resp.Msg.Success, "normalized (uppercase, colon) pin must match: %s", resp.Msg.Error)
 }
 
-// TestEnroll_CAPinMismatchRejected pins fail-closed on a wrong pin (#5):
-// no Save, no callback, no status — the trust-anchor swap is refused.
 func TestEnroll_CAPinMismatchRejected(t *testing.T) {
 	caPEM := genTestCAPEM(t)
 	srv := startMockControlServer(t, caReturningMock(caPEM))
@@ -136,7 +128,7 @@ func TestEnroll_CAPinMismatchRejected(t *testing.T) {
 	resp, err := h.Enroll(context.Background(), connect.NewRequest(&cadestrov1.EnrollRequest{
 		ServerUrl:        srv.URL,
 		Token:            "tok",
-		CaFingerprintPin: strings.Repeat("0", 64), // wrong pin
+		CaFingerprintPin: strings.Repeat("0", 64),
 	}))
 	require.NoError(t, err)
 	assert.False(t, resp.Msg.Success)
@@ -147,7 +139,6 @@ func TestEnroll_CAPinMismatchRejected(t *testing.T) {
 	assert.Empty(t, pending.DeviceID, "pin failure must not create active credentials")
 	assert.False(t, called, "onEnrolled must not fire on a pin mismatch")
 
-	// Status cache must not be primed.
 	st, err := h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.False(t, st.Msg.Enrolled)
@@ -164,8 +155,7 @@ func TestEnroll_CAPinRejectsBeforeBearerToken(t *testing.T) {
 	}
 	srv := startMockControlServer(t, mock)
 	h := NewEnrollHandler("test-host", "dev", credentials.NewStore(t.TempDir()), slog.Default(), nil)
-	// The test server's client supplies its trust root; WithCAPin adds the
-	// handshake-time pin check on top of it.
+
 	wrongPin := strings.Repeat("f", 64)
 	h.registerOpts = append(trustServer(srv), sdk.WithCAPin(wrongPin))
 

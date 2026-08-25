@@ -7,10 +7,6 @@ import (
 	"testing"
 )
 
-// requireMachineID skips a test if the host has no readable
-// /etc/machine-id (or fallback). The credentials package derives its
-// encryption key from the machine ID, so every test in this file
-// transitively depends on it.
 func requireMachineID(t *testing.T) {
 	t.Helper()
 	if _, err := getMachineID(); err != nil {
@@ -113,12 +109,10 @@ func TestLoadRejectsUnknownFutureMagic(t *testing.T) {
 	dir := t.TempDir()
 	store := NewStore(dir)
 
-	// Force a salt so deriveKey doesn't try to create one.
 	if _, err := store.loadOrCreateSalt(); err != nil {
 		t.Fatalf("loadOrCreateSalt: %v", err)
 	}
 
-	// Write a credentials.enc that starts with a future-format prefix.
 	credPath := filepath.Join(dir, credentialsFile)
 	if err := os.WriteFile(credPath, []byte("cadestrocred:v999:opaque"), 0600); err != nil {
 		t.Fatalf("write fake creds: %v", err)
@@ -128,8 +122,7 @@ func TestLoadRejectsUnknownFutureMagic(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected Load to reject unknown future magic, got nil error")
 	}
-	// The exact wording is documented in credentials.go; just check that the
-	// "re-enroll" hint is present so operators know what to do.
+
 	if msg := err.Error(); !contains(msg, "re-enroll") {
 		t.Errorf("error message missing re-enroll hint: %q", msg)
 	}
@@ -151,7 +144,6 @@ func TestLoadCorruptCiphertextFails(t *testing.T) {
 		t.Fatalf("read credentials file: %v", err)
 	}
 
-	// Flip a byte well past the magic prefix to corrupt the GCM tag.
 	if len(raw) < len(credentialsMagicV1)+8 {
 		t.Fatalf("ciphertext too short to corrupt: %d bytes", len(raw))
 	}
@@ -201,8 +193,6 @@ func TestExistsAndDelete(t *testing.T) {
 	}
 }
 
-// contains is a tiny strings.Contains shim so this test file doesn't
-// reach for the strings package solely for one substring check.
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && indexOf(s, substr) >= 0
 }

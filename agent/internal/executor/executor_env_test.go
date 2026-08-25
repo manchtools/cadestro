@@ -10,20 +10,6 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// runShellScript builds the child environment from a curated baseline plus
-// only the caller-supplied entries that pass the SDK hijack allow-list. A
-// blocklisted variable (LD_PRELOAD, PATH, LD_LIBRARY_PATH, …) must be refused
-// BEFORE the interpreter is ever launched, so a compromised control cannot
-// inject an ambient-library hijack through a SHELL action.
-//
-// The wrong inputs are sourced from intent (the classic LD_* / PATH hijack
-// names), not from the allow-list's own table. A deliberately non-existent
-// interpreter is used so that if the guard ever regressed to run *after*
-// exec, the failure would surface as an interpreter error rather than the
-// allow-list message — and this test would catch it.
-//
-// The env validation runs BEFORE the command dispatches, so a nil executor
-// (no runner) exercises it without needing a real subprocess.
 func TestRunShellScript_RejectsBlocklistedEnvVar(t *testing.T) {
 	e := NewExecutor(nil)
 	ctx := context.Background()
@@ -50,10 +36,6 @@ func TestRunShellScript_RejectsBlocklistedEnvVar(t *testing.T) {
 		})
 	}
 
-	// correct: an allow-listed application variable passes the gate and the
-	// function proceeds to launch the interpreter. With a non-existent
-	// interpreter the launch fails, but the error is NOT the allow-list
-	// rejection — proving MYAPP_FLAG was accepted into the child env.
 	t.Run("allows MYAPP_FLAG past the gate", func(t *testing.T) {
 		params := &pb.ShellParams{
 			Interpreter: bogusInterp,
@@ -67,16 +49,6 @@ func TestRunShellScript_RejectsBlocklistedEnvVar(t *testing.T) {
 	})
 }
 
-// TestRunShellScript_DoesNotInjectReservedLocaleVar verifies that a SHELL
-// action cannot smuggle a locale variable the Runner reserves for deterministic
-// output (LC_ALL=C / LANG=C / NO_COLOR=1). Such a var passes the agent's own
-// IsAllowedEnvVar gate (it is not hijack-prone) but is refused at the Runner
-// boundary with ErrReservedEnvVar BEFORE any process is spawned — so a
-// reintroduced reserved-locale injection is caught here without a real subprocess.
-//
-// The forced-LC_ALL=C child-environment assertion (the runner actually injecting
-// it) is exercised against a real runner in container_test.go
-// (TestIntegration_ShellScriptRunsThroughRealRunner).
 func TestRunShellScript_DoesNotInjectReservedLocaleVar(t *testing.T) {
 	e := NewExecutor(nil)
 	ctx := context.Background()
@@ -100,8 +72,6 @@ func TestRunShellScript_DoesNotInjectReservedLocaleVar(t *testing.T) {
 		})
 	}
 
-	// Correct/allowed control: a non-reserved application variable does NOT trip
-	// the reserved-var gate (it fails later on the bogus interpreter instead).
 	t.Run("allows MYAPP_FLAG past the reserved gate", func(t *testing.T) {
 		params := &pb.ShellParams{
 			Interpreter: bogusInterp,

@@ -7,9 +7,6 @@ import (
 	"testing"
 )
 
-// TestParseRegistrationURI pins URI parsing (#19): token and CA pin are
-// required, the host always normalizes to https, and any
-// tls=/skip-verify= query params are ignored (no TLS-bypass path).
 func TestParseRegistrationURI(t *testing.T) {
 	t.Run("well-formed with pin", func(t *testing.T) {
 		pin := strings.Repeat("A", 64)
@@ -51,8 +48,6 @@ func TestParseRegistrationURI(t *testing.T) {
 	})
 }
 
-// TestResolveEnrollToken pins the secure token-delivery precedence (#3):
-// file > env > argv flag; missing file errors; whitespace is trimmed.
 func TestResolveEnrollToken(t *testing.T) {
 	tokenFile := filepath.Join(t.TempDir(), "tok")
 	if err := os.WriteFile(tokenFile, []byte("  filetok\n"), 0o600); err != nil {
@@ -91,21 +86,16 @@ func TestResolveEnrollToken(t *testing.T) {
 	}
 }
 
-// TestRegistrationURIRefusedByHandler pins WS7: the bare-binary / desktop
-// URI-handler path refuses registration URIs (server+token) — only luks
-// operation URIs are allowed — so a browser-triggered cadestro:// link can
-// never silently enroll the device. Enrollment stays explicit (the `enroll`
-// subcommand).
 func TestRegistrationURIRefusedByHandler(t *testing.T) {
 	cases := []struct {
 		uri    string
 		refuse bool
 	}{
-		{"cadestro://control.example.com:8080?token=abc123", true}, // registration → refused
+		{"cadestro://control.example.com:8080?token=abc123", true},
 		{"cadestro://server?token=t&pin=DEADBEEF", true},
-		{"cadestro://luks/set-passphrase?token=xxx", false}, // luks op → allowed through to runLuksURI
+		{"cadestro://luks/set-passphrase?token=xxx", false},
 		{"cadestro://luks/rotate", false},
-		{"https://example.com/?token=x", false}, // not our scheme
+		{"https://example.com/?token=x", false},
 		{"", false},
 	}
 	for _, c := range cases {

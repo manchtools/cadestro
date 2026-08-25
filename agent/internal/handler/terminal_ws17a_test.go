@@ -15,12 +15,6 @@ import (
 
 func ws17aULID() string { return ulid.Make().String() }
 
-// The IsValidName conjunct of the username guard is exercised independently of
-// the HasPrefix conjunct the existing test covers: usernames that HAVE the
-// cadestro-tty- prefix but FAIL IsValidName (uppercase, separators, control chars,
-// over length) must be refused with STATE_ERROR before any system call, and no
-// session may be registered. The wrong inputs are sourced from the IsValidName
-// contract (lowercase letters/digits/_/-, ≤32 chars), not from the regex.
 func TestTerminal_Start_RejectsPrefixedButInvalidUsername(t *testing.T) {
 	cases := map[string]string{
 		"uppercase":  "cadestro-tty-Abc",
@@ -34,7 +28,7 @@ func TestTerminal_Start_RejectsPrefixedButInvalidUsername(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			h, sender := newTestHandler(t)
 			err := h.OnTerminalStart(context.Background(), &pb.TerminalStart{
-				SessionId: &pb.SessionId{Value: ws17aULID()}, // valid ULID so the failure is the username, not the id
+				SessionId: &pb.SessionId{Value: ws17aULID()},
 				TtyUser:   user,
 				Cols:      80,
 				Rows:      24,
@@ -56,11 +50,6 @@ func TestTerminal_Start_RejectsPrefixedButInvalidUsername(t *testing.T) {
 	}
 }
 
-// session_id flows into filepath.Join("/tmp", ttyUser+"."+session_id) and is
-// then created + chowned as root. It must be a valid ULID (the proto declares
-// validate:"required,ulid"); the agent must enforce that on inbound stream
-// messages. Cases are sourced from ULID intent (path-meaningful values, the
-// empty string, wrong length), not from ulid.Parse's own rules.
 func TestTerminal_Start_RejectsNonUlidSessionId(t *testing.T) {
 	bad := map[string]string{
 		"parent-traversal": "../../etc",
@@ -95,8 +84,6 @@ func TestTerminal_Start_RejectsNonUlidSessionId(t *testing.T) {
 		})
 	}
 
-	// correct: a real ULID passes the session-id gate (it then fails later for
-	// other reasons, but NOT with the session-id message).
 	t.Run("valid ULID passes the session-id gate", func(t *testing.T) {
 		origGet := sysuserGet
 		origModify := sysuserModify
@@ -118,9 +105,6 @@ func TestTerminal_Start_RejectsNonUlidSessionId(t *testing.T) {
 	})
 }
 
-// The session-limit and duplicate-session guards sit AFTER the real user lookup
-// (which shells out), so they are driven through the sysuserGet seam returning a
-// healthy account.
 func TestTerminal_Start_RejectsAtSessionLimit(t *testing.T) {
 	origGet := sysuserGet
 	t.Cleanup(func() { sysuserGet = origGet })
@@ -176,9 +160,6 @@ func TestTerminal_Start_RejectsDuplicateSession(t *testing.T) {
 	}
 }
 
-// A locked/disabled cadestro-tty-* user must be refused; an unlocked user is the
-// distinguishing factor — it gets PAST the locked gate (and then fails at shell
-// activation, a different error), proving info.Locked is what gates here.
 func TestTerminal_Start_RejectsLockedTtyUser(t *testing.T) {
 	origGet := sysuserGet
 	origModify := sysuserModify

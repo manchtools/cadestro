@@ -15,10 +15,6 @@ import (
 
 const setupTestULID = "01ARZ3NDEKTSV4RRFFQ69G5FAV"
 
-// TestOnTerminalStart_BoundedSetupContext pins WS13 #2: the privileged setup
-// steps run under a BOUNDED context, so a hung step surfaces a STATE_ERROR
-// within the deadline and the call returns — it cannot wedge the dispatch loop
-// indefinitely. Driven via the sysuser seams so it needs no real cadestro-tty account.
 func TestOnTerminalStart_BoundedSetupContext(t *testing.T) {
 	h, sender := newTestHandlerWithTTY(t, true)
 
@@ -27,18 +23,16 @@ func TestOnTerminalStart_BoundedSetupContext(t *testing.T) {
 		sysuserGet, sysuserModify, terminalSetupTimeout = origGet, origModify, origTimeout
 	})
 
-	// A valid, unlocked user so we reach the setup steps.
 	sysuserGet = func(context.Context, string) (sysuser.Info, error) { return sysuser.Info{Locked: false}, nil }
-	// Modify hangs, respecting ctx — it returns only when the bounded setup ctx
-	// fires. This is the "hung sudo" the bound defends against.
+
 	modifyEntered := make(chan struct{})
-	var modifyOnce sync.Once // a retry / second user must not re-close (#174)
+	var modifyOnce sync.Once
 	sysuserModify = func(ctx context.Context, _ string, _ sysuser.ModifyOptions) error {
 		modifyOnce.Do(func() { close(modifyEntered) })
 		<-ctx.Done()
 		return ctx.Err()
 	}
-	terminalSetupTimeout = 100 * time.Millisecond // fast test
+	terminalSetupTimeout = 100 * time.Millisecond
 
 	done := make(chan error, 1)
 	go func() {
@@ -47,15 +41,12 @@ func TestOnTerminalStart_BoundedSetupContext(t *testing.T) {
 		})
 	}()
 
-	// Prove we actually exercised the setup path (reached Modify).
 	select {
 	case <-modifyEntered:
 	case <-time.After(2 * time.Second):
 		t.Fatal("setup never reached the Modify step")
 	}
 
-	// OnTerminalStart must RETURN shortly after the deadline — the dispatch loop
-	// goroutine is freed, not blocked on the hung step.
 	select {
 	case err := <-done:
 		require.NoError(t, err, "OnTerminalStart returns nil; failures surface via STATE_ERROR, not a returned error")

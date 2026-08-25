@@ -16,7 +16,6 @@ func TestNoRedundantPackageManagerLookPath(t *testing.T) {
 		t.Fatal("matches-zero guard: walked zero executor Go files")
 	}
 
-	// Package manager binaries whose presence the SDK pkg.Detect already checks.
 	sdkDetectedBinaries := map[string]string{
 		"flatpak": "FlatpakAvailable already checks for flatpak; use the executor's pkgBackend for native managers",
 		"dpkg":    "pkg.Detect() already checks for apt which requires dpkg; use the executor's pkgBackend",
@@ -30,7 +29,7 @@ func TestNoRedundantPackageManagerLookPath(t *testing.T) {
 			if !ok {
 				return true
 			}
-			// Match exec.LookPath("...") or osexec.LookPath("...")
+
 			fnName, literal, isLookPath := lookPathCall(call)
 			if !isLookPath {
 				return true
@@ -47,8 +46,6 @@ func TestNoRedundantPackageManagerLookPath(t *testing.T) {
 	}
 }
 
-// lookPathCall returns the fully-qualified name and the string literal argument
-// when the call is exec.LookPath("...") or osexec.LookPath("...").
 func lookPathCall(call *ast.CallExpr) (string, string, bool) {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok || sel.Sel.Name != "LookPath" {

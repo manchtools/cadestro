@@ -26,18 +26,6 @@ import (
 	"github.com/manchtools/cadestro/agent/internal/store"
 )
 
-// =============================================================================
-// Test Helpers
-// =============================================================================
-
-// testRunner builds the privilege runner for the integration suite, mirroring
-// the agent's runtime backend selection so the tests exercise the same
-// dispatcher branch as production. When the test process is already root (the
-// post-rewire container default — containers no longer set up a cadestro
-// user) it uses the no-escalation Direct backend so privileged calls don't
-// depend on per-distro sudoers quirks (notably openSUSE Tumbleweed's default
-// /etc/sudoers excludes root, breaking every `sudo -n cmd`); otherwise it
-// escalates via sudo.
 func testRunner() sysexec.Runner {
 	backend := sysexec.Sudo
 	if os.Geteuid() == 0 {
@@ -51,15 +39,9 @@ func testRunner() sysexec.Runner {
 }
 
 func newTestExecutor() *Executor {
-	// Pass a real runner so NewExecutor adopts it process-wide AND runs
-	// pkg.Detect — the repository/package actions dispatch on e.pkgBackend,
-	// which is only set when a runner is supplied.
+
 	e := NewExecutor(testRunner())
-	// Downloads are https-only (WS7 #2). The test file servers
-	// (startFileServer) are TLS with self-signed certs, so trust any cert here —
-	// this is integration-test-only code. e.httpClient covers the agent's own
-	// fetches (checksum URL, GPG key); remoteHTTPClient covers the artifact
-	// downloads that now route through the SDK remote source (deb/rpm/appimage).
+
 	insecure := &http.Client{
 		Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
 	}
@@ -69,9 +51,7 @@ func newTestExecutor() *Executor {
 	if err != nil {
 		panic("failed to create temp dir: " + err.Error())
 	}
-	// Registered for TestMain teardown (#174): newTestExecutor has no
-	// *testing.T, so t.Cleanup isn't available and each call previously
-	// leaked its directory on disk.
+
 	testExecutorTmpDirsMu.Lock()
 	testExecutorTmpDirs = append(testExecutorTmpDirs, tmpDir)
 	testExecutorTmpDirsMu.Unlock()
@@ -80,15 +60,11 @@ func newTestExecutor() *Executor {
 		panic("failed to create test store: " + err.Error())
 	}
 	e.SetStore(s)
-	// Wire the password store so LPS rotations and user-create temporary
-	// passwords can be observed by the integration lane.
+
 	e.SetLpsPasswordStore(testLpsReports)
 	return e
 }
 
-// testLpsReports collects every password the executor reports, standing in for
-// control. Shared across the lane and queried by username, so tests do not
-// depend on execution order.
 var testLpsReports = &recordingLpsStore{}
 
 type recordingLpsStore struct {
@@ -103,7 +79,6 @@ func (r *recordingLpsStore) StorePasswords(_ context.Context, _ string, rotation
 	return nil
 }
 
-// reportedFor returns the last rotation reported for username, or nil.
 func (r *recordingLpsStore) reportedFor(username string) *pb.LpsPasswordRotation {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -139,9 +114,6 @@ func assertSuccess(t *testing.T, result *pb.ActionResult) {
 	}
 }
 
-// assertNotApplicable pins the spec-23 contract for structural
-// inapplicability: NOT_APPLICABLE status, the reason in the result error,
-// and changed=false.
 func assertNotApplicable(t *testing.T, result *pb.ActionResult, wantReason string) {
 	t.Helper()
 	if result.Status != pb.ExecutionStatus_EXECUTION_STATUS_NOT_APPLICABLE {
@@ -236,7 +208,6 @@ func isPacmanInstalled(pkg string) bool {
 	return checkCmdSuccess("pacman", "-Q", pkg)
 }
 
-// createTestRpm builds a minimal noarch .rpm package and returns its bytes.
 func createTestRpm(t *testing.T) []byte {
 	t.Helper()
 	dir := t.TempDir()
@@ -286,14 +257,11 @@ echo "test" > %{buildroot}/usr/share/cadestrotestrpm/marker
 	return data
 }
 
-// startFileServer serves the given files over HTTPS. Downloads are
-// https-only (WS7 #2), so this is a TLS server; the test executor's
-// httpClient (newTestExecutor) skips cert verification to trust it.
 func startFileServer(t *testing.T, files map[string][]byte) *httptest.Server {
 	t.Helper()
 	mux := http.NewServeMux()
 	for path, content := range files {
-		body := content // capture
+		body := content
 		mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
 			w.Write(body)
 		})
@@ -303,7 +271,6 @@ func startFileServer(t *testing.T, files map[string][]byte) *httptest.Server {
 	return ts
 }
 
-// createTestDeb builds a minimal .deb package and returns its bytes.
 func createTestDeb(t *testing.T) []byte {
 	t.Helper()
 	dir := t.TempDir()
@@ -333,14 +300,11 @@ Description: Test package for integration tests
 	return data
 }
 
-// ensureTestUser creates a test user if it doesn't exist.
 func ensureTestUser(t *testing.T, username string) {
 	t.Helper()
 	v, err := userExists(context.Background(), username)
 	if err != nil {
-		// A failed existence probe must not read as "absent" (#174):
-		// useradd on an EXISTING user would then fail the test with a
-		// misleading error instead of this honest one.
+
 		t.Fatalf("userExists(%s): %v", username, err)
 	}
 	if v {
@@ -352,26 +316,16 @@ func ensureTestUser(t *testing.T, username string) {
 	}
 }
 
-// cleanupTestUser removes a test user.
 func cleanupTestUser(t *testing.T, username string) {
 	t.Helper()
 	sudoRun("userdel", "-r", username).Run()
 }
 
-// cleanupTestGroup removes a test group.
 func cleanupTestGroup(t *testing.T, groupName string) {
 	t.Helper()
 	sudoRun("groupdel", groupName).Run()
 }
 
-// sudoRun creates an exec.Cmd for a privileged setup/cleanup step.
-// Mirrors the agent's runtime privilege backend selection: when the
-// test process is already root (the post-rewire default — production
-// agent runs as root via systemd User=root), exec the command
-// directly. Otherwise wrap with `sudo -n`. The direct path matters on
-// distros (notably openSUSE Tumbleweed) whose default /etc/sudoers
-// excludes root, so `sudo -n cmd` would fail with "root is not in the
-// sudoers file" on every invocation.
 func sudoRun(name string, args ...string) *exec.Cmd {
 	if os.Geteuid() == 0 {
 		return exec.Command(name, args...)
@@ -380,19 +334,14 @@ func sudoRun(name string, args ...string) *exec.Cmd {
 	return exec.Command("sudo", sudoArgs...)
 }
 
-// sudoRemove removes a file. Routed through sudoRun (#174) so the
-// root-skips-sudo consistency holds on distros whose sudoers excludes
-// root (the same reason sudoRun exists).
 func sudoRemove(path string) {
 	sudoRun("rm", "-f", path).Run()
 }
 
-// sudoRemoveAll removes a file or directory recursively.
 func sudoRemoveAll(path string) {
 	sudoRun("rm", "-rf", path).Run()
 }
 
-// sudoWriteFile writes content to a file via tee.
 func sudoWriteFile(path string, content []byte) error {
 	cmd := sudoRun("tee", path)
 	cmd.Stdin = bytes.NewReader(content)
@@ -400,16 +349,10 @@ func sudoWriteFile(path string, content []byte) error {
 	return cmd.Run()
 }
 
-// sudoFileExists checks whether path exists using sudo. Needed for paths in
-// directories not readable by the current user (e.g. /etc/sudoers.d on Fedora).
 func sudoFileExists(path string) bool {
 	return sudoRun("sh", "-c", fmt.Sprintf("test -e %s", path)).Run() == nil
 }
 
-// removePacmanSection removes a [name] section from pacman.conf content. A
-// section extends from [name] to the next [section] line (exclusive) or end of
-// file. The production logic now lives in the SDK repo Manager; this copy
-// restores pacman.conf in the pacman repository test's cleanup.
 func removePacmanSection(content, name string) string {
 	sectionHeader := "[" + name + "]"
 	lines := strings.Split(content, "\n")
@@ -431,16 +374,11 @@ func removePacmanSection(content, name string) string {
 	return strings.Join(result, "\n")
 }
 
-// =============================================================================
-// Package Tests (apt)
-// =============================================================================
-
 func TestIntegration_Package(t *testing.T) {
 	skipIfNoApt(t)
 	e := newTestExecutor()
 	ctx := context.Background()
 
-	// Ensure clean state
 	sudoRun("apt-get", "remove", "-y", "sl").Run()
 
 	t.Run("Install", func(t *testing.T) {
@@ -502,10 +440,6 @@ func TestIntegration_Package(t *testing.T) {
 	})
 }
 
-// =============================================================================
-// Package Graceful Failures (missing package managers)
-// =============================================================================
-
 func TestIntegration_Package_GracefulSkip(t *testing.T) {
 	skipIfNoApt(t)
 	e := newTestExecutor()
@@ -533,10 +467,6 @@ func TestIntegration_Package_GracefulSkip(t *testing.T) {
 	})
 }
 
-// =============================================================================
-// Update Tests
-// =============================================================================
-
 func TestIntegration_Update(t *testing.T) {
 	skipIfNoApt(t)
 	e := newTestExecutor()
@@ -550,23 +480,10 @@ func TestIntegration_Update(t *testing.T) {
 	})
 }
 
-// =============================================================================
-// Shell Tests
-// =============================================================================
-
 func TestIntegration_Shell(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
 
-	// All integration tests below set RunAsRoot=true. Pre-#79
-	// RunAsRoot=false silently ran as the agent's UID (root in CI),
-	// which let these tests pass while exercising shell mechanics
-	// rather than the privilege model. Post-#79 RunAsRoot=false
-	// fans out per signed-in user — and CI containers without a
-	// graphical session no-op out of that path. Use RunAsRoot=true
-	// here so the tests still exercise the script execution they
-	// were written for; the privilege-routing tests are in their
-	// own files (action_flatpak_test.go, shell_per_user_test.go).
 	t.Run("BasicScript", func(t *testing.T) {
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_SHELL, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_Shell{Shell: &pb.ShellParams{Script: "echo hello", RunAsRoot: true}}
@@ -581,8 +498,7 @@ func TestIntegration_Shell(t *testing.T) {
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_SHELL, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_Shell{Shell: &pb.ShellParams{Script: "exit 42", RunAsRoot: true}}
 		result := e.ExecuteAction(ctx, testAction(action))
-		// Non-zero exit codes are treated as failures for shell actions.
-		// The exit code is captured in the output.
+
 		if result.Status != pb.ExecutionStatus_EXECUTION_STATUS_FAILED {
 			t.Errorf("expected FAILED, got %s", result.Status)
 		}
@@ -632,10 +548,6 @@ func TestIntegration_Shell(t *testing.T) {
 		}
 	})
 }
-
-// =============================================================================
-// File Tests
-// =============================================================================
 
 func TestIntegration_File(t *testing.T) {
 	e := newTestExecutor()
@@ -712,7 +624,6 @@ func TestIntegration_File(t *testing.T) {
 		mbFile := "/tmp/cadestro-integration-test-mb"
 		t.Cleanup(func() { sudoRemove(mbFile) })
 
-		// Create a base file first
 		os.WriteFile(mbFile, []byte("existing content\n"), 0644)
 
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_FILE, pb.DesiredState_DESIRED_STATE_PRESENT)
@@ -734,10 +645,6 @@ func TestIntegration_File(t *testing.T) {
 		}
 	})
 }
-
-// =============================================================================
-// Directory Tests
-// =============================================================================
 
 func TestIntegration_Directory(t *testing.T) {
 	e := newTestExecutor()
@@ -812,10 +719,6 @@ func TestIntegration_Directory(t *testing.T) {
 	})
 }
 
-// =============================================================================
-// User Tests
-// =============================================================================
-
 func TestIntegration_User(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
@@ -835,7 +738,7 @@ func TestIntegration_User(t *testing.T) {
 		if v, _ := userExists(context.Background(), username); !v {
 			t.Error("user not created")
 		}
-		// The temp password must have been reported to control.
+
 		if testLpsReports.reportedFor(username) == nil {
 			t.Error("expected the temporary password to be reported to control")
 		}
@@ -890,15 +793,6 @@ func TestIntegration_User(t *testing.T) {
 	})
 }
 
-// TestIntegration_User_CreateHomeRespected locks down the fix for the
-// agent inverting `create_home: false` to `true` for non-system users.
-// Before the fix, the control server's cadestro-tty-* sync explicitly set
-// create_home: false on the UserParams but the agent overrode it and
-// produced a home directory at /home/cadestro-tty-<username> anyway, which
-// contradicted the wire contract.
-//
-// Two sub-tests — the explicit-false path and the explicit-true path.
-// Both exercise non-system users (the branch that used to invert).
 func TestIntegration_User_CreateHomeRespected(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
@@ -908,9 +802,7 @@ func TestIntegration_User_CreateHomeRespected(t *testing.T) {
 		homeDir := "/home/" + username
 		t.Cleanup(func() {
 			cleanupTestUser(t, username)
-			// Defensive: some failure paths can leave a home behind
-			// even after userdel; clean it up so a re-run isn't
-			// polluted.
+
 			sudoRun("rm", "-rf", homeDir).Run()
 		})
 
@@ -960,18 +852,6 @@ func TestIntegration_User_CreateHomeRespected(t *testing.T) {
 	})
 }
 
-// TestIntegration_User_NoPassword locks down the contract for the
-// UserParams.no_password flag (sdk #77, server #327): when NoPassword=true the
-// agent must NOT generate a temp password, call chpasswd, or report one.
-// Under the lock=disabled model, an ENABLED no_password account rests at "*" (no
-// password, NOT locked) — so no password LOGIN path succeeds (the #94 guarantee:
-// "*" is never an empty/login-able password), while the agent's terminal handler
-// can still tell it apart from a DISABLED ("!") account, and the setuid terminal
-// opener works because it bypasses PAM entirely.
-//
-// Two sub-tests, both non-system users to exercise the temp-password branch:
-//   - NoPasswordTrue: nothing reported, account rests at "*"
-//   - NoPasswordFalse: a password is reported (regression guard)
 func TestIntegration_User_NoPassword(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
@@ -994,17 +874,10 @@ func TestIntegration_User_NoPassword(t *testing.T) {
 			t.Fatal("user not created")
 		}
 
-		// L1: nothing reported to control — no password was generated at all.
 		if rot := testLpsReports.reportedFor(username); rot != nil {
 			t.Errorf("expected no password reported when NoPassword=true, got one for %q", rot.GetUsername())
 		}
 
-		// L2: an ENABLED no_password account is NOT locked — the agent
-		// unlocks the useradd "!" default to "*" (no password, not locked) so
-		// the terminal handler accepts it. Verified THROUGH the SDK Manager —
-		// the same interface the terminal handler and provisioner use — not by
-		// shelling out. The SDK's own Unlock test guarantees "*" (never an
-		// empty/login-able password, the #94 hole).
 		info, err := userMgr.Get(context.Background(), username)
 		if err != nil {
 			t.Fatalf("userMgr.Get(%s): %v", username, err)
@@ -1015,9 +888,7 @@ func TestIntegration_User_NoPassword(t *testing.T) {
 	})
 
 	t.Run("NoPasswordFalse_StillGeneratesPassword", func(t *testing.T) {
-		// Regression guard: the existing temp-password path must still
-		// work when NoPassword is unset / false. If a future commit
-		// accidentally flips the gate, this catches it.
+
 		username := "cadestrotestwithpass"
 		t.Cleanup(func() { cleanupTestUser(t, username) })
 
@@ -1034,12 +905,6 @@ func TestIntegration_User_NoPassword(t *testing.T) {
 	})
 }
 
-// TestIntegration_User_ReapplyNoPasswordStaysStar pins the #94 contract on the
-// RE-APPLY path under the lock=disabled model: an ENABLED no_password account
-// rests at "*" (no password, NOT locked), and re-applying the SAME action must
-// keep it "*" — idempotent reconciliation must neither flip it to a real
-// password, strip it to an EMPTY (login-able) password, nor lock it. The unit
-// tests cover the lock decision; this drives the real create-then-reapply path.
 func TestIntegration_User_ReapplyNoPasswordStaysStar(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
@@ -1074,7 +939,6 @@ func TestIntegration_User_ReapplyNoPasswordStaysStar(t *testing.T) {
 		return res
 	}
 
-	// Create, then re-apply the byte-identical action.
 	apply("create")
 	if v, _ := userExists(context.Background(), username); !v {
 		t.Fatal("user not created")
@@ -1082,14 +946,9 @@ func TestIntegration_User_ReapplyNoPasswordStaysStar(t *testing.T) {
 	assertUnlocked("after create")
 
 	apply("re-apply")
-	assertUnlocked("after re-apply") // the reconcile must keep it unlocked, not flip/strip/lock it
+	assertUnlocked("after re-apply")
 }
 
-// TestIntegration_User_DisabledNoPasswordIsLocked is the disabled-gate half of
-// the lock=disabled model: a no_password account created with Disabled=true must
-// come out LOCKED via the SDK Manager interface (Info.Locked=true), so the
-// terminal handler refuses it — even though the control already blocks a disabled
-// user at StartTerminal (defense in depth at both ends).
 func TestIntegration_User_DisabledNoPasswordIsLocked(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
@@ -1114,10 +973,6 @@ func TestIntegration_User_DisabledNoPasswordIsLocked(t *testing.T) {
 		t.Error("disabled no_password account must be LOCKED (Info.Locked=true) so the terminal handler refuses it; got Locked=false")
 	}
 }
-
-// =============================================================================
-// Group Tests
-// =============================================================================
 
 func TestIntegration_Group(t *testing.T) {
 	e := newTestExecutor()
@@ -1169,9 +1024,7 @@ func TestIntegration_Group(t *testing.T) {
 	})
 
 	t.Run("EmptyMembersRemovesAll", func(t *testing.T) {
-		// After AddMembers, the group has cadestrogrpuser1 and cadestrogrpuser2.
-		// Syncing with an empty members list should remove them all
-		// but keep the group itself.
+
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_GROUP, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_Group{Group: &pb.GroupParams{
 			Name:    groupName,
@@ -1203,10 +1056,6 @@ func TestIntegration_Group(t *testing.T) {
 	})
 }
 
-// =============================================================================
-// Sudo Tests
-// =============================================================================
-
 func TestIntegration_Sudo(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
@@ -1233,7 +1082,6 @@ func TestIntegration_Sudo(t *testing.T) {
 		assertSuccess(t, result)
 		assertChanged(t, result, true)
 
-		// Verify sudoers file exists and is valid
 		filePath := sudoersFilePath(actionID)
 		if !sudoFileExists(filePath) {
 			t.Error("sudoers file not created")
@@ -1281,10 +1129,6 @@ func TestIntegration_Sudo(t *testing.T) {
 		}
 	})
 }
-
-// =============================================================================
-// SSH Tests
-// =============================================================================
 
 func TestIntegration_SSH(t *testing.T) {
 	e := newTestExecutor()
@@ -1357,10 +1201,6 @@ func TestIntegration_SSH(t *testing.T) {
 	})
 }
 
-// =============================================================================
-// SSHD Tests
-// =============================================================================
-
 func TestIntegration_SSHD(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
@@ -1425,10 +1265,6 @@ func TestIntegration_SSHD(t *testing.T) {
 	})
 }
 
-// =============================================================================
-// Systemd Tests
-// =============================================================================
-
 func TestIntegration_Systemd(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
@@ -1463,18 +1299,13 @@ WantedBy=multi-user.target
 			UnitContent: unitContent,
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
-		// daemon-reload fails without systemd PID 1, so status is FAILED.
-		// But the unit file itself should still be written before daemon-reload.
+
 		assertFailed(t, result)
 		if _, err := os.Stat(unitPath); err != nil {
 			t.Errorf("unit file not created despite daemon-reload failure: %v", err)
 		}
 	})
 }
-
-// =============================================================================
-// LPS Tests
-// =============================================================================
 
 func TestIntegration_LPS(t *testing.T) {
 	e := newTestExecutor()
@@ -1547,10 +1378,6 @@ func TestIntegration_LPS(t *testing.T) {
 	})
 }
 
-// =============================================================================
-// DEB Tests
-// =============================================================================
-
 func TestIntegration_Deb(t *testing.T) {
 	skipIfNoApt(t)
 	e := newTestExecutor()
@@ -1580,7 +1407,7 @@ func TestIntegration_Deb(t *testing.T) {
 	})
 
 	t.Run("RemoveAbsent", func(t *testing.T) {
-		// Remove the package first
+
 		sudoRun("dpkg", "-r", "cadestro-testpkg").Run()
 
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_DEB, pb.DesiredState_DESIRED_STATE_ABSENT)
@@ -1593,10 +1420,6 @@ func TestIntegration_Deb(t *testing.T) {
 	})
 }
 
-// =============================================================================
-// AppImage Tests
-// =============================================================================
-
 func TestIntegration_AppImage(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
@@ -1605,7 +1428,6 @@ func TestIntegration_AppImage(t *testing.T) {
 
 	t.Cleanup(func() { sudoRemoveAll(installDir) })
 
-	// Create a dummy "AppImage" file
 	dummyContent := []byte("#!/bin/sh\necho test\n")
 	checksum := sha256.Sum256(dummyContent)
 	checksumHex := hex.EncodeToString(checksum[:])
@@ -1634,9 +1456,7 @@ func TestIntegration_AppImage(t *testing.T) {
 	})
 
 	t.Run("InstallIdempotent", func(t *testing.T) {
-		// Re-install with the SAME checksum — the file already exists with the
-		// correct hash, so the executor reports changed=false. (AppImage installs
-		// now fail closed without a checksum, parity with rpm/deb.)
+
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_APP_IMAGE, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_App{App: &pb.AppInstallParams{
 			Url:            ts.URL + "/" + fileName,
@@ -1663,10 +1483,6 @@ func TestIntegration_AppImage(t *testing.T) {
 		}
 	})
 }
-
-// =============================================================================
-// Repository Tests (apt)
-// =============================================================================
 
 func TestIntegration_Repository(t *testing.T) {
 	skipIfNoApt(t)
@@ -1716,10 +1532,6 @@ func TestIntegration_Repository(t *testing.T) {
 		}
 	})
 }
-
-// =============================================================================
-// DNF Package Tests
-// =============================================================================
 
 func TestIntegration_Package_Dnf(t *testing.T) {
 	skipIfNoDnf(t)
@@ -1854,10 +1666,6 @@ func TestIntegration_Repository_Dnf(t *testing.T) {
 	})
 }
 
-// =============================================================================
-// RPM Tests (Fedora + openSUSE)
-// =============================================================================
-
 func TestIntegration_Rpm(t *testing.T) {
 	if _, err := exec.LookPath("rpm"); err != nil {
 		t.Skip("rpm not found, skipping")
@@ -1906,11 +1714,7 @@ func TestIntegration_Rpm(t *testing.T) {
 	})
 
 	t.Run("Remove", func(t *testing.T) {
-		// PR #77 changed RPM ABSENT to download the package and ask
-		// `rpm -qp NAME` for the canonical package name (the prior
-		// dash-split heuristic was unsound for any package whose
-		// upstream name contains a dash). The URL therefore needs to
-		// resolve, not 404 — give Remove a real local file server.
+
 		rpmData := createTestRpm(t)
 		ts := startFileServer(t, map[string][]byte{
 			"/cadestrotestrpm-1.0.0-1.noarch.rpm": rpmData,
@@ -1930,8 +1734,7 @@ func TestIntegration_Rpm(t *testing.T) {
 	})
 
 	t.Run("RemoveAbsent", func(t *testing.T) {
-		// Same reason as Remove above — must download to learn the
-		// canonical NAME before asking rpm whether it's installed.
+
 		rpmData := createTestRpm(t)
 		ts := startFileServer(t, map[string][]byte{
 			"/cadestrotestrpm-1.0.0-1.noarch.rpm": rpmData,
@@ -1947,10 +1750,6 @@ func TestIntegration_Rpm(t *testing.T) {
 		assertChanged(t, result, false)
 	})
 }
-
-// =============================================================================
-// Pacman Package Tests
-// =============================================================================
 
 func TestIntegration_Package_Pacman(t *testing.T) {
 	skipIfNoPacman(t)
@@ -2044,7 +1843,7 @@ func TestIntegration_Repository_Pacman(t *testing.T) {
 	repoName := "cadestrotestrepo"
 
 	t.Cleanup(func() {
-		// Restore pacman.conf by removing the test repo section
+
 		content, err := os.ReadFile("/etc/pacman.conf")
 		if err == nil {
 			cleaned := removePacmanSection(string(content), repoName)
@@ -2093,10 +1892,6 @@ func TestIntegration_Repository_Pacman(t *testing.T) {
 		}
 	})
 }
-
-// =============================================================================
-// Zypper Package Tests
-// =============================================================================
 
 func TestIntegration_Package_Zypper(t *testing.T) {
 	skipIfNoZypper(t)
@@ -2207,7 +2002,6 @@ func TestIntegration_Repository_Zypper(t *testing.T) {
 		result := e.ExecuteAction(ctx, testAction(action))
 		assertSuccess(t, result)
 
-		// Verify repo exists
 		if !checkCmdSuccess("zypper", "lr", repoName) {
 			t.Error("repository not listed by zypper")
 		}
@@ -2226,11 +2020,6 @@ func TestIntegration_Repository_Zypper(t *testing.T) {
 	})
 }
 
-// =============================================================================
-// Edge Case Helpers
-// =============================================================================
-
-// skipIfNotPrivileged skips tests that require mount capabilities (--privileged).
 func skipIfNotPrivileged(t *testing.T) {
 	t.Helper()
 	testDir := "/tmp/cadestro-priv-check"
@@ -2244,11 +2033,9 @@ func skipIfNotPrivileged(t *testing.T) {
 	exec.Command("sudo", "-n", "umount", testDir).Run()
 }
 
-// startFailingServer returns an httptest server that returns the given status code.
 func startFailingServer(t *testing.T, statusCode int) *httptest.Server {
 	t.Helper()
-	// TLS: downloads are https-only (WS7 #2); the test executor trusts the
-	// self-signed cert (newTestExecutor).
+
 	ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(statusCode)
 		w.Write([]byte(http.StatusText(statusCode)))
@@ -2257,7 +2044,6 @@ func startFailingServer(t *testing.T, statusCode int) *httptest.Server {
 	return ts
 }
 
-// startSlowServer returns an httptest TLS server that delays before responding.
 func startSlowServer(t *testing.T, delay time.Duration) *httptest.Server {
 	t.Helper()
 	ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2267,10 +2053,6 @@ func startSlowServer(t *testing.T, delay time.Duration) *httptest.Server {
 	t.Cleanup(ts.Close)
 	return ts
 }
-
-// =============================================================================
-// Edge Case: LPS No Prior State
-// =============================================================================
 
 func TestIntegration_EdgeCase_LpsNoPriorState(t *testing.T) {
 	e := newTestExecutor()
@@ -2283,7 +2065,6 @@ func TestIntegration_EdgeCase_LpsNoPriorState(t *testing.T) {
 		cleanupTestUser(t, "cadestrolpsedge")
 	})
 
-	// LPS should treat empty state as initial rotation
 	action := &pb.Action{
 		Id:           &pb.ActionId{Value: actionID},
 		Type:         pb.ActionType_ACTION_TYPE_LPS,
@@ -2298,7 +2079,6 @@ func TestIntegration_EdgeCase_LpsNoPriorState(t *testing.T) {
 	result := e.ExecuteAction(ctx, testAction(action))
 	assertSuccess(t, result)
 
-	// Verify state was persisted in SQLite
 	states, err := e.store.GetLpsState(ctx, actionID)
 	if err != nil {
 		t.Fatalf("failed to get LPS state: %v", err)
@@ -2313,10 +2093,6 @@ func TestIntegration_EdgeCase_LpsNoPriorState(t *testing.T) {
 	}
 }
 
-// =============================================================================
-// Edge Case: Missing System Directories
-// =============================================================================
-
 func TestIntegration_EdgeCase_MissingSudoersDir(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
@@ -2327,20 +2103,17 @@ func TestIntegration_EdgeCase_MissingSudoersDir(t *testing.T) {
 	backupDir := "/etc/sudoers.d.bak"
 	origDir := "/etc/sudoers.d"
 
-	// Before removing sudoers.d, copy rules into main /etc/sudoers so sudo
-	// still works during cleanup (the sudoers.d files won't exist to provide NOPASSWD).
 	sudoRun("cp", "/etc/sudoers", "/etc/sudoers.bak").Run()
 	sudoRun("sh", "-c", "cat /etc/sudoers.d/cadestro >> /etc/sudoers").Run()
 
-	// Backup and remove sudoers.d
 	sudoRun("cp", "-a", origDir, backupDir).Run()
 	sudoRun("rm", "-rf", origDir).Run()
 
 	t.Cleanup(func() {
-		// Restore sudoers.d from backup (sudo works via rules appended to main /etc/sudoers)
+
 		sudoRun("rm", "-rf", origDir).Run()
 		sudoRun("mv", backupDir, origDir).Run()
-		// Restore original /etc/sudoers (remove the appended rules)
+
 		sudoRun("mv", "/etc/sudoers.bak", "/etc/sudoers").Run()
 		cleanupTestUser(t, "cadestrosudoedge")
 	})
@@ -2355,8 +2128,7 @@ func TestIntegration_EdgeCase_MissingSudoersDir(t *testing.T) {
 		}},
 	}
 	result := e.ExecuteAction(ctx, testAction(action))
-	// The executor writes via tee — if /etc/sudoers.d doesn't exist, tee fails.
-	// This is expected to fail since the executor doesn't create the parent dir for sudoers files.
+
 	assertFailed(t, result)
 }
 
@@ -2388,19 +2160,13 @@ func TestIntegration_EdgeCase_MissingSshdConfigDir(t *testing.T) {
 		}},
 	}
 	result := e.ExecuteAction(ctx, testAction(action))
-	// SSHD executor calls createDirectory() with recursive=true before writing.
-	// The directory should be re-created and config written.
+
 	assertSuccess(t, result)
 
-	// Verify directory was re-created
 	if _, err := os.Stat(origDir); err != nil {
 		t.Errorf("sshd_config.d not re-created: %v", err)
 	}
 }
-
-// =============================================================================
-// Edge Case: Download Failures
-// =============================================================================
 
 func TestIntegration_EdgeCase_DownloadHttp500(t *testing.T) {
 	e := newTestExecutor()
@@ -2413,9 +2179,7 @@ func TestIntegration_EdgeCase_DownloadHttp500(t *testing.T) {
 		action.Params = &pb.Action_App{App: &pb.AppInstallParams{
 			Url:         ts.URL + "/test.AppImage",
 			InstallPath: t.TempDir(),
-			// Checksum is mandated and the executor fails closed without it before
-			// downloading (parity with rpm/deb); the value is irrelevant here —
-			// the download errors with the HTTP status first.
+
 			ChecksumSha256: strings.Repeat("a", 64),
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
@@ -2432,9 +2196,7 @@ func TestIntegration_EdgeCase_DownloadHttp500(t *testing.T) {
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_RPM, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_App{App: &pb.AppInstallParams{
 			Url: ts.URL + "/test-1.0-1.noarch.rpm",
-			// Checksum is server-mandated and the agent fails closed
-			// without it before downloading (WS8); the value is
-			// irrelevant here — the download errors with the status first.
+
 			ChecksumSha256: strings.Repeat("a", 64),
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
@@ -2449,9 +2211,7 @@ func TestIntegration_EdgeCase_DownloadHttp500(t *testing.T) {
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_DEB, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_App{App: &pb.AppInstallParams{
 			Url: ts.URL + "/test.deb",
-			// Checksum is mandated and the executor fails closed without it
-			// before downloading (WS16 #2); the value is irrelevant here — the
-			// download errors with the HTTP status first.
+
 			ChecksumSha256: strings.Repeat("a", 64),
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
@@ -2473,9 +2233,7 @@ func TestIntegration_EdgeCase_DownloadHttp404(t *testing.T) {
 		action.Params = &pb.Action_App{App: &pb.AppInstallParams{
 			Url:         ts.URL + "/test.AppImage",
 			InstallPath: t.TempDir(),
-			// Checksum is mandated and the executor fails closed without it before
-			// downloading (parity with rpm/deb); the value is irrelevant here —
-			// the download errors with the HTTP status first.
+
 			ChecksumSha256: strings.Repeat("a", 64),
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
@@ -2492,9 +2250,7 @@ func TestIntegration_EdgeCase_DownloadHttp404(t *testing.T) {
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_RPM, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_App{App: &pb.AppInstallParams{
 			Url: ts.URL + "/test-1.0-1.noarch.rpm",
-			// Checksum is server-mandated and the agent fails closed
-			// without it before downloading (WS8); the value is
-			// irrelevant here — the download errors with the status first.
+
 			ChecksumSha256: strings.Repeat("a", 64),
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
@@ -2509,9 +2265,7 @@ func TestIntegration_EdgeCase_DownloadHttp404(t *testing.T) {
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_DEB, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_App{App: &pb.AppInstallParams{
 			Url: ts.URL + "/test.deb",
-			// Checksum is mandated and the executor fails closed without it
-			// before downloading (WS16 #2); the value is irrelevant here — the
-			// download errors with the HTTP status first.
+
 			ChecksumSha256: strings.Repeat("a", 64),
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
@@ -2542,14 +2296,11 @@ func TestIntegration_EdgeCase_DownloadChecksumMismatch(t *testing.T) {
 	}}
 	result := e.ExecuteAction(ctx, testAction(action))
 	assertFailed(t, result)
-	// remote.Fetch reports a wrong checksum as "integrity check failed: sha256
-	// mismatch …"; assert the mismatch is surfaced (the agent download now
-	// delegates to the SDK remote source, which owns the verify).
+
 	if !strings.Contains(result.Error, "mismatch") {
 		t.Errorf("expected an integrity/sha256-mismatch error, got: %s", result.Error)
 	}
 
-	// Verify no partial file left behind
 	installPath := filepath.Join(installDir, "test.AppImage")
 	if _, err := os.Stat(installPath); err == nil {
 		t.Error("partial file should have been cleaned up after checksum mismatch")
@@ -2560,7 +2311,6 @@ func TestIntegration_EdgeCase_DownloadTimeout(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
 
-	// Server that takes 5 seconds to respond
 	ts := startSlowServer(t, 5*time.Second)
 
 	installDir := t.TempDir()
@@ -2569,24 +2319,18 @@ func TestIntegration_EdgeCase_DownloadTimeout(t *testing.T) {
 	action.Params = &pb.Action_App{App: &pb.AppInstallParams{
 		Url:         ts.URL + "/test.AppImage",
 		InstallPath: installDir,
-		// Checksum is mandated and the executor fails closed without it before
-		// downloading (parity with rpm/deb); the value is irrelevant here — the
-		// slow download trips the action timeout first.
+
 		ChecksumSha256: strings.Repeat("a", 64),
 	}}
-	// Set a 1-second timeout on the action
+
 	action.TimeoutSeconds = 1
 
 	result := e.ExecuteAction(ctx, testAction(action))
-	// Should be TIMEOUT status (executor.go:253 checks context.DeadlineExceeded)
+
 	if result.Status != pb.ExecutionStatus_EXECUTION_STATUS_TIMEOUT {
 		t.Errorf("expected TIMEOUT status, got %s (error: %s)", result.Status, result.Error)
 	}
 }
-
-// =============================================================================
-// Edge Case: Invalid Action Parameters
-// =============================================================================
 
 func TestIntegration_EdgeCase_NilParams(t *testing.T) {
 	e := newTestExecutor()
@@ -2614,7 +2358,7 @@ func TestIntegration_EdgeCase_NilParams(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			action := makeAction(t, tt.actionType, pb.DesiredState_DESIRED_STATE_PRESENT)
-			action.Params = nil // Force nil params
+			action.Params = nil
 			result := e.ExecuteAction(ctx, testAction(action))
 			assertFailed(t, result)
 			if !strings.Contains(result.Error, "required") {
@@ -2721,10 +2465,6 @@ func TestIntegration_EdgeCase_InvalidPaths(t *testing.T) {
 	})
 }
 
-// =============================================================================
-// Edge Case: Filesystem Issues (requires --privileged)
-// =============================================================================
-
 func TestIntegration_EdgeCase_DiskFull(t *testing.T) {
 	skipIfNotPrivileged(t)
 	e := newTestExecutor()
@@ -2733,7 +2473,6 @@ func TestIntegration_EdgeCase_DiskFull(t *testing.T) {
 	mountPoint := "/tmp/cadestro-diskfull-test"
 	os.MkdirAll(mountPoint, 0755)
 
-	// Mount a 1MB tmpfs
 	cmd := exec.Command("sudo", "-n", "mount", "-t", "tmpfs", "-o", "size=1M", "tmpfs", mountPoint)
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("mount tmpfs failed: %v", err)
@@ -2743,18 +2482,16 @@ func TestIntegration_EdgeCase_DiskFull(t *testing.T) {
 		sudoRemoveAll(mountPoint)
 	})
 
-	// Fill the tmpfs
 	filler := filepath.Join(mountPoint, "filler")
 	exec.Command("sudo", "-n", "sh", "-c", "dd if=/dev/zero of="+filler+" bs=1M count=1").Run()
 
-	// Now try to write a file to the full filesystem
 	action := makeAction(t, pb.ActionType_ACTION_TYPE_FILE, pb.DesiredState_DESIRED_STATE_PRESENT)
 	action.Params = &pb.Action_File{File: &pb.FileParams{
 		Path:    filepath.Join(mountPoint, "testfile.txt"),
-		Content: strings.Repeat("data", 1024), // 4KB of data
+		Content: strings.Repeat("data", 1024),
 	}}
 	result := e.ExecuteAction(ctx, testAction(action))
-	// Should fail gracefully — no crash, just an error
+
 	assertFailed(t, result)
 }
 
@@ -2763,7 +2500,6 @@ func TestIntegration_EdgeCase_ReadOnlyMount(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
 
-	// Create a directory and bind-mount it read-only
 	sourceDir := "/tmp/cadestro-ro-source"
 	mountPoint := "/tmp/cadestro-ro-test"
 	os.MkdirAll(sourceDir, 0755)
@@ -2773,7 +2509,7 @@ func TestIntegration_EdgeCase_ReadOnlyMount(t *testing.T) {
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("bind mount failed: %v", err)
 	}
-	// Remount as read-only
+
 	cmd = exec.Command("sudo", "-n", "mount", "-o", "remount,ro,bind", mountPoint)
 	if err := cmd.Run(); err != nil {
 		exec.Command("sudo", "-n", "umount", mountPoint).Run()
@@ -2786,31 +2522,25 @@ func TestIntegration_EdgeCase_ReadOnlyMount(t *testing.T) {
 		sudoRemoveAll(sourceDir)
 	})
 
-	// Try to write to the read-only mount
 	action := makeAction(t, pb.ActionType_ACTION_TYPE_FILE, pb.DesiredState_DESIRED_STATE_PRESENT)
 	action.Params = &pb.Action_File{File: &pb.FileParams{
 		Path:    filepath.Join(mountPoint, "testfile.txt"),
 		Content: "should not be written",
 	}}
 	result := e.ExecuteAction(ctx, testAction(action))
-	// Should fail gracefully
+
 	assertFailed(t, result)
 }
-
-// =============================================================================
-// Edge Case: Pre-existing Conflicting State
-// =============================================================================
 
 func TestIntegration_EdgeCase_UserExistsDifferentShell(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
 
 	username := "cadestroedgeuser"
-	// Create user with /bin/bash
+
 	sudoRun("useradd", "-s", "/bin/bash", username).Run()
 	t.Cleanup(func() { cleanupTestUser(t, username) })
 
-	// Now request user with /usr/sbin/nologin
 	action := makeAction(t, pb.ActionType_ACTION_TYPE_USER, pb.DesiredState_DESIRED_STATE_PRESENT)
 	action.Params = &pb.Action_User{User: &pb.UserParams{
 		Username: username,
@@ -2820,7 +2550,6 @@ func TestIntegration_EdgeCase_UserExistsDifferentShell(t *testing.T) {
 	assertSuccess(t, result)
 	assertChanged(t, result, true)
 
-	// Verify shell was actually changed
 	out, _ := exec.Command("getent", "passwd", username).CombinedOutput()
 	if !strings.Contains(string(out), "/usr/sbin/nologin") {
 		t.Errorf("shell not updated, getent says: %s", strings.TrimSpace(string(out)))
@@ -2845,7 +2574,6 @@ func TestIntegration_EdgeCase_FileExistsDifferentPerms(t *testing.T) {
 	assertSuccess(t, result)
 	assertChanged(t, result, true)
 
-	// Verify permissions were changed
 	info, err := os.Stat(filePath)
 	if err != nil {
 		t.Fatal(err)
@@ -2863,13 +2591,6 @@ func TestIntegration_EdgeCase_FileExistsAsDirectory(t *testing.T) {
 	os.MkdirAll(dirPath, 0755)
 	t.Cleanup(func() { sudoRemoveAll(dirPath) })
 
-	// Writing a FILE to a path that already exists as a DIRECTORY must
-	// FAIL cleanly. The previous atomicWriteFile shelled out to `mv`,
-	// which silently moved the temp file INTO the directory and reported
-	// success — a latent bug this test used to pin. The fd-based safe
-	// writer (WS6 #2) renames the temp over the target, and the kernel
-	// refuses to replace a directory with a non-directory, so the type
-	// conflict is surfaced instead of mishandled.
 	action := makeAction(t, pb.ActionType_ACTION_TYPE_FILE, pb.DesiredState_DESIRED_STATE_PRESENT)
 	action.Params = &pb.Action_File{File: &pb.FileParams{
 		Path:    dirPath,
@@ -2878,8 +2599,6 @@ func TestIntegration_EdgeCase_FileExistsAsDirectory(t *testing.T) {
 	result := e.ExecuteAction(ctx, testAction(action))
 	assertFailed(t, result)
 
-	// The directory is left intact — not replaced, and no temp file was
-	// moved inside it.
 	info, err := os.Stat(dirPath)
 	if err != nil || !info.IsDir() {
 		t.Fatalf("directory should be left intact, got info=%v err=%v", info, err)
@@ -2908,7 +2627,6 @@ func TestIntegration_EdgeCase_EmptyFileContent(t *testing.T) {
 	result := e.ExecuteAction(ctx, testAction(action))
 	assertSuccess(t, result)
 
-	// File should exist and be empty
 	info, err := os.Stat(filePath)
 	if err != nil {
 		t.Fatalf("file not created: %v", err)
@@ -2918,18 +2636,12 @@ func TestIntegration_EdgeCase_EmptyFileContent(t *testing.T) {
 	}
 }
 
-// =============================================================================
-// Edge Case Tests — Round 2: Adverse Real-World Conditions
-// =============================================================================
-
-// TestIntegration_EdgeCase_SymlinkCircular verifies that the executor handles
-// circular and dangling symlinks in file paths without crashing.
 func TestIntegration_EdgeCase_SymlinkCircular(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
 
 	t.Run("DanglingSymlink", func(t *testing.T) {
-		// Create a symlink pointing to a non-existent target
+
 		linkPath := "/tmp/cadestro-edge-dangling-link"
 		os.Remove(linkPath)
 		t.Cleanup(func() { os.Remove(linkPath) })
@@ -2938,16 +2650,13 @@ func TestIntegration_EdgeCase_SymlinkCircular(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// Try to write a file at the symlink path — resolveAndValidatePath resolves
-		// the parent directory, so it should handle this gracefully
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_FILE, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_File{File: &pb.FileParams{
 			Path:    linkPath,
 			Content: "test content\n",
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
-		// The executor should either succeed (writing through the resolved path)
-		// or fail gracefully — it must not panic
+
 		if result.Status != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS &&
 			result.Status != pb.ExecutionStatus_EXECUTION_STATUS_FAILED {
 			t.Errorf("unexpected status: %s", result.Status)
@@ -2955,7 +2664,7 @@ func TestIntegration_EdgeCase_SymlinkCircular(t *testing.T) {
 	})
 
 	t.Run("CircularSymlink", func(t *testing.T) {
-		// Create two symlinks pointing at each other
+
 		linkA := "/tmp/cadestro-edge-circular-a"
 		linkB := "/tmp/cadestro-edge-circular-b"
 		os.Remove(linkA)
@@ -2968,14 +2677,13 @@ func TestIntegration_EdgeCase_SymlinkCircular(t *testing.T) {
 		os.Symlink(linkB, linkA)
 		os.Symlink(linkA, linkB)
 
-		// Try to write a file at the circular symlink path
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_FILE, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_File{File: &pb.FileParams{
 			Path:    linkA,
 			Content: "test content\n",
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
-		// Must not panic — either succeeds or fails with error
+
 		if result.Status != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS &&
 			result.Status != pb.ExecutionStatus_EXECUTION_STATUS_FAILED {
 			t.Errorf("unexpected status: %s", result.Status)
@@ -2983,27 +2691,23 @@ func TestIntegration_EdgeCase_SymlinkCircular(t *testing.T) {
 	})
 
 	t.Run("SymlinkToProtectedPath", func(t *testing.T) {
-		// Create a symlink from a temp path pointing to /etc/passwd
+
 		linkPath := "/tmp/cadestro-edge-symlink-protected"
 		os.Remove(linkPath)
 		t.Cleanup(func() { os.Remove(linkPath) })
 
 		os.Symlink("/etc/passwd", linkPath)
 
-		// Try to remove the file — resolveAndValidatePath should resolve the symlink
-		// and detect /etc/passwd as the real target
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_FILE, pb.DesiredState_DESIRED_STATE_ABSENT)
 		action.Params = &pb.Action_File{File: &pb.FileParams{Path: linkPath}}
 		_ = e.ExecuteAction(ctx, testAction(action))
-		// /etc/passwd should still exist regardless of outcome
+
 		if _, err := os.Stat("/etc/passwd"); err != nil {
 			t.Fatal("CRITICAL: /etc/passwd was deleted!")
 		}
 	})
 }
 
-// TestIntegration_EdgeCase_DNSResolutionFailure verifies graceful handling when
-// download URLs point to unresolvable hostnames.
 func TestIntegration_EdgeCase_DNSResolutionFailure(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
@@ -3013,8 +2717,7 @@ func TestIntegration_EdgeCase_DNSResolutionFailure(t *testing.T) {
 		action.Params = &pb.Action_App{App: &pb.AppInstallParams{
 			Url:         "https://this-domain-does-not-exist-xyzzy.invalid/app.AppImage",
 			InstallPath: "/tmp/cadestro-edge-dns",
-			// Supply a checksum so the install passes the artifact-verification
-			// guard and actually reaches the DNS resolution this test exercises.
+
 			ChecksumSha256: strings.Repeat("a", 64),
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
@@ -3044,46 +2747,33 @@ func TestIntegration_EdgeCase_DNSResolutionFailure(t *testing.T) {
 	})
 }
 
-// TestIntegration_EdgeCase_HTTPSCertError verifies graceful handling when
-// the server presents a self-signed or invalid TLS certificate.
 func TestIntegration_EdgeCase_HTTPSCertError(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
 
-	// Override newTestExecutor's trust-all test client with a normal
-	// verifying client: this test specifically asserts that an untrusted
-	// (self-signed) cert is REJECTED, which the shared insecure test
-	// client would otherwise accept.
 	e.httpClient = &http.Client{}
 
-	// Create an HTTPS server with a self-signed cert (httptest.NewTLSServer)
 	ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("fake appimage content"))
 	}))
 	t.Cleanup(ts.Close)
 
-	// The executor's HTTP client does NOT trust the self-signed cert,
-	// so the TLS handshake should fail
 	action := makeAction(t, pb.ActionType_ACTION_TYPE_APP_IMAGE, pb.DesiredState_DESIRED_STATE_PRESENT)
 	action.Params = &pb.Action_App{App: &pb.AppInstallParams{
 		Url:         ts.URL + "/test.AppImage",
 		InstallPath: "/tmp/cadestro-edge-tls",
-		// Supply a checksum so the install passes the artifact-verification guard
-		// and actually reaches the TLS handshake this test exercises.
+
 		ChecksumSha256: strings.Repeat("a", 64),
 	}}
 	result := e.ExecuteAction(ctx, testAction(action))
 	assertFailed(t, result)
 
-	// Verify no partial file was left behind
 	if _, err := os.Stat("/tmp/cadestro-edge-tls/test.AppImage"); err == nil {
 		t.Error("partial file left behind after TLS error")
 		os.RemoveAll("/tmp/cadestro-edge-tls")
 	}
 }
 
-// TestIntegration_EdgeCase_PartialAppImage verifies that the executor handles
-// a 0-byte or truncated file already existing at the install path.
 func TestIntegration_EdgeCase_PartialAppImage(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
@@ -3093,10 +2783,8 @@ func TestIntegration_EdgeCase_PartialAppImage(t *testing.T) {
 	os.MkdirAll(installDir, 0755)
 	t.Cleanup(func() { os.RemoveAll(installDir) })
 
-	// Create a 0-byte file at the install path (simulates interrupted download)
 	os.WriteFile(filepath.Join(installDir, fileName), []byte{}, 0755)
 
-	// Serve a real file
 	realContent := []byte("#!/bin/sh\necho real\n")
 	checksum := sha256.Sum256(realContent)
 	checksumHex := hex.EncodeToString(checksum[:])
@@ -3114,7 +2802,6 @@ func TestIntegration_EdgeCase_PartialAppImage(t *testing.T) {
 	assertSuccess(t, result)
 	assertChanged(t, result, true)
 
-	// Verify the file has the correct content now
 	data, err := os.ReadFile(filepath.Join(installDir, fileName))
 	if err != nil {
 		t.Fatal(err)
@@ -3124,8 +2811,6 @@ func TestIntegration_EdgeCase_PartialAppImage(t *testing.T) {
 	}
 }
 
-// TestIntegration_EdgeCase_ShellTimeout verifies that shell scripts that run
-// longer than TimeoutSeconds are killed and reported as TIMEOUT.
 func TestIntegration_EdgeCase_ShellTimeout(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
@@ -3143,8 +2828,6 @@ func TestIntegration_EdgeCase_ShellTimeout(t *testing.T) {
 	}
 }
 
-// TestIntegration_EdgeCase_UserDeleteWhileLoggedIn verifies that user removal
-// works even when the user has active processes (simulated with a background sleep).
 func TestIntegration_EdgeCase_UserDeleteWhileLoggedIn(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
@@ -3153,13 +2836,11 @@ func TestIntegration_EdgeCase_UserDeleteWhileLoggedIn(t *testing.T) {
 	ensureTestUser(t, username)
 	t.Cleanup(func() { cleanupTestUser(t, username) })
 
-	// Start a long-running process as the test user
 	bgCmd := exec.Command("sudo", "-n", "sh", "-c", fmt.Sprintf("su -s /bin/sh -c 'sleep 300 &' %s", username))
 	bgCmd.Start()
-	// Give the process a moment to start
+
 	time.Sleep(200 * time.Millisecond)
 
-	// Now try to remove the user — killUserSessions should handle the active process
 	action := makeAction(t, pb.ActionType_ACTION_TYPE_USER, pb.DesiredState_DESIRED_STATE_ABSENT)
 	action.Params = &pb.Action_User{User: &pb.UserParams{Username: username}}
 	result := e.ExecuteAction(ctx, testAction(action))
@@ -3171,33 +2852,26 @@ func TestIntegration_EdgeCase_UserDeleteWhileLoggedIn(t *testing.T) {
 	}
 }
 
-// TestIntegration_EdgeCase_GroupIsPrimaryGroup verifies behavior when trying
-// to delete a group that is still a user's primary group.
 func TestIntegration_EdgeCase_GroupIsPrimaryGroup(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
 	username := "cadestroedgeprimgrp"
-	groupName := username // useradd creates a primary group matching username
+	groupName := username
 
 	t.Cleanup(func() {
 		cleanupTestUser(t, username)
 		cleanupTestGroup(t, groupName)
 	})
 
-	// Create user — this automatically creates a primary group with the same name
 	ensureTestUser(t, username)
 
-	// Try to delete the group while it's still the user's primary group
 	action := makeAction(t, pb.ActionType_ACTION_TYPE_GROUP, pb.DesiredState_DESIRED_STATE_ABSENT)
 	action.Params = &pb.Action_Group{Group: &pb.GroupParams{Name: groupName}}
 	result := e.ExecuteAction(ctx, testAction(action))
 
-	// groupdel should fail because the group is a primary group
 	assertFailed(t, result)
 }
 
-// TestIntegration_EdgeCase_BinaryFileContent verifies that the executor correctly
-// handles binary content (null bytes, non-UTF-8) in file operations.
 func TestIntegration_EdgeCase_BinaryFileContent(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
@@ -3206,7 +2880,6 @@ func TestIntegration_EdgeCase_BinaryFileContent(t *testing.T) {
 		filePath := "/tmp/cadestro-edge-binary-null"
 		t.Cleanup(func() { sudoRemove(filePath) })
 
-		// Content with null bytes
 		content := "before\x00middle\x00after\n"
 
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_FILE, pb.DesiredState_DESIRED_STATE_PRESENT)
@@ -3230,7 +2903,6 @@ func TestIntegration_EdgeCase_BinaryFileContent(t *testing.T) {
 		filePath := "/tmp/cadestro-edge-utf8"
 		t.Cleanup(func() { sudoRemove(filePath) })
 
-		// Content with multibyte UTF-8 characters
 		content := "日本語テスト 🎉 Ünïcödé\n"
 
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_FILE, pb.DesiredState_DESIRED_STATE_PRESENT)
@@ -3254,7 +2926,6 @@ func TestIntegration_EdgeCase_BinaryFileContent(t *testing.T) {
 		filePath := "/tmp/cadestro-edge-large-content"
 		t.Cleanup(func() { sudoRemove(filePath) })
 
-		// 1MB file content
 		content := strings.Repeat("A", 1024*1024) + "\n"
 
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_FILE, pb.DesiredState_DESIRED_STATE_PRESENT)
@@ -3275,8 +2946,6 @@ func TestIntegration_EdgeCase_BinaryFileContent(t *testing.T) {
 	})
 }
 
-// TestIntegration_EdgeCase_ImmutableFile verifies behavior when a file has
-// the immutable attribute set (chattr +i). Requires privileged container.
 func TestIntegration_EdgeCase_ImmutableFile(t *testing.T) {
 	skipIfNotPrivileged(t)
 	e := newTestExecutor()
@@ -3284,44 +2953,37 @@ func TestIntegration_EdgeCase_ImmutableFile(t *testing.T) {
 	filePath := "/tmp/cadestro-edge-immutable"
 
 	t.Cleanup(func() {
-		// Must remove immutable attribute before cleanup
+
 		sudoRun("chattr", "-i", filePath).Run()
 		sudoRemove(filePath)
 	})
 
-	// Create a file and make it immutable
 	os.WriteFile(filePath, []byte("original\n"), 0644)
 	if out, err := sudoRun("chattr", "+i", filePath).CombinedOutput(); err != nil {
 		t.Skipf("chattr not available or not supported: %v: %s", err, out)
 	}
 
-	// Try to overwrite the immutable file
 	action := makeAction(t, pb.ActionType_ACTION_TYPE_FILE, pb.DesiredState_DESIRED_STATE_PRESENT)
 	action.Params = &pb.Action_File{File: &pb.FileParams{
 		Path:    filePath,
 		Content: "modified\n",
 	}}
 	result := e.ExecuteAction(ctx, testAction(action))
-	// Should fail because file is immutable (mv -f to immutable target fails)
+
 	assertFailed(t, result)
 
-	// Original content should be preserved
 	data, _ := os.ReadFile(filePath)
 	if string(data) != "original\n" {
 		t.Error("immutable file was modified!")
 	}
 }
 
-// TestIntegration_EdgeCase_BrokenSudoersFile verifies that a broken sudoers file
-// (one that fails visudo validation) doesn't break the executor's ability to
-// write new sudoers configuration.
 func TestIntegration_EdgeCase_BrokenSudoersFile(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
-	// Use a unique action ID for this test's sudoers file
+
 	actionID := "edgebroken01"
 
-	// Create a broken sudoers file in sudoers.d
 	brokenPath := "/etc/sudoers.d/99-cadestro-broken-test"
 	t.Cleanup(func() {
 		sudoRemove(brokenPath)
@@ -3330,12 +2992,10 @@ func TestIntegration_EdgeCase_BrokenSudoersFile(t *testing.T) {
 		cleanupTestUser(t, "cadestroedgesudo")
 	})
 
-	// Write invalid sudoers syntax
 	sudoWriteFile(brokenPath, []byte("INVALID SUDOERS SYNTAX !!!\n"))
 
 	ensureTestUser(t, "cadestroedgesudo")
 
-	// The executor should still be able to write its own valid sudoers file
 	action := &pb.Action{
 		Id:           &pb.ActionId{Value: actionID},
 		Type:         pb.ActionType_ACTION_TYPE_ADMIN_POLICY,
@@ -3346,10 +3006,9 @@ func TestIntegration_EdgeCase_BrokenSudoersFile(t *testing.T) {
 		}},
 	}
 	result := e.ExecuteAction(ctx, testAction(action))
-	// The executor writes its own file independently — should succeed
+
 	assertSuccess(t, result)
 
-	// Verify our file passes visudo validation
 	ourFile := sudoersFilePath(actionID)
 	cmd := sudoRun("visudo", "-c", "-f", ourFile)
 	if out, err := cmd.CombinedOutput(); err != nil {
@@ -3357,9 +3016,6 @@ func TestIntegration_EdgeCase_BrokenSudoersFile(t *testing.T) {
 	}
 }
 
-// TestIntegration_EdgeCase_SSHDirWrongPermissions verifies that the executor
-// corrects .ssh directory and authorized_keys permissions even when they
-// already exist with wrong permissions.
 func TestIntegration_EdgeCase_SSHDirWrongPermissions(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
@@ -3372,15 +3028,12 @@ func TestIntegration_EdgeCase_SSHDirWrongPermissions(t *testing.T) {
 	sshDir := filepath.Join(homeDir, ".ssh")
 	authKeys := filepath.Join(sshDir, "authorized_keys")
 
-	// Create .ssh with wrong permissions (0777 instead of 0700)
 	sudoRun("mkdir", "-p", sshDir).Run()
 	sudoRun("chmod", "0777", sshDir).Run()
 
-	// Create authorized_keys with wrong permissions (0666 instead of 0600)
 	sudoRun("sh", "-c", fmt.Sprintf("echo 'ssh-rsa OLD_KEY' > %s", authKeys)).Run()
 	sudoRun("chmod", "0666", authKeys).Run()
 
-	// Now run user PRESENT with SSH keys — executor should fix permissions
 	action := makeAction(t, pb.ActionType_ACTION_TYPE_USER, pb.DesiredState_DESIRED_STATE_PRESENT)
 	action.Params = &pb.Action_User{User: &pb.UserParams{
 		Username:          username,
@@ -3389,8 +3042,6 @@ func TestIntegration_EdgeCase_SSHDirWrongPermissions(t *testing.T) {
 	result := e.ExecuteAction(ctx, testAction(action))
 	assertSuccess(t, result)
 
-	// Verify .ssh directory permissions are now 700
-	// Use sudo sh because .ssh is 0700 owned by the test user, not accessible by cadestro
 	out, err := sudoRun("sh", "-c", fmt.Sprintf("stat -c '%%a' %s", sshDir)).Output()
 	if err != nil {
 		t.Fatalf("cannot stat .ssh: %v", err)
@@ -3399,7 +3050,6 @@ func TestIntegration_EdgeCase_SSHDirWrongPermissions(t *testing.T) {
 		t.Errorf("expected .ssh permissions 700, got %s", perm)
 	}
 
-	// Verify authorized_keys permissions are now 600
 	out, err = sudoRun("sh", "-c", fmt.Sprintf("stat -c '%%a' %s", authKeys)).Output()
 	if err != nil {
 		t.Fatalf("cannot stat authorized_keys: %v", err)
@@ -3409,21 +3059,16 @@ func TestIntegration_EdgeCase_SSHDirWrongPermissions(t *testing.T) {
 	}
 }
 
-// TestIntegration_EdgeCase_VeryLongFilePath verifies behavior when the file
-// path approaches the Linux PATH_MAX limit (4096 bytes).
 func TestIntegration_EdgeCase_VeryLongFilePath(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
 
-	// Create a path that's just under PATH_MAX (4096)
-	// /tmp/ = 5 chars, then we need deeply nested dirs
 	baseDir := "/tmp/cadestro-edge-longpath"
 	t.Cleanup(func() { os.RemoveAll(baseDir) })
 
-	// Build a path with many nested directories
 	longPath := baseDir
 	for len(longPath) < 3900 {
-		longPath = filepath.Join(longPath, "abcdefghij") // 10 chars per component
+		longPath = filepath.Join(longPath, "abcdefghij")
 	}
 	longPath = filepath.Join(longPath, "file.txt")
 
@@ -3434,15 +3079,13 @@ func TestIntegration_EdgeCase_VeryLongFilePath(t *testing.T) {
 	}}
 	result := e.ExecuteAction(ctx, testAction(action))
 
-	// Linux PATH_MAX is 4096 — this should either succeed (path fits) or
-	// fail gracefully with an error (if filesystem rejects it)
 	if result.Status != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS &&
 		result.Status != pb.ExecutionStatus_EXECUTION_STATUS_FAILED {
 		t.Errorf("unexpected status: %s", result.Status)
 	}
 
 	t.Run("ExceedsPathMax", func(t *testing.T) {
-		// Build a path that exceeds PATH_MAX (4096)
+
 		tooLong := baseDir
 		for len(tooLong) < 4200 {
 			tooLong = filepath.Join(tooLong, "abcdefghij")
@@ -3455,25 +3098,21 @@ func TestIntegration_EdgeCase_VeryLongFilePath(t *testing.T) {
 			Content: "test\n",
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
-		// Should fail — path too long for Linux VFS
+
 		assertFailed(t, result)
 	})
 }
 
-// TestIntegration_EdgeCase_PackagePinConflict verifies that pinning behavior
-// works correctly when a package is already pinned.
 func TestIntegration_EdgeCase_PackagePinConflict(t *testing.T) {
 	skipIfNoApt(t)
 	e := newTestExecutor()
 	ctx := context.Background()
 
-	// First, install a package
 	sudoRun("apt-get", "install", "-y", "sl").Run()
 	t.Cleanup(func() {
 		sudoRun("apt-get", "remove", "-y", "sl").Run()
 	})
 
-	// Install with pin=true
 	action := makeAction(t, pb.ActionType_ACTION_TYPE_PACKAGE, pb.DesiredState_DESIRED_STATE_PRESENT)
 	action.Params = &pb.Action_Package{Package: &pb.PackageParams{
 		Name: "sl",
@@ -3482,7 +3121,6 @@ func TestIntegration_EdgeCase_PackagePinConflict(t *testing.T) {
 	result := e.ExecuteAction(ctx, testAction(action))
 	assertSuccess(t, result)
 
-	// Run again — should be idempotent (already pinned)
 	action2 := makeAction(t, pb.ActionType_ACTION_TYPE_PACKAGE, pb.DesiredState_DESIRED_STATE_PRESENT)
 	action2.Params = &pb.Action_Package{Package: &pb.PackageParams{
 		Name: "sl",
@@ -3493,8 +3131,6 @@ func TestIntegration_EdgeCase_PackagePinConflict(t *testing.T) {
 	assertChanged(t, result2, false)
 }
 
-// TestIntegration_EdgeCase_SystemdInvalidUnit verifies that the executor handles
-// invalid systemd unit file content gracefully.
 func TestIntegration_EdgeCase_SystemdInvalidUnit(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
@@ -3504,35 +3140,30 @@ func TestIntegration_EdgeCase_SystemdInvalidUnit(t *testing.T) {
 	t.Cleanup(func() { sudoRemove(unitPath) })
 
 	t.Run("InvalidSyntax", func(t *testing.T) {
-		// Unit file with completely invalid content
+
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_SERVICE, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_Service{Service: &pb.ServiceParams{
 			UnitName:    unitName,
 			UnitContent: "THIS IS NOT VALID SYSTEMD UNIT CONTENT\n[[[invalid\n",
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
-		// The unit file is written, but daemon-reload fails without systemd
-		// In a real system, systemd would parse the invalid unit and the start would fail
-		// In container: daemon-reload fails → FAILED status
+
 		assertFailed(t, result)
 
-		// The file should still be written (daemon-reload fails after the write)
 		if _, err := os.Stat(unitPath); err != nil {
 			t.Error("unit file not written")
 		}
 	})
 
 	t.Run("EmptyUnitContent", func(t *testing.T) {
-		// Empty unit content — executor should still write it
+
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_SERVICE, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_Service{Service: &pb.ServiceParams{
 			UnitName:    unitName,
 			UnitContent: "",
 		}}
 		result := e.ExecuteAction(ctx, testAction(action))
-		// With empty UnitContent, the executor skips unit file writing and
-		// goes straight to enable/start logic. Without systemd, this may vary.
-		// The key is that it doesn't crash.
+
 		if result.Status != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS &&
 			result.Status != pb.ExecutionStatus_EXECUTION_STATUS_FAILED {
 			t.Errorf("unexpected status: %s", result.Status)
@@ -3540,14 +3171,11 @@ func TestIntegration_EdgeCase_SystemdInvalidUnit(t *testing.T) {
 	})
 }
 
-// TestIntegration_EdgeCase_ConcurrentFileWrites verifies that concurrent
-// file writes to the same path don't corrupt the file.
 func TestIntegration_EdgeCase_ConcurrentFileWrites(t *testing.T) {
 	e := newTestExecutor()
 	filePath := "/tmp/cadestro-edge-concurrent"
 	t.Cleanup(func() { sudoRemove(filePath) })
 
-	// Run 10 concurrent file writes with different content
 	var wg sync.WaitGroup
 	errors := make(chan string, 10)
 
@@ -3572,16 +3200,11 @@ func TestIntegration_EdgeCase_ConcurrentFileWrites(t *testing.T) {
 	wg.Wait()
 	close(errors)
 
-	// Collect any errors
 	var errs []string
 	for e := range errors {
 		errs = append(errs, e)
 	}
 
-	// Some may fail: ten writers racing on one destination contend on the
-	// read-compare-replace sequence, and a loser reports the failure rather
-	// than silently interleaving. This is expected. The important thing is:
-	// at least one succeeds and the file isn't corrupt.
 	successCount := 10 - len(errs)
 	if successCount == 0 {
 		t.Error("all concurrent writes failed — expected at least one to succeed")
@@ -3592,21 +3215,18 @@ func TestIntegration_EdgeCase_ConcurrentFileWrites(t *testing.T) {
 		t.Fatalf("file not readable after concurrent writes: %v", err)
 	}
 
-	// The file should contain exactly one complete line from one goroutine
 	content := string(data)
 	if !strings.HasPrefix(content, "content from goroutine ") {
 		t.Errorf("file content corrupt after concurrent writes: %q", content)
 	}
 }
 
-// TestIntegration_EdgeCase_LargeShellOutput verifies that the executor handles
-// shell scripts producing large amounts of output without hanging or crashing.
 func TestIntegration_EdgeCase_LargeShellOutput(t *testing.T) {
 	e := newTestExecutor()
 	ctx := context.Background()
 
 	t.Run("LargeStdout", func(t *testing.T) {
-		// Generate ~2MB of output
+
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_SHELL, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_Shell{Shell: &pb.ShellParams{
 			Script:    "dd if=/dev/zero bs=1024 count=2048 | tr '\\0' 'A'",
@@ -3618,7 +3238,7 @@ func TestIntegration_EdgeCase_LargeShellOutput(t *testing.T) {
 	})
 
 	t.Run("LargeStderr", func(t *testing.T) {
-		// Generate ~1MB of stderr output
+
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_SHELL, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_Shell{Shell: &pb.ShellParams{
 			Script:    "dd if=/dev/zero bs=1024 count=1024 | tr '\\0' 'E' >&2",
@@ -3630,7 +3250,7 @@ func TestIntegration_EdgeCase_LargeShellOutput(t *testing.T) {
 	})
 
 	t.Run("InterleavedOutput", func(t *testing.T) {
-		// Rapidly alternate between stdout and stderr
+
 		action := makeAction(t, pb.ActionType_ACTION_TYPE_SHELL, pb.DesiredState_DESIRED_STATE_PRESENT)
 		action.Params = &pb.Action_Shell{Shell: &pb.ShellParams{
 			Script:    `for i in $(seq 1 1000); do echo "stdout line $i"; echo "stderr line $i" >&2; done`,
@@ -3642,8 +3262,6 @@ func TestIntegration_EdgeCase_LargeShellOutput(t *testing.T) {
 	})
 }
 
-// TestIntegration_EdgeCase_RepositoryExpiredGPGKey verifies that the executor
-// handles repository operations when GPG keys are expired or invalid.
 func TestIntegration_EdgeCase_RepositoryExpiredGPGKey(t *testing.T) {
 	skipIfNoApt(t)
 	e := newTestExecutor()
@@ -3655,7 +3273,6 @@ func TestIntegration_EdgeCase_RepositoryExpiredGPGKey(t *testing.T) {
 		sudoRemove(fmt.Sprintf("/etc/apt/keyrings/%s.gpg", repoName))
 	})
 
-	// Add a repository with a non-existent GPG key URL
 	action := makeAction(t, pb.ActionType_ACTION_TYPE_REPOSITORY, pb.DesiredState_DESIRED_STATE_PRESENT)
 	action.Params = &pb.Action_Repository{Repository: &pb.RepositoryParams{
 		Name: repoName,
@@ -3667,6 +3284,6 @@ func TestIntegration_EdgeCase_RepositoryExpiredGPGKey(t *testing.T) {
 		},
 	}}
 	result := e.ExecuteAction(ctx, testAction(action))
-	// Should fail because the GPG key can't be downloaded
+
 	assertFailed(t, result)
 }

@@ -11,11 +11,8 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// errReadOnlyFS is a sentinel error returned when the filesystem is read-only and repair failed.
 var errReadOnlyFS = errors.New("filesystem is read-only")
 
-// requireWritableFS checks if the filesystem is writable and attempts repair if not.
-// Returns nil, nil if writable. Returns (output, error) if repair failed.
 func (e *Executor) requireWritableFS(ctx context.Context) (*pb.CommandOutput, error) {
 	repair := e.repairFilesystem
 	if e.repairFS != nil {
@@ -30,11 +27,8 @@ func (e *Executor) requireWritableFS(ctx context.Context) (*pb.CommandOutput, er
 	}, errReadOnlyFS
 }
 
-// validActionIDRegex matches only safe alphanumeric characters for action IDs.
 var validActionIDRegex = regexp.MustCompile(`^[A-Za-z0-9]+$`)
 
-// envActionID extracts and validates the action ID used to derive on-disk paths
-// and Linux group names.
 func envActionID(env *pb.Action) string {
 	if env == nil || env.GetId() == nil {
 		return ""
@@ -46,15 +40,10 @@ func envActionID(env *pb.Action) string {
 	return id
 }
 
-// syncGroupMembers adds missing users and removes users no longer in the desired list
-// for the given group. It logs warnings for non-existent users.
-// Returns (changed bool, error). The error is non-nil if any membership operation
-// failed, even if some operations succeeded (changed may still be true).
 func (e *Executor) syncGroupMembers(ctx context.Context, groupName string, desiredUsers []string, output *strings.Builder) (bool, error) {
 	changed := false
 	var errs []string
 
-	// Add missing members
 	for _, username := range desiredUsers {
 		uExists, err := e.userExists(ctx, username)
 		if err != nil {
@@ -76,7 +65,6 @@ func (e *Executor) syncGroupMembers(ctx context.Context, groupName string, desir
 		}
 	}
 
-	// Remove members not in desired list
 	currentMembers := e.getGroupMembers(ctx, groupName)
 	desiredSet := make(map[string]bool, len(desiredUsers))
 	for _, u := range desiredUsers {
@@ -101,9 +89,6 @@ func (e *Executor) syncGroupMembers(ctx context.Context, groupName string, desir
 	return changed, nil
 }
 
-// writeAndValidateConfig writes a config file atomically and validates it with an external command.
-// If validation fails, the file is removed and the validation error is returned.
-// On success, returns nil, nil.
 func (e *Executor) writeAndValidateConfig(ctx context.Context, path, content, mode, owner, group string, validateCmd string, validateArgs ...string) (*pb.CommandOutput, error) {
 	if err := e.atomicWriteFile(ctx, path, content, mode, owner, group); err != nil {
 		return nil, fmt.Errorf("write config file: %w", err)
@@ -111,7 +96,7 @@ func (e *Executor) writeAndValidateConfig(ctx context.Context, path, content, mo
 
 	validateOut, validateErr := e.runSudo(ctx, validateCmd, validateArgs...)
 	if validateErr != nil {
-		// Config is invalid — remove it and report error
+
 		if rmErr := e.removeFileStrict(ctx, path); rmErr != nil {
 			slog.Warn("failed to remove invalid config after validation failure", "path", path, "error", rmErr)
 		}
@@ -128,13 +113,9 @@ func (e *Executor) writeAndValidateConfig(ctx context.Context, path, content, mo
 	return nil, nil
 }
 
-// removeGroupWithConfig removes a managed config file and its associated group.
-// Removes all users from the group, deletes the group, and removes the config file.
-// If configPath is empty, only the group is removed.
 func (e *Executor) removeGroupWithConfig(ctx context.Context, groupName, configPath string, output *strings.Builder) (bool, error) {
 	changed := false
 
-	// Remove config file if specified
 	if configPath != "" && e.fileExistsWithSudo(ctx, configPath) {
 		if _, err := e.requireWritableFS(ctx); err != nil {
 			return false, fmt.Errorf("writable fs: %w", err)
@@ -146,14 +127,13 @@ func (e *Executor) removeGroupWithConfig(ctx context.Context, groupName, configP
 		changed = true
 	}
 
-	// Remove group and membership
 	gExists, err := e.groupExists(ctx, groupName)
 	if err != nil {
 		return changed, fmt.Errorf("check group %s: %w", groupName, err)
 	}
 	if gExists {
 		if !changed {
-			// Need writable FS for group operations (may not have been checked above)
+
 			if _, err := e.requireWritableFS(ctx); err != nil {
 				return false, fmt.Errorf("writable fs: %w", err)
 			}

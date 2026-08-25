@@ -10,9 +10,6 @@ import (
 	"strings"
 )
 
-// releaseSigningPublicKey is a base64-encoded PKIX Ed25519 public key injected
-// by the protected release workflow. A normal development build deliberately
-// cannot authenticate release manifests, so self-update fails closed.
 var releaseSigningPublicKey = "__RELEASE_SIGNING_PUBLIC_KEY__"
 
 func verifyReleaseManifest(manifest, signature []byte) error {

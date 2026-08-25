@@ -1,4 +1,3 @@
-// Package main is the entry point for the cadestrod agent.
 package main
 
 import (
@@ -11,16 +10,6 @@ import (
 	"github.com/manchtools/cadestro/agent/internal/store"
 )
 
-// runTTY manages the device-local TTY enable/disable toggle.
-// Usage:
-//
-//	cadestrod tty enable
-//	cadestrod tty disable
-//	cadestrod tty status
-//
-// The toggle is stored in the agent's SQLite database. `enable` and
-// `disable` require root (euid 0). `status` only needs read access to the
-// agent's database.
 func runTTY(args []string) int {
 	fs := flag.NewFlagSet("tty", flag.ExitOnError)
 	dataDir := fs.String("data-dir", credentials.DefaultDataDir, "Agent data directory")
@@ -31,7 +20,7 @@ func runTTY(args []string) int {
 	}
 
 	sub := args[0]
-	// flag.ExitOnError exits(2) on a parse failure; no error path here (#174).
+
 	_ = fs.Parse(args[1:])
 
 	switch sub {
@@ -39,29 +28,13 @@ func runTTY(args []string) int {
 		printTTYUsage()
 		return 0
 	case "enable", "disable", "status":
-		// handled below
+
 	default:
 		fmt.Fprintf(os.Stderr, "unknown tty subcommand: %s\n", sub)
 		printTTYUsage()
 		return 1
 	}
 
-	// Require root for mutating subcommands. The tty.enabled row in the
-	// agent's SQLite DB is owned by the agent service user; another
-	// unprivileged local user must not be able to flip the flag for a
-	// user they aren't. Root-only enforces that — sudo or an equivalent
-	// privilege backend is the only path to the mutator.
-	//
-	// An earlier revision also required the call to originate from an
-	// interactive TTY so an assigned shell action couldn't
-	// flip the flag remotely. That gate was dropped in this revision:
-	// the `script(1)` utility routes around it in one line (pty
-	// allocation makes the stdin check pass), so the gate only added
-	// operational friction without providing real defence-in-depth. The
-	// server-side answer to "who can grant terminal access on which
-	// device" belongs in the permission model (RBAC + the fleet-wide
-	// distribution of shell actions), not in a terminal-shape check on
-	// the agent CLI.
 	if sub == "enable" || sub == "disable" {
 		if os.Geteuid() != 0 {
 			fmt.Fprintf(os.Stderr, "Error: tty %s must be run as root (try: sudo cadestrod tty %s)\n", sub, sub)
@@ -69,8 +42,6 @@ func runTTY(args []string) int {
 		}
 	}
 
-	// OpenExisting (not New): the agent service owns migrations, so a CLI toggle
-	// must not run goose on an already-initialised database.
 	st, err := store.OpenExisting(*dataDir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: open agent store: %v\n", err)

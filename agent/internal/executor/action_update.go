@@ -1,4 +1,3 @@
-// Package executor provides implementations for action executors.
 package executor
 
 import (
@@ -12,9 +11,6 @@ import (
 	sysreboot "github.com/manchtools/cadestro/sdk/sys/reboot"
 )
 
-// Notification seams so the update/LPS paths can be exercised with fixtures
-// instead of a live host. Production binds them to the real notify Manager;
-// tests stub them.
 func (e *Executor) notifyAll(ctx context.Context, title, body string) {
 	_ = e.deps.notify.NotifyAll(ctx, title, body)
 }
@@ -22,24 +18,17 @@ func (e *Executor) notifyUsers(ctx context.Context, users []string, title, body 
 	_ = e.deps.notify.NotifyUsers(ctx, users, title, body)
 }
 
-// repairFilesystem attempts to fix read-only filesystem issues.
-// This can happen when the kernel remounts the filesystem as read-only due to errors.
-// It checks all real (non-virtual) filesystem mounts, not just /, because partitions
-// like /usr may be mounted separately and go read-only independently.
-// Returns true if all filesystems are writable, false if any repair failed.
 func (e *Executor) repairFilesystem(ctx context.Context) bool {
 	e.ensureDeps()
 	mounts, err := e.deps.fs.ListMounts(ctx)
 	if err != nil {
 		e.logger.Warn("could not list mounts", "error", err)
-		return true // Assume writable, let operations fail naturally
+		return true
 	}
 
 	allOk := true
 	for _, mnt := range mounts {
-		// Only real block-device filesystems: skip virtual mounts (proc, sysfs,
-		// cgroup, tmpfs, …) which are legitimately read-only and must never be
-		// remounted rw.
+
 		if !strings.HasPrefix(mnt.Source, "/dev/") {
 			continue
 		}
@@ -69,19 +58,14 @@ func (e *Executor) repairFilesystem(ctx context.Context) bool {
 	return allOk
 }
 
-// executeUpdate performs a system-wide package update.
-// It respects version pinning (apt-mark hold / dnf versionlock).
 func (e *Executor) executeUpdate(ctx context.Context, params *pb.UpdateParams) (*pb.CommandOutput, bool, error) {
 	e.ensureDeps()
-	// WS16 #3: bind the package manager to the action ctx so the per-action
-	// timeout reaches the index-update and generic-upgrade subprocesses. The
-	// apt/dnf-specific upgrade paths already build a ctx-bound backend.
+
 	mgr := e.pkgManagerForCtx(ctx)
 	if mgr == nil {
 		return nil, false, fmt.Errorf("no supported package manager found")
 	}
 
-	// Repair filesystem if mounted read-only (common after kernel errors)
 	if out, err := e.requireWritableFS(ctx); err != nil {
 		return out, false, err
 	}
@@ -101,10 +85,8 @@ func (e *Executor) executeUpdate(ctx context.Context, params *pb.UpdateParams) (
 		updatesAvailable = true
 	}
 
-	// Record pre-update reboot state to detect new reboot requirements.
 	rebootRequiredBefore := e.rebootRequired(ctx)
 
-	// Update package index
 	allOutput.WriteString("=== Package Index Update ===\n")
 	if updateResult, err := mgr.Update(ctx); err != nil {
 		allOutput.WriteString(updateResult.Stdout)
@@ -118,7 +100,6 @@ func (e *Executor) executeUpdate(ctx context.Context, params *pb.UpdateParams) (
 		allOutput.WriteString("\n")
 	}
 
-	// Re-check after index update (new updates may now be visible).
 	if !updatesAvailable {
 		var u bool
 		var err error
@@ -132,7 +113,6 @@ func (e *Executor) executeUpdate(ctx context.Context, params *pb.UpdateParams) (
 		}
 	}
 
-	// Perform the upgrade
 	allOutput.WriteString("=== Package Upgrade ===\n")
 
 	var upgradeResult sysexec.Result
@@ -149,10 +129,6 @@ func (e *Executor) executeUpdate(ctx context.Context, params *pb.UpdateParams) (
 		lastErr = upgradeErr
 	}
 
-	// Autoremove if requested. Delegate to the SDK Manager (a no-op on backends
-	// with no native equivalent) and detect change via the SDK installed-count
-	// comparison. Surface a call failure so the result reflects "we tried to
-	// autoremove and it failed", not a clean success over stale packages.
 	autoremoved := false
 	if params != nil && params.Autoremove {
 		allOutput.WriteString("\n=== Autoremove Unused Packages ===\n")
@@ -169,18 +145,12 @@ func (e *Executor) executeUpdate(ctx context.Context, params *pb.UpdateParams) (
 		}
 	}
 
-	// Check if this run created a new reboot requirement.
 	rebootRequiredAfter := e.rebootRequired(ctx)
 	newRebootRequired := rebootRequiredAfter && !rebootRequiredBefore
 	if rebootRequiredAfter {
 		allOutput.WriteString("\n*** REBOOT REQUIRED ***\n")
 		if newRebootRequired && params != nil && params.RebootIfRequired {
-			// errors.Join keeps the reboot failure visible even when an
-			// earlier upgrade error already occupied lastErr — a
-			// first-error-wins guard would silently demote a reboot the
-			// operator explicitly asked for. Join only on a real failure so
-			// lastErr keeps its identity otherwise (the NA classification
-			// below relies on it).
+
 			if rebootErr := e.scheduleRebootAfterUpdate(ctx, &allOutput); rebootErr != nil {
 				lastErr = errors.Join(lastErr, rebootErr)
 			}
@@ -206,19 +176,8 @@ func (e *Executor) executeUpdate(ctx context.Context, params *pb.UpdateParams) (
 	}, changed, lastErr
 }
 
-// scheduleRebootAfterUpdate issues the reboot the operator requested via
-// RebootIfRequired and notifies signed-in users ONLY if the shutdown actually
-// went out. A failure to schedule a reboot the operator explicitly asked for
-// is a real action failure (returned, not a logged warning); the desktop
-// notification is gated on success so users are never told "your system will
-// reboot" when it won't. Returns nil when the reboot was scheduled.
 func (e *Executor) scheduleRebootAfterUpdate(ctx context.Context, output *strings.Builder) error {
-	// Fail closed without a privilege runner, exactly as executeReboot does: a
-	// reboot must NEVER fall through to the process-global Direct runner, which
-	// systemd-logind honors via polkit with no sudo. sysreboot.New already
-	// rejects a nil runner, but guarding here keeps both reboot entry points
-	// identical and defends against a future New that defaults the runner. See
-	// action_reboot.go for the original workstation-reboot incident.
+
 	if e.runner == nil {
 		output.WriteString("FAILED to schedule reboot: no privilege runner configured\n")
 		return fmt.Errorf("schedule reboot: no privilege runner configured")
@@ -236,10 +195,6 @@ func (e *Executor) scheduleRebootAfterUpdate(ctx context.Context, output *string
 	return nil
 }
 
-// rebootRequired reports whether the system needs a reboot, via the SDK reboot
-// Manager (the reboot-required marker on Debian/Ubuntu, needs-restarting on
-// Fedora/RHEL). A nil runner or a probe error reports false — best-effort,
-// matching the prior behavior.
 func (e *Executor) rebootRequired(ctx context.Context) bool {
 	rb, err := sysreboot.New(e.runner)
 	if err != nil {

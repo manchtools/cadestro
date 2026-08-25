@@ -12,10 +12,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/service"
 )
 
-// fakeManager implements service.Manager hermetically: scripted version /
-// read results, recorded writes and reloads. Only the methods the unit
-// package touches carry behavior; the rest are wired to fail the test if
-// ever called (the reconciler must never restart/enable/stop anything).
 type fakeManager struct {
 	t *testing.T
 
@@ -101,10 +97,6 @@ func testLogger() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard,
 const testBin = "/usr/local/bin/cadestrod"
 const testData = "/var/lib/cadestro"
 
-// TestRender_RestrictRealtimeByVersion pins AC 2: ≥257 → true, <257 →
-// false; the unparseable/unknown case is exercised on the sync paths
-// below (Version error → false + WARN), because Render itself takes the
-// already-decided boolean.
 func TestRender_RestrictRealtimeByVersion(t *testing.T) {
 	on, err := Render(Params{BinaryPath: testBin, DataDir: testData, RestrictRealtime: true})
 	if err != nil {
@@ -122,10 +114,6 @@ func TestRender_RestrictRealtimeByVersion(t *testing.T) {
 	}
 }
 
-// TestRender_CarriesInstallShape pins the load-bearing lines the
-// install.sh heredoc used to carry — the capability set that #187
-// showed must track the binary, the paths, and the restart policy the
-// self-update respawn relies on.
 func TestRender_CarriesInstallShape(t *testing.T) {
 	out, err := Render(Params{BinaryPath: testBin, DataDir: testData, RestrictRealtime: false})
 	if err != nil {
@@ -150,7 +138,6 @@ func TestRender_CarriesInstallShape(t *testing.T) {
 	}
 }
 
-// TestReconcile_DriftRewritesAndReloads is the core of AC 3.
 func TestReconcile_DriftRewritesAndReloads(t *testing.T) {
 	m := &fakeManager{t: t, version: 257, readContent: "stale unit\n"}
 	drifted, err := Reconcile(context.Background(), m, testLogger(), Params{BinaryPath: testBin, DataDir: testData})
@@ -171,9 +158,6 @@ func TestReconcile_DriftRewritesAndReloads(t *testing.T) {
 	}
 }
 
-// TestReconcile_IdenticalIsNoop pins AC 3's second half: identical
-// bytes → no write, no reload. Identity is produced by rendering with
-// the same inputs the fake will serve back.
 func TestReconcile_IdenticalIsNoop(t *testing.T) {
 	rendered, err := Render(Params{BinaryPath: testBin, DataDir: testData, RestrictRealtime: false})
 	if err != nil {
@@ -192,8 +176,6 @@ func TestReconcile_IdenticalIsNoop(t *testing.T) {
 	}
 }
 
-// TestReconcile_AbsentUnitSkips pins AC 7's unit-file guard: no unit on
-// disk (container/dev run) → the startup reconcile does nothing.
 func TestReconcile_AbsentUnitSkips(t *testing.T) {
 	m := &fakeManager{t: t, version: 257, readErr: fs.ErrNotExist}
 	drifted, err := Reconcile(context.Background(), m, testLogger(), Params{BinaryPath: testBin, DataDir: testData})
@@ -208,9 +190,6 @@ func TestReconcile_AbsentUnitSkips(t *testing.T) {
 	}
 }
 
-// TestReconcile_VersionProbeFailureFailsSafe: probe error → render with
-// RestrictRealtime=false (the install.sh precaution, AC 2) rather than
-// aborting the reconcile.
 func TestReconcile_VersionProbeFailureFailsSafe(t *testing.T) {
 	m := &fakeManager{t: t, versionErr: errors.New("no systemctl"), readContent: "stale\n"}
 	drifted, err := Reconcile(context.Background(), m, testLogger(), Params{BinaryPath: testBin, DataDir: testData})
@@ -225,8 +204,6 @@ func TestReconcile_VersionProbeFailureFailsSafe(t *testing.T) {
 	}
 }
 
-// TestReconcile_WriteFailureSurfaces: the caller (daemon startup) is
-// fail-open, so Reconcile must RETURN the error, not swallow it.
 func TestReconcile_WriteFailureSurfaces(t *testing.T) {
 	m := &fakeManager{t: t, version: 257, readContent: "stale\n", writeErr: errors.New("read-only /etc")}
 	if _, err := Reconcile(context.Background(), m, testLogger(), Params{BinaryPath: testBin, DataDir: testData}); err == nil {
@@ -234,8 +211,6 @@ func TestReconcile_WriteFailureSurfaces(t *testing.T) {
 	}
 }
 
-// TestEnsureInstalled_WritesWhenAbsent covers the install-unit path
-// (AC 1): absent unit → written + reloaded.
 func TestEnsureInstalled_WritesWhenAbsent(t *testing.T) {
 	m := &fakeManager{t: t, version: 257, readErr: fs.ErrNotExist}
 	if err := EnsureInstalled(context.Background(), m, testLogger(), Params{BinaryPath: testBin, DataDir: testData}); err != nil {
@@ -246,8 +221,6 @@ func TestEnsureInstalled_WritesWhenAbsent(t *testing.T) {
 	}
 }
 
-// TestEnsureInstalled_IdenticalIsNoop: re-running install-unit (e.g.
-// updater hook after install.sh) must not churn the file or reload.
 func TestEnsureInstalled_IdenticalIsNoop(t *testing.T) {
 	rendered, err := Render(Params{BinaryPath: testBin, DataDir: testData, RestrictRealtime: true})
 	if err != nil {
@@ -262,10 +235,6 @@ func TestEnsureInstalled_IdenticalIsNoop(t *testing.T) {
 	}
 }
 
-// TestRenderedUnitPassesSDKContentGate: the agent's own template must
-// pass the same content gate operator SERVICE units do — WriteUnit
-// enforces it, so a template regression would brick the reconcile.
-// Drives the REAL exported gate for both RestrictRealtime renders.
 func TestRenderedUnitPassesSDKContentGate(t *testing.T) {
 	for _, rr := range []bool{true, false} {
 		out, err := Render(Params{BinaryPath: testBin, DataDir: testData, RestrictRealtime: rr})
@@ -278,10 +247,6 @@ func TestRenderedUnitPassesSDKContentGate(t *testing.T) {
 	}
 }
 
-// TestReconcile_PendingReloadRetried closes the reload-retry gap (local
-// CR on the spec-27 PR): a previous run wrote the unit but its
-// daemon-reload failed. The next reconcile sees identical bytes, and
-// must consult NeedDaemonReload and retry the reload — statelessly.
 func TestReconcile_PendingReloadRetried(t *testing.T) {
 	rendered, err := Render(Params{BinaryPath: testBin, DataDir: testData, RestrictRealtime: true})
 	if err != nil {
@@ -303,8 +268,6 @@ func TestReconcile_PendingReloadRetried(t *testing.T) {
 	}
 }
 
-// TestReconcile_NoPendingReloadNoReload: the identical path stays a
-// no-op when systemd's loaded config is current.
 func TestReconcile_NoPendingReloadNoReload(t *testing.T) {
 	rendered, err := Render(Params{BinaryPath: testBin, DataDir: testData, RestrictRealtime: true})
 	if err != nil {
@@ -319,12 +282,8 @@ func TestReconcile_NoPendingReloadNoReload(t *testing.T) {
 	}
 }
 
-// TestReconcile_ReloadFailureThenRetrySucceeds is the CR-requested
-// regression pair end-to-end: run 1 drifts, writes, and fails the
-// reload (error surfaces); run 2 sees identical bytes + pending reload
-// and completes it.
 func TestReconcile_ReloadFailureThenRetrySucceeds(t *testing.T) {
-	// Run 1: drift + failing reload.
+
 	m1 := &fakeManager{t: t, version: 257, readContent: "stale\n", reloadErr: errors.New("dbus down")}
 	_, err := Reconcile(context.Background(), m1, testLogger(), Params{BinaryPath: testBin, DataDir: testData})
 	if err == nil {
@@ -334,7 +293,6 @@ func TestReconcile_ReloadFailureThenRetrySucceeds(t *testing.T) {
 		t.Fatal("the unit must have been written before the reload failed")
 	}
 
-	// Run 2: disk now matches (m1 wrote it), systemd still stale.
 	m2 := &fakeManager{t: t, version: 257, readContent: m1.writeContent, needsReload: true}
 	drifted, err := Reconcile(context.Background(), m2, testLogger(), Params{BinaryPath: testBin, DataDir: testData})
 	if err != nil {
@@ -348,11 +306,6 @@ func TestReconcile_ReloadFailureThenRetrySucceeds(t *testing.T) {
 	}
 }
 
-// TestRender_RejectsUnsafePaths pins the render-input validation (local
-// CR): BinaryPath/DataDir land verbatim in ExecStart=/Environment=, so
-// whitespace, quotes, backslashes, %-specifiers, control characters,
-// or relative paths must be refused — a mangled root-owned unit is
-// worse than a loud install failure.
 func TestRender_RejectsUnsafePaths(t *testing.T) {
 	bad := []string{
 		"relative/path",

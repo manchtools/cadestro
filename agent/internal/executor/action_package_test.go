@@ -11,9 +11,6 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-// TestExecutePackage_RejectsNilParams verifies that a nil PackageParams is
-// rejected before any package-manager work runs. The executor rejects at the
-// field level, not by crashing on a nil dereference deeper in the call chain.
 func TestExecutePackage_RejectsNilParams(t *testing.T) {
 	e := NewExecutor(nil)
 	_, changed, err := e.executePackage(context.Background(), nil, pb.DesiredState_DESIRED_STATE_PRESENT)
@@ -28,11 +25,8 @@ func TestExecutePackage_RejectsNilParams(t *testing.T) {
 	}
 }
 
-// TestExecutePackage_FailsWhenNoPackageManager verifies that the PACKAGE
-// executor fails closed when no package manager was detected (pkgManager is
-// nil). A nil manager must surface as an error, not a silent no-op.
 func TestExecutePackage_FailsWhenNoPackageManager(t *testing.T) {
-	e := NewExecutor(nil) // runner=nil → pkgManager stays nil
+	e := NewExecutor(nil)
 	params := &pb.PackageParams{Name: "curl"}
 	_, changed, err := e.executePackage(context.Background(), params, pb.DesiredState_DESIRED_STATE_PRESENT)
 	if err == nil {
@@ -43,11 +37,8 @@ func TestExecutePackage_FailsWhenNoPackageManager(t *testing.T) {
 	}
 }
 
-// TestExecutePackage_RejectsUnknownDesiredState verifies that an unknown (zero
-// or out-of-range) desired state is rejected rather than silently falling
-// through to a default branch.
 func TestExecutePackage_RejectsUnknownDesiredState(t *testing.T) {
-	// Wire a fake package manager so we get past the nil-mgr check.
+
 	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
 		t.Fatalf("build direct runner: %v", err)
@@ -67,10 +58,6 @@ func TestExecutePackage_RejectsUnknownDesiredState(t *testing.T) {
 	}
 }
 
-// TestExecutePackage_ContextCancelledBeforeDispatch verifies that a cancelled
-// context is detected BEFORE any privileged package-manager call. The
-// pkgManagerForCtx helper returns nil when ctx is already done, and
-// executePackage surfaces that as an error.
 func TestExecutePackage_ContextCancelledBeforeDispatch(t *testing.T) {
 	r, err := sysexec.NewRunner(sysexec.Direct)
 	if err != nil {
@@ -82,7 +69,7 @@ func TestExecutePackage_ContextCancelledBeforeDispatch(t *testing.T) {
 	}
 	e := &Executor{pkgManager: mgr, pkgBackend: pkg.Apt}
 	ctx, cancel := context.WithCancel(context.Background())
-	cancel() // cancel immediately
+	cancel()
 	params := &pb.PackageParams{Name: "curl"}
 	_, changed, err := e.executePackage(ctx, params, pb.DesiredState_DESIRED_STATE_PRESENT)
 	if err == nil {
@@ -93,10 +80,6 @@ func TestExecutePackage_ContextCancelledBeforeDispatch(t *testing.T) {
 	}
 }
 
-// TestExecutePackage_GetPackageNameForManager_FallbackToName verifies that
-// getPackageNameForManager falls back to the generic Name field when no
-// backend-specific name is set. Without this fix, an AptName="curl" action
-// would no-op on a dnf host even though Name="curl" is the right answer.
 func TestGetPackageNameForManager_FallbackToName(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -164,10 +147,6 @@ func TestGetPackageNameForManager_FallbackToName(t *testing.T) {
 	}
 }
 
-// TestIsPackagePinned_NilManagerFailsClosed verifies that isPackagePinned
-// returns an error (not false, nil) when mgr is nil — a nil manager must never
-// be treated as "not pinned", which would cause pinPackage to proceed into a
-// nil dereference.
 func TestIsPackagePinned_NilManagerFailsClosed(t *testing.T) {
 	e := &Executor{}
 	_, err := e.isPackagePinned(context.Background(), nil, "curl")
@@ -176,8 +155,6 @@ func TestIsPackagePinned_NilManagerFailsClosed(t *testing.T) {
 	}
 }
 
-// TestPinPackage_NilManagerFailsClosed verifies that pinPackage returns an
-// error when mgr is nil.
 func TestPinPackage_NilManagerFailsClosed(t *testing.T) {
 	e := &Executor{}
 	_, err := e.pinPackage(context.Background(), nil, "curl")
@@ -186,8 +163,6 @@ func TestPinPackage_NilManagerFailsClosed(t *testing.T) {
 	}
 }
 
-// TestUnpinPackage_NilManagerFailsClosed verifies that unpinPackage returns an
-// error when mgr is nil.
 func TestUnpinPackage_NilManagerFailsClosed(t *testing.T) {
 	e := &Executor{}
 	_, err := e.unpinPackage(context.Background(), nil, "curl")
@@ -196,10 +171,6 @@ func TestUnpinPackage_NilManagerFailsClosed(t *testing.T) {
 	}
 }
 
-// TestPackageResult_CommandNeverRan verifies that packageResult returns a
-// visible failure when the runner error is non-nil AND Result.ExitCode is 0
-// (meaning the command never ran — the runner itself failed). Without the
-// exit-code synthesis the caller sees a clean exit and misreports success.
 func TestPackageResult_CommandNeverRan(t *testing.T) {
 	result := sysexec.Result{ExitCode: 0, Stdout: "", Stderr: ""}
 	runnerErr := errors.New("exec: fork/exec: no such file or directory")
@@ -218,9 +189,6 @@ func TestPackageResult_CommandNeverRan(t *testing.T) {
 	}
 }
 
-// TestPackageResult_NonZeroExitIsError verifies that a non-zero exit code
-// with nil runner error still propagates the error through the Mgr->agent
-// error chain.
 func TestPackageResult_NonZeroExitIsError(t *testing.T) {
 	result := sysexec.Result{ExitCode: 100, Stdout: "stdout", Stderr: "command not found"}
 	out, changed, err := packageResult(result, errors.New("command failed"))
@@ -235,7 +203,6 @@ func TestPackageResult_NonZeroExitIsError(t *testing.T) {
 	}
 }
 
-// TestPackageResult_Success verifies the happy path.
 func TestPackageResult_Success(t *testing.T) {
 	result := sysexec.Result{ExitCode: 0, Stdout: "installed ok\n", Stderr: ""}
 	out, changed, err := packageResult(result, nil)

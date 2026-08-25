@@ -10,32 +10,19 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// The remote/app-id end-of-options argv discipline now lives in the SDK flatpak
-// backend (it validates the remote and package names and builds the install
-// argv), so the agent no longer assembles it — the obsolete
-// flatpakInstallArgs/flatpakUninstallArgs unit test was removed with those
-// helpers. The executor-boundary validation gate below is what the agent still
-// owns and must keep proving.
-
-// TestExecuteFlatpak_ValidatesAppIdAndRemote pins finding 7: app-id and
-// remote are validated BEFORE any dispatch, so a flag-shaped value can
-// never reach `flatpak`. Hermetic: validation runs before the flatpak
-// binary lookup, so no flatpak install is required.
 func TestExecuteFlatpak_ValidatesAppIdAndRemote(t *testing.T) {
 	e := &Executor{logger: slog.Default(), now: time.Now}
 	ctx := context.Background()
 
 	reject := []*pb.FlatpakParams{
-		{AppId: &pb.FlatpakAppId{Value: "--system"}},                          // flag-shaped app id
-		{AppId: &pb.FlatpakAppId{Value: "-y"}},                                // flag-shaped app id
-		{AppId: &pb.FlatpakAppId{Value: "a b"}},                               // embedded space → argv confusion
-		{AppId: &pb.FlatpakAppId{Value: "org.ok.App"}, Remote: "--from=evil"}, // flag-shaped remote
-		{AppId: &pb.FlatpakAppId{Value: "org.ok.App"}, Remote: "-x"},          // flag-shaped remote
-		{AppId: &pb.FlatpakAppId{Value: ""}},                                  // ABSENT — existing required error preserved
+		{AppId: &pb.FlatpakAppId{Value: "--system"}},
+		{AppId: &pb.FlatpakAppId{Value: "-y"}},
+		{AppId: &pb.FlatpakAppId{Value: "a b"}},
+		{AppId: &pb.FlatpakAppId{Value: "org.ok.App"}, Remote: "--from=evil"},
+		{AppId: &pb.FlatpakAppId{Value: "org.ok.App"}, Remote: "-x"},
+		{AppId: &pb.FlatpakAppId{Value: ""}},
 	}
-	// The rejection must be a VALIDATION error — not an incidental
-	// downstream failure (e.g. desktop-session enumeration) that would
-	// mask a missing validation gate.
+
 	isValidationErr := func(err error) bool {
 		if err == nil {
 			return false
@@ -50,10 +37,6 @@ func TestExecuteFlatpak_ValidatesAppIdAndRemote(t *testing.T) {
 		}
 	}
 
-	// correct app-id + remote must pass validation. On a host without
-	// flatpak this returns the skip no-op (nil err); on a host with
-	// flatpak it may fail the real install — assert only that it is NOT a
-	// validation rejection.
 	if _, _, err := e.executeFlatpak(ctx, &pb.FlatpakParams{AppId: &pb.FlatpakAppId{Value: "org.videolan.VLC"}, Remote: "flathub"}, pb.DesiredState_DESIRED_STATE_PRESENT); err != nil {
 		if strings.Contains(err.Error(), "invalid") || strings.Contains(err.Error(), "is required") {
 			t.Errorf("valid app-id/remote produced a validation error: %v", err)

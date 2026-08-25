@@ -12,12 +12,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/remote"
 )
 
-// WS16 #2: executeDeb relied solely on downloadFile, which SKIPS checksum
-// verification when checksum_sha256 is empty. RPM/AppImage already guard at the
-// executor boundary; DEB now does too (requireVerifiedArtifact). Pin that a
-// non-https URL or an absent/malformed checksum is rejected BEFORE any
-// privileged filesystem remount — hermetic, since the guard runs before the
-// dpkg lookup.
 func TestExecuteDeb_RejectsBeforeRemount(t *testing.T) {
 	validHex := strings.Repeat("a", 64)
 	cases := []struct {
@@ -47,10 +41,6 @@ func TestExecuteDeb_RejectsBeforeRemount(t *testing.T) {
 	}
 }
 
-// #173 review finding (SECURITY): with no verifiable checksum the ABSENT
-// path must NEVER fetch the artifact — an unverified origin-served .deb's
-// Package field would otherwise choose what gets removed. The name must
-// come from the control-authored URL's filename instead.
 func TestDebAbsentPackageName_NoChecksumNeverFetches(t *testing.T) {
 	fetchCalls := 0
 	orig := fetchArtifact
@@ -74,9 +64,6 @@ func TestDebAbsentPackageName_NoChecksumNeverFetches(t *testing.T) {
 	}
 }
 
-// Complementary positive path: with a well-formed checksum the ABSENT
-// path DOES attempt the verified fetch (and still falls back to the URL
-// name when the artifact is gone upstream).
 func TestDebAbsentPackageName_WithChecksumFetchesVerified(t *testing.T) {
 	var gotChecksum string
 	fetchCalls := 0

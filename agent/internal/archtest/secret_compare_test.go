@@ -6,24 +6,11 @@ import (
 	"testing"
 )
 
-// secretCompareAllowlist lists comparisons that match the secret-name
-// heuristic but are NOT timing-sensitive secret-value compares (typically
-// enum/metadata fields the suffix filter didn't catch). Each entry is
-// justified; assertNoStale fails the build if one stops matching.
-// Keyed by "<module-rel path> :: <rendered expression>".
 var secretCompareAllowlist = map[string]string{
 	`internal/executor/lps.go :: params.Complexity == pb.LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_UNSPECIFIED`: "Enum-mode compare, not secret bytes. The secret-name regex matches because the LPS (Local Password Solution) complexity enum's constant name contains \"PASSWORD\"; params.Complexity is a policy-complexity mode (UNSPECIFIED/COMPLEX/ALPHANUMERIC), carrying no secret material and no timing oracle. The generated password itself is never compared with ==/!=.",
 	`internal/executor/lps.go :: params.Complexity == pb.LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_COMPLEX`:     "Enum-mode compare, not secret bytes. Same as above: selects whether the rotated password includes special characters. params.Complexity is a configuration enum, not timing-sensitive secret material.",
 }
 
-// TestSecretComparesAreConstantTime forbids comparing secret material
-// (tokens, MACs, signatures, fingerprints, password/digest bytes) with
-// == / != / bytes.Equal — all of which short-circuit and leak length and
-// content through timing. The correct primitives are
-// subtle.ConstantTimeCompare and hmac.Equal. Presence checks (`tok == ""`,
-// `sig == nil`) and metadata fields (TokenType, KeyID, SessionVersion)
-// are excluded; everything else that names secret material and is
-// compared with a non-constant-time operator is a finding.
 func TestSecretComparesAreConstantTime(t *testing.T) {
 	root := moduleRoot(t)
 	files := walkGoFiles(t, root, func(string) bool { return true })
@@ -44,7 +31,7 @@ func TestSecretComparesAreConstantTime(t *testing.T) {
 					checkSecretCompare(t, gf, x, x.X, x.Y, allow, &sawSecretName)
 				}
 			case *ast.CallExpr:
-				// bytes.Equal(a, b) is non-constant-time for secrets.
+
 				if sel, ok := x.Fun.(*ast.SelectorExpr); ok {
 					if id, ok := sel.X.(*ast.Ident); ok && id.Name == "bytes" && sel.Sel.Name == "Equal" && len(x.Args) == 2 {
 						sawComparison = true
@@ -65,8 +52,6 @@ func TestSecretComparesAreConstantTime(t *testing.T) {
 	allow.assertNoStale(t)
 }
 
-// checkSecretCompare flags node if either operand names secret material
-// and neither operand is a presence comparand (nil/empty/zero).
 func checkSecretCompare(t *testing.T, gf *goFile, node ast.Node, lhs, rhs ast.Expr, allow *allowlist, sawSecretName *bool) {
 	t.Helper()
 	lSecret := looksLikeSecretOperand(lhs)
@@ -78,7 +63,7 @@ func checkSecretCompare(t *testing.T, gf *goFile, node ast.Node, lhs, rhs ast.Ex
 		return
 	}
 	if isPresenceComparand(lhs) || isPresenceComparand(rhs) {
-		return // presence/absence check, not a secret-value compare
+		return
 	}
 	key := gf.rel + " :: " + render(gf.fset, node)
 	if allow.exempt(key) {

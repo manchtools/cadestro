@@ -19,18 +19,12 @@ import (
 	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 )
 
-// credentialStore is the slice of *credentials.Store the enrollment
-// handler depends on. Declared as an interface so the costly Load()
-// (64 MiB Argon2id) can be counted/faked in tests.
 type credentialStore interface {
 	Exists() bool
 	Load() (*credentials.Credentials, error)
 	Save(*credentials.Credentials) error
 }
 
-// EnrollHandler implements the Enroll and GetEnrollmentStatus RPCs
-// on the local enrollment socket. All other DeviceAuthService RPCs
-// return Unimplemented.
 type EnrollHandler struct {
 	cadestrov1connect.UnimplementedDeviceAuthServiceHandler
 
@@ -43,31 +37,17 @@ type EnrollHandler struct {
 	rateMu       sync.Mutex
 	lastAttempts []time.Time
 
-	// enrollMu serializes the whole Enroll body so concurrent requests
-	// (the rate limiter allows up to 5 in flight) can't each pass the
-	// Exists() check, register a duplicate device, race Save (last
-	// write wins, key/cert may mismatch the saved creds), and fire
-	// onEnrolled more than the single-buffer enrollCh can absorb.
 	enrollMu sync.Mutex
 
-	// statusMu guards the cached device id and serializes the one
-	// expensive Load() so a flood of GetEnrollmentStatus calls on the
-	// 0666 socket can't each trigger a 64 MiB Argon2id derivation.
 	statusMu       sync.Mutex
 	cachedDeviceID string
 	statusCached   bool
 
-	now func() time.Time // clock seam; defaults to time.Now, overridden in tests
+	now func() time.Time
 
-	// registerOpts are extra ClientOptions passed to sdk.RegisterAgent.
-	// nil in production (RegisterAgent then uses its bounded default
-	// client). Tests set this to point RegisterAgent at an httptest TLS
-	// control server it can trust.
 	registerOpts []sdk.ClientOption
 }
 
-// NewEnrollHandler creates a handler for enrollment RPCs.
-// onEnrolled is called after successful enrollment with the new credentials.
 func NewEnrollHandler(hostname, version string, credStore *credentials.Store, logger *slog.Logger, onEnrolled func(*credentials.Credentials)) *EnrollHandler {
 	return &EnrollHandler{
 		hostname:   hostname,
@@ -79,11 +59,6 @@ func NewEnrollHandler(hostname, version string, credStore *credentials.Store, lo
 	}
 }
 
-// normalizePin canonicalizes an operator-supplied CA fingerprint pin for
-// comparison: it strips surrounding whitespace and colons (openssl prints
-// the fingerprint uppercase and colon-separated). Case is handled by
-// EqualFold at the comparison site, so a pin pasted in any common form
-// matches the lowercase-hex value derived from the server CA.
 func normalizePin(pin string) (string, error) {
 	normalized := strings.ReplaceAll(strings.TrimSpace(pin), ":", "")
 	if len(normalized) != 64 {
@@ -95,9 +70,8 @@ func normalizePin(pin string) (string, error) {
 	return strings.ToLower(normalized), nil
 }
 
-// Enroll registers the agent with the PM server using the provided token.
 func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestrov1.EnrollRequest]) (*connect.Response[cadestrov1.EnrollResponse], error) {
-	// Rate limiting: max 5 attempts per minute
+
 	h.rateMu.Lock()
 	now := h.now()
 	cutoff := now.Add(-1 * time.Minute)
@@ -120,9 +94,6 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestr
 		}), nil
 	}
 
-	// Serialize the rest of enrollment. Up to 5 requests can pass the
-	// rate limiter concurrently; without this they would each pass the
-	// Exists() check below, register a duplicate device, and race Save.
 	h.enrollMu.Lock()
 	defer h.enrollMu.Unlock()
 
@@ -139,10 +110,6 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestr
 		return connect.NewResponse(&cadestrov1.EnrollResponse{Success: false, Error: err.Error()}), nil
 	}
 
-	// https-only gate (WS9 #2/#16): refuse a cleartext or malformed
-	// control-plane URL BEFORE any CSR generation or network call. The
-	// agent has no trust anchor yet, so a non-TLS endpoint would let a
-	// MITM substitute the control URL and a malicious CA.
 	if err := sdk.ValidateHTTPSURL(req.Msg.ServerUrl); err != nil {
 		return connect.NewResponse(&cadestrov1.EnrollResponse{
 			Success: false,
@@ -150,9 +117,6 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestr
 		}), nil
 	}
 
-	// Reuse an encrypted pending identity when a prior request may have
-	// committed server-side but lost its response. A complete credential set
-	// still short-circuits enrollment as before.
 	var csrPEM, keyPEM []byte
 	if h.credStore.Exists() {
 		creds, err := h.credStore.Load()
@@ -175,7 +139,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestr
 	}
 
 	if len(csrPEM) == 0 {
-		// Generate key pair and CSR locally — private key never leaves the agent.
+
 		h.logger.Debug("generating key pair and CSR")
 		csrPEM, keyPEM, err = sdkcrypto.GenerateCSR(h.hostname)
 		if err != nil {
@@ -185,9 +149,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestr
 				Error:   fmt.Sprintf("failed to generate CSR: %v", err),
 			}), nil
 		}
-		// Save the pending identity before sending the token. Store.Save is
-		// encrypted and atomic; a failed save means no credential leaves the
-		// process and no token is consumed.
+
 		if err := h.credStore.Save(&credentials.Credentials{
 			PendingPrivateKey: keyPEM,
 			PendingCSR:        csrPEM,
@@ -199,7 +161,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestr
 			}), nil
 		}
 	}
-	// Register via control server RPC.
+
 	registerOpts := h.registerOpts
 	if len(registerOpts) == 0 {
 		registerOpts = []sdk.ClientOption{sdk.WithCAPin(pin)}
@@ -213,19 +175,13 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestr
 		}), nil
 	}
 
-	// Verify we received CA cert and signed certificate
 	if len(result.CACert) == 0 || len(result.Certificate) == 0 {
 		return connect.NewResponse(&cadestrov1.EnrollResponse{
 			Success: false,
 			Error:   "server did not provide mTLS certificates",
 		}), nil
 	}
-	// Mandatory out-of-band CA-pin verification: the CA returned by
-	// registration MUST match before we adopt it as the trust anchor. Fail closed on a
-	// mismatch — no Save, no callback, no status-cache prime — so a
-	// first-enrollment trust-anchor swap is refused. The pin is
-	// normalized (colons stripped) and compared case-insensitively, since
-	// operators paste it from tools like openssl (uppercase, colon-sep).
+
 	got, fpErr := sdkcrypto.CAFingerprintFromPEM(result.CACert)
 	if fpErr != nil {
 		return connect.NewResponse(&cadestrov1.EnrollResponse{
@@ -251,7 +207,6 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestr
 		ControlAddr: req.Msg.ServerUrl,
 	}
 
-	// Save credentials
 	if err := h.credStore.Save(creds); err != nil {
 		h.logger.Error("failed to save credentials", "error", err)
 		return connect.NewResponse(&cadestrov1.EnrollResponse{
@@ -262,14 +217,11 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestr
 
 	h.logger.Info("enrollment successful", "device_id", result.DeviceID, "control", result.ControlURL)
 
-	// Prime the status cache so subsequent GetEnrollmentStatus calls
-	// don't re-derive the Argon2id key just to learn the device id.
 	h.statusMu.Lock()
 	h.cachedDeviceID = result.DeviceID
 	h.statusCached = true
 	h.statusMu.Unlock()
 
-	// Notify the main goroutine that enrollment is complete
 	if h.onEnrolled != nil {
 		h.onEnrolled(creds)
 	}
@@ -280,14 +232,6 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestr
 	}), nil
 }
 
-// GetEnrollmentStatus checks whether the agent is currently enrolled.
-//
-// The enrollment socket is mode 0666, so any local user can call this.
-// credStore.Load() runs a 64 MiB Argon2id derivation, so a naive
-// implementation that loads on every call is a trivial local CPU/memory
-// DoS against the root agent process. We cache the device id after the
-// first successful load and serialize that single load behind statusMu
-// (so a concurrent flood collapses to one derivation, not N).
 func (h *EnrollHandler) GetEnrollmentStatus(_ context.Context, _ *connect.Request[cadestrov1.GetEnrollmentStatusRequest]) (*connect.Response[cadestrov1.GetEnrollmentStatusResponse], error) {
 	h.statusMu.Lock()
 	defer h.statusMu.Unlock()
@@ -299,8 +243,6 @@ func (h *EnrollHandler) GetEnrollmentStatus(_ context.Context, _ *connect.Reques
 		}), nil
 	}
 
-	// Cheap stat; never triggers Argon2id. Not cached so a later
-	// enrollment is still observed.
 	if !h.credStore.Exists() {
 		return connect.NewResponse(&cadestrov1.GetEnrollmentStatusResponse{
 			Enrolled: false,
@@ -309,10 +251,7 @@ func (h *EnrollHandler) GetEnrollmentStatus(_ context.Context, _ *connect.Reques
 
 	creds, err := h.credStore.Load()
 	if err != nil || creds.DeviceID == "" {
-		// Credentials exist but can't be loaded — treat as not enrolled.
-		// Pending enrollment material is deliberately not an active identity.
-		// Don't cache the failure: a transient decrypt error shouldn't
-		// pin "not enrolled" for the process lifetime.
+
 		return connect.NewResponse(&cadestrov1.GetEnrollmentStatusResponse{
 			Enrolled: false,
 		}), nil
