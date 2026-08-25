@@ -175,6 +175,28 @@ func TestReleaseBuildsEachContainerForItsTargetPlatform(t *testing.T) {
 	}
 }
 
+func TestSmokeProbesEveryComposeServiceAndSharesThePublishedTag(t *testing.T) {
+	root := repositoryRoot(t)
+	smoke, err := os.ReadFile(filepath.Join(root, "server", "deploy", "smoke-test.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	script := string(smoke)
+	for _, required := range []string{
+		`compose up -d --wait`,
+		`for service in "${services[@]}"`,
+		`compose exec -T traefik traefik healthcheck --ping`,
+		`compose exec -T control wget`,
+		`compose exec -T web wget`,
+		`CONTROL_SOURCE_IMAGE`,
+		`WEB_SOURCE_IMAGE`,
+	} {
+		if !strings.Contains(script, required) {
+			t.Errorf("smoke test is missing %q", required)
+		}
+	}
+}
+
 func moduleRoot(t *testing.T) string {
 	t.Helper()
 	_, file, _, ok := runtime.Caller(0)

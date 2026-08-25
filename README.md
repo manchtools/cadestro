@@ -36,14 +36,14 @@ over mTLS, and a transactional audit log that cannot be written around.
 
 ```bash
 # 1. Install control (needs two DNS names and two filesystems — see the docs)
-curl -fsSL https://github.com/manchtools/cadestro/releases/latest/download/install.sh -o install.sh
+curl -fsSL https://github.com/manchtools/cadestro/releases/latest/download/cadestro-install.sh -o install.sh
 sudo bash install.sh
 
 # 2. Get your one-time setup link, open it, configure your identity provider
 cd /opt/cadestro && docker compose exec control cadestro bootstrap-admin
 
 # 3. In the web UI, mint a registration token. Then, on a device:
-curl -fsSL https://github.com/manchtools/cadestro/releases/latest/download/install.sh \
+curl -fsSL https://github.com/manchtools/cadestro/releases/latest/download/cadestrod-install.sh \
   | sudo bash -s -- --server https://control.example.com \
                     --token <TOKEN> --pin <CA_SHA256>
 ```

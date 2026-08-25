@@ -105,6 +105,37 @@ func TestReleaseWorkflowSignsChecksumsInProtectedEnvironment(t *testing.T) {
 	}
 }
 
+func TestReleaseWorkflowPublishesDistinctInstallersAndArchive(t *testing.T) {
+	workflow := readRootFile(t, releaseWorkflow)
+	for _, required := range []string{"release/cadestro-install.sh", "release/cadestrod-install.sh", "release/cadestro-deploy.tar.gz"} {
+		if !strings.Contains(workflow, required) {
+			t.Errorf("release workflow is missing %q", required)
+		}
+	}
+	if strings.Contains(workflow, "release/"+"install.sh") {
+		t.Error("release workflow must not publish a generic install.sh")
+	}
+}
+
+func TestControlInstallerIsStampedAndDefaultsToItsRelease(t *testing.T) {
+	sh := readRootFile(t, "server/deploy/install.sh")
+	for _, required := range []string{"__RELEASE_SIGNING_PUBLIC_KEY__", "__INSTALLER_RELEASE_VERSION__", "INSTALLER_RELEASE_VERSION"} {
+		if !strings.Contains(sh, required) {
+			t.Errorf("control installer is missing %q", required)
+		}
+	}
+	if !strings.Contains(sh, `RELEASE_TAG="$INSTALLER_RELEASE_VERSION"`) {
+		t.Error("control installer must default to its stamped release")
+	}
+}
+
+func TestReleaseWorkflowRunsCanonicalGateOnce(t *testing.T) {
+	workflow := readRootFile(t, releaseWorkflow)
+	if got := strings.Count(workflow, "bash scripts/verify-all.sh"); got != 1 {
+		t.Fatalf("release workflow invokes canonical gate %d times, want 1", got)
+	}
+}
+
 func TestReleaseWorkflowPrereleaseInstructionsUseExactTag(t *testing.T) {
 	workflow := readRootFile(t, releaseWorkflow)
 	_, prerelease, ok := strings.Cut(workflow, `if [[ "${{ needs.version.outputs.is_prerelease }}" == "true" ]]; then`)
@@ -115,10 +146,10 @@ func TestReleaseWorkflowPrereleaseInstructionsUseExactTag(t *testing.T) {
 	if !ok {
 		t.Fatal("release workflow is missing the stable release-body branch")
 	}
-	if strings.Contains(prerelease, "releases/latest/download/install.sh") {
+	if strings.Contains(prerelease, "releases/latest/download/cadestrod-install.sh") {
 		t.Error("prerelease instructions must not bootstrap the latest stable installer")
 	}
-	if !strings.Contains(prerelease, `releases/download/${TAG}/install.sh`) {
+	if !strings.Contains(prerelease, `releases/download/${TAG}/cadestrod-install.sh`) {
 		t.Error("prerelease instructions must use the installer from the exact release tag")
 	}
 

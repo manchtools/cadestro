@@ -29,7 +29,7 @@ free disk, or a minimum Docker version — so satisfy those yourself.
 ## Running the installer
 
 ```bash
-curl -fsSL https://github.com/manchtools/cadestro/releases/latest/download/install.sh -o install.sh
+curl -fsSL https://github.com/manchtools/cadestro/releases/latest/download/cadestro-install.sh -o install.sh
 sudo bash install.sh
 ```
 
@@ -47,16 +47,16 @@ It asks, in order:
 | Browser/API domain | `CONTROL_DOMAIN` | must be a hostname; the documentation placeholder is rejected |
 | Agent domain | `AGENT_DOMAIN` | must differ from the browser domain |
 | Email for expiry notices | `ACME_EMAIL` | goes to Let's Encrypt |
-| Release to install | `RELEASE_TAG` | **no default** — you must name one |
+| Release to install | `RELEASE_TAG` | release installers default to their stamped release; source copies require one |
 | Certificate challenge | `ACME_CHALLENGE` | `http01` (default) or `dns01` |
 | DNS provider code | `ACME_DNS_PROVIDER` | only asked for `dns01` |
 
-<!-- docref: begin src=server/deploy/install.sh#check_control_domain:213169ce,server/deploy/install.sh#check_acme_email:77a9e4af,server/deploy/install.sh#check_release_tag:7d46e71a -->
+<!-- docref: begin src=server/deploy/install.sh#check_control_domain:213169ce,server/deploy/install.sh#check_acme_email:77a9e4af,server/deploy/install.sh#check_release_tag:dfdd9ce2 -->
 Each answer is validated and re-asked until it is valid. The validators reject
 the literal placeholder values used in the documentation, so a copy-pasted
 example domain or example email cannot become a live configuration by accident.
-The release tag has no default at all: the installer will not silently install
-whatever is newest.
+The published installer carries its exact release tag, so it never silently
+installs whatever is newest. A source copy requires `RELEASE_TAG` explicitly.
 <!-- docref: end -->
 
 **No prompt ever asks for a secret.** Credentials for a DNS challenge are placed
@@ -67,9 +67,8 @@ The installer then copies the deployment tree into `/opt/cadestro` (override
 with `INSTALL_DIR`), writes `.env` at mode `0600`, runs `setup.sh`, pulls the
 images, and brings the stack up.
 
-> **Worth knowing:** the installer downloads the release tarball over HTTPS and
-> unpacks it. Unlike the device agent installer, it does **not** verify a
-> signature or checksum over what it downloaded.
+> **Worth knowing:** the installer verifies the signed `SHA256SUMS` manifest
+> before unpacking the release deployment archive.
 
 ---
 

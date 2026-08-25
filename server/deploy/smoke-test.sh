@@ -8,7 +8,11 @@ PROJECT_NAME="cadestro-smoke-$$"
 PUBLISHED_IMAGE_TAG="${IMAGE_TAG:-}"
 REQUESTED_IMAGE_TAG="${PUBLISHED_IMAGE_TAG:-smoke-$$}"
 CONTROL_IMAGE="ghcr.io/manchtools/cadestro:$REQUESTED_IMAGE_TAG"
+WEB_IMAGE="ghcr.io/manchtools/cadestro-web:$REQUESTED_IMAGE_TAG"
+CONTROL_SOURCE_IMAGE="${CONTROL_SOURCE_IMAGE:-$CONTROL_IMAGE}"
+WEB_SOURCE_IMAGE="${WEB_SOURCE_IMAGE:-ghcr.io/manchtools/cadestro-web:latest}"
 BUILT_IMAGE=""
+ALIASED_IMAGES=()
 
 
 
@@ -43,6 +47,9 @@ cleanup() {
     if [[ -n "$BUILT_IMAGE" ]]; then
         docker image rm "$BUILT_IMAGE" >/dev/null 2>&1 || true
     fi
+    for image in "${ALIASED_IMAGES[@]}"; do
+        docker image rm "$image" >/dev/null 2>&1 || true
+    done
     rm -rf "$WORK_DIR"
     exit "$status"
 }
@@ -70,8 +77,18 @@ cp -R "$SOURCE_DIR/." "$WORK_DIR/"
 if [[ -z "$PUBLISHED_IMAGE_TAG" ]]; then
     CGO_ENABLED=0 go -C "$SOURCE_DIR/.." build -o "$WORK_DIR/cadestro" ./cmd/cadestro
     docker build --build-arg BINARY=cadestro -f "$SOURCE_DIR/Containerfile.control" \
-        -t "$CONTROL_IMAGE" "$WORK_DIR"
-    BUILT_IMAGE="$CONTROL_IMAGE"
+        -t "$CONTROL_SOURCE_IMAGE" "$WORK_DIR"
+    BUILT_IMAGE="$CONTROL_SOURCE_IMAGE"
+fi
+if [[ "$CONTROL_SOURCE_IMAGE" != "$CONTROL_IMAGE" ]]; then
+    docker pull "$CONTROL_SOURCE_IMAGE"
+    docker tag "$CONTROL_SOURCE_IMAGE" "$CONTROL_IMAGE"
+    ALIASED_IMAGES+=("$CONTROL_IMAGE")
+fi
+if [[ "$WEB_SOURCE_IMAGE" != "$WEB_IMAGE" ]]; then
+    docker pull "$WEB_SOURCE_IMAGE"
+    docker tag "$WEB_SOURCE_IMAGE" "$WEB_IMAGE"
+    ALIASED_IMAGES+=("$WEB_IMAGE")
 fi
 cat > "$WORK_DIR/.env" <<EOF
 CONTROL_DOMAIN=manage.example.test
@@ -93,7 +110,18 @@ if compose config | grep -q '/var/run/docker.sock'; then
     exit 1
 fi
 
-compose up -d --wait control
+compose up -d --wait
+
+for service in "${services[@]}"; do
+    compose ps --format '{{.Service}} {{.Health}}' "$service" | grep -Fq "$service healthy" || {
+        printf '%s did not become healthy\n' "$service" >&2
+        exit 1
+    }
+done
+
+compose exec -T traefik traefik healthcheck --ping
+compose exec -T control wget --no-check-certificate -q --spider https://127.0.0.1:8081/ready
+compose exec -T web wget -q --spider http://127.0.0.1:3000/
 
 schema_version="$(compose exec -T control sqlite3 /var/lib/cadestro/state/control.db \
     'SELECT COALESCE((SELECT version_id FROM goose_db_version WHERE is_applied ORDER BY id DESC LIMIT 1), 0);')"

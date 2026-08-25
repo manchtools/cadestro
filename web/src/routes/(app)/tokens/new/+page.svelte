@@ -59,7 +59,7 @@
 
 	const installCommand = $derived(
 		created
-			? `curl -fsSL https://github.com/manchtools/cadestro/releases/latest/download/install.sh | sudo bash -s -- -s ${configStore.serverUrl} -t ${created.value} -p ${caPin}`
+			? `curl -fsSL https://github.com/manchtools/cadestro/releases/latest/download/cadestrod-install.sh | sudo bash -s -- -s ${configStore.serverUrl} -t ${created.value} -p ${caPin}`
 			: ''
 	);
 

@@ -8,7 +8,7 @@ the certificate it produces.
 The short version:
 
 ```bash
-curl -fsSL https://github.com/manchtools/cadestro/releases/latest/download/install.sh \
+curl -fsSL https://github.com/manchtools/cadestro/releases/latest/download/cadestrod-install.sh \
   | sudo bash -s -- \
       --server https://control.example.com \
       --token  <REGISTRATION_TOKEN> \

@@ -32,29 +32,13 @@ jobs:
           fi
           cat "$GITHUB_OUTPUT"
 
-  server-test:
-    name: Server tests
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: server
-    env:
-      GOWORK: 'off'
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v6
-        with:
-          go-version-file: server/go.mod
-      - run: go test -count=1 -p 1 ./...
-      - run: go vet ./...
-
   agent-integration:
     name: Agent integration tests
     uses: ./.github/workflows/agent-integration.yml
 
   server-build:
     name: Build cadestro (${{ matrix.arch }})
-    needs: [version, server-test]
+    needs: [version, canonical-gate]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -84,7 +68,7 @@ jobs:
 
   agent-build:
     name: Build cadestrod (${{ matrix.arch }})
-    needs: [version, agent-integration]
+    needs: [version, agent-integration, canonical-gate]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -153,7 +137,7 @@ jobs:
 
   smoke:
     name: Deployed-stack smoke test
-    needs: [version, containers]
+    needs: [version, containers, web-image]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -170,7 +154,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Verify deployed target
         env:
-          IMAGE_TAG: ${{ needs.version.outputs.version }}-amd64
+          IMAGE_TAG: ${{ needs.version.outputs.version }}
+          CONTROL_SOURCE_IMAGE: ghcr.io/manchtools/cadestro:${{ needs.version.outputs.version }}-amd64
+          WEB_SOURCE_IMAGE: ghcr.io/${{ github.repository_owner }}/cadestro-web:${{ needs.version.outputs.version }}
         run: bash deploy/smoke-test.sh
 
   manifests:
@@ -196,7 +182,7 @@ jobs:
 
   web-image:
     name: Administration UI image
-    needs: [version]
+    needs: [version, canonical-gate]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -228,6 +214,41 @@ jobs:
           cache-to: type=gha,mode=max
 
   # docref: begin release-signing
+  canonical-gate:
+    name: Canonical repository gate
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: server/go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@v0.6.1
+      - name: Install pinned docref
+        run: |
+          version=v0.1.1
+          base="https://github.com/manchtools/open-docref/releases/download/${version}"
+          curl -fsSL "${base}/docref-linux-x64" -o "$RUNNER_TEMP/docref"
+          curl -fsSL "${base}/SHA256SUMS" -o "$RUNNER_TEMP/docref.SHA256SUMS"
+          expected="$(awk '$2 == "docref-linux-x64" { print $1; exit }' "$RUNNER_TEMP/docref.SHA256SUMS")"
+          actual="$(sha256sum "$RUNNER_TEMP/docref" | awk '{print $1}')"
+          [[ "$expected" == "$actual" ]] || { echo "docref checksum mismatch" >&2; exit 1; }
+          install -Dm755 "$RUNNER_TEMP/docref" "$HOME/.local/bin/docref"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Install module dependencies
+        run: |
+          npm ci --prefix contract
+          npm ci --prefix web
+          web/node_modules/.bin/playwright install --with-deps chromium
+      - name: Run canonical gate
+        run: bash scripts/verify-all.sh
+
   release:
     name: GitHub Release
     runs-on: ubuntu-latest
@@ -256,21 +277,27 @@ jobs:
           cp artifacts/cadestro-arm64/* release/
           cp artifacts/cadestrod-amd64/* release/
           cp artifacts/cadestrod-arm64/* release/
-          cp agent/install.sh release/
-          sed -i "s|__RELEASE_SIGNING_PUBLIC_KEY__|${RELEASE_SIGNING_PUBLIC_KEY}|g" release/install.sh
-          if grep -q '__RELEASE_SIGNING_PUBLIC_KEY__' release/install.sh; then
-            echo "release installer still contains the public-key placeholder" >&2
-            exit 1
-          fi
+          cp server/deploy/install.sh release/cadestro-install.sh
+          cp agent/install.sh release/cadestrod-install.sh
+          tar -czf release/cadestro-deploy.tar.gz --exclude='./install.sh' -C server/deploy .
+          for installer in release/cadestro-install.sh release/cadestrod-install.sh; do
+            sed -i "s|__RELEASE_SIGNING_PUBLIC_KEY__|${RELEASE_SIGNING_PUBLIC_KEY}|g" "$installer"
+            if grep -q '__RELEASE_SIGNING_PUBLIC_KEY__' "$installer"; then
+              echo "release installer still contains the public-key placeholder" >&2
+              exit 1
+            fi
+          done
           if ! printf '%s' "${GITHUB_REF_NAME}" | grep -Eq '^v[0-9]{4}\.[0-9]{2}(\.[0-9]{2})?(-[A-Za-z0-9.]+)?$'; then
             echo "refusing to stamp non-release tag name: ${GITHUB_REF_NAME}" >&2
             exit 1
           fi
-          sed -i "s|__INSTALLER_RELEASE_VERSION__|${GITHUB_REF_NAME}|g" release/install.sh
-          if grep -q '__INSTALLER_RELEASE_VERSION__' release/install.sh; then
-            echo "release installer still contains the version placeholder" >&2
-            exit 1
-          fi
+          for installer in release/cadestro-install.sh release/cadestrod-install.sh; do
+            sed -i "s|__INSTALLER_RELEASE_VERSION__|${GITHUB_REF_NAME}|g" "$installer"
+            if grep -q '__INSTALLER_RELEASE_VERSION__' "$installer"; then
+              echo "release installer still contains the version placeholder" >&2
+              exit 1
+            fi
+          done
 
       - uses: anchore/sbom-action/download-syft@v0
         id: syft
@@ -369,11 +396,18 @@ jobs:
           cat changelog.md > body.md
           echo "" >> body.md
           if [[ "${{ needs.version.outputs.is_prerelease }}" == "true" ]]; then
-            cat >> body.md <<EOF
+          cat >> body.md <<EOF
+          ## Installing the control plane
+
+          \`\`\`bash
+          curl -fsSL https://github.com/${{ github.repository }}/releases/download/${TAG}/cadestro-install.sh -o cadestro-install.sh
+          sudo bash cadestro-install.sh
+          \`\`\`
+
           ## Installing the agent
 
           \`\`\`bash
-          curl -fsSL https://github.com/${{ github.repository }}/releases/download/${TAG}/install.sh | sudo bash -s -- -v ${TAG} -s https://your-server.example.com -t YOUR_TOKEN -p CA_SHA256
+          curl -fsSL https://github.com/${{ github.repository }}/releases/download/${TAG}/cadestrod-install.sh | sudo bash -s -- -v ${TAG} -s https://your-server.example.com -t YOUR_TOKEN -p CA_SHA256
           \`\`\`
 
           ## Update
@@ -381,23 +415,37 @@ jobs:
           To update an already registered agent to this prerelease:
 
           \`\`\`bash
-          curl -fsSL https://github.com/${{ github.repository }}/releases/download/${TAG}/install.sh | sudo bash -s -- -v ${TAG}
+          curl -fsSL https://github.com/${{ github.repository }}/releases/download/${TAG}/cadestrod-install.sh | sudo bash -s -- -v ${TAG}
           \`\`\`
 
           The update stops the running service, downloads the new binary, updates the sudoers configuration, and restarts the service. Existing registration and credentials are preserved.
           EOF
           else
-            cat >> body.md <<EOF
+          cat >> body.md <<EOF
+          ## Installing the control plane
+
+          \`\`\`bash
+          curl -fsSL https://github.com/${{ github.repository }}/releases/latest/download/cadestro-install.sh -o cadestro-install.sh
+          sudo bash cadestro-install.sh
+          \`\`\`
+
+          Or install this specific version:
+
+          \`\`\`bash
+          curl -fsSL https://github.com/${{ github.repository }}/releases/download/${TAG}/cadestro-install.sh -o cadestro-install.sh
+          sudo bash cadestro-install.sh
+          \`\`\`
+
           ## Installing the agent
 
           \`\`\`bash
-          curl -fsSL https://github.com/${{ github.repository }}/releases/latest/download/install.sh | sudo bash -s -- -s https://your-server.example.com -t YOUR_TOKEN -p CA_SHA256
+          curl -fsSL https://github.com/${{ github.repository }}/releases/latest/download/cadestrod-install.sh | sudo bash -s -- -s https://your-server.example.com -t YOUR_TOKEN -p CA_SHA256
           \`\`\`
 
           Or install a specific version:
 
           \`\`\`bash
-          curl -fsSL https://github.com/${{ github.repository }}/releases/download/${TAG}/install.sh | sudo bash -s -- -v ${TAG} -s https://your-server.example.com -t YOUR_TOKEN -p CA_SHA256
+          curl -fsSL https://github.com/${{ github.repository }}/releases/download/${TAG}/cadestrod-install.sh | sudo bash -s -- -v ${TAG} -s https://your-server.example.com -t YOUR_TOKEN -p CA_SHA256
           \`\`\`
 
           ## Update
@@ -405,13 +453,13 @@ jobs:
           To update an already registered agent to the latest version:
 
           \`\`\`bash
-          curl -fsSL https://github.com/${{ github.repository }}/releases/latest/download/install.sh | sudo bash
+          curl -fsSL https://github.com/${{ github.repository }}/releases/latest/download/cadestrod-install.sh | sudo bash
           \`\`\`
 
           Or update to this specific version:
 
           \`\`\`bash
-          curl -fsSL https://github.com/${{ github.repository }}/releases/download/${TAG}/install.sh | sudo bash -s -- -v ${TAG}
+          curl -fsSL https://github.com/${{ github.repository }}/releases/download/${TAG}/cadestrod-install.sh | sudo bash -s -- -v ${TAG}
           \`\`\`
 
           The update stops the running service, downloads the new binary, updates the sudoers configuration, and restarts the service. Existing registration and credentials are preserved.

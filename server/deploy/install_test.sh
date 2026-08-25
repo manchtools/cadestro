@@ -29,9 +29,14 @@ EOF
 
 
 stub_command curl 'exit 1'
-stub_command tar 'exit 0'
+stub_command tar 'exec /usr/bin/tar "$@"'
 stub_command docker 'exit 0'
-stub_command openssl 'exit 0'
+stub_command openssl '[[ "${OPENSSL_MODE:-}" == reject ]] && exit 1; exit 0'
+stub_command base64 'cat >/dev/null'
+stub_command sha256sum '[[ "${SHA_MODE:-}" == reject ]] && { printf "%064d  %s\n" 0 "$1"; exit 0; }; exec /usr/bin/sha256sum "$@"'
+INSTALLER_PATH="$STUB_ROOT/install.sh"
+sed 's/__RELEASE_SIGNING_PUBLIC_KEY__/dGVzdA==/' "$DEPLOY_DIR/install.sh" > "$INSTALLER_PATH"
+chmod +x "$INSTALLER_PATH"
 
 
 
@@ -46,23 +51,20 @@ done
 
 
 
-FIXTURE_SOURCE="$FIXTURE_ROOT/cadestro-server-fixture"
+FIXTURE_SOURCE="$FIXTURE_ROOT/deploy"
 FIXTURE_TARBALL="$FIXTURE_ROOT/release.tar.gz"
-SKEW_TARBALL="$FIXTURE_ROOT/release-skew.tar.gz"
-mkdir -p "$FIXTURE_SOURCE/deploy"
-: > "$FIXTURE_SOURCE/deploy/compose.yml"
-cat > "$FIXTURE_SOURCE/deploy/setup.sh" <<'EOF'
+mkdir -p "$FIXTURE_SOURCE"
+: > "$FIXTURE_SOURCE/compose.yml"
+cat > "$FIXTURE_SOURCE/setup.sh" <<'EOF'
 
 printf 'setup-ran\n' > setup-ran-marker
 EOF
-chmod +x "$FIXTURE_SOURCE/deploy/setup.sh"
+chmod +x "$FIXTURE_SOURCE/setup.sh"
 
 
 
 
-tar -czf "$SKEW_TARBALL" -C "$FIXTURE_ROOT" "$(basename "$FIXTURE_SOURCE")"
-cp "$DEPLOY_DIR/install.sh" "$FIXTURE_SOURCE/deploy/install.sh"
-tar -czf "$FIXTURE_TARBALL" -C "$FIXTURE_ROOT" "$(basename "$FIXTURE_SOURCE")"
+tar -czf "$FIXTURE_TARBALL" -C "$FIXTURE_SOURCE" .
 
 mkdir -p "$STUB_ROOT/download-bin"
 cat > "$STUB_ROOT/download-bin/curl" <<EOF
@@ -75,16 +77,17 @@ for argument in "\$@"; do
     [[ "\$previous" == -o ]] && target="\$argument"
     previous="\$argument"
 done
-cp "$FIXTURE_TARBALL" "\$target"
+case "\$(basename "\$target")" in
+  source.tar.gz) cp "$FIXTURE_TARBALL" "\$target" ;;
+  SHA256SUMS) /usr/bin/sha256sum "$FIXTURE_TARBALL" | awk '{print \$1 "  cadestro-deploy.tar.gz"}' > "\$target" ;;
+  SHA256SUMS.sig) : > "\$target" ;;
+  *) exit 1 ;;
+esac
 EOF
 chmod +x "$STUB_ROOT/download-bin/curl"
-cp "$STUB_ROOT/bin/docker" "$STUB_ROOT/bin/openssl" "$STUB_ROOT/download-bin/"
+cp "$STUB_ROOT/bin/docker" "$STUB_ROOT/bin/openssl" "$STUB_ROOT/bin/base64" "$STUB_ROOT/download-bin/"
+cp "$STUB_ROOT/bin/sha256sum" "$STUB_ROOT/download-bin/"
 
-
-mkdir -p "$STUB_ROOT/skew-bin"
-sed "s|$FIXTURE_TARBALL|$SKEW_TARBALL|" "$STUB_ROOT/download-bin/curl" > "$STUB_ROOT/skew-bin/curl"
-chmod +x "$STUB_ROOT/skew-bin/curl"
-cp "$STUB_ROOT/bin/docker" "$STUB_ROOT/bin/openssl" "$STUB_ROOT/skew-bin/"
 
 new_install_dir() {
     mktemp -d "$FIXTURE_ROOT/XXXXXX"
@@ -106,7 +109,7 @@ run_install() {
         ACME_EMAIL=admin@example.test \
         GITHUB_REPOSITORY=cadestro.invalid/server \
         "$@" \
-        bash "$DEPLOY_DIR/install.sh"
+        bash "$INSTALLER_PATH"
 }
 
 assert_no_download() {
@@ -179,7 +182,7 @@ test_complete_environment_reaches_the_release_tag() {
         printf 'the stubbed download succeeded; the negative cases prove nothing\n' >&2
         return 1
     fi
-    grep -Fq 'refs/tags/v2026.08.09-rc2.tar.gz' "$CALL_LOG" || {
+    grep -Fq 'releases/download/v2026.08.09-rc2/cadestro-deploy.tar.gz' "$CALL_LOG" || {
         printf 'install.sh did not request the release tag:\n%s\n' "$(cat "$CALL_LOG")" >&2
         return 1
     }
@@ -201,7 +204,7 @@ run_install_guided() {
         GITHUB_REPOSITORY=cadestro.invalid/server \
         FSTAB_FILE="$fstab" \
         python3 -c 'import os, pty, sys; sys.exit(os.waitstatus_to_exitcode(pty.spawn(sys.argv[1:])))' \
-        bash "$DEPLOY_DIR/install.sh"
+        bash "$INSTALLER_PATH"
 }
 
 
@@ -216,7 +219,7 @@ test_missing_domain_without_terminal_still_refuses() {
         ACME_EMAIL=admin@example.test \
         RELEASE_TAG=v2026.08.09-rc2 \
         GITHUB_REPOSITORY=cadestro.invalid/server \
-        bash "$DEPLOY_DIR/install.sh" </dev/null 2>&1)"; then
+        bash "$INSTALLER_PATH" </dev/null 2>&1)"; then
         printf 'install.sh proceeded without CONTROL_DOMAIN and without a terminal\n' >&2
         return 1
     fi
@@ -242,7 +245,7 @@ test_guided_answers_reach_the_release_tag() {
         printf 'guided run did not reach the download step: %s\n' "$output" >&2
         return 1
     }
-    grep -Fq 'refs/tags/v2026.08.09-rc2.tar.gz' "$CALL_LOG" || {
+    grep -Fq 'releases/download/v2026.08.09-rc2/cadestro-deploy.tar.gz' "$CALL_LOG" || {
         printf 'guided run did not request the answered release tag:\n%s\n' "$(cat "$CALL_LOG")" >&2
         return 1
     }
@@ -302,10 +305,6 @@ test_guided_dns01_marks_the_credential_for_self_pasting() {
         printf 'the stack was touched although the credential is missing:\n%s\n' "$(cat "$CALL_LOG")" >&2
         return 1
     }
-    grep -Fq 'differs from the one inside release' <<<"$output" && {
-        printf 'a matching release tree must not raise the skew warning: %s\n' "$output" >&2
-        return 1
-    }
     grep -Fq 'must point at this host' <<<"$output" || {
         printf 'the credential stop does not remind about the DNS records: %s\n' "$output" >&2
         return 1
@@ -313,28 +312,39 @@ test_guided_dns01_marks_the_credential_for_self_pasting() {
     return 0
 }
 
-
-
-
-
-test_version_skew_between_script_and_tree_warns() {
+test_invalid_signature_refuses_before_unpacking() {
     local directory="$1" output
-    : > "$CALL_LOG"
-    if output="$(run_install "$directory" \
-        RELEASE_TAG=v2026.08.09-rc2 ACME_CHALLENGE=dns01 ACME_DNS_PROVIDER=hetzner \
-        PATH="$STUB_ROOT/skew-bin:$PATH" 2>&1)"; then
-        printf 'skewed dns01 run finished although the credential is missing\n' >&2
+    if output="$(run_install "$directory" RELEASE_TAG=v2026.08.09-rc2 \
+        ACME_CHALLENGE=dns01 ACME_DNS_PROVIDER=hetzner \
+        PATH="$STUB_ROOT/download-bin:$PATH" OPENSSL_MODE=reject 2>&1)"; then
+        printf 'installer accepted an invalid release signature\n' >&2
         return 1
     fi
-    grep -Fq 'differs from the one inside release' <<<"$output" || {
-        printf 'the version skew was not named: %s\n' "$output" >&2
+    grep -Fq 'release checksum signature is invalid' <<<"$output" || {
+        printf 'signature failure was not reported: %s\n' "$output" >&2
         return 1
     }
-    grep -Fq 'ACTION REQUIRED' <<<"$output" || {
-        printf 'the skew warning must not replace the credential stop: %s\n' "$output" >&2
-        return 1
-    }
+    assert_install_dir_empty "$directory"
 }
+
+test_archive_checksum_refuses_before_unpacking() {
+    local directory="$1" output
+    if output="$(run_install "$directory" RELEASE_TAG=v2026.08.09-rc2 \
+        ACME_CHALLENGE=dns01 ACME_DNS_PROVIDER=hetzner \
+        PATH="$STUB_ROOT/download-bin:$PATH" SHA_MODE=reject 2>&1)"; then
+        printf 'installer accepted a tampered release archive\n' >&2
+        return 1
+    fi
+    grep -Fq 'release checksum mismatch' <<<"$output" || {
+        printf 'checksum failure was not reported: %s\n' "$output" >&2
+        return 1
+    }
+    assert_install_dir_empty "$directory"
+}
+
+
+
+
 
 test_missing_release_tag_refuses_before_downloading "$(new_install_dir)"
 printf 'PASS unset RELEASE_TAG refused before any download\n'
@@ -348,5 +358,7 @@ test_guided_answers_reach_the_release_tag "$(new_install_dir)"
 printf 'PASS guided answers drive the fetch and invalid input is re-asked\n'
 test_guided_dns01_marks_the_credential_for_self_pasting "$(new_install_dir)"
 printf 'PASS guided dns01 prepares the credential file and stops before setup.sh\n'
-test_version_skew_between_script_and_tree_warns "$(new_install_dir)"
-printf 'PASS a tree whose install.sh differs from the running script is named\n'
+test_invalid_signature_refuses_before_unpacking "$(new_install_dir)"
+printf 'PASS invalid release signature is refused before unpacking\n'
+test_archive_checksum_refuses_before_unpacking "$(new_install_dir)"
+printf 'PASS tampered release archive is refused before unpacking\n'

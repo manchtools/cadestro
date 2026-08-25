@@ -45,7 +45,7 @@ Usage:
   sudo ./install.sh [OPTIONS]
 
   One-liner:
-  curl -fsSL https://github.com/${GITHUB_REPO}/releases/latest/download/install.sh | sudo bash -s -- -s URL -t TOKEN -p CA_SHA256
+  curl -fsSL https://github.com/${GITHUB_REPO}/releases/latest/download/cadestrod-install.sh | sudo bash -s -- -s URL -t TOKEN -p CA_SHA256
 
 Options:
   -t, --token TOKEN       Registration token for initial setup
@@ -61,7 +61,7 @@ Options:
 
 Examples:
 
-  curl -fsSL https://github.com/${GITHUB_REPO}/releases/latest/download/install.sh | sudo bash -s -- -s https://cadestro.example.com -t abc123 -p CA_SHA256
+  curl -fsSL https://github.com/${GITHUB_REPO}/releases/latest/download/cadestrod-install.sh | sudo bash -s -- -s https://cadestro.example.com -t abc123 -p CA_SHA256
 
   sudo ./install.sh --pre -s https://cadestro.example.com -t abc123 -p CA_SHA256
 

@@ -48,7 +48,8 @@ OIDC provider for operator login. The installer is interactive and asks for
 everything it needs; it never prompts for secrets.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/manchtools/cadestro/main/deploy/install.sh -o install.sh
+curl -fsSL https://github.com/manchtools/cadestro/releases/latest/download/cadestro-install.sh -o cadestro-install.sh
+mv cadestro-install.sh install.sh
 chmod +x install.sh && sudo ./install.sh
 ```
 
@@ -62,8 +63,9 @@ docker compose exec control cadestro bootstrap-admin
 # in the browser at that URL: configure OIDC and SCIM, then mint an
 # enrollment token
 
-# on the device, with the installer from the agent release assets
-sudo bash install.sh -s https://agents.example.com -t <token> -p <ca-fingerprint>
+# on the device
+curl -fsSL https://github.com/manchtools/cadestro/releases/latest/download/cadestrod-install.sh -o cadestrod-install.sh
+sudo bash cadestrod-install.sh -s https://agents.example.com -t <token> -p <ca-fingerprint>
 ```
 
 The bearer token sits in the URL fragment, which browsers do not send to

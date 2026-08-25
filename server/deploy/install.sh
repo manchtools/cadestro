@@ -6,9 +6,17 @@ umask 077
 INSTALL_DIR="${INSTALL_DIR:-/opt/cadestro}"
 RELEASE_TAG="${RELEASE_TAG:-}"
 GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-MANCHTOOLS/cadestro}"
+RELEASE_SIGNING_PUBLIC_KEY="__RELEASE_SIGNING_PUBLIC_KEY__"
+INSTALLER_RELEASE_VERSION="__INSTALLER_RELEASE_VERSION__"
+
+version_sentinel="__INSTALLER_RELEASE_VERSION"
+version_sentinel="${version_sentinel}__"
+if [[ -z "$RELEASE_TAG" && "$INSTALLER_RELEASE_VERSION" != "$version_sentinel" ]]; then
+    RELEASE_TAG="$INSTALLER_RELEASE_VERSION"
+fi
 
 fail() { printf '[ERROR] %s\n' "$*" >&2; exit 1; }
-for command_name in curl tar docker openssl; do
+for command_name in curl tar docker openssl base64 sha256sum awk; do
     command -v "$command_name" >/dev/null 2>&1 || fail "$command_name is required"
 done
 docker compose version >/dev/null 2>&1 || fail "the Docker Compose plugin is required"
@@ -25,7 +33,7 @@ hostname_pattern='^([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63
 check_control_domain() { [[ "$1" =~ $hostname_pattern && "$1" != manage.example.com ]]; }
 check_agent_domain() { [[ "$1" =~ $hostname_pattern && "$1" != agents.example.com && "$1" != "$CONTROL_DOMAIN" ]]; }
 check_acme_email() { [[ "$1" =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ && "$1" != admin@example.com ]]; }
-check_release_tag() { [[ -n "$1" ]]; }
+check_release_tag() { [[ "$1" =~ ^v[0-9]{4}\.[0-9]{2}(\.[0-9]{2})?(-[A-Za-z0-9.]+)?$ ]]; }
 check_acme_challenge() { [[ -z "$1" || "$1" == http01 || "$1" == dns01 ]]; }
 check_dns_provider() { [[ "$1" =~ ^[a-z0-9-]+$ ]]; }
 
@@ -80,6 +88,8 @@ fi
 
 [[ -n "$RELEASE_TAG" ]] \
     || fail "set RELEASE_TAG to the release to install, e.g. RELEASE_TAG=v2026.08.09-rc2"
+check_release_tag "$RELEASE_TAG" \
+    || fail "RELEASE_TAG must match vYYYY.MM or vYYYY.MM.DD"
 
 
 
@@ -99,27 +109,36 @@ temporary_directory="$(mktemp -d)"
 trap 'rm -rf "$temporary_directory"' EXIT
 archive="$temporary_directory/source.tar.gz"
 
-tag_url="https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/${RELEASE_TAG}.tar.gz"
-branch_url="https://github.com/${GITHUB_REPOSITORY}/archive/refs/heads/${RELEASE_TAG}.tar.gz"
-if ! curl -fsSL "$tag_url" -o "$archive"; then
-    curl -fsSL "$branch_url" -o "$archive" || fail "could not download $GITHUB_REPOSITORY@$RELEASE_TAG"
-fi
+release_base="https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}"
+manifest="$temporary_directory/SHA256SUMS"
+signature="$temporary_directory/SHA256SUMS.sig"
+public_key="$temporary_directory/release-signing-public.der"
+curl -fsSL "$release_base/cadestro-deploy.tar.gz" -o "$archive" || fail "could not download $GITHUB_REPOSITORY@$RELEASE_TAG"
+curl -fsSL "$release_base/SHA256SUMS" -o "$manifest" || fail "could not download the release checksum manifest"
+curl -fsSL "$release_base/SHA256SUMS.sig" -o "$signature" || fail "could not download the release checksum signature"
+sentinel="__RELEASE_SIGNING_PUBLIC_KEY"
+sentinel="${sentinel}__"
+[[ "$RELEASE_SIGNING_PUBLIC_KEY" != "$sentinel" && -n "$RELEASE_SIGNING_PUBLIC_KEY" ]] \
+    || fail "release signing public key is not configured"
+printf '%s' "$RELEASE_SIGNING_PUBLIC_KEY" | base64 --decode > "$public_key" \
+    || fail "release signing public key is invalid"
+openssl pkeyutl -verify -rawin -pubin -keyform DER -inkey "$public_key" \
+    -sigfile "$signature" -in "$manifest" >/dev/null \
+    || fail "release checksum signature is invalid"
+expected_sha="$(awk '$2 == "cadestro-deploy.tar.gz" { print $1; exit }' "$manifest")"
+[[ "$expected_sha" =~ ^[[:xdigit:]]{64}$ ]] || fail "release checksum manifest has no archive entry"
+actual_sha="$(sha256sum "$archive" | awk '{print $1}')"
+[[ "$expected_sha" == "$actual_sha" ]] || fail "release checksum mismatch"
 
 mkdir -p "$temporary_directory/source" "$INSTALL_DIR"
 tar -xzf "$archive" -C "$temporary_directory/source"
-source_root="$(find "$temporary_directory/source" -mindepth 1 -maxdepth 1 -type d -print -quit)"
-[[ -f "$source_root/deploy/compose.yml" ]] || fail "release does not contain the deployment tree"
-cp -R "$source_root/deploy/." "$INSTALL_DIR/"
+source_root="$temporary_directory/source"
+[[ -f "$source_root/compose.yml" ]] || fail "release does not contain the deployment tree"
+cp -R "$source_root/." "$INSTALL_DIR/"
 
 
 
 
-
-if ! cmp -s "${BASH_SOURCE[0]}" "$source_root/deploy/install.sh" 2>/dev/null; then
-    printf 'WARNING: this install.sh differs from the one inside release %s.\n' "$RELEASE_TAG" >&2
-    printf 'Options it offered may not be understood by that release; prefer a release\n' >&2
-    printf 'that matches this script, or RELEASE_TAG=main for the current tree.\n' >&2
-fi
 
 print_dns_reminder() {
     printf 'DNS: both records must point at this host:\n' >&2
