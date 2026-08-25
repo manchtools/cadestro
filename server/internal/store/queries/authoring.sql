@@ -1,5 +1,5 @@
--- Read-side inputs for compiling authored Actions, ActionSets and Definitions
--- into flat agent manifests. Deleted authoring rows never produce work.
+
+
 
 -- name: GetManifestAction :one
 SELECT * FROM actions

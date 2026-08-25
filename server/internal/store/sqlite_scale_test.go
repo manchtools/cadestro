@@ -60,9 +60,6 @@ type sqliteScaleResult struct {
 	JobQueueDropped        int            `json:"job_queue_dropped"`
 }
 
-// TestSQLiteScale_MixedWorkloadAtTenThousandAgents is the repeatable target
-// database gate. Normal suites skip it; run explicitly with
-// CADESTRO_RUN_SCALE_TEST=1.
 func TestSQLiteScale_MixedWorkloadAtTenThousandAgents(t *testing.T) {
 	if os.Getenv("CADESTRO_RUN_SCALE_TEST") != "1" {
 		t.Skip("set CADESTRO_RUN_SCALE_TEST=1 to run the 10,000-agent SQLite gate")
@@ -75,10 +72,7 @@ func TestSQLiteScale_MixedWorkloadAtTenThousandAgents(t *testing.T) {
 	st, raw := setupSQLitePool(t, 32)
 	now := time.Now().UTC()
 	deviceIDs := seedScaleDevices(t, raw, now)
-	// The bulk seed writes device rows directly. Production cannot: every device
-	// mutation refreshes its search document inside the same audited
-	// transaction. Rebuild once through the production path so the search
-	// workload measures a real 10,000-document FTS5 corpus.
+
 	rebuildSearchFixture(t, st)
 
 	runtime.GC()

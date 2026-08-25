@@ -14,9 +14,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/auth"
 )
 
-// The trusted-proxy resolution decides which address a rate limit and
-// an audit origin fingerprint are attributed to, so a caller who can
-// forge it can evade both.
 func TestClientIPFromHTTP_HonoursForwardedHeadersOnlyBehindATrustedProxy(t *testing.T) {
 	original := auth.TrustedProxies
 	t.Cleanup(func() { auth.TrustedProxies = original })
@@ -47,20 +44,14 @@ func TestClientIPFromHTTP_HonoursForwardedHeadersOnlyBehindATrustedProxy(t *test
 		auth.ClientIPFromHTTP(newRequest("10.1.2.3:5000", "203.0.113.1", "")),
 		"a trusted proxy's forwarded address is honoured")
 
-	// Walking right to left skips our own hops and stops at the first
-	// address we did not place, which defeats a spoofed leftmost entry.
 	assert.Equal(t, "203.0.113.1",
 		auth.ClientIPFromHTTP(newRequest("10.1.2.3:5000", "1.2.3.4, 203.0.113.1, 10.4.5.6", "")),
 		"a client-supplied leftmost entry must not win over the real hop")
 
-	// Walking right to left, the FIRST hop examined is malformed, so
-	// nothing further left can be trusted and the direct peer stands.
 	assert.Equal(t, "10.1.2.3",
 		auth.ClientIPFromHTTP(newRequest("10.1.2.3:5000", "203.0.113.1, not-an-ip", "")),
 		"a malformed hop makes the chain untrustworthy from there leftward")
 
-	// A malformed hop FARTHER LEFT than a trustworthy client is never
-	// reached: the client was already established.
 	assert.Equal(t, "203.0.113.1",
 		auth.ClientIPFromHTTP(newRequest("10.1.2.3:5000", "not-an-ip, 203.0.113.1", "")),
 		"the first untrusted address from the right is the client")
@@ -91,16 +82,11 @@ func TestRateLimiter_BoundsAttemptsPerKeyWithinTheWindow(t *testing.T) {
 	assert.True(t, rl.Blocked("a"))
 	assert.False(t, rl.Blocked("b"))
 
-	// The window slides: an attempt older than the window no longer
-	// counts.
 	now = now.Add(2 * time.Minute)
 	assert.False(t, rl.Blocked("a"))
 	assert.True(t, rl.Allow("a"))
 }
 
-// The control API is unary. A streaming request must be refused rather
-// than falling through some path where the unary authentication gate
-// does not run.
 func TestInterceptors_RefuseStreaming(t *testing.T) {
 	t.Parallel()
 	_, priv, err := auth.GenerateSessionKey()

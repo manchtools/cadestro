@@ -8,7 +8,6 @@ import (
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
-// MountLiveControl registers live device-control procedures.
 func (h *Handlers) MountLiveControl(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
 	if mux == nil {
 		panic("devicecontrol: mux is required")
@@ -25,7 +24,6 @@ func (h *Handlers) MountLiveControl(mux *http.ServeMux, opts ...connect.HandlerO
 	return mounted
 }
 
-// LiveControlProcedures is the exact audited live-control surface implemented here.
 func LiveControlProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceSyncDeviceProcedure,

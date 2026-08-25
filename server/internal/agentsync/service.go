@@ -1,5 +1,3 @@
-// Package agentsync builds stream synchronization state from scheduled policy
-// work and the authenticated device's assignment snapshot.
 package agentsync
 
 import (
@@ -27,7 +25,6 @@ var (
 	ErrNotConnected = errors.New("agent stream is not connected")
 )
 
-// Config supplies durable work, assignment resolution, and live connections.
 type Config struct {
 	Store       *store.Store
 	Manager     *connection.Manager
@@ -36,7 +33,6 @@ type Config struct {
 	AtRest      *crypto.Encryptor
 }
 
-// Service implements durable stream synchronization.
 type Service struct {
 	store       *store.Store
 	manager     *connection.Manager
@@ -45,7 +41,6 @@ type Service struct {
 	atRest      *crypto.Encryptor
 }
 
-// New constructs the agent sync service.
 func New(cfg Config) *Service {
 	if cfg.Store == nil || cfg.Manager == nil || cfg.AtRest == nil {
 		panic("agentsync: store, manager, and at-rest cipher are required")
@@ -56,7 +51,6 @@ func New(cfg Config) *Service {
 	return &Service{store: cfg.Store, manager: cfg.Manager, assignments: cfg.Assignments, now: cfg.Now, atRest: cfg.AtRest}
 }
 
-// Sync returns the device's current assignment snapshot and scheduling state.
 func (s *Service) Sync(ctx context.Context, deviceID string) (*cadestrov1.SyncState, error) {
 	if ctx == nil || !validID(deviceID) {
 		return nil, ErrInvalidInput

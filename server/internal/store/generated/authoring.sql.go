@@ -407,13 +407,10 @@ func (q *Queries) DeleteDefinitionMembershipsForActionSet(ctx context.Context, a
 }
 
 const getManifestAction = `-- name: GetManifestAction :one
-
 SELECT id, name, description, action_type, desired_state, params, params_canonical, timeout_seconds, schedule, is_system, created_at, created_by, updated_at, is_deleted FROM actions
 WHERE id = ? AND is_deleted = FALSE
 `
 
-// Read-side inputs for compiling authored Actions, ActionSets and Definitions
-// into flat agent manifests. Deleted authoring rows never produce work.
 func (q *Queries) GetManifestAction(ctx context.Context, id string) (Action, error) {
 	row := q.db.QueryRowContext(ctx, getManifestAction, id)
 	var i Action

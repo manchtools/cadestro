@@ -29,8 +29,6 @@ const (
 	resultTimeout            = 5 * time.Minute
 )
 
-// Config supplies the direct SQLite store and process-local seams used by
-// the device handlers.
 type Config struct {
 	Store            *store.Store
 	Logger           *slog.Logger
@@ -44,13 +42,10 @@ type Config struct {
 	IsConnected      func(deviceID string) bool
 }
 
-// AgentSender is the only outbound transport capability an instant device
-// operation needs. The connection manager satisfies it directly.
 type AgentSender interface {
 	Send(deviceID string, message *cadestrov1.ServerMessage) error
 }
 
-// Handlers implements the device CRUD procedures.
 type Handlers struct {
 	store            *store.Store
 	logger           *slog.Logger
@@ -64,8 +59,6 @@ type Handlers struct {
 	isConnected      func(string) bool
 }
 
-// New constructs the device handlers. A missing store is a boot-time wiring
-// defect and is rejected immediately.
 func New(cfg Config) *Handlers {
 	if cfg.Store == nil {
 		panic("device: store is required")
@@ -125,8 +118,7 @@ type scopeResolver struct{ store *store.Store }
 func (r scopeResolver) DeviceGroupsForDevice(ctx context.Context, deviceID string) ([]string, error) {
 	ids, err := r.store.ListDeviceGroupIDs(ctx, deviceID)
 	if store.IsNotFound(err) {
-		// Scope checks run before existence lookups. Unknown and out-of-scope
-		// identifiers must therefore both reduce to "not in an allowed group".
+
 		return nil, nil
 	}
 	return ids, err
@@ -230,8 +222,6 @@ func (h *Handlers) recordSensitiveRead(
 	return nil
 }
 
-// ListDevices returns a keyset page narrowed in SQL by assignment, device
-// scope, status, and exact label matches.
 func (h *Handlers) ListDevices(ctx context.Context, req *connect.Request[cadestrov1.ListDevicesRequest]) (*connect.Response[cadestrov1.ListDevicesResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
@@ -292,7 +282,6 @@ func (h *Handlers) ListDevices(ctx context.Context, req *connect.Request[cadestr
 	}), nil
 }
 
-// GetDevice returns one visible device without revealing hidden device IDs.
 func (h *Handlers) GetDevice(ctx context.Context, req *connect.Request[cadestrov1.GetDeviceRequest]) (*connect.Response[cadestrov1.GetDeviceResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
@@ -304,8 +293,6 @@ func (h *Handlers) GetDevice(ctx context.Context, req *connect.Request[cadestrov
 	return connect.NewResponse(&cadestrov1.GetDeviceResponse{Device: h.toProto(view)}), nil
 }
 
-// GetDeviceInventory returns the latest directly stored osquery tables for a
-// visible device.
 func (h *Handlers) GetDeviceInventory(ctx context.Context, req *connect.Request[cadestrov1.GetDeviceInventoryRequest]) (*connect.Response[cadestrov1.GetDeviceInventoryResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
@@ -345,7 +332,6 @@ func (h *Handlers) GetDeviceInventory(ctx context.Context, req *connect.Request[
 	return connect.NewResponse(&cadestrov1.GetDeviceInventoryResponse{Tables: tables}), nil
 }
 
-// GetOSQueryResult returns one directly stored on-demand query result.
 func (h *Handlers) GetOSQueryResult(ctx context.Context, req *connect.Request[cadestrov1.GetOSQueryResultRequest]) (*connect.Response[cadestrov1.GetOSQueryResultResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
@@ -394,7 +380,6 @@ func (h *Handlers) GetOSQueryResult(ctx context.Context, req *connect.Request[ca
 	return connect.NewResponse(response), nil
 }
 
-// GetDeviceLogResult returns one directly stored remote log query result.
 func (h *Handlers) GetDeviceLogResult(ctx context.Context, req *connect.Request[cadestrov1.GetDeviceLogResultRequest]) (*connect.Response[cadestrov1.GetDeviceLogResultResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
@@ -435,8 +420,6 @@ func (h *Handlers) GetDeviceLogResult(ctx context.Context, req *connect.Request[
 	return connect.NewResponse(response), nil
 }
 
-// GetDeviceCompliance returns the current direct compliance rows for one
-// visible device.
 func (h *Handlers) GetDeviceCompliance(ctx context.Context, req *connect.Request[cadestrov1.GetDeviceComplianceRequest]) (*connect.Response[cadestrov1.GetDeviceComplianceResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
@@ -476,8 +459,6 @@ func (h *Handlers) GetDeviceCompliance(ctx context.Context, req *connect.Request
 	}), nil
 }
 
-// GetDeviceCompliancePolicyStatus returns the current direct policy-rule
-// evaluations for one visible device.
 func (h *Handlers) GetDeviceCompliancePolicyStatus(ctx context.Context, req *connect.Request[cadestrov1.GetDeviceCompliancePolicyStatusRequest]) (*connect.Response[cadestrov1.GetDeviceCompliancePolicyStatusResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
@@ -584,7 +565,6 @@ func worseComplianceStatus(left, right cadestrov1.ComplianceStatus) cadestrov1.C
 	return left
 }
 
-// ListDeviceAssignees returns the live users and groups assigned to a device.
 func (h *Handlers) ListDeviceAssignees(ctx context.Context, req *connect.Request[cadestrov1.ListDeviceAssigneesRequest]) (*connect.Response[cadestrov1.ListDeviceAssigneesResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	if _, err := h.actor(ctx); err != nil {

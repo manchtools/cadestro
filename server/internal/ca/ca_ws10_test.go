@@ -67,8 +67,6 @@ func TestIssueCertificateFromCSR_RejectsNonEd25519Identity(t *testing.T) {
 	require.ErrorContains(t, err, "Ed25519 is required")
 }
 
-// TestNew_RejectsGroupOrWorldReadableKeyFile pins the deployment invariant:
-// the fleet CA key is accepted only when owner-accessible.
 func TestNew_RejectsGroupOrWorldReadableKeyFile(t *testing.T) {
 	certPEM, keyPEM := generateTestCA(t)
 	dir := t.TempDir()

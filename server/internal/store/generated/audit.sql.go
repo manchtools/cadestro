@@ -394,7 +394,6 @@ func (q *Queries) NextAuditEffectSeq(ctx context.Context, operationID string) (i
 }
 
 const nextAuditEventSeq = `-- name: NextAuditEventSeq :one
-
 SELECT CAST(COALESCE(MAX(chain_seq), 0) + 1 AS INTEGER)
 FROM (
     SELECT chain_seq FROM audit_operations WHERE audit_operations.stream = ?1
@@ -403,8 +402,6 @@ FROM (
 )
 `
 
-// Transactional, append-only audit operations and effects. The operation carries
-// authenticated actor/request context; each effect carries the action and subject.
 func (q *Queries) NextAuditEventSeq(ctx context.Context, stream string) (int64, error) {
 	row := q.db.QueryRowContext(ctx, nextAuditEventSeq, stream)
 	var column_1 int64

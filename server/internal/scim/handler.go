@@ -11,10 +11,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-// Store is the database surface the SCIM routes use: the audited
-// mutation door, the audited no-mutation door, and the individual
-// reads. Deliberately not a generic handle — this package cannot write
-// outside WithAudit. Satisfied by *store.Store.
 type Store interface {
 	WithAudit(ctx context.Context, op store.AuditOperation, mutate func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error) (store.AuditRecord, error)
 	RecordOperation(ctx context.Context, op store.AuditOperation, effects ...store.AuditEffect) (store.AuditRecord, error)
@@ -38,25 +34,14 @@ type Store interface {
 	ListSCIMGroupMappings(ctx context.Context, providerID string) ([]store.SCIMGroupMappingRow, error)
 }
 
-// Audit vocabulary for this surface. Every value is a code-derived
-// constant that satisfies the audit schema's token shapes; none of them
-// can carry request input.
 const (
-	// Origin names the surface a directory request entered through.
 	Origin = "scim"
-	// ActorTypeProvider is the acting principal on an authenticated
-	// directory request: a provider row, not a human subject.
+
 	ActorTypeProvider = "scim_provider"
-	// AuthorizationDetail names what decided the request. A directory
-	// holds no RBAC permission; presenting the provider's bearer token
-	// is the whole of its authority, and it reaches only the subjects
-	// and groups bound to that provider.
+
 	AuthorizationDetail = "scim_bearer_token"
 )
 
-// Rejection reason codes. They are recorded server-side; the response
-// a client sees is identical for every one of them, so distinguishing
-// them here is evidence rather than an oracle.
 const (
 	reasonMissingCredentials = "missing_credentials"
 	reasonUnknownProvider    = "unknown_provider"
@@ -66,38 +51,24 @@ const (
 	reasonInvalidToken       = "invalid_token"
 )
 
-// Rate-limit ceilings. Two buckets guard the credential path and a
-// third bounds how fast one source can make the audit log grow.
 const (
-	// providerRequestsPerWindow is generous: a real directory sync
-	// (list users, upsert each, patch groups) must never bump into it.
 	providerRequestsPerWindow = 100
-	// providerIPRequestsPerWindow is tighter and keyed on (slug,
-	// address), so an attacker holding several valid slugs cannot
-	// spread requests across them to evade the per-slug ceiling.
+
 	providerIPRequestsPerWindow = 20
-	// rejectedPerWindow bounds recorded authentication failures per
-	// source address. Throttling changes what is RECORDED, never what
-	// is ADMITTED.
+
 	rejectedPerWindow = 20
 	rateLimitWindow   = time.Minute
 )
 
-// Config wires the SCIM routes.
 type Config struct {
 	Store  Store
 	Logger *slog.Logger
-	// KEK wraps the per-subject data-encryption keys this surface mints
-	// when it provisions a subject, and opens them to seal class-three
-	// audit detail.
+
 	KEK *crypto.Encryptor
-	// Now is the clock seam.
+
 	Now func() time.Time
 }
 
-// Handler serves the SCIM v2 provisioning routes for every configured
-// directory. One instance serves all providers; the slug in the path
-// selects which, and the bearer token proves it.
 type Handler struct {
 	store  Store
 	logger *slog.Logger
@@ -109,7 +80,6 @@ type Handler struct {
 	rejectionLimiter *auth.RateLimiter
 }
 
-// New builds the SCIM handler.
 func New(cfg Config) *Handler {
 	now := cfg.Now
 	if now == nil {
@@ -130,35 +100,24 @@ func New(cfg Config) *Handler {
 	}
 }
 
-// Close releases the handler's rate-limit sweepers.
 func (h *Handler) Close() {
 	h.providerLimiter.Stop()
 	h.providerIPLimit.Stop()
 	h.rejectionLimiter.Stop()
 }
 
-// session is the authenticated directory on one request. It is built
-// by withAuth and handed to the route, so a route can never act for a
-// provider the credential did not prove.
 type session struct {
 	provider store.IdentityProviderRow
-	// descriptor is the code-derived route name the audit record
-	// carries. It comes from the mount table, never from the URL.
+
 	descriptor string
-	// tokenFingerprint is the SHA-256 digest of the presented bearer
-	// token, which is also the stored form. It proves WHICH token
-	// acted without the log holding anything presentable.
+
 	tokenFingerprint string
-	// originFingerprint is the SHA-256 digest of the client address.
+
 	originFingerprint string
 }
 
-// routeHandler is a SCIM route body. It runs only for an authenticated
-// directory.
 type routeHandler func(w http.ResponseWriter, r *http.Request, s *session)
 
-// Route descriptors. They name the route in the audit log and are the
-// enumerated writable surface a coverage test walks.
 const (
 	DescUsersList     = "scim.v2.Users.List"
 	DescUsersGet      = "scim.v2.Users.Get"
@@ -178,11 +137,6 @@ const (
 	DescResourceTypes         = "scim.v2.ResourceTypes"
 )
 
-// MutationRoutes is the exact set of SCIM routes that change state.
-// The design enumerates non-RPC writers from their writable surface and
-// requires each to be shown writing its operation and effects in the
-// same transaction as its mutation; this is that enumeration, and a
-// route mounted without being classified fails the coverage test.
 func MutationRoutes() []string {
 	return []string{
 		DescUsersCreate,
@@ -196,9 +150,6 @@ func MutationRoutes() []string {
 	}
 }
 
-// SensitiveReadRoutes is the exact set of SCIM routes that return
-// personal data without changing anything. They record an audited
-// operation of the sensitive-read class.
 func SensitiveReadRoutes() []string {
 	return []string{
 		DescUsersList,
@@ -208,9 +159,6 @@ func SensitiveReadRoutes() []string {
 	}
 }
 
-// DiscoveryRoutes is the exact set of SCIM routes that describe the
-// service itself. They expose no subject, no group and no
-// deployment-specific value, so they record nothing.
 func DiscoveryRoutes() []string {
 	return []string{
 		DescServiceProviderConfig,
@@ -219,12 +167,6 @@ func DiscoveryRoutes() []string {
 	}
 }
 
-// Mount registers the SCIM routes on mux and returns the descriptors it
-// mounted, so a test can assert the surface rather than trust this list.
-//
-// Every route is wrapped in withAuth: discovery MAY be anonymous under
-// RFC 7644, but these responses confirm that a slug exists, so they sit
-// behind the same credential as the rest.
 func (h *Handler) Mount(mux *http.ServeMux) []string {
 	var mounted []string
 	register := func(method, path, descriptor string, handle routeHandler) {
@@ -255,14 +197,10 @@ func (h *Handler) Mount(mux *http.ServeMux) []string {
 	return mounted
 }
 
-// mutationOp builds the audit operation for a directory write. SCIM is
-// a non-RPC writer, which is the class the design names for it.
 func (h *Handler) mutationOp(s *session) store.AuditOperation {
 	return h.operation(s, store.ClassBackgroundWriter)
 }
 
-// sensitiveReadOp builds the audit operation for a directory read of
-// personal data.
 func (h *Handler) sensitiveReadOp(s *session) store.AuditOperation {
 	return h.operation(s, store.ClassSensitiveRead)
 }
@@ -271,9 +209,7 @@ func (h *Handler) operation(s *session, class store.OperationClass) store.AuditO
 	return store.AuditOperation{
 		Class:     class,
 		ActorType: ActorTypeProvider,
-		// The provider's own ULID: the acting principal is the
-		// directory, and naming it is what makes a provisioning change
-		// attributable to the directory that asked for it.
+
 		ActorID:              s.provider.ID,
 		ActorFingerprint:     s.tokenFingerprint,
 		Origin:               Origin,

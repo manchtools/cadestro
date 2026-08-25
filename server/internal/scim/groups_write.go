@@ -14,15 +14,10 @@ import (
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
-// groupAssertion is what a directory said one of its groups should look
-// like. A nil Members means the field was absent — the current set is
-// left alone — while an empty non-nil slice is the assertion that the
-// group has no members.
 type groupAssertion struct {
 	DisplayName string
 	Members     []string
-	// MembersAsserted distinguishes "no members field" from "an empty
-	// members field".
+
 	MembersAsserted bool
 }
 
@@ -40,10 +35,6 @@ func assertionFromGroup(g SCIMGroup) groupAssertion {
 	return a
 }
 
-// createGroup handles POST /Groups.
-//
-// A directory re-asserts its whole group set on every sync cycle, so a
-// POST for a group it has already mapped is a sync and answers 200.
 func (h *Handler) createGroup(w http.ResponseWriter, r *http.Request, s *session) {
 	ctx := r.Context()
 	var resource SCIMGroup
@@ -57,10 +48,6 @@ func (h *Handler) createGroup(w http.ResponseWriter, r *http.Request, s *session
 	baseURL := baseURLFromRequest(r, s.provider.Slug)
 	assertion := assertionFromGroup(resource)
 
-	// The directory's own identifier for the group. Some directories
-	// send it as externalId, some as id, and some send neither on the
-	// first sync — in which case one is minted so the mapping has a
-	// stable key to be found by next time.
 	scimGroupID := resource.ExternalID
 	if scimGroupID == "" {
 		scimGroupID = resource.ID
@@ -80,11 +67,7 @@ func (h *Handler) createGroup(w http.ResponseWriter, r *http.Request, s *session
 			writeError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}
-		// The mapping points at a group that has been retired outside
-		// this surface. Replacing the pair is what lets the directory's
-		// next sync recover; leaving the stale mapping in place would
-		// make the group permanently unreachable under its own
-		// identifier.
+
 		h.provisionGroup(w, r, s, scimGroupID, assertion, baseURL, &existing)
 	case store.IsNotFound(err):
 		h.provisionGroup(w, r, s, scimGroupID, assertion, baseURL, nil)
@@ -94,10 +77,6 @@ func (h *Handler) createGroup(w http.ResponseWriter, r *http.Request, s *session
 	}
 }
 
-// provisionGroup creates the local group, its mapping and its
-// membership as one unit. When stale is set, its mapping is removed in
-// the same transaction, so one directory identifier never has two
-// mappings.
 func (h *Handler) provisionGroup(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -126,8 +105,7 @@ func (h *Handler) provisionGroup(
 				BeforeRef:    &removed.UserGroupID,
 				AfterRef:     &s.provider.ID,
 			})
-			// The mapping row is what makes its group SCIM-managed in the
-			// group's search document.
+
 			rec.RefreshSearch("user_group", removed.UserGroupID)
 		}
 
@@ -195,7 +173,6 @@ func (h *Handler) provisionGroup(
 	h.writeGroup(ctx, w, mapping, baseURL, http.StatusCreated)
 }
 
-// replaceGroup handles PUT /Groups/{id}.
 func (h *Handler) replaceGroup(w http.ResponseWriter, r *http.Request, s *session) {
 	ctx := r.Context()
 	mapping, ok := h.resolveGroup(ctx, w, s, r.PathValue("id"))
@@ -219,11 +196,6 @@ func (h *Handler) replaceGroup(w http.ResponseWriter, r *http.Request, s *sessio
 		baseURLFromRequest(r, s.provider.Slug), http.StatusOK)
 }
 
-// patchGroup handles PATCH /Groups/{id}.
-//
-// Every operation in the request is applied in ONE transaction, so a
-// request that renames a group and moves members cannot be observed
-// half-applied.
 func (h *Handler) patchGroup(w http.ResponseWriter, r *http.Request, s *session) {
 	ctx := r.Context()
 	mapping, ok := h.resolveGroup(ctx, w, s, r.PathValue("id"))
@@ -245,8 +217,7 @@ func (h *Handler) patchGroup(w http.ResponseWriter, r *http.Request, s *session)
 		return
 	}
 	for _, op := range patch.Operations {
-		// RFC 7644 §3.5.2 defines exactly three verbs; an unknown one is
-		// a malformed request rather than a silent no-op.
+
 		if !op.Op.IsValid() {
 			writeError(w, http.StatusBadRequest, "unsupported patch op")
 			return
@@ -326,8 +297,6 @@ func (h *Handler) applyGroupPatchOp(
 	return nil
 }
 
-// syncGroup applies a whole-resource assertion to an already-mapped
-// group.
 func (h *Handler) syncGroup(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -373,12 +342,6 @@ func (h *Handler) syncGroup(
 	h.writeGroup(ctx, w, mapping, baseURL, okStatus)
 }
 
-// deleteGroup handles DELETE /Groups/{id}.
-//
-// It removes the MAPPING only. The local group may carry role grants an
-// operator configured, and destroying it because a directory stopped
-// listing the group would silently withdraw authority nobody asked to
-// withdraw.
 func (h *Handler) deleteGroup(w http.ResponseWriter, r *http.Request, s *session) {
 	ctx := r.Context()
 	mapping, ok := h.resolveGroup(ctx, w, s, r.PathValue("id"))
@@ -401,9 +364,7 @@ func (h *Handler) deleteGroup(w http.ResponseWriter, r *http.Request, s *session
 			EvidenceKind:        "external_group_sha256",
 			EvidenceFingerprint: fingerprint(removed.ScimGroupID),
 		})
-		// The surviving group stops being SCIM-managed the moment its
-		// mapping goes, and the user-groups list renders that state from
-		// the group's search document.
+
 		rec.RefreshSearch("user_group", removed.UserGroupID)
 		return nil
 	})
@@ -415,14 +376,6 @@ func (h *Handler) deleteGroup(w http.ResponseWriter, r *http.Request, s *session
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// ---------------------------------------------------------------------------
-// Membership
-// ---------------------------------------------------------------------------
-
-// reconcileMembers makes the group's membership equal the asserted set.
-// The directory is the source of truth for its own groups, so a member
-// removed outside this surface is re-added and one the directory
-// dropped is removed.
 func (h *Handler) reconcileMembers(
 	ctx context.Context,
 	tx *store.Tx,
@@ -445,8 +398,6 @@ func (h *Handler) reconcileMembers(
 		requestedSet[id] = true
 	}
 
-	// Iterate the request in order so two runs over the same assertion
-	// produce the same effect sequence.
 	for _, userID := range requested {
 		if currentSet[userID] {
 			continue
@@ -466,13 +417,6 @@ func (h *Handler) reconcileMembers(
 	return nil
 }
 
-// addMember joins a subject to a group.
-//
-// Membership confers the group's role grants, so a directory may only
-// add subjects it is itself bound to: adding somebody else's subject
-// would let one directory grant authority to another's account. An
-// unowned subject is skipped rather than refused, which keeps the
-// member set idempotent the way SCIM expects.
 func (h *Handler) addMember(
 	ctx context.Context,
 	tx *store.Tx,
@@ -502,8 +446,7 @@ func (h *Handler) addMember(
 		return err
 	}
 	if n == 0 {
-		// Already a member. Re-asserting a membership is not a fresh
-		// grant and must not look like one in the record.
+
 		return nil
 	}
 	rec.Effect(store.AuditEffect{
@@ -517,7 +460,6 @@ func (h *Handler) addMember(
 	return h.invalidateSubjectSessions(ctx, tx, rec, userID, at)
 }
 
-// removeMember withdraws a subject from a group.
 func (h *Handler) removeMember(
 	ctx context.Context,
 	tx *store.Tx,
@@ -546,9 +488,6 @@ func (h *Handler) removeMember(
 	return h.invalidateSubjectSessions(ctx, tx, rec, userID, at)
 }
 
-// invalidateSubjectSessions bumps a subject's session version. A
-// membership change is a change to what the subject may do, so the
-// sessions minted under the previous authority stop validating.
 func (h *Handler) invalidateSubjectSessions(
 	ctx context.Context,
 	tx *store.Tx,
@@ -575,12 +514,6 @@ func (h *Handler) invalidateSubjectSessions(
 	return nil
 }
 
-// renameGroup renames the mapping and the local group together.
-//
-// The change guard reads the MAPPING's name, so a rename that reached
-// only one of the two rows would let the next sync see equal names,
-// skip, and leave the local group's name wrong forever. One transaction
-// makes both land or neither.
 func (h *Handler) renameGroup(
 	ctx context.Context,
 	tx *store.Tx,
@@ -628,13 +561,6 @@ func (h *Handler) renameGroup(
 	return nil
 }
 
-// ---------------------------------------------------------------------------
-// Response and value helpers
-// ---------------------------------------------------------------------------
-
-// writeGroup answers with the group as committed: the local group and
-// its membership are re-read rather than reconstructed from what the
-// handler believed it wrote.
 func (h *Handler) writeGroup(ctx context.Context, w http.ResponseWriter, mapping store.SCIMGroupMappingRow, baseURL string, status int) {
 	resource, err := h.groupResource(ctx, mapping, baseURL)
 	if err != nil {
@@ -668,12 +594,6 @@ func patchMemberIDs(value json.RawMessage) []string {
 	return out
 }
 
-// memberIDFromFilter reads the subject id out of a member value filter
-// such as `members[value eq "01J..."]`.
-//
-// The structural parts are matched case-insensitively because
-// directories vary; the id itself keeps its case, since a ULID is
-// case-sensitive as stored.
 func memberIDFromFilter(path string) string {
 	lower := strings.ToLower(path)
 	if !strings.HasPrefix(lower, "members[") {

@@ -24,8 +24,6 @@ const (
 	maxAgentLogResultLen = 16 << 20
 )
 
-// DispatchOSQuery creates the pollable SQLite result before sending one
-// unsigned query frame over the authenticated agent stream.
 func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[cadestrov1.DispatchOSQueryRequest]) (*connect.Response[cadestrov1.DispatchOSQueryResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	hasTable := strings.TrimSpace(req.Msg.Table) != ""
@@ -79,8 +77,6 @@ func (h *Handlers) DispatchOSQuery(ctx context.Context, req *connect.Request[cad
 	return connect.NewResponse(&cadestrov1.DispatchOSQueryResponse{QueryId: &cadestrov1.QueryId{Value: queryID}}), nil
 }
 
-// QueryDeviceLogs creates the pollable SQLite result before sending one
-// journal query over the authenticated agent stream.
 func (h *Handlers) QueryDeviceLogs(ctx context.Context, req *connect.Request[cadestrov1.QueryDeviceLogsRequest]) (*connect.Response[cadestrov1.QueryDeviceLogsResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
@@ -126,8 +122,6 @@ func (h *Handlers) QueryDeviceLogs(ctx context.Context, req *connect.Request[cad
 	return connect.NewResponse(&cadestrov1.QueryDeviceLogsResponse{QueryId: &cadestrov1.QueryId{Value: queryID}}), nil
 }
 
-// RefreshDeviceInventory sends one immediate collection request. Periodic
-// inventory remains an agent decision; this path is only the operator trigger.
 func (h *Handlers) RefreshDeviceInventory(ctx context.Context, req *connect.Request[cadestrov1.RefreshDeviceInventoryRequest]) (*connect.Response[cadestrov1.RefreshDeviceInventoryResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
@@ -171,7 +165,6 @@ func (h *Handlers) RefreshDeviceInventory(ctx context.Context, req *connect.Requ
 	return nil, rpcError(ctx, errDeviceUnavailable, connect.CodeUnavailable, "device is unavailable")
 }
 
-// CompleteOSQueryResult commits an authenticated agent's result directly.
 func (h *Handlers) CompleteOSQueryResult(ctx context.Context, deviceID string, result *cadestrov1.OSQueryResult) error {
 	if result == nil {
 		return errors.New("OS query result is required")
@@ -212,7 +205,6 @@ func (h *Handlers) CompleteOSQueryResult(ctx context.Context, deviceID string, r
 		})
 }
 
-// CompleteLogQueryResult commits an authenticated agent's bounded log result.
 func (h *Handlers) CompleteLogQueryResult(ctx context.Context, deviceID string, result *cadestrov1.LogQueryResult) error {
 	if result == nil {
 		return errors.New("log query result is required")
@@ -242,7 +234,6 @@ func (h *Handlers) CompleteLogQueryResult(ctx context.Context, deviceID string, 
 		})
 }
 
-// StoreDeviceInventory replaces each reported table in one audited transaction.
 func (h *Handlers) StoreDeviceInventory(ctx context.Context, deviceID string, inventory *cadestrov1.DeviceInventory) error {
 	if inventory == nil {
 		return errors.New("device inventory is required")

@@ -25,7 +25,6 @@ func TestRefreshToken_RotatesAndRevokesTheOldToken(t *testing.T) {
 	assert.NotEmpty(t, resp.Msg.AccessToken)
 	assert.NotEqual(t, pair.RefreshToken, resp.Msg.RefreshToken, "the refresh token rotates")
 
-	// The spent token cannot be replayed.
 	_, err = f.client.RefreshToken(f.ctx(), connect.NewRequest(&cadestrov1.RefreshTokenRequest{
 		RefreshToken: pair.RefreshToken,
 	}))
@@ -44,8 +43,6 @@ func TestRefreshToken_RotatesAndRevokesTheOldToken(t *testing.T) {
 	assert.Empty(t, ops[1].ActorID, "a rejected attempt has no actor")
 }
 
-// Bumping a subject's session version stops their outstanding refresh
-// token from producing a new session.
 func TestRefreshToken_RefusesASessionMintedUnderOldAuthority(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -122,8 +119,6 @@ func TestLogout_RevokesTheSessionAndIsIdempotent(t *testing.T) {
 	}))
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err), "the session is over")
 
-	// Logging out twice is not an error, and the second attempt records
-	// that it changed nothing.
 	_, err = f.client.Logout(f.ctx(), connect.NewRequest(&cadestrov1.LogoutRequest{RefreshToken: pair.RefreshToken}))
 	require.NoError(t, err)
 
@@ -136,9 +131,6 @@ func TestLogout_RevokesTheSessionAndIsIdempotent(t *testing.T) {
 		"a repeat revocation changed nothing, and the record says so")
 }
 
-// A value that is not a token at all produces the same response as a
-// successful logout: the endpoint is public, and a distinguishable
-// answer would let an anonymous caller test values against it.
 func TestLogout_TreatsAnUnusableTokenAsAlreadyEnded(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -183,9 +175,6 @@ func TestGetCurrentUser_RefusesAnUnauthenticatedCaller(t *testing.T) {
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
 }
 
-// An authentication rejection on a protected procedure records its own
-// operation class, with the presented credential reduced to a digest
-// and no actor id.
 func TestRejectedAuthentication_RecordsItsOwnOperationClass(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -207,8 +196,6 @@ func TestRejectedAuthentication_RecordsItsOwnOperationClass(t *testing.T) {
 	assert.Empty(t, f.effectsOf(op.OperationID), "a refused credential affected no resource")
 }
 
-// An expired token is separated from every other failure so a client
-// can tell "refresh and retry" from "log in again".
 func TestRejectedAuthentication_DistinguishesExpiryFromEverythingElse(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -222,9 +209,6 @@ func TestRejectedAuthentication_DistinguishesExpiryFromEverythingElse(t *testing
 	assert.Equal(t, "token_expired", op.ResultCode)
 }
 
-// pairJTI extracts the token id from a refresh token, so a test can
-// assert the audit digest is of THAT token rather than of some other
-// value that happens to be 64 hex characters.
 func pairJTI(t *testing.T, f *fixture, refreshToken string) string {
 	t.Helper()
 	claims, err := f.jwt.ValidateToken(refreshToken, auth.TokenTypeRefresh)

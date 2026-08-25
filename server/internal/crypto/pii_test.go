@@ -10,9 +10,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/crypto"
 )
 
-// A random DEK per user is KEK-wrapped at rest. Audit PII detail is sealed
-// under the subject's DEK with field-bound AAD.
-
 const userA = "01JUSERAAAAAAAAAAAAAAAAAAA"
 const userB = "01JUSERBBBBBBBBBBBBBBBBBBB"
 
@@ -35,8 +32,6 @@ func TestGenerateWrappedDEK_RoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, dek)
 
-	// The wrap is bound to the owning user: another user's id must not
-	// unwrap it (a swapped user_encryption_keys row must not decrypt).
 	_, err = crypto.UnwrapDEK(kek, userB, wrapped)
 	require.Error(t, err, "a DEK wrapped for one user must not unwrap under another")
 }
@@ -73,8 +68,6 @@ func TestDEK_SealOpenField(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "alice@example.com", pt)
 
-	// Field binding: the same user's ciphertext must not open under a
-	// different field name (no cross-field relocation).
 	_, err = dek.OpenField(ct, "display_name")
 	require.Error(t, err, "PII sealed for one field must not open as another")
 }
@@ -145,7 +138,7 @@ func TestDEK_TamperedFieldFails(t *testing.T) {
 
 func TestUnwrapDEK_CorruptWrapFails(t *testing.T) {
 	kek := newKEK(t)
-	// A present-but-unwrappable DEK row is a fault, not the graceful erased state.
+
 	_, err := crypto.UnwrapDEK(kek, userA, "enc:v1:Y29ycnVwdGVkY29ycnVwdGVk")
 	require.Error(t, err)
 

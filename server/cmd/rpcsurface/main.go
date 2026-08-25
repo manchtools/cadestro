@@ -1,21 +1,3 @@
-// Command rpcsurface prints cadestro.v1 procedure paths, one per line.
-//
-// It exists so the deployment gate can ask a RUNNING listener "do you serve
-// exactly these?" without anyone maintaining a list by hand. The set is derived
-// from the descriptor registry, so it follows the contract automatically.
-//
-// -services SELECTS, and selecting is mandatory in practice, because the
-// contract's services are deliberately spread across DIFFERENT processes and
-// listeners: ControlService on control's public listener, AgentService on
-// control's mTLS agent listener, and DeviceAuthService on the agent's own
-// local enrollment socket. A single global
-// list is therefore not a meaningful expectation for any one listener — it
-// would report the other processes' services as missing, and, worse, could not
-// express the property that actually matters: that a service is NOT reachable
-// on a listener it does not belong to.
-//
-// -invert emits every service EXCEPT those named, which is how the caller
-// builds the must-not-be-served set for a given listener.
 package main
 
 import (
@@ -28,18 +10,9 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
-	// Imported for descriptor registration side effects: without this the
-	// registry is empty and the tool would print nothing, which the caller must
-	// treat as a failure rather than as "no RPCs".
 	_ "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// contractPackage is the protobuf namespace the contract ships under. It is
-// named ONCE: the procedure paths below are built from each service's own
-// FullName rather than from a second copy of this string, so a namespace
-// rename cannot leave the filter and the emitted paths disagreeing — the shape
-// that makes every emitted procedure miss the listener it is compared against
-// while the tool still reports a full, plausible-looking set.
 const contractPackage = "cadestro.v1"
 
 func main() {
@@ -86,8 +59,7 @@ func main() {
 			"the enumeration is broken, and emitting an empty set would let the gate pass vacuously\n", contractPackage)
 		os.Exit(1)
 	}
-	// A name that matches no live service is a stale expectation: it would
-	// silently contribute nothing and shrink the set the gate checks.
+
 	for name := range want {
 		if !seen[name] {
 			fmt.Fprintf(os.Stderr, "rpcsurface: -services names %q but no such %s service exists — stale expectation\n", name, contractPackage)

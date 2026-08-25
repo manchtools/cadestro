@@ -193,14 +193,11 @@ func (q *Queries) DeleteCompliancePolicyEvaluations(ctx context.Context, policyI
 }
 
 const deleteCompliancePolicyEvaluationsForAction = `-- name: DeleteCompliancePolicyEvaluationsForAction :many
-
 DELETE FROM compliance_policy_evaluation
 WHERE action_id = ?
 RETURNING device_id
 `
 
-// Compliance evidence deletes return the devices whose summary was derived from
-// the rows they remove, so the caller can recompute it in the same transaction.
 func (q *Queries) DeleteCompliancePolicyEvaluationsForAction(ctx context.Context, actionID string) ([]string, error) {
 	rows, err := q.db.QueryContext(ctx, deleteCompliancePolicyEvaluationsForAction, actionID)
 	if err != nil {

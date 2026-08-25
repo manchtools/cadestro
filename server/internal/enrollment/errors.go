@@ -1,5 +1,3 @@
-// Package enrollment implements direct audited device enrollment and
-// certificate renewal.
 package enrollment
 
 import (

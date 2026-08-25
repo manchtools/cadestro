@@ -11,9 +11,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/testdb"
 )
 
-// setupSQLitePool creates one isolated, real SQLite file per test. maxConns is
-// retained at the call boundary for the lock-pressure cases; SQLite writer
-// serialization belongs to Store rather than a test-configurable pool.
 func setupSQLitePool(t *testing.T, _ int) (*store.Store, *testdb.DB) {
 	t.Helper()
 	ctx := context.Background()

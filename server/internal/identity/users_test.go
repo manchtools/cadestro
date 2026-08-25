@@ -24,9 +24,6 @@ func TestEraseJITUser_ErasesSubjectAndCryptoShredsAuditDetail(t *testing.T) {
 	f.addUserToGroup(group, subject.ID)
 	f.insertIdentityLink(subject.ID, f.insertProvider("jit", nil), "jit-subject")
 
-	// The users search document carries the email, role names, and the
-	// last-login stamp; index the subject so the erasure below has a real
-	// document to remove.
 	f.rebuildSearch()
 	documentsFor := func(userID string) int {
 		var n int
@@ -87,7 +84,6 @@ func TestEraseJITUser_ErasesSubjectAndCryptoShredsAuditDetail(t *testing.T) {
 		assert.Zero(t, count, table+" must be erased")
 	}
 
-	// The readable address must not survive in any audit text slot.
 	var hits int
 	require.NoError(t, f.raw.QueryRow(f.ctx(), `
 		SELECT count(*) FROM audit_operations
@@ -210,9 +206,6 @@ func TestUpdateUserEmail_SealsTheTransitionForTheSubject(t *testing.T) {
 	assert.Equal(t, subject.Email+" -> renamed@test.example", opened)
 }
 
-// A caller holding only the self-scoped tier may change their own
-// address and nobody else's — and the refusal is not-found, so the id
-// space cannot be probed.
 func TestUpdateUserEmail_SelfTierIsConfinedToTheCaller(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -230,14 +223,11 @@ func TestUpdateUserEmail_SelfTierIsConfinedToTheCaller(t *testing.T) {
 	assert.Equal(t, connect.CodeNotFound, connectCodeOf(t, err),
 		"a self-scoped caller must not learn that another subject exists")
 
-	// The refused request changed nothing.
 	row, err := f.store.GetUser(f.ctx(), other.ID)
 	require.NoError(t, err)
 	assert.Equal(t, other.Email, row.Email)
 }
 
-// A caller confined to one user group may act on subjects inside it and
-// sees not-found for subjects outside it.
 func TestScopedCaller_SeesNotFoundForSubjectOutsideScope(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -265,8 +255,6 @@ func TestScopedCaller_SeesNotFoundForSubjectOutsideScope(t *testing.T) {
 		"scoped non-owner access is reported as not found, never as permission denied")
 }
 
-// The same role granted globally reaches every subject; granted at two
-// scopes it reaches exactly the union of those scopes.
 func TestGrantEvaluation_GlobalVersusTwoScopes(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -287,7 +275,6 @@ func TestGrantEvaluation_GlobalVersusTwoScopes(t *testing.T) {
 		assert.NoError(t, err, "an unscoped grant reaches every subject")
 	}
 
-	// One subject, the SAME permission, granted at two distinct scopes.
 	twoScopes := f.seedActor(
 		grant{Permissions: perms, ScopeKind: auth.ScopeKindUserGroup, ScopeID: groupA},
 		grant{Permissions: perms, ScopeKind: auth.ScopeKindUserGroup, ScopeID: groupB},
@@ -333,9 +320,6 @@ func TestSetUserDisabled_BumpsSessionVersionAndRecordsTheTransition(t *testing.T
 	assert.True(t, *effect.AfterFlag)
 }
 
-// SetUserDisabled is privilege-granting, so it has no self tier: a
-// subject cannot re-enable themselves and cannot disable a colleague
-// through a group scope either.
 func TestSetUserDisabled_HasNoSelfOrScopedTier(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -348,11 +332,7 @@ func TestSetUserDisabled_HasNoSelfOrScopedTier(t *testing.T) {
 		ScopeKind:   auth.ScopeKindUserGroup,
 		ScopeID:     group,
 	})
-	// The grant is scopable only because the fixture wrote it directly;
-	// the handler ignores the scope for this permission because it is
-	// global-only, so the caller still acts. What must NOT happen is a
-	// scoped grant being MINTED through the RPC — see
-	// TestAssignRoleToUser_RefusesScopedGrantOfPrivilegeGrantingRole.
+
 	_, err := f.client.SetUserDisabled(f.ctx(), authed(&cadestrov1.SetUserDisabledRequest{
 		Id: &cadestrov1.UserId{Value: target.ID}, Disabled: true,
 	}, confined.Token))
@@ -450,7 +430,6 @@ func TestAddUserSshKey_RecordsTheKeyFingerprintNotTheKey(t *testing.T) {
 	assert.Equal(t, "ssh_public_key_sha256", effect.EvidenceKind)
 	assert.Len(t, effect.EvidenceFingerprint, 64, "the evidence is a SHA-256 digest")
 
-	// Removing it records the same digest, so the two rows correlate.
 	_, err = f.client.RemoveUserSshKey(f.ctx(), authed(&cadestrov1.RemoveUserSshKeyRequest{
 		UserId: &cadestrov1.UserId{Value: subject.ID}, KeyId: &cadestrov1.SshKeyId{Value: resp.Msg.Key.GetId().GetValue()},
 	}, admin.Token))
@@ -480,8 +459,7 @@ func TestAddUserSshKey_RejectsUnparsableKey(t *testing.T) {
 func TestUpdateUserLinuxUsername_HasNoSelfTier(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	// The self variant is not even registered, so the closest a subject
-	// can get is holding a self grant of a sibling permission.
+
 	selfish := f.seedActor(grant{Permissions: []string{"UpdateUserProfile:self", "GetCurrentUser"}})
 
 	_, err := f.client.UpdateUserLinuxUsername(f.ctx(), authed(&cadestrov1.UpdateUserLinuxUsernameRequest{

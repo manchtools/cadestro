@@ -1,5 +1,3 @@
-// Package manifest compiles the authoring hierarchy into the flat, durable
-// unit of work sent to an agent.
 package manifest
 
 import (
@@ -18,20 +16,15 @@ import (
 )
 
 var (
-	// ErrInvalidInput means the requested source identifier is not a ULID or
-	// the caller supplied no context.
 	ErrInvalidInput = errors.New("invalid manifest compiler input")
-	// ErrEmptyManifest means an ActionSet or Definition member contains no
-	// live actions and therefore cannot become executable work.
+
 	ErrEmptyManifest = errors.New("manifest contains no actions")
 )
 
-// Compiler turns an Action, ActionSet or Definition into complete manifests.
 type Compiler struct {
 	store *store.Store
 }
 
-// New constructs a compiler. A missing store is a boot-time wiring error.
 func New(st *store.Store) *Compiler {
 	if st == nil {
 		panic("manifest: store is required")
@@ -39,7 +32,6 @@ func New(st *store.Store) *Compiler {
 	return &Compiler{store: st}
 }
 
-// Action creates the singleton manifest for one authored Action.
 func (c *Compiler) Action(ctx context.Context, id string) (*cadestrov1.Manifest, error) {
 	if !validInput(ctx, id) {
 		return nil, ErrInvalidInput
@@ -65,7 +57,6 @@ func (c *Compiler) Action(ctx context.Context, id string) (*cadestrov1.Manifest,
 	})
 }
 
-// ActionSet flattens one set into a manifest in authored member order.
 func (c *Compiler) ActionSet(ctx context.Context, id string) (*cadestrov1.Manifest, error) {
 	if !validInput(ctx, id) {
 		return nil, ErrInvalidInput
@@ -81,7 +72,6 @@ func (c *Compiler) ActionSet(ctx context.Context, id string) (*cadestrov1.Manife
 	return c.compileSet(set, rows, &cadestrov1.ManifestProvenance{ActionSetId: &cadestrov1.ActionSetId{Value: id}}, nil)
 }
 
-// Definition flattens a Definition into one globally ordered runbook.
 func (c *Compiler) Definition(ctx context.Context, id string) (*cadestrov1.Manifest, error) {
 	if !validInput(ctx, id) {
 		return nil, ErrInvalidInput
@@ -134,8 +124,6 @@ func (c *Compiler) Definition(ctx context.Context, id string) (*cadestrov1.Manif
 	return finish(runbook)
 }
 
-// FreshCopy preserves compiled semantics while reminting policy-local
-// manifest and occurrence identities for another target device.
 func FreshCopy(compiled *cadestrov1.Manifest) (*cadestrov1.Manifest, error) {
 	if compiled == nil {
 		return nil, ErrInvalidInput
@@ -269,8 +257,6 @@ func secretActionField(ciphertext string) ([]byte, error) {
 	return []byte(ciphertext), nil
 }
 
-// MaterializeSecrets opens catalog ciphertext only for the authenticated
-// device stream. Callers must pass a copy that is never persisted.
 func MaterializeSecrets(manifest *cadestrov1.Manifest, atRest *crypto.Encryptor) error {
 	if manifest == nil || atRest == nil {
 		return errors.New("manifest secret materialization requires manifest and cipher")

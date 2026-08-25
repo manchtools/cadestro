@@ -10,23 +10,12 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store/sqlitetype"
 )
 
-// Reads are exported one at a time rather than by handing out the
-// generated query surface. A read method cannot become a write by
-// accident, and the set of things a caller can do to the database
-// stays enumerable: this file plus WithAudit.
-
-// AuditOperationRow is one stored operation row.
 type AuditOperationRow = generated.AuditOperation
 
-// AuditEffectRow is one stored effect row.
 type AuditEffectRow = generated.AuditEffect
 
-// AuditEventRow is one safe read-side projection of the append-only audit
-// evidence. Its query deliberately cannot select either sealed-detail column.
 type AuditEventRow = generated.AuditEventRow
 
-// AuditEventFilter is the common keyset/filter surface used by list and
-// export. Empty bounds cover the full supported SQLite timestamp range.
 type AuditEventFilter struct {
 	ActorID      string
 	StreamTypes  []string
@@ -37,21 +26,14 @@ type AuditEventFilter struct {
 	Limit        int32
 }
 
-// DeviceRow is one stored device.
 type DeviceRow = generated.Device
 
-// JobRow is one durable scheduled job.
 type JobRow = generated.Job
 
-// LuksKeyRow is one current LUKS metadata row joined to its generic secret
-// owner context.
 type LuksKeyRow = generated.GetCurrentLuksKeyForAgentRow
 
-// ActionRow is one live authored action used to compile agent manifests.
 type ActionRow = generated.Action
 
-// ActionListFilter contains the keyset, type, assignment and object-scope
-// narrowing shared by the Action list and count reads.
 type ActionListFilter struct {
 	AfterID         string
 	Limit           int32
@@ -61,11 +43,8 @@ type ActionListFilter struct {
 	ScopeGroupIDs   []string
 }
 
-// AssignmentTarget is one live target reached from an authored source.
 type AssignmentTarget = generated.ListAuthoringAssignmentsForSourceRow
 
-// AssignmentView is one live assignment with operator-facing source and
-// target names resolved from live rows.
 type AssignmentView struct {
 	ID         string
 	SourceType string
@@ -79,15 +58,10 @@ type AssignmentView struct {
 	TargetName string
 }
 
-// ResolvedAssignmentSource is one live source/mode path that reaches a device,
-// with its current optional selection state.
 type ResolvedAssignmentSource = generated.ListResolvedAssignmentSourcesForDeviceRow
 
-// UserSelectionRow is one device/source selection.
 type UserSelectionRow = generated.UserSelection
 
-// AssignmentListFilter is the deterministic keyset and exact-match filter
-// shared by assignment list and count reads.
 type AssignmentListFilter struct {
 	AfterID    string
 	Limit      int32
@@ -97,19 +71,12 @@ type AssignmentListFilter struct {
 	TargetID   string
 }
 
-// DeviceGroupView is one live device group with a member count derived from
-// live membership rows.
 type DeviceGroupView = generated.GetDeviceGroupRow
 
-// DeviceGroupMemberView is one live member device.
 type DeviceGroupMemberView = generated.ListDeviceGroupMembersRow
 
-// DynamicDeviceView is the current device state consumed by the in-process
-// dynamic-group evaluator.
 type DynamicDeviceView = generated.ListDevicesForDynamicEvaluationRow
 
-// DeviceGroupListFilter contains the keyset and device-group scope shared by
-// the list and count reads.
 type DeviceGroupListFilter struct {
 	AfterID         string
 	Limit           int32
@@ -117,7 +84,6 @@ type DeviceGroupListFilter struct {
 	ScopeGroupIDs   []string
 }
 
-// GetDeviceGroupID returns one live device-group identifier.
 func (s *Store) GetDeviceGroupID(ctx context.Context, id string) (string, error) {
 	rowID, err := s.queries.GetDeviceGroupID(ctx, id)
 	if err != nil {
@@ -126,7 +92,6 @@ func (s *Store) GetDeviceGroupID(ctx context.Context, id string) (string, error)
 	return rowID, nil
 }
 
-// GetDeviceGroup returns one live device group.
 func (s *Store) GetDeviceGroup(ctx context.Context, id string) (DeviceGroupView, error) {
 	row, err := s.queries.GetDeviceGroup(ctx, id)
 	if err != nil {
@@ -135,7 +100,6 @@ func (s *Store) GetDeviceGroup(ctx context.Context, id string) (DeviceGroupView,
 	return row, nil
 }
 
-// ListDeviceGroupMembers returns live devices in stable identifier order.
 func (s *Store) ListDeviceGroupMembers(ctx context.Context, id string) ([]DeviceGroupMemberView, error) {
 	rows, err := s.queries.ListDeviceGroupMembers(ctx, id)
 	if err != nil {
@@ -144,8 +108,6 @@ func (s *Store) ListDeviceGroupMembers(ctx context.Context, id string) ([]Device
 	return rows, nil
 }
 
-// ListDevicesForDynamicEvaluation returns every live device with the labels,
-// inventory and group names understood by the retained query language.
 func (s *Store) ListDevicesForDynamicEvaluation(ctx context.Context) ([]DynamicDeviceView, error) {
 	rows, err := s.queries.ListDevicesForDynamicEvaluation(ctx)
 	if err != nil {
@@ -154,7 +116,6 @@ func (s *Store) ListDevicesForDynamicEvaluation(ctx context.Context) ([]DynamicD
 	return rows, nil
 }
 
-// ListDeviceGroups returns a deterministic keyset page.
 func (s *Store) ListDeviceGroups(ctx context.Context, filter DeviceGroupListFilter) ([]DeviceGroupView, error) {
 	if filter.Limit < 0 || filter.Limit > 101 {
 		return nil, fmt.Errorf("device group: list limit must be between 0 and 101")
@@ -176,7 +137,6 @@ func (s *Store) ListDeviceGroups(ctx context.Context, filter DeviceGroupListFilt
 	return groups, nil
 }
 
-// CountDeviceGroups counts the same scope selected by ListDeviceGroups.
 func (s *Store) CountDeviceGroups(ctx context.Context, filter DeviceGroupListFilter) (int64, error) {
 	n, err := s.queries.CountDeviceGroups(ctx, generated.CountDeviceGroupsParams{
 		ScopeRestricted: filter.ScopeRestricted, ScopeGroupIdsJson: sqlitetype.StringList(filter.ScopeGroupIDs),
@@ -187,8 +147,6 @@ func (s *Store) CountDeviceGroups(ctx context.Context, filter DeviceGroupListFil
 	return n, nil
 }
 
-// ListDeviceGroupsForDevice returns the visible live groups containing one
-// device.
 func (s *Store) ListDeviceGroupsForDevice(ctx context.Context, deviceID string, filter DeviceGroupListFilter) ([]DeviceGroupView, error) {
 	rows, err := s.queries.ListDeviceGroupsForDevice(ctx, generated.ListDeviceGroupsForDeviceParams{
 		DeviceID: deviceID, ScopeRestricted: filter.ScopeRestricted, ScopeGroupIdsJson: sqlitetype.StringList(filter.ScopeGroupIDs),
@@ -203,11 +161,8 @@ func (s *Store) ListDeviceGroupsForDevice(ctx context.Context, deviceID string, 
 	return groups, nil
 }
 
-// ActionSetRow is one live authored action set used to compile agent manifests.
 type ActionSetRow = generated.ActionSet
 
-// ActionSetListFilter contains the keyset, assignment and object-scope
-// narrowing shared by the ActionSet list and count reads.
 type ActionSetListFilter struct {
 	AfterID         string
 	Limit           int32
@@ -216,21 +171,15 @@ type ActionSetListFilter struct {
 	ScopeGroupIDs   []string
 }
 
-// ActionSetView is one authored set with its member count derived from the
-// live edge rows.
 type ActionSetView struct {
 	ActionSetRow
 	MemberCount int64
 }
 
-// ActionSetMemberView is one live action edge in authored execution order.
 type ActionSetMemberView = generated.ListActionSetMembersRow
 
-// DefinitionRow is one live authored definition used to compile agent manifests.
 type DefinitionRow = generated.Definition
 
-// DefinitionListFilter contains the keyset and object-scope narrowing shared
-// by the Definition list and count reads.
 type DefinitionListFilter struct {
 	AfterID         string
 	Limit           int32
@@ -238,28 +187,20 @@ type DefinitionListFilter struct {
 	ScopeGroupIDs   []string
 }
 
-// DefinitionView is one authored definition with its member count derived
-// from live ActionSets.
 type DefinitionView struct {
 	DefinitionRow
 	LiveMemberCount int64
 }
 
-// DefinitionMemberView is one live ActionSet edge in authored order.
 type DefinitionMemberView = generated.ListDefinitionMembersRow
 
-// DefinitionManifestAction pairs one authored action with the set through
-// which the containing definition reaches it.
 type DefinitionManifestAction struct {
 	ActionSetID string
 	Action      ActionRow
 }
 
-// CompliancePolicyRow is one live authored compliance policy.
 type CompliancePolicyRow = generated.CompliancePolicy
 
-// CompliancePolicyListFilter contains the keyset and object-scope narrowing
-// shared by the policy list and count reads.
 type CompliancePolicyListFilter struct {
 	AfterID         string
 	Limit           int32
@@ -267,17 +208,13 @@ type CompliancePolicyListFilter struct {
 	ScopeGroupIDs   []string
 }
 
-// CompliancePolicyView derives its rule count from live Actions.
 type CompliancePolicyView struct {
 	CompliancePolicyRow
 	LiveRuleCount int64
 }
 
-// CompliancePolicyRuleView is one live policy rule.
 type CompliancePolicyRuleView = generated.ListCompliancePolicyRulesRow
 
-// DeviceStatusFilter selects the server-derived online state for a device
-// listing. Zero keeps both states.
 type DeviceStatusFilter int32
 
 const (
@@ -286,8 +223,6 @@ const (
 	DeviceStatusOffline DeviceStatusFilter = 2
 )
 
-// DeviceListFilter contains every narrowing rule shared by ListDeviceViews
-// and CountDeviceViews. OnlineSince is normally now minus five minutes.
 type DeviceListFilter struct {
 	AfterID         string
 	Limit           int32
@@ -299,7 +234,6 @@ type DeviceListFilter struct {
 	ScopeGroupIDs   []string
 }
 
-// DeviceView is the complete device read model exposed to handlers.
 type DeviceView struct {
 	DeviceRow
 	Labels                           map[string]string
@@ -309,39 +243,28 @@ type DeviceView struct {
 	ResolvedInventoryIntervalMinutes int32
 }
 
-// DeviceAssigneeView is one live user or user group assigned to a device.
 type DeviceAssigneeView struct {
 	ID   string
 	Kind string
 	Name string
 }
 
-// DeviceInventoryTable is one latest collected osquery table for a device.
 type DeviceInventoryTable = generated.ListDeviceInventoryRow
 
-// OSQueryResult is one current on-demand query result.
 type OSQueryResult = generated.GetOSQueryResultRow
 
-// DeviceLogResult is one current remote log query result.
 type DeviceLogResult = generated.GetDeviceLogResultRow
 
-// DeviceComplianceResult is one current action check for a device.
 type DeviceComplianceResult = generated.ListDeviceComplianceResultsRow
 
-// DeviceComplianceEvaluation is one current policy-rule evaluation for a
-// device.
 type DeviceComplianceEvaluation = generated.ListDeviceComplianceEvaluationsRow
 
-// ExecutionView is one current execution with its live action name when the
-// catalogue action still exists.
 type LpsPasswordView struct {
 	ID, DeviceID, DeviceHostname, ActionID, ActionName string
 	Username, RotationReason                           string
 	RotatedAt                                          time.Time
 }
 
-// LuksKeyView is one LUKS entry's display metadata. The ciphertext is
-// deliberately absent and can only be fetched through GetLuksKeyForReveal.
 type LuksKeyView struct {
 	ID, DeviceID, DeviceHostname, ActionID, ActionName string
 	DevicePath, RotationReason                         string
@@ -350,29 +273,18 @@ type LuksKeyView struct {
 	RevocationAt                                       *time.Time
 }
 
-// LpsPasswordSecret and LuksKeySecret are the narrow ciphertext-bearing rows
-// used by the corresponding one-entry reveal handlers.
 type LpsPasswordSecret = generated.GetLpsPasswordForRevealRow
 type LuksKeySecret = generated.GetLuksKeyForRevealRow
 type DeviceSecretRow = generated.GetDeviceSecretRow
 
-// LuksRevocationTarget summarizes the current keys governed by one encryption
-// action without exposing their encrypted passphrases.
 type LuksRevocationTarget = generated.GetLuksRevocationTargetRow
 
-// OpenTerminalSession is durable metadata for a session control still regards
-// as open. Live transport activity remains in the process-local registry.
 type OpenTerminalSession = generated.GetOpenTerminalSessionRow
 
-// DefaultInventoryIntervalMinutes is the server cadence used when neither a
-// device nor any live device group supplies an inventory interval.
 const DefaultInventoryIntervalMinutes int32 = 1440
 
-// UserRow is one stored user.
 type UserRow = generated.User
 
-// GetAuditOperation returns one operation row. ErrNotFound when the
-// operation is unknown.
 func (s *Store) GetAuditOperation(ctx context.Context, operationID string) (AuditOperationRow, error) {
 	row, err := s.queries.GetAuditOperation(ctx, operationID)
 	if err != nil {
@@ -381,9 +293,6 @@ func (s *Store) GetAuditOperation(ctx context.Context, operationID string) (Audi
 	return row, nil
 }
 
-// ListAuditEffects returns an operation's effects in the order they
-// were recorded, including any appended long after the operation
-// itself.
 func (s *Store) ListAuditEffects(ctx context.Context, operationID string) ([]AuditEffectRow, error) {
 	rows, err := s.queries.ListAuditEffectsForOperation(ctx, operationID)
 	if err != nil {
@@ -392,8 +301,6 @@ func (s *Store) ListAuditEffects(ctx context.Context, operationID string) ([]Aud
 	return rows, nil
 }
 
-// ListAuditEventRows returns newest-first effect evidence plus operation-only
-// evidence. The SQL projection is allowlisted and never reads sealed detail.
 func (s *Store) ListAuditEventRows(ctx context.Context, filter AuditEventFilter) ([]AuditEventRow, error) {
 	if filter.Limit < 1 || filter.Limit > 1001 {
 		return nil, fmt.Errorf("audit: list limit must be between 1 and 1001")
@@ -428,8 +335,6 @@ func (s *Store) ListAuditEventRows(ctx context.Context, filter AuditEventFilter)
 	return rows, nil
 }
 
-// CountAuditEventRows counts the same actor/resource/action selection as the
-// list RPC. Export does not need a count and applies its date range directly.
 func (s *Store) CountAuditEventRows(ctx context.Context, filter AuditEventFilter) (int64, error) {
 	if filter.StreamTypes == nil {
 		filter.StreamTypes = []string{}
@@ -443,8 +348,6 @@ func (s *Store) CountAuditEventRows(ctx context.Context, filter AuditEventFilter
 	return n, nil
 }
 
-// CountAuditOperations returns how many operation rows a stream
-// currently holds.
 func (s *Store) CountAuditOperations(ctx context.Context, stream string) (int64, error) {
 	if stream == "" {
 		stream = DefaultAuditStream
@@ -456,8 +359,6 @@ func (s *Store) CountAuditOperations(ctx context.Context, stream string) (int64,
 	return n, nil
 }
 
-// GetDevice returns one live device. ErrNotFound when it is unknown or
-// deleted.
 func (s *Store) GetDevice(ctx context.Context, id string) (DeviceRow, error) {
 	row, err := s.queries.GetDevice(ctx, id)
 	if err != nil {
@@ -466,7 +367,6 @@ func (s *Store) GetDevice(ctx context.Context, id string) (DeviceRow, error) {
 	return row, nil
 }
 
-// CountDevices returns the number of live devices.
 func (s *Store) CountDevices(ctx context.Context) (int64, error) {
 	n, err := s.queries.CountDevices(ctx)
 	if err != nil {
@@ -475,13 +375,10 @@ func (s *Store) CountDevices(ctx context.Context) (int64, error) {
 	return n, nil
 }
 
-// CountActions returns the number of live, operator-authored actions.
 func (s *Store) CountActions(ctx context.Context) (int64, error) {
 	return s.CountAuthoringActions(ctx, ActionListFilter{})
 }
 
-// ListAuthoringActions returns a deterministic keyset page of live,
-// operator-visible Actions. System actions never enter this read surface.
 func (s *Store) ListAuthoringActions(ctx context.Context, filter ActionListFilter) ([]ActionRow, error) {
 	rows, err := s.queries.ListAuthoringActions(ctx, generated.ListAuthoringActionsParams{
 		AfterID: filter.AfterID, TypeFilter: filter.Type,
@@ -494,8 +391,6 @@ func (s *Store) ListAuthoringActions(ctx context.Context, filter ActionListFilte
 	return rows, nil
 }
 
-// CountAuthoringActions counts the same Action population selected by the
-// list filter, ignoring its keyset and limit.
 func (s *Store) CountAuthoringActions(ctx context.Context, filter ActionListFilter) (int64, error) {
 	n, err := s.queries.CountAuthoringActions(ctx, generated.CountAuthoringActionsParams{
 		TypeFilter: filter.Type, UnassignedOnly: filter.UnassignedOnly,
@@ -507,8 +402,6 @@ func (s *Store) CountAuthoringActions(ctx context.Context, filter ActionListFilt
 	return n, nil
 }
 
-// ListAuthoringAssignmentTargets returns the live assignment targets for one
-// Action, ActionSet, Definition, or compliance-policy source.
 func (s *Store) ListAuthoringAssignmentTargets(ctx context.Context, sourceType, sourceID string) ([]AssignmentTarget, error) {
 	rows, err := s.queries.ListAuthoringAssignmentsForSource(ctx, generated.ListAuthoringAssignmentsForSourceParams{
 		SourceType: sourceType, SourceID: sourceID,
@@ -519,8 +412,6 @@ func (s *Store) ListAuthoringAssignmentTargets(ctx context.Context, sourceType, 
 	return rows, nil
 }
 
-// GetAssignment returns one live assignment whose source and target still
-// exist.
 func (s *Store) GetAssignment(ctx context.Context, id string) (AssignmentView, error) {
 	row, err := s.queries.GetAssignmentByID(ctx, id)
 	if err != nil {
@@ -534,7 +425,6 @@ func (s *Store) GetAssignment(ctx context.Context, id string) (AssignmentView, e
 	}, nil
 }
 
-// FindAssignment returns the live row for one source-target tuple.
 func (s *Store) FindAssignment(ctx context.Context, sourceType, sourceID, targetType, targetID string) (AssignmentView, error) {
 	row, err := s.queries.GetAssignmentByTuple(ctx, generated.GetAssignmentByTupleParams{
 		SourceType: sourceType, SourceID: sourceID, TargetType: targetType, TargetID: targetID,
@@ -550,7 +440,6 @@ func (s *Store) FindAssignment(ctx context.Context, sourceType, sourceID, target
 	}, nil
 }
 
-// ListAssignments returns a stable keyset page of live assignments.
 func (s *Store) ListAssignments(ctx context.Context, filter AssignmentListFilter) ([]AssignmentView, error) {
 	if filter.Limit < 0 || filter.Limit > 101 {
 		return nil, fmt.Errorf("assignment: list limit must be between 0 and 101")
@@ -577,7 +466,6 @@ func (s *Store) ListAssignments(ctx context.Context, filter AssignmentListFilter
 	return views, nil
 }
 
-// CountAssignments counts the same population selected by ListAssignments.
 func (s *Store) CountAssignments(ctx context.Context, filter AssignmentListFilter) (int64, error) {
 	n, err := s.queries.CountAssignmentViews(ctx, generated.CountAssignmentViewsParams{
 		SourceType: filter.SourceType, SourceID: filter.SourceID,
@@ -589,8 +477,6 @@ func (s *Store) CountAssignments(ctx context.Context, filter AssignmentListFilte
 	return n, nil
 }
 
-// ListAssignmentsForUser returns live direct and group-targeted assignments in
-// stable identifier order.
 func (s *Store) ListAssignmentsForUser(ctx context.Context, userID string) ([]AssignmentView, error) {
 	rows, err := s.queries.ListAssignmentViewsForUser(ctx, userID)
 	if err != nil {
@@ -608,15 +494,12 @@ func (s *Store) ListAssignmentsForUser(ctx context.Context, userID string) ([]As
 	return views, nil
 }
 
-// ListAvailableSources resolves direct, device-group, assigned-user and
-// assigned-user-group targets to one source list for a device.
 func (s *Store) ListAvailableSources(ctx context.Context, deviceID string) ([]ResolvedAssignmentSource, error) {
 	rows, err := s.ListResolvedSources(ctx, deviceID)
 	if err != nil {
 		return nil, err
 	}
-	// A source reached through a stronger mode is not an optional choice,
-	// even if another target path reaches it as AVAILABLE.
+
 	nonOptional := make(map[string]bool, len(rows))
 	for _, row := range rows {
 		if row.Mode != 1 {
@@ -632,8 +515,6 @@ func (s *Store) ListAvailableSources(ctx context.Context, deviceID string) ([]Re
 	return available, nil
 }
 
-// ListResolvedSources returns every live source/mode path that reaches a
-// device. Callers decide how the assignment modes combine for their response.
 func (s *Store) ListResolvedSources(ctx context.Context, deviceID string) ([]ResolvedAssignmentSource, error) {
 	rows, err := s.queries.ListResolvedAssignmentSourcesForDevice(ctx, deviceID)
 	if err != nil {
@@ -642,8 +523,6 @@ func (s *Store) ListResolvedSources(ctx context.Context, deviceID string) ([]Res
 	return rows, nil
 }
 
-// ListContainingActionSetIDs returns the live sets that directly contain an
-// Action.
 func (s *Store) ListContainingActionSetIDs(ctx context.Context, actionID string) ([]string, error) {
 	ids, err := s.queries.ListContainingActionSetIDs(ctx, actionID)
 	if err != nil {
@@ -652,8 +531,6 @@ func (s *Store) ListContainingActionSetIDs(ctx context.Context, actionID string)
 	return ids, nil
 }
 
-// ListContainingDefinitionIDs returns the live Definitions that directly
-// contain an ActionSet.
 func (s *Store) ListContainingDefinitionIDs(ctx context.Context, actionSetID string) ([]string, error) {
 	ids, err := s.queries.ListContainingDefinitionIDs(ctx, actionSetID)
 	if err != nil {
@@ -662,8 +539,6 @@ func (s *Store) ListContainingDefinitionIDs(ctx context.Context, actionSetID str
 	return ids, nil
 }
 
-// ListCompliancePolicyIDsForAction returns the live policies that directly
-// contain an Action.
 func (s *Store) ListCompliancePolicyIDsForAction(ctx context.Context, actionID string) ([]string, error) {
 	ids, err := s.queries.ListContainingCompliancePolicyIDs(ctx, actionID)
 	if err != nil {
@@ -672,13 +547,10 @@ func (s *Store) ListCompliancePolicyIDsForAction(ctx context.Context, actionID s
 	return ids, nil
 }
 
-// CountActionSets returns the number of live authored sets.
 func (s *Store) CountActionSets(ctx context.Context) (int64, error) {
 	return s.CountAuthoringActionSets(ctx, ActionSetListFilter{})
 }
 
-// ListAuthoringActionSets returns a deterministic keyset page of live sets
-// with member counts derived from live Actions.
 func (s *Store) ListAuthoringActionSets(ctx context.Context, filter ActionSetListFilter) ([]ActionSetView, error) {
 	rows, err := s.queries.ListAuthoringActionSets(ctx, generated.ListAuthoringActionSetsParams{
 		AfterID: filter.AfterID, UnassignedOnly: filter.UnassignedOnly,
@@ -700,8 +572,6 @@ func (s *Store) ListAuthoringActionSets(ctx context.Context, filter ActionSetLis
 	return views, nil
 }
 
-// CountAuthoringActionSets counts the same set population selected by the
-// list filter, ignoring its keyset and limit.
 func (s *Store) CountAuthoringActionSets(ctx context.Context, filter ActionSetListFilter) (int64, error) {
 	n, err := s.queries.CountAuthoringActionSets(ctx, generated.CountAuthoringActionSetsParams{
 		UnassignedOnly: filter.UnassignedOnly, ScopeRestricted: filter.ScopeRestricted,
@@ -713,7 +583,6 @@ func (s *Store) CountAuthoringActionSets(ctx context.Context, filter ActionSetLi
 	return n, nil
 }
 
-// ListActionSetMembers returns live action members in authored order.
 func (s *Store) ListActionSetMembers(ctx context.Context, id string) ([]ActionSetMemberView, error) {
 	rows, err := s.queries.ListActionSetMembers(ctx, id)
 	if err != nil {
@@ -722,13 +591,10 @@ func (s *Store) ListActionSetMembers(ctx context.Context, id string) ([]ActionSe
 	return rows, nil
 }
 
-// CountDefinitions returns the number of live authored definitions.
 func (s *Store) CountDefinitions(ctx context.Context) (int64, error) {
 	return s.CountAuthoringDefinitions(ctx, DefinitionListFilter{})
 }
 
-// ListAuthoringDefinitions returns a deterministic keyset page of live
-// definitions with member counts derived from live ActionSets.
 func (s *Store) ListAuthoringDefinitions(ctx context.Context, filter DefinitionListFilter) ([]DefinitionView, error) {
 	rows, err := s.queries.ListAuthoringDefinitions(ctx, generated.ListAuthoringDefinitionsParams{
 		AfterID: filter.AfterID, ScopeRestricted: filter.ScopeRestricted,
@@ -748,8 +614,6 @@ func (s *Store) ListAuthoringDefinitions(ctx context.Context, filter DefinitionL
 	return views, nil
 }
 
-// CountAuthoringDefinitions counts the same Definition population selected by
-// the list filter, ignoring its keyset and limit.
 func (s *Store) CountAuthoringDefinitions(ctx context.Context, filter DefinitionListFilter) (int64, error) {
 	n, err := s.queries.CountAuthoringDefinitions(ctx, generated.CountAuthoringDefinitionsParams{
 		ScopeRestricted: filter.ScopeRestricted, ScopeGroupIdsJson: sqlitetype.StringList(filter.ScopeGroupIDs),
@@ -760,7 +624,6 @@ func (s *Store) CountAuthoringDefinitions(ctx context.Context, filter Definition
 	return n, nil
 }
 
-// ListDefinitionMembers returns live ActionSet members in authored order.
 func (s *Store) ListDefinitionMembers(ctx context.Context, id string) ([]DefinitionMemberView, error) {
 	rows, err := s.queries.ListDefinitionMembers(ctx, id)
 	if err != nil {
@@ -769,7 +632,6 @@ func (s *Store) ListDefinitionMembers(ctx context.Context, id string) ([]Definit
 	return rows, nil
 }
 
-// GetAuthoringCompliancePolicy returns one live compliance policy.
 func (s *Store) GetAuthoringCompliancePolicy(ctx context.Context, id string) (CompliancePolicyRow, error) {
 	row, err := s.queries.GetAuthoringCompliancePolicy(ctx, id)
 	if err != nil {
@@ -778,8 +640,6 @@ func (s *Store) GetAuthoringCompliancePolicy(ctx context.Context, id string) (Co
 	return row, nil
 }
 
-// ListAuthoringCompliancePolicies returns a deterministic keyset page with
-// rule counts derived from live Actions.
 func (s *Store) ListAuthoringCompliancePolicies(ctx context.Context, filter CompliancePolicyListFilter) ([]CompliancePolicyView, error) {
 	rows, err := s.queries.ListAuthoringCompliancePolicies(ctx, generated.ListAuthoringCompliancePoliciesParams{
 		AfterID: filter.AfterID, ScopeRestricted: filter.ScopeRestricted,
@@ -799,8 +659,6 @@ func (s *Store) ListAuthoringCompliancePolicies(ctx context.Context, filter Comp
 	return views, nil
 }
 
-// CountAuthoringCompliancePolicies counts the same population selected by the
-// policy list filter.
 func (s *Store) CountAuthoringCompliancePolicies(ctx context.Context, filter CompliancePolicyListFilter) (int64, error) {
 	n, err := s.queries.CountAuthoringCompliancePolicies(ctx, generated.CountAuthoringCompliancePoliciesParams{
 		ScopeRestricted: filter.ScopeRestricted, ScopeGroupIdsJson: sqlitetype.StringList(filter.ScopeGroupIDs),
@@ -811,7 +669,6 @@ func (s *Store) CountAuthoringCompliancePolicies(ctx context.Context, filter Com
 	return n, nil
 }
 
-// ListCompliancePolicyRules returns live rules ordered by Action id.
 func (s *Store) ListCompliancePolicyRules(ctx context.Context, policyID string) ([]CompliancePolicyRuleView, error) {
 	rows, err := s.queries.ListCompliancePolicyRules(ctx, policyID)
 	if err != nil {
@@ -820,8 +677,6 @@ func (s *Store) ListCompliancePolicyRules(ctx context.Context, policyID string) 
 	return rows, nil
 }
 
-// ListDeviceMaintenanceWindows returns every non-empty device- and user-group
-// window that constrains one device.
 func (s *Store) ListDeviceMaintenanceWindows(ctx context.Context, deviceID string) ([][]byte, error) {
 	rows, err := s.queries.ListDeviceMaintenanceWindows(ctx, deviceID)
 	if err != nil {
@@ -834,8 +689,6 @@ func (s *Store) ListDeviceMaintenanceWindows(ctx context.Context, deviceID strin
 	return windows, nil
 }
 
-// GetCurrentLuksKeyForAgent returns the current device-scoped key for one
-// action. The stored passphrase remains ciphertext.
 func (s *Store) GetCurrentLuksKeyForAgent(ctx context.Context, deviceID, actionID string) (LuksKeyRow, error) {
 	row, err := s.queries.GetCurrentLuksKeyForAgent(ctx, generated.GetCurrentLuksKeyForAgentParams{
 		DeviceID: deviceID, ActionID: actionID,
@@ -846,7 +699,6 @@ func (s *Store) GetCurrentLuksKeyForAgent(ctx context.Context, deviceID, actionI
 	return row, nil
 }
 
-// GetJob returns one durable scheduled job. ErrNotFound when it is unknown.
 func (s *Store) GetJob(ctx context.Context, id string) (JobRow, error) {
 	row, err := s.queries.GetJob(ctx, id)
 	if err != nil {
@@ -855,8 +707,6 @@ func (s *Store) GetJob(ctx context.Context, id string) (JobRow, error) {
 	return row, nil
 }
 
-// GetLiveJobByDedupe returns the pending or claimed singleton for one
-// scheduling key. ErrNotFound means the singleton still needs to be seeded.
 func (s *Store) GetLiveJobByDedupe(ctx context.Context, key string) (JobRow, error) {
 	row, err := s.queries.GetLiveJobByDedupe(ctx, &key)
 	if err != nil {
@@ -865,7 +715,6 @@ func (s *Store) GetLiveJobByDedupe(ctx context.Context, key string) (JobRow, err
 	return row, nil
 }
 
-// ListClaimableJobs returns due pending jobs and expired leases, oldest first.
 func (s *Store) ListClaimableJobs(ctx context.Context, at time.Time, limit int32) ([]JobRow, error) {
 	rows, err := s.queries.ListClaimableJobs(ctx, generated.ListClaimableJobsParams{Now: at, PageSize: int64(limit)})
 	if err != nil {
@@ -874,7 +723,6 @@ func (s *Store) ListClaimableJobs(ctx context.Context, at time.Time, limit int32
 	return rows, nil
 }
 
-// GetManifestAction returns one live action for manifest compilation.
 func (s *Store) GetManifestAction(ctx context.Context, id string) (ActionRow, error) {
 	row, err := s.queries.GetManifestAction(ctx, id)
 	if err != nil {
@@ -883,7 +731,6 @@ func (s *Store) GetManifestAction(ctx context.Context, id string) (ActionRow, er
 	return row, nil
 }
 
-// GetManifestActionSet returns one live action set for manifest compilation.
 func (s *Store) GetManifestActionSet(ctx context.Context, id string) (ActionSetRow, error) {
 	row, err := s.queries.GetManifestActionSet(ctx, id)
 	if err != nil {
@@ -892,7 +739,6 @@ func (s *Store) GetManifestActionSet(ctx context.Context, id string) (ActionSetR
 	return row, nil
 }
 
-// ListManifestActionSetActions returns a set's live actions in authored order.
 func (s *Store) ListManifestActionSetActions(ctx context.Context, id string) ([]ActionRow, error) {
 	rows, err := s.queries.ListManifestActionSetActions(ctx, id)
 	if err != nil {
@@ -901,7 +747,6 @@ func (s *Store) ListManifestActionSetActions(ctx context.Context, id string) ([]
 	return rows, nil
 }
 
-// GetManifestDefinition returns one live definition for manifest compilation.
 func (s *Store) GetManifestDefinition(ctx context.Context, id string) (DefinitionRow, error) {
 	row, err := s.queries.GetManifestDefinition(ctx, id)
 	if err != nil {
@@ -910,8 +755,6 @@ func (s *Store) GetManifestDefinition(ctx context.Context, id string) (Definitio
 	return row, nil
 }
 
-// ListManifestDefinitionActionSets returns a definition's live sets in
-// authored order.
 func (s *Store) ListManifestDefinitionActionSets(ctx context.Context, id string) ([]ActionSetRow, error) {
 	rows, err := s.queries.ListManifestDefinitionActionSets(ctx, id)
 	if err != nil {
@@ -920,8 +763,6 @@ func (s *Store) ListManifestDefinitionActionSets(ctx context.Context, id string)
 	return rows, nil
 }
 
-// ListManifestDefinitionActions returns every live action for a definition in
-// set order and then action order, without one query per contained set.
 func (s *Store) ListManifestDefinitionActions(ctx context.Context, id string) ([]DefinitionManifestAction, error) {
 	rows, err := s.queries.ListManifestDefinitionActions(ctx, id)
 	if err != nil {
@@ -945,7 +786,6 @@ func (s *Store) ListManifestDefinitionActions(ctx context.Context, id string) ([
 	return out, nil
 }
 
-// GetDeviceView returns one live device with its labels and assignees.
 func (s *Store) GetDeviceView(ctx context.Context, id string) (DeviceView, error) {
 	row, err := s.GetDevice(ctx, id)
 	if err != nil {
@@ -992,8 +832,7 @@ type normalizedDeviceFilter struct {
 }
 
 func (s *Store) normalizeDeviceFilter(filter DeviceListFilter) (normalizedDeviceFilter, error) {
-	// Handlers request one look-ahead row to produce an exact keyset next-page
-	// token. The wire page remains capped at 100 rows.
+
 	if filter.Limit < 0 || filter.Limit > 101 {
 		return normalizedDeviceFilter{}, fmt.Errorf("device: list limit must be between 0 and 101")
 	}
@@ -1024,8 +863,6 @@ func (s *Store) normalizeDeviceFilter(filter DeviceListFilter) (normalizedDevice
 	}, nil
 }
 
-// ListDeviceViews returns a stable keyset page with labels and assignees
-// loaded in three bounded batch reads.
 func (s *Store) ListDeviceViews(ctx context.Context, filter DeviceListFilter) ([]DeviceView, error) {
 	f, err := s.normalizeDeviceFilter(filter)
 	if err != nil {
@@ -1122,8 +959,6 @@ func (s *Store) addDeviceFreshness(ctx context.Context, ids []string, views []De
 	return nil
 }
 
-// CountDeviceViews counts the same filtered set as ListDeviceViews without a
-// page cursor or limit.
 func (s *Store) CountDeviceViews(ctx context.Context, filter DeviceListFilter) (int64, error) {
 	f, err := s.normalizeDeviceFilter(filter)
 	if err != nil {
@@ -1140,7 +975,6 @@ func (s *Store) CountDeviceViews(ctx context.Context, filter DeviceListFilter) (
 	return n, nil
 }
 
-// ListDeviceGroupIDs returns the device groups containing a live device.
 func (s *Store) ListDeviceGroupIDs(ctx context.Context, deviceID string) ([]string, error) {
 	if _, err := s.GetDevice(ctx, deviceID); err != nil {
 		return nil, err
@@ -1152,8 +986,6 @@ func (s *Store) ListDeviceGroupIDs(ctx context.Context, deviceID string) ([]stri
 	return ids, nil
 }
 
-// IsDeviceAssignedToUser reports whether a live device is assigned directly
-// to a user or through one of the user's live groups.
 func (s *Store) IsDeviceAssignedToUser(ctx context.Context, deviceID, userID string) (bool, error) {
 	assigned, err := s.queries.IsDeviceAssignedToUser(ctx, generated.IsDeviceAssignedToUserParams{
 		DeviceID: deviceID,
@@ -1165,8 +997,6 @@ func (s *Store) IsDeviceAssignedToUser(ctx context.Context, deviceID, userID str
 	return assigned, nil
 }
 
-// IsDeviceDirectlyAssignedToUser reports whether the user is a direct owner;
-// group-derived visibility is intentionally excluded.
 func (s *Store) IsDeviceDirectlyAssignedToUser(ctx context.Context, deviceID, userID string) (bool, error) {
 	assigned, err := s.queries.IsDeviceDirectlyAssignedToUser(ctx, generated.IsDeviceDirectlyAssignedToUserParams{
 		DeviceID: deviceID,
@@ -1178,7 +1008,6 @@ func (s *Store) IsDeviceDirectlyAssignedToUser(ctx context.Context, deviceID, us
 	return assigned, nil
 }
 
-// ListDeviceAssignees returns all live user and group assignees in one read.
 func (s *Store) ListDeviceAssignees(ctx context.Context, deviceID string) ([]DeviceAssigneeView, error) {
 	if _, err := s.GetDevice(ctx, deviceID); err != nil {
 		return nil, err
@@ -1194,8 +1023,6 @@ func (s *Store) ListDeviceAssignees(ctx context.Context, deviceID string) ([]Dev
 	return out, nil
 }
 
-// ListDeviceInventory returns the requested latest tables in stable name
-// order. An empty name list selects every table for the device.
 func (s *Store) ListDeviceInventory(ctx context.Context, deviceID string, tableNames []string) ([]DeviceInventoryTable, error) {
 	rows, err := s.queries.ListDeviceInventory(ctx, generated.ListDeviceInventoryParams{
 		DeviceID: deviceID, AllTableNames: len(tableNames) == 0, TableNames: tableNames,
@@ -1206,7 +1033,6 @@ func (s *Store) ListDeviceInventory(ctx context.Context, deviceID string, tableN
 	return rows, nil
 }
 
-// GetOSQueryResult returns one on-demand query result by identifier.
 func (s *Store) GetOSQueryResult(ctx context.Context, queryID string) (OSQueryResult, error) {
 	row, err := s.queries.GetOSQueryResult(ctx, queryID)
 	if err != nil {
@@ -1215,7 +1041,6 @@ func (s *Store) GetOSQueryResult(ctx context.Context, queryID string) (OSQueryRe
 	return row, nil
 }
 
-// GetDeviceLogResult returns one remote log query result by identifier.
 func (s *Store) GetDeviceLogResult(ctx context.Context, queryID string) (DeviceLogResult, error) {
 	row, err := s.queries.GetDeviceLogResult(ctx, queryID)
 	if err != nil {
@@ -1224,7 +1049,6 @@ func (s *Store) GetDeviceLogResult(ctx context.Context, queryID string) (DeviceL
 	return row, nil
 }
 
-// ListDeviceComplianceResults returns current action checks in stable order.
 func (s *Store) ListDeviceComplianceResults(ctx context.Context, deviceID string) ([]DeviceComplianceResult, error) {
 	rows, err := s.queries.ListDeviceComplianceResults(ctx, deviceID)
 	if err != nil {
@@ -1233,8 +1057,6 @@ func (s *Store) ListDeviceComplianceResults(ctx context.Context, deviceID string
 	return rows, nil
 }
 
-// ListDeviceComplianceEvaluations returns current policy-rule evaluations in
-// stable policy and action order.
 func (s *Store) ListDeviceComplianceEvaluations(ctx context.Context, deviceID string) ([]DeviceComplianceEvaluation, error) {
 	rows, err := s.queries.ListDeviceComplianceEvaluations(ctx, deviceID)
 	if err != nil {
@@ -1243,8 +1065,6 @@ func (s *Store) ListDeviceComplianceEvaluations(ctx context.Context, deviceID st
 	return rows, nil
 }
 
-// ListDeviceLpsPasswords returns current rows and at most three historical
-// rows per action. Passwords remain ciphertext in this store layer.
 func (s *Store) ListDeviceLpsPasswords(ctx context.Context, deviceID string) ([]LpsPasswordView, []LpsPasswordView, error) {
 	currentRows, err := s.queries.ListCurrentLpsPasswords(ctx, deviceID)
 	if err != nil {
@@ -1273,8 +1093,6 @@ func (s *Store) ListDeviceLpsPasswords(ctx context.Context, deviceID string) ([]
 	return current, history, nil
 }
 
-// GetLpsPasswordForReveal returns one encrypted password and the references
-// required for authorization, AAD, and audit attribution.
 func (s *Store) GetLpsPasswordForReveal(ctx context.Context, id string) (LpsPasswordSecret, error) {
 	row, err := s.queries.GetLpsPasswordForReveal(ctx, id)
 	if err != nil {
@@ -1283,13 +1101,10 @@ func (s *Store) GetLpsPasswordForReveal(ctx context.Context, id string) (LpsPass
 	return row, nil
 }
 
-// GetDeviceSecret returns the generic encrypted row used by the reveal sink.
 func (s *Store) GetDeviceSecret(ctx context.Context, id string) (DeviceSecretRow, error) {
 	return s.queries.GetDeviceSecret(ctx, id)
 }
 
-// ListDeviceLuksKeys returns current rows and at most three historical rows
-// per action. Passphrases remain ciphertext in this store layer.
 func (s *Store) ListDeviceLuksKeys(ctx context.Context, deviceID string) ([]LuksKeyView, []LuksKeyView, error) {
 	currentRows, err := s.queries.ListCurrentLuksKeys(ctx, deviceID)
 	if err != nil {
@@ -1322,8 +1137,6 @@ func (s *Store) ListDeviceLuksKeys(ctx context.Context, deviceID string) ([]Luks
 	return current, history, nil
 }
 
-// GetLuksKeyForReveal returns one encrypted key and the references required
-// for authorization, AAD, and audit attribution.
 func (s *Store) GetLuksKeyForReveal(ctx context.Context, id string) (LuksKeySecret, error) {
 	row, err := s.queries.GetLuksKeyForReveal(ctx, id)
 	if err != nil {
@@ -1332,8 +1145,6 @@ func (s *Store) GetLuksKeyForReveal(ctx context.Context, id string) (LuksKeySecr
 	return row, nil
 }
 
-// GetLuksRevocationTarget returns the current-key count and terminal state used
-// to reject missing, duplicate, or already-completed revocation requests.
 func (s *Store) GetLuksRevocationTarget(ctx context.Context, deviceID, actionID string) (LuksRevocationTarget, error) {
 	row, err := s.queries.GetLuksRevocationTarget(ctx, generated.GetLuksRevocationTargetParams{
 		DeviceID: deviceID, ActionID: actionID,
@@ -1344,7 +1155,6 @@ func (s *Store) GetLuksRevocationTarget(ctx context.Context, deviceID, actionID 
 	return row, nil
 }
 
-// GetOpenTerminalSession returns one not-yet-stopped terminal session.
 func (s *Store) GetOpenTerminalSession(ctx context.Context, sessionID string) (OpenTerminalSession, error) {
 	row, err := s.queries.GetOpenTerminalSession(ctx, sessionID)
 	if err != nil {
@@ -1353,7 +1163,6 @@ func (s *Store) GetOpenTerminalSession(ctx context.Context, sessionID string) (O
 	return row, nil
 }
 
-// GetUser returns one live user. ErrNotFound when unknown or deleted.
 func (s *Store) GetUser(ctx context.Context, id string) (UserRow, error) {
 	row, err := s.queries.GetUser(ctx, id)
 	if err != nil {
@@ -1362,7 +1171,6 @@ func (s *Store) GetUser(ctx context.Context, id string) (UserRow, error) {
 	return row, nil
 }
 
-// CountUsers returns the number of live users.
 func (s *Store) CountUsers(ctx context.Context) (int64, error) {
 	n, err := s.queries.CountUsers(ctx)
 	if err != nil {
@@ -1371,9 +1179,6 @@ func (s *Store) CountUsers(ctx context.Context) (int64, error) {
 	return n, nil
 }
 
-// GetUserEncryptionKey returns a subject's wrapped DEK. ErrNotFound
-// when the subject has no key, which for an erased subject IS the
-// expected state.
 func (s *Store) GetUserEncryptionKey(ctx context.Context, userID string) (generated.UserEncryptionKey, error) {
 	row, err := s.queries.GetUserEncryptionKey(ctx, userID)
 	if err != nil {

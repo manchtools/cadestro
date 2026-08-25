@@ -38,8 +38,6 @@ func (h *Handlers) countMatchingUsers(ctx context.Context, raw string) (int64, e
 	return int64(len(matched)), nil
 }
 
-// evaluateDynamicUserGroup reconciles the materialized membership, session
-// invalidation and audit evidence in one transaction.
 func (h *Handlers) evaluateDynamicUserGroup(ctx context.Context, op store.AuditOperation, groupID, actorID string) (userGroupEvaluationResult, error) {
 	var result userGroupEvaluationResult
 	_, err := h.store.WithAudit(ctx, op, func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {

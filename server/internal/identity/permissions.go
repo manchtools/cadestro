@@ -1,12 +1,5 @@
 package identity
 
-// The permission keys this package gates on. They are named constants
-// rather than literals so a handler and the registry cannot drift on a
-// typo — a misspelled literal would silently gate on a permission
-// nobody holds, which reads as "closed" until someone widens a role to
-// make it work.
-//
-// A guard test asserts every constant here is a registered permission.
 const (
 	PermGetCurrentUser = "GetCurrentUser"
 
@@ -64,9 +57,6 @@ const (
 	PermListAuditEvents      = "ListAuditEvents"
 )
 
-// gatedPermissions is every permission key this package gates on,
-// enumerated so the guard test can check them all rather than the ones
-// someone remembered to list.
 var gatedPermissions = []string{
 	PermGetCurrentUser,
 	PermGetUser, PermListUsers, PermEraseJITUser, PermUpdateUserEmail,
@@ -88,9 +78,6 @@ var gatedPermissions = []string{
 	PermGetServerSettings, PermUpdateServerSettings, PermListAuditEvents,
 }
 
-// GatedPermissions returns every permission key this package gates on.
-// A guard test uses it to assert each one is registered, so a typo
-// cannot silently gate on a permission nobody can hold.
 func GatedPermissions() []string {
 	return append([]string(nil), gatedPermissions...)
 }

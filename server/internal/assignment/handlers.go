@@ -21,14 +21,12 @@ import (
 
 const defaultPageSize = int32(50)
 
-// Handlers implements explicit assignment CRUD.
 type Handlers struct {
 	store  *store.Store
 	state  *State
 	logger *slog.Logger
 }
 
-// New constructs direct assignment handlers.
 func New(cfg Config) *Handlers {
 	if cfg.Store == nil {
 		panic("assignment: handler store is required")
@@ -72,7 +70,6 @@ func (h *Handlers) operation(req connect.AnyRequest, actor *auth.UserContext, pr
 	return op
 }
 
-// CreateAssignment creates or idempotently returns one source-target edge.
 func (h *Handlers) CreateAssignment(ctx context.Context, req *connect.Request[cadestrov1.CreateAssignmentRequest]) (*connect.Response[cadestrov1.CreateAssignmentResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
@@ -93,7 +90,6 @@ func (h *Handlers) CreateAssignment(ctx context.Context, req *connect.Request[ca
 	return connect.NewResponse(&cadestrov1.CreateAssignmentResponse{Assignment: assignmentToProto(row)}), nil
 }
 
-// DeleteAssignment soft-deletes one assignment edge.
 func (h *Handlers) DeleteAssignment(ctx context.Context, req *connect.Request[cadestrov1.DeleteAssignmentRequest]) (*connect.Response[cadestrov1.DeleteAssignmentResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
@@ -109,7 +105,6 @@ func (h *Handlers) DeleteAssignment(ctx context.Context, req *connect.Request[ca
 	return connect.NewResponse(&cadestrov1.DeleteAssignmentResponse{}), nil
 }
 
-// ListAssignments returns a deterministic keyset page.
 func (h *Handlers) ListAssignments(ctx context.Context, req *connect.Request[cadestrov1.ListAssignmentsRequest]) (*connect.Response[cadestrov1.ListAssignmentsResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
@@ -158,7 +153,6 @@ func (h *Handlers) ListAssignments(ctx context.Context, req *connect.Request[cad
 	}), nil
 }
 
-// GetUserAssignments resolves direct and current user-group targets.
 func (h *Handlers) GetUserAssignments(ctx context.Context, req *connect.Request[cadestrov1.GetUserAssignmentsRequest]) (*connect.Response[cadestrov1.GetUserAssignmentsResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
@@ -177,9 +171,6 @@ func (h *Handlers) GetUserAssignments(ctx context.Context, req *connect.Request[
 	return connect.NewResponse(&cadestrov1.GetUserAssignmentsResponse{Assignments: out}), nil
 }
 
-// GetDeviceAssignments expands every effective live source that reaches a
-// device. EXCLUDED suppresses a source, UNINSTALL forces its resolved actions
-// absent, and AVAILABLE contributes only when selected.
 func (h *Handlers) GetDeviceAssignments(ctx context.Context, req *connect.Request[cadestrov1.GetDeviceAssignmentsRequest]) (*connect.Response[cadestrov1.GetDeviceAssignmentsResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	if _, err := h.actor(ctx); err != nil {
@@ -218,8 +209,7 @@ func (h *Handlers) GetDeviceAssignments(ctx context.Context, req *connect.Reques
 
 		switch sourceType {
 		case cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION:
-			// The expanded action above is the complete response for a
-			// singleton source.
+
 		case cadestrov1.AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION_SET:
 			row, err := h.store.GetManifestActionSet(ctx, source.Row.SourceID)
 			if err != nil {
@@ -269,9 +259,6 @@ func (h *Handlers) GetDeviceAssignments(ctx context.Context, req *connect.Reques
 	return connect.NewResponse(response), nil
 }
 
-// ResolvedSource is one source after all target paths and modes have been
-// collapsed. Excluded remains explicit because it suppresses lower authoring
-// layers even though it produces no manifest itself.
 type ResolvedSource struct {
 	Row         store.ResolvedAssignmentSource
 	Active      bool
@@ -279,7 +266,6 @@ type ResolvedSource struct {
 	ForceAbsent bool
 }
 
-// ResolveSources collapses assignment modes without discarding exclusions.
 func ResolveSources(paths []store.ResolvedAssignmentSource) ([]ResolvedSource, error) {
 	type decision struct {
 		row                           store.ResolvedAssignmentSource
@@ -321,7 +307,6 @@ func ResolveSources(paths []store.ResolvedAssignmentSource) ([]ResolvedSource, e
 	return resolved, nil
 }
 
-// EffectiveSources returns only sources that currently contribute actions.
 func EffectiveSources(paths []store.ResolvedAssignmentSource) ([]ResolvedSource, error) {
 	resolved, err := ResolveSources(paths)
 	if err != nil {
@@ -370,8 +355,6 @@ func compliancePolicyToProto(row store.CompliancePolicyRow, rules []store.Compli
 	return policy
 }
 
-// SetUserSelection persists one optional source choice for an accessible
-// device through the audited mutation primitive.
 func (h *Handlers) SetUserSelection(ctx context.Context, req *connect.Request[cadestrov1.SetUserSelectionRequest]) (*connect.Response[cadestrov1.SetUserSelectionResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
@@ -393,8 +376,6 @@ func (h *Handlers) SetUserSelection(ctx context.Context, req *connect.Request[ca
 	return connect.NewResponse(&cadestrov1.SetUserSelectionResponse{Selection: userSelectionToProto(row)}), nil
 }
 
-// ListAvailableActions returns each live AVAILABLE source once with its
-// current device selection and a complete action preview.
 func (h *Handlers) ListAvailableActions(ctx context.Context, req *connect.Request[cadestrov1.ListAvailableActionsRequest]) (*connect.Response[cadestrov1.ListAvailableActionsResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
@@ -615,7 +596,6 @@ func rpcError(ctx context.Context, code cadestrov1.ErrorCode, connectCode connec
 	return err
 }
 
-// Mount registers exactly the implemented assignment CRUD procedures.
 func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
 	if mux == nil {
 		panic("assignment: mux is required")
@@ -642,7 +622,6 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 	return mounted
 }
 
-// MutationProcedures is the exact audited assignment mutation surface.
 func MutationProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceCreateAssignmentProcedure,
@@ -651,7 +630,6 @@ func MutationProcedures() []string {
 	}
 }
 
-// ReadProcedures is the exact non-mutating assignment CRUD surface.
 func ReadProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceListAssignmentsProcedure,

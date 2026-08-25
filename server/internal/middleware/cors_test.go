@@ -20,10 +20,6 @@ func okHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 }
 
-// TestCORS_AllowAll_NoCredentialedWildcard pins WS5 #7: in allow-all mode the
-// middleware reflects the Origin but MUST NOT also send
-// Access-Control-Allow-Credentials — the reflect-any + allow-credentials combo
-// is the credentialed-wildcard hole.
 func TestCORS_AllowAll_NoCredentialedWildcard(t *testing.T) {
 	h := CORS(nil, true, corsTestLogger())(okHandler())
 
@@ -38,9 +34,6 @@ func TestCORS_AllowAll_NoCredentialedWildcard(t *testing.T) {
 		"allow-all must NOT set Allow-Credentials (credentialed-wildcard hole)")
 }
 
-// TestCORS_ExplicitOrigin_KeepsCredentials pins the regression-guard: an
-// explicitly allow-listed origin still gets Allow-Credentials:true (the cookie
-// auth flow depends on it for named origins).
 func TestCORS_ExplicitOrigin_KeepsCredentials(t *testing.T) {
 	h := CORS([]string{"https://app.example"}, false, corsTestLogger())(okHandler())
 
@@ -54,11 +47,6 @@ func TestCORS_ExplicitOrigin_KeepsCredentials(t *testing.T) {
 		"a named origin keeps credentials")
 }
 
-// TestCORS_AllowHeadersExcludesCookie pins WS13 #15: auth is Bearer-only, so the
-// preflight Access-Control-Allow-Headers must NOT advertise Cookie (advertising
-// it invites a cookie-based cross-origin flow the server doesn't use). Splits
-// the header on ", " and asserts membership rather than substring-matching the
-// whole constant.
 func TestCORS_AllowHeadersExcludesCookie(t *testing.T) {
 	h := CORS([]string{"https://app.example"}, false, corsTestLogger())(okHandler())
 
@@ -74,8 +62,6 @@ func TestCORS_AllowHeadersExcludesCookie(t *testing.T) {
 	assert.NotContains(t, allow, "Cookie", "Cookie must NOT be an allowed request header (Bearer-only auth)")
 }
 
-// TestCORS_AllowedOriginPreflight204 pins the preflight contract for an allowed
-// origin: 204 with Allow-Methods, Allow-Headers, Max-Age, and Vary present.
 func TestCORS_AllowedOriginPreflight204(t *testing.T) {
 	h := CORS([]string{"https://app.example"}, false, corsTestLogger())(okHandler())
 
@@ -101,8 +87,6 @@ func splitCSV(s string) []string {
 	return out
 }
 
-// TestCORS_UnlistedOrigin_NoHeaders pins that a non-allow-listed origin (not in
-// allow-all mode) gets no CORS headers and a preflight is 403.
 func TestCORS_UnlistedOrigin_NoHeaders(t *testing.T) {
 	h := CORS([]string{"https://app.example"}, false, corsTestLogger())(okHandler())
 

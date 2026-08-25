@@ -98,7 +98,6 @@ func (q *Queries) GetIdentityProviderBySlug(ctx context.Context, slug string) (I
 }
 
 const insertIdentityProvider = `-- name: InsertIdentityProvider :one
-
 INSERT INTO identity_providers (
     id, name, slug, provider_type, enabled,
     client_id, client_secret_encrypted,
@@ -142,9 +141,6 @@ type InsertIdentityProviderParams struct {
 	UpdatedAt             time.Time             `json:"updated_at"`
 }
 
-// OIDC identity providers. client_secret_encrypted holds AES-256-GCM
-// ciphertext bound to this provider row; scim_token_hash holds a
-// non-reversible digest. Neither plaintext is representable here.
 func (q *Queries) InsertIdentityProvider(ctx context.Context, arg InsertIdentityProviderParams) (IdentityProvider, error) {
 	row := q.db.QueryRowContext(ctx, insertIdentityProvider,
 		arg.ID,
@@ -317,6 +313,9 @@ func (q *Queries) ListIdentityProviders(ctx context.Context, arg ListIdentityPro
 }
 
 const setIdentityProviderSCIM = `-- name: SetIdentityProviderSCIM :one
+
+
+
 UPDATE identity_providers
 SET scim_enabled = ?, scim_token_hash = ?, updated_at = ?
 WHERE id = ? AND is_deleted = FALSE
@@ -330,9 +329,6 @@ type SetIdentityProviderSCIMParams struct {
 	ID            string    `json:"id"`
 }
 
-// Enable, disable and rotate all land here: enabling writes a fresh
-// token hash, disabling writes FALSE and an empty hash, so a disabled
-// provider cannot be reached with a token issued before.
 func (q *Queries) SetIdentityProviderSCIM(ctx context.Context, arg SetIdentityProviderSCIMParams) (IdentityProvider, error) {
 	row := q.db.QueryRowContext(ctx, setIdentityProviderSCIM,
 		arg.ScimEnabled,
@@ -372,6 +368,8 @@ func (q *Queries) SetIdentityProviderSCIM(ctx context.Context, arg SetIdentityPr
 }
 
 const softDeleteIdentityProvider = `-- name: SoftDeleteIdentityProvider :execrows
+
+
 UPDATE identity_providers SET is_deleted = TRUE, updated_at = ?
 WHERE id = ? AND is_deleted = FALSE
 `
@@ -381,8 +379,6 @@ type SoftDeleteIdentityProviderParams struct {
 	ID        string    `json:"id"`
 }
 
-// Soft delete, not erasure: identity_links point at this row and must
-// stay resolvable as evidence of who was once linked where.
 func (q *Queries) SoftDeleteIdentityProvider(ctx context.Context, arg SoftDeleteIdentityProviderParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, softDeleteIdentityProvider, arg.UpdatedAt, arg.ID)
 	if err != nil {

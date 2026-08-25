@@ -1,4 +1,3 @@
-// Package assignment owns direct source-to-target assignment state.
 package assignment
 
 import (
@@ -25,20 +24,17 @@ var (
 	errAlreadyActive         = errors.New("assignment already active")
 )
 
-// Config supplies the direct store and clock.
 type Config struct {
 	Store  *store.Store
 	Logger *slog.Logger
 	Now    func() time.Time
 }
 
-// State applies assignment mutations through audited transactions.
 type State struct {
 	store *store.Store
 	now   func() time.Time
 }
 
-// NewState constructs direct assignment state.
 func NewState(cfg Config) *State {
 	if cfg.Store == nil {
 		panic("assignment: store is required")
@@ -49,7 +45,6 @@ func NewState(cfg Config) *State {
 	return &State{store: cfg.Store, now: cfg.Now}
 }
 
-// CreateParams is one complete assignment edge.
 type CreateParams struct {
 	SourceType cadestrov1.AssignmentSourceType
 	SourceID   string
@@ -59,8 +54,6 @@ type CreateParams struct {
 	CreatedBy  string
 }
 
-// Create inserts or reactivates one edge. Repeating an active tuple is
-// idempotent and returns its existing row without manufacturing a mutation.
 func (s *State) Create(ctx context.Context, op store.AuditOperation, p CreateParams) (store.AssignmentView, error) {
 	sourceType, sourceOK := sourceTypeName(p.SourceType)
 	targetType, targetOK := targetTypeName(p.TargetType)
@@ -113,7 +106,6 @@ func (s *State) Create(ctx context.Context, op store.AuditOperation, p CreatePar
 	return s.store.GetAssignment(ctx, stored.ID)
 }
 
-// Delete soft-deletes one ordinary assignment.
 func (s *State) Delete(ctx context.Context, op store.AuditOperation, id string) error {
 	if ctx == nil || !validID(id) {
 		return ErrInvalidInput
@@ -152,9 +144,6 @@ func (s *State) Delete(ctx context.Context, op store.AuditOperation, id string) 
 	return err
 }
 
-// SetUserSelection upserts one device/source choice only while a live
-// AVAILABLE assignment resolves to that device. The eligibility check, row
-// write and effect commit together.
 func (s *State) SetUserSelection(
 	ctx context.Context,
 	op store.AuditOperation,

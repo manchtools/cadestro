@@ -11,6 +11,8 @@ import (
 )
 
 const consumeBootstrapAdminToken = `-- name: ConsumeBootstrapAdminToken :one
+
+
 UPDATE tokens
 SET is_deleted = TRUE
 WHERE value_hash = ?
@@ -27,8 +29,6 @@ type ConsumeBootstrapAdminTokenParams struct {
 	Now          time.Time `json:"now"`
 }
 
-// The consume-once conditional write. Retiring the row is the bootstrap
-// boundary; enrollment tokens never mutate a usage counter.
 func (q *Queries) ConsumeBootstrapAdminToken(ctx context.Context, arg ConsumeBootstrapAdminTokenParams) (Token, error) {
 	row := q.db.QueryRowContext(ctx, consumeBootstrapAdminToken, arg.ValueHash, arg.ReservedName, arg.Now)
 	var i Token
@@ -67,7 +67,6 @@ func (q *Queries) CountLiveBootstrapAdminTokens(ctx context.Context, arg CountLi
 }
 
 const insertBootstrapAdminToken = `-- name: InsertBootstrapAdminToken :one
-
 INSERT INTO tokens (id, value_hash, name, max_uses, expires_at, created_at, created_by, disabled, is_deleted)
 VALUES (?1, ?2, ?3, 1,
         ?4, ?5, ?6, FALSE, FALSE)
@@ -83,12 +82,6 @@ type InsertBootstrapAdminTokenParams struct {
 	CreatedBy    string     `json:"created_by"`
 }
 
-// The host-authorized bootstrap-admin token.
-//
-// One row in `tokens`, distinguished by its reserved name. Only the
-// SHA-256 digest of the bearer value is stored: the token is printed
-// once by the command that mints it and is never recoverable. Owner is
-// NULL because the bootstrap principal is deliberately not a user.
 func (q *Queries) InsertBootstrapAdminToken(ctx context.Context, arg InsertBootstrapAdminTokenParams) (Token, error) {
 	row := q.db.QueryRowContext(ctx, insertBootstrapAdminToken,
 		arg.ID,
@@ -114,12 +107,12 @@ func (q *Queries) InsertBootstrapAdminToken(ctx context.Context, arg InsertBoots
 }
 
 const retireBootstrapAdminTokens = `-- name: RetireBootstrapAdminTokens :execrows
+
+
 UPDATE tokens SET is_deleted = TRUE
 WHERE name = ?1 AND is_deleted = FALSE
 `
 
-// Minting a new bootstrap token retires every outstanding one, so at
-// most one host-authorized token can ever be presentable.
 func (q *Queries) RetireBootstrapAdminTokens(ctx context.Context, reservedName string) (int64, error) {
 	result, err := q.db.ExecContext(ctx, retireBootstrapAdminTokens, reservedName)
 	if err != nil {

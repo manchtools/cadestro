@@ -333,6 +333,9 @@ func (q *Queries) ListAssignmentViews(ctx context.Context, arg ListAssignmentVie
 }
 
 const listAssignmentViewsForUser = `-- name: ListAssignmentViewsForUser :many
+
+
+
 SELECT a.id, a.source_type, a.source_id, a.target_type, a.target_id, a.sort_order, a.mode, a.created_at, a.created_by, a.is_deleted,
        COALESCE(sa.name, ss.name, sd.name, sp.name, '') AS resolved_source_name,
        COALESCE(tu.display_name, tug.name, '') AS resolved_target_name
@@ -375,9 +378,6 @@ type ListAssignmentViewsForUserRow struct {
 	ResolvedTargetName string     `json:"resolved_target_name"`
 }
 
-// User-targeted assignments resolve through the current materialized group
-// memberships. Dynamic group evaluation updates the same membership table, so
-// this read needs no second query language or compatibility path.
 func (q *Queries) ListAssignmentViewsForUser(ctx context.Context, userID string) ([]ListAssignmentViewsForUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, listAssignmentViewsForUser, userID)
 	if err != nil {

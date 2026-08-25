@@ -4,8 +4,8 @@ set -euo pipefail
 
 DEPLOY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# The single expected control.env surface. Every name assertion derives from
-# this list, so an added, removed, or duplicated variable is caught once.
+
+
 CONTROL_ENV_VARIABLES=(
     CADESTRO_PUBLIC_LISTEN
     CADESTRO_AGENT_LISTEN
@@ -35,15 +35,15 @@ CONTROL_ENV_VARIABLES=(
     CADESTRO_SESSION_SIGNING_KEY_FILE
 )
 
-# The single expected web.env surface, same contract as above. The web
-# container is preconfigured from the answers the installer already collected,
-# so this file is what makes a fresh install reach a working UI without the
-# operator typing a server URL into /setup.
+
+
+
+
 WEB_ENV_VARIABLES=(
     PUBLIC_CONTROL_URL
 )
 
-# Every fixture models a deployment that can actually start.
+
 new_fixture() {
     local directory="$1" control_domain="$2" agent_domain="$3"
     mkdir -p "$directory"
@@ -54,8 +54,8 @@ ACME_EMAIL=admin@example.test
 EOF
 }
 
-# The rendered file is consumed verbatim by Compose as an env file, so assert
-# whole lines: a name that merely appears as a substring is not a setting.
+
+
 assert_env_line() {
     local file="$1" line="$2"
     grep -Fxq -- "$line" "$file" || {
@@ -64,9 +64,9 @@ assert_env_line() {
     }
 }
 
-# Every rendered line must name exactly one expected variable, and every
-# expected variable must be rendered exactly once. Taking the name from every
-# line rather than only from assignment-shaped lines also rejects stray output.
+
+
+
 assert_env_variable_set() {
     local file="$1" expected actual
     shift
@@ -79,8 +79,8 @@ assert_env_variable_set() {
     }
 }
 
-# The value of one rendered variable. A name rendered zero times, or twice,
-# fails here rather than yielding an empty string the caller would compare.
+
+
 env_value() {
     local file="$1" name="$2" matches value
     matches="$(grep -c "^$name=" "$file" || true)"
@@ -96,10 +96,10 @@ env_value() {
     printf '%s\n' "$value"
 }
 
-# The host directory Compose bind-mounts onto a container path. Reading it out
-# of compose.yml keeps the assertion attached to the deployment: a mount that
-# moves, disappears, or is declared twice fails here instead of leaving the
-# filesystem comparison below testing a path nothing is mounted on.
+
+
+
+
 host_mount_for() {
     local container_path="$1" directory="$2" matches source
     matches="$(grep -cE "^ +- \./[^:]+:${container_path}:" "$DEPLOY_DIR/compose.yml" || true)"
@@ -111,9 +111,9 @@ host_mount_for() {
     printf '%s\n' "$directory/$source"
 }
 
-# The operator authors config/traefik-dns.env by hand, so the fixture writes it
-# with an explicit mode. setup.sh must judge its presence, its emptiness, and
-# its permissions without ever reading a value out of it.
+
+
+
 write_dns_credentials() {
     local directory="$1" mode="$2" contents="${3-}"
     mkdir -p "$directory/config"
@@ -121,9 +121,9 @@ write_dns_credentials() {
     chmod "$mode" "$directory/config/traefik-dns.env"
 }
 
-# The ACME-challenge cases need a fixture each, and most also need .env lines
-# new_fixture does not write, so they allocate under one root the trap already
-# removes instead of extending the named list of fixtures.
+
+
+
 challenge_fixture() {
     local directory
     directory="$(mktemp -d "$CHALLENGE_ROOT/XXXXXX")"
@@ -131,8 +131,8 @@ challenge_fixture() {
     printf '%s\n' "$directory"
 }
 
-# The .env parser cases append to the file new_fixture wrote, and likewise need
-# one fixture each.
+
+
 env_fixture() {
     local directory
     directory="$(mktemp -d "$ENV_ROOT/XXXXXX")"
@@ -140,9 +140,9 @@ env_fixture() {
     printf '%s\n' "$directory"
 }
 
-# A configuration setup.sh cannot use must be refused before it generates
-# anything. An operator who corrects the variable and re-runs must not already
-# own a CA, a control certificate, or secrets produced by the rejected attempt.
+
+
+
 assert_setup_refused() {
     local directory="$1" expected="$2" output artifact
     if output="$(run_setup "$directory" 2>&1)"; then
@@ -163,9 +163,9 @@ assert_setup_refused() {
     done
 }
 
-# Compose merges every env_file into the service environment, so the resolved
-# configuration is where the wiring can be asserted: a rendered file nothing
-# references would satisfy a file-content check and reach Traefik never.
+
+
+
 compose_service_environment() {
     local directory="$1" service="${2:-traefik}"
     docker compose -p cadestro-challenge-test -f "$directory/compose.yml" config --format json \
@@ -174,10 +174,10 @@ service = json.load(sys.stdin)["services"][sys.argv[1]]["environment"]
 print("\n".join(f"{name}={value}" for name, value in service.items()))' "$service"
 }
 
-# `docker compose up -d --wait` waits on the services that declare a
-# healthcheck and on no others, so a service without one is reported ready the
-# moment it is started. Traefik is the only way into the deployment; without
-# its healthcheck the wait returns while every request still fails.
+
+
+
+
 assert_service_healthcheck() {
     local directory="$1" service="$2" expected="$3" command_line
     command_line="$(docker compose -p cadestro-challenge-test -f "$directory/compose.yml" config --format json \
@@ -193,19 +193,20 @@ print(" ".join(service.get("healthcheck", {}).get("test", [])))' "$service")"
 run_setup() {
     local directory="$1"
     (
-        # shellcheck disable=SC1091
-        source "$DEPLOY_DIR/setup.sh"
-        # These globals are consumed by the sourced setup functions.
-        # shellcheck disable=SC2034
-        SCRIPT_DIR="$directory"
-        # shellcheck disable=SC2034
-        CERTS_DIR="$directory/certs"
-        # shellcheck disable=SC2034
-        CONFIG_DIR="$directory/config"
-        # shellcheck disable=SC2034
-        SECRETS_DIR="$directory/secrets"
-        # shellcheck disable=SC2034
-        DATA_DIR="$directory/data"
+
+        cd "$DEPLOY_DIR"
+        source setup.sh
+
+
+        export SCRIPT_DIR="$directory"
+
+        export CERTS_DIR="$directory/certs"
+
+        export CONFIG_DIR="$directory/config"
+
+        export SECRETS_DIR="$directory/secrets"
+
+        export DATA_DIR="$directory/data"
         main
     )
 }
@@ -221,7 +222,7 @@ test_secure_idempotent_setup() {
     local config="$directory/config/control.env"
     [[ -f "$config" ]]
     [[ "$(stat -c '%a' "$config")" == 600 ]]
-    # Control is configured entirely by the environment; no file is rendered.
+
     [[ ! -e "$directory/config/control.json" ]]
     assert_env_variable_set "$config" "${CONTROL_ENV_VARIABLES[@]}"
     assert_env_line "$config" 'CADESTRO_PUBLIC_LISTEN=0.0.0.0:8081'
@@ -233,7 +234,7 @@ test_secure_idempotent_setup() {
     assert_env_line "$config" 'CADESTRO_TERMINAL_ORIGINS=manage.example.test'
     assert_env_line "$config" 'CADESTRO_TRUSTED_PROXIES=172.29.0.2'
     assert_env_line "$config" 'CADESTRO_AGENT_PROXY_SOURCES=172.30.0.2'
-    # Both defaults are rendered by setup.sh; the fixture .env never set them.
+
     assert_env_line "$config" 'CADESTRO_LOG_LEVEL=info'
     assert_env_line "$config" 'CADESTRO_LOG_FORMAT=json'
     assert_env_line "$config" 'CADESTRO_CERTIFICATE_VALIDITY=8760h'
@@ -257,9 +258,9 @@ test_secure_idempotent_setup() {
     fi
 	[[ ! -e "$directory/certs/postgres.crt" ]]
 	[[ ! -e "$directory/secrets/postgres.password" ]]
-    # Match the verdict text, not the exit status: OpenSSL 3.0 exits 0 even for
-    # a name that does NOT match, so an exit-code assertion here would hold on
-    # any certificate and prove nothing.
+
+
+
     [[ "$(openssl x509 -in "$directory/certs/control.crt" -checkhost agents.example.test -noout 2>/dev/null)" \
         == "Hostname agents.example.test does match certificate" ]]
     [[ "$(openssl x509 -in "$directory/certs/control.crt" -checkhost control -noout 2>/dev/null)" \
@@ -307,18 +308,18 @@ test_backend_name_missing_fails() {
     ! run_setup "$directory" >/dev/null 2>&1
 }
 
-# .env is an operator-authored data file that Compose reads as KEY=VALUE lines
-# and never executes, so setup.sh must not execute it either. A value that
-# looks like a command substitution has to arrive as those literal characters;
-# sourcing the file would instead run it as whoever ran setup.sh.
+
+
+
+
 test_env_file_values_are_never_executed() {
     local directory
     directory="$(env_fixture)"
-    printf 'EVIL=$(touch %s/pwned)\n' "$directory" >> "$directory/.env"
+    printf "EVIL=\$(touch %s/pwned)\n" "$directory" >> "$directory/.env"
 
-    # The line is a well-formed assignment, so the run proceeds and only the
-    # value is left uninterpreted. Asserting the run completed matters: without
-    # it, "no pwned file" would also hold for a setup.sh that died first.
+
+
+
     run_setup "$directory" >/dev/null
     [[ -f "$directory/config/control.env" ]] || {
         printf 'setup.sh did not complete, so the value was never parsed\n' >&2
@@ -330,9 +331,9 @@ test_env_file_values_are_never_executed() {
     }
 }
 
-# A line that is not an assignment is a line whose meaning setup.sh and Compose
-# would each have to guess at. It is refused, and the message names where it is
-# so the operator does not go looking.
+
+
+
 test_env_file_rejects_a_non_assignment_line() {
     local directory
     directory="$(env_fixture)"
@@ -340,9 +341,9 @@ test_env_file_rejects_a_non_assignment_line() {
     assert_setup_refused "$directory" 'line 4 is not a KEY=VALUE assignment'
 }
 
-# Compose strips a surrounding quote pair and bash keeps whatever the quoting
-# rules produce, so a quoted value means two different things in one
-# deployment. Quote-free values only.
+
+
+
 test_env_file_rejects_a_quoted_value() {
     local directory
     directory="$(env_fixture)"
@@ -350,18 +351,18 @@ test_env_file_rejects_a_quoted_value() {
     assert_setup_refused "$directory" 'quotes its value'
 }
 
-# The challenge type is chosen per deployment and comes from the environment. A
-# challenge left in the static file would win for every deployment including
-# the dns01 ones, and the DNS provider would never be asked.
+
+
+
 test_static_traefik_config_names_no_challenge() {
     if grep -Eq 'httpChallenge|dnsChallenge' "$DEPLOY_DIR/traefik/traefik.yml"; then
         printf 'traefik.yml still pins an ACME challenge type\n' >&2
         return 1
     fi
     grep -Fq 'storage: /letsencrypt/acme.json' "$DEPLOY_DIR/traefik/traefik.yml"
-    # `traefik healthcheck --ping`, the container healthcheck compose.yml
-    # declares, asks Traefik's own ping endpoint and fails closed when the
-    # endpoint is not enabled here.
+
+
+
     grep -Fq 'ping:' "$DEPLOY_DIR/traefik/traefik.yml" || {
         printf 'traefik.yml does not enable ping, so its healthcheck can never succeed\n' >&2
         return 1
@@ -377,12 +378,12 @@ test_default_challenge_renders_http01() {
     credentials="$directory/config/traefik-dns.env"
     [[ "$(stat -c '%a' "$acme")" == 600 ]]
     assert_env_line "$acme" 'TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_HTTPCHALLENGE_ENTRYPOINT=web'
-    # Exactly one setting: an http01 deployment must not also carry a
-    # half-configured DNS challenge Traefik would try alongside it.
+
+
     [[ "$(wc -l < "$acme")" == 1 ]]
-    # compose.yml references the credentials file unconditionally and Compose
-    # refuses to read a configuration whose env_file is missing, so http01 gets
-    # an empty one rather than no file at all.
+
+
+
     [[ -f "$credentials" && ! -s "$credentials" ]]
     [[ "$(stat -c '%a' "$credentials")" == 600 ]]
 }
@@ -396,13 +397,13 @@ test_dns01_renders_provider_and_public_resolvers() {
 
     acme="$directory/config/traefik-acme.env"
     assert_env_line "$acme" 'TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_DNSCHALLENGE_PROVIDER=hetzner'
-    # Pinned public resolvers: a homelab's split-horizon DNS answers the
-    # propagation check from the internal view, where the challenge record does
-    # not exist, and the order then never completes.
+
+
+
     assert_env_line "$acme" 'TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_DNSCHALLENGE_RESOLVERS=1.1.1.1:53,9.9.9.9:53'
-    # A propagation delay: the ACME CA validates from several vantage points,
-    # and a record the pinned resolvers already see can still be missing at
-    # the authoritative operator's other anycast nodes.
+
+
+
     assert_env_line "$acme" 'TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_DNSCHALLENGE_PROPAGATION_DELAYBEFORECHECKS=60s'
     [[ "$(wc -l < "$acme")" == 3 ]]
     [[ "$(stat -c '%a' "$acme")" == 600 ]]
@@ -410,8 +411,8 @@ test_dns01_renders_provider_and_public_resolvers() {
         printf 'dns01 rendered the http01 entrypoint as well\n' >&2
         return 1
     fi
-    # The operator's file is consulted for its existence, size, and mode only,
-    # and is handed to Traefik exactly as written.
+
+
     [[ "$(cat "$directory/config/traefik-dns.env")" == 'HETZNER_API_KEY=example-token' ]]
 }
 
@@ -427,9 +428,9 @@ test_dns01_without_credentials_fails() {
     local directory
     directory="$(challenge_fixture)"
     printf 'ACME_CHALLENGE=dns01\nACME_DNS_PROVIDER=hetzner\n' >> "$directory/.env"
-    # No credentials file at all. The empty one setup.sh creates for http01
-    # must never stand in for provider credentials, or the deployment would
-    # start and fail its first certificate order instead of failing here.
+
+
+
     assert_setup_refused "$directory" 'traefik-dns.env does not exist'
 }
 
@@ -446,8 +447,8 @@ test_dns01_with_readable_credentials_fails() {
     directory="$(challenge_fixture)"
     printf 'ACME_CHALLENGE=dns01\nACME_DNS_PROVIDER=hetzner\n' >> "$directory/.env"
     write_dns_credentials "$directory" 644 $'HETZNER_API_KEY=example-token\n'
-    # Refused, not repaired: a provider credential every local account could
-    # read is one the operator has to rotate, not one a silent chmod fixes.
+
+
     assert_setup_refused "$directory" 'traefik-dns.env must not be group/world accessible'
 }
 
@@ -458,8 +459,8 @@ test_unknown_challenge_fails() {
     assert_setup_refused "$directory" 'ACME_CHALLENGE must be http01 or dns01'
 }
 
-# Nothing setup.sh prints or renders may carry a provider credential; only the
-# operator's own file holds one.
+
+
 test_provider_credentials_never_leave_their_file() {
     local directory output leaked
     directory="$(challenge_fixture)"
@@ -467,8 +468,8 @@ test_provider_credentials_never_leave_their_file() {
     write_dns_credentials "$directory" 600 $'HETZNER_API_KEY=CANARY_SECRET_VALUE_9X7\n'
 
     output="$(run_setup "$directory" 2>&1)"
-    # The run has to have taken the real dns01 path, or the canary below proves
-    # only that a credential nothing read was not printed.
+
+
     assert_env_line "$directory/config/traefik-acme.env" \
         'TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_DNSCHALLENGE_PROVIDER=hetzner'
     if grep -Fq CANARY_SECRET_VALUE_9X7 <<<"$output"; then
@@ -483,9 +484,9 @@ test_provider_credentials_never_leave_their_file() {
     }
 }
 
-# A fresh install must reach a working UI without anyone typing a server URL
-# into /setup, so the browser origin is rendered from the same answer the rest
-# of the deployment is built from rather than left to the operator.
+
+
+
 test_web_env_is_rendered_for_the_control_domain() {
     local directory config
     directory="$(challenge_fixture)"
@@ -496,16 +497,16 @@ test_web_env_is_rendered_for_the_control_domain() {
         printf 'setup.sh rendered no web configuration; the UI container would start unconfigured\n' >&2
         return 1
     }
-    # validate_permissions covers every config/*.env, so a web.env that escaped
-    # the mode rules would have failed the run; assert it anyway, because this
-    # file is new and the loop is what makes that true.
+
+
+
     [[ "$(stat -c '%a' "$config")" == 600 ]]
     assert_env_variable_set "$config" "${WEB_ENV_VARIABLES[@]}"
-    # Same origin as control: Traefik serves the UI on the browser domain and
-    # keeps control's own paths for control, so the API the UI talks to is the
-    # page's own origin. CADESTRO_PUBLIC_BASE_URL already assumes exactly this —
-    # bootstrap-admin prints <that base>/setup#bootstrap_token=…, a path only
-    # the UI serves.
+
+
+
+
+
     assert_env_line "$config" 'PUBLIC_CONTROL_URL=https://manage.example.test'
     [[ "$(env_value "$config" PUBLIC_CONTROL_URL)" == "$(env_value "$directory/config/control.env" CADESTRO_PUBLIC_BASE_URL)" ]] || {
         printf 'the UI would call an origin other than the one control publishes its setup URL on\n' >&2
@@ -513,11 +514,11 @@ test_web_env_is_rendered_for_the_control_domain() {
     }
 }
 
-# The prefix every browser RPC lands on is not a constant this file may choose:
-# it is the Connect service name the contract generates. Reading it out of the
-# generated client means a renamed proto package fails here instead of silently
-# routing RPCs into the web container, which would answer them with the SPA
-# shell and a 200.
+
+
+
+
+
 control_rpc_prefix() {
     local generated="$DEPLOY_DIR/../../contract/gen/go/cadestro/v1/cadestrov1connect/control.connect.go" name
     [[ -f "$generated" ]] || {
@@ -533,9 +534,9 @@ control_rpc_prefix() {
     printf '/%s\n' "$name"
 }
 
-# Both the UI and the API answer on CONTROL_DOMAIN, so the split between them is
-# a routing rule rather than a second hostname. Control keeps exactly the paths
-# it serves; everything else is the UI.
+
+
+
 test_traefik_reserves_the_control_paths_and_serves_the_ui() {
     local routes="$DEPLOY_DIR/traefik/dynamic/routes.yml" prefix path
     prefix="$(control_rpc_prefix)"
@@ -545,8 +546,8 @@ test_traefik_reserves_the_control_paths_and_serves_the_ui() {
             "$prefix" >&2
         return 1
     }
-    # The rest of control's public surface: SCIM provisioning, the terminal
-    # websocket bridge, and the two probes the UI and Compose both ask for.
+
+
     for path in '/scim' '/terminal' '/health' '/ready'; do
         grep -Eq "Path(Prefix)?\(\`${path}\`\)" "$routes" || {
             printf 'the control router does not reserve %s\n' "$path" >&2
@@ -561,9 +562,9 @@ test_traefik_reserves_the_control_paths_and_serves_the_ui() {
         printf 'the web service does not name the UI container\n' >&2
         return 1
     }
-    # Traefik falls back to rule length when no priority is set, which would
-    # make this split depend on how the rules happen to be spelled. Both are
-    # explicit, and control's has to win.
+
+
+
     local control_priority web_priority
     control_priority="$(sed -nE '/^    control:$/,/^    [a-z]/ s|^ *priority: ([0-9]+)$|\1|p' "$routes")"
     web_priority="$(sed -nE '/^    web:$/,/^    [a-z]/ s|^ *priority: ([0-9]+)$|\1|p' "$routes")"
@@ -578,11 +579,11 @@ test_traefik_reserves_the_control_paths_and_serves_the_ui() {
     }
 }
 
-# deploy.sh names the images it pulls, so a service added to compose.yml can be
-# left out of that line and then start from whatever stale image the host
-# happens to have — or from none. The expected set is read out of compose.yml
-# rather than written down a second time, so the next service is covered by
-# existing code.
+
+
+
+
+
 test_deploy_pulls_every_declared_service() {
     local declared service pull_line
     mapfile -t declared < <(python3 -c 'import sys, yaml
@@ -604,8 +605,8 @@ print("\n".join(sorted(yaml.safe_load(open(sys.argv[1]))["services"])))' "$DEPLO
     done
 }
 
-# This one reports its own verdict, because a skipped compose validation must
-# not be printed as a pass.
+
+
 test_compose_configuration_valid_in_both_modes() {
     local directory
     if ! docker compose version >/dev/null 2>&1; then
@@ -621,8 +622,8 @@ test_compose_configuration_valid_in_both_modes() {
     assert_env_line "$directory/resolved.env" \
         'TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_HTTPCHALLENGE_ENTRYPOINT=web'
     assert_service_healthcheck "$directory" traefik 'traefik healthcheck'
-    # The rendered web.env has to reach the container. A file nothing references
-    # would satisfy the rendering test above and configure nothing.
+
+
     compose_service_environment "$directory" web > "$directory/resolved-web.env"
     assert_env_line "$directory/resolved-web.env" 'PUBLIC_CONTROL_URL=https://manage.example.test'
 
@@ -637,8 +638,8 @@ test_compose_configuration_valid_in_both_modes() {
         'TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_DNSCHALLENGE_PROVIDER=hetzner'
     assert_env_line "$directory/resolved.env" \
         'TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_DNSCHALLENGE_RESOLVERS=1.1.1.1:53,9.9.9.9:53'
-    # The credentials are Traefik's to read, not setup.sh's: Compose carries
-    # them from the operator's file into the container.
+
+
     assert_env_line "$directory/resolved.env" 'HETZNER_API_KEY=example-token'
     printf 'PASS compose configuration valid in both challenge modes\n'
 }

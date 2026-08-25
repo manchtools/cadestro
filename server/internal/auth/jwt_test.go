@@ -58,8 +58,6 @@ func TestSessionTokens_AreSignedWithEdDSA(t *testing.T) {
 	assert.Equal(t, int32(3), claims.SessionVersion)
 	assert.Equal(t, now.Add(auth.DefaultAccessTokenExpiry).Unix(), claims.ExpiresAt.Unix())
 
-	// The refresh token carries identity, never authority: the
-	// permissions it would grant are re-read at refresh time.
 	refresh, err := m.ValidateToken(pair.RefreshToken, auth.TokenTypeRefresh)
 	require.NoError(t, err)
 	assert.Empty(t, refresh.Permissions)
@@ -79,9 +77,6 @@ func TestValidateToken_RefusesAnotherKeysSignature(t *testing.T) {
 	assert.Error(t, err, "a token signed by an unknown key must never validate")
 }
 
-// The classic algorithm-substitution forgery: an attacker who knows the
-// public key resigns the token as HMAC and hopes the verifier hands the
-// public key over as a shared secret.
 func TestValidateToken_RefusesAnAlgorithmSubstitution(t *testing.T) {
 	t.Parallel()
 	now := time.Date(2026, 8, 1, 9, 0, 0, 0, time.UTC)
@@ -110,7 +105,6 @@ func TestValidateToken_RefusesAnAlgorithmSubstitution(t *testing.T) {
 	_, err = m.ValidateToken(forged, auth.TokenTypeAccess)
 	assert.Error(t, err, "the public key must never be accepted as an HMAC secret")
 
-	// And the unsigned "alg: none" variant.
 	unsigned, err := jwt.NewWithClaims(jwt.SigningMethodNone, claims).SignedString(jwt.UnsafeAllowNoneSignatureType)
 	require.NoError(t, err)
 	_, err = m.ValidateToken(unsigned, auth.TokenTypeAccess)
@@ -185,7 +179,6 @@ func TestValidateRefreshToken_ConsultsTheRevocationList(t *testing.T) {
 	assert.Error(t, err, "a revoked refresh token is dead even though its signature verifies")
 }
 
-// tokenAlg reads the `alg` header of a JWT without validating it.
 func tokenAlg(t *testing.T, token string) string {
 	t.Helper()
 	parts := strings.Split(token, ".")
@@ -199,8 +192,6 @@ func tokenAlg(t *testing.T, token string) string {
 	return header.Alg
 }
 
-// The token ids are ULIDs minted from the cryptographic random source,
-// so two tokens issued in the same instant still differ.
 func TestSessionTokens_CarryDistinctULIDIdentifiers(t *testing.T) {
 	t.Parallel()
 	now := time.Date(2026, 8, 1, 9, 0, 0, 0, time.UTC)

@@ -13,8 +13,6 @@ type readinessStore interface {
 	Ping(context.Context) error
 }
 
-// checkReadiness verifies the dependencies whose availability can change
-// after startup. Schema and key material are validated while control starts.
 func checkReadiness(
 	ctx context.Context,
 	st readinessStore,
@@ -29,8 +27,7 @@ func checkReadiness(
 	if err := validateWritableDirectory("artifact path", artifactPath); err != nil {
 		return fmt.Errorf("artifact path: %w", err)
 	}
-	// Empty path or non-positive lag is the explicit disabled/unconfigured
-	// policy; readiness must not manufacture a backup failure in that mode.
+
 	if backupPath == "" || backupMaxLag <= 0 {
 		return nil
 	}

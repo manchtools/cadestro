@@ -25,8 +25,6 @@ import (
 
 const luksTokenTTL = 24 * time.Hour
 
-// ListLpsPasswords returns bounded current and historical LPS metadata. Its
-// store query does not select ciphertext.
 func (h *Handlers) ListLpsPasswords(ctx context.Context, req *connect.Request[cadestrov1.ListLpsPasswordsRequest]) (*connect.Response[cadestrov1.ListLpsPasswordsResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
@@ -56,8 +54,6 @@ func (h *Handlers) ListLpsPasswords(ctx context.Context, req *connect.Request[ca
 	return connect.NewResponse(&cadestrov1.ListLpsPasswordsResponse{Current: current, History: history}), nil
 }
 
-// RevealLpsPassword returns one plaintext password only after the dedicated
-// reveal operation and its device/action/entry effects are durable.
 func (h *Handlers) RevealLpsPassword(ctx context.Context, req *connect.Request[cadestrov1.RevealLpsPasswordRequest]) (*connect.Response[cadestrov1.RevealLpsPasswordResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
@@ -96,8 +92,6 @@ func (h *Handlers) RevealLpsPassword(ctx context.Context, req *connect.Request[c
 	return connect.NewResponse(&cadestrov1.RevealLpsPasswordResponse{Password: password}), nil
 }
 
-// ListLuksKeys returns bounded current and historical LUKS metadata. Its store
-// query does not select ciphertext.
 func (h *Handlers) ListLuksKeys(ctx context.Context, req *connect.Request[cadestrov1.ListLuksKeysRequest]) (*connect.Response[cadestrov1.ListLuksKeysResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
@@ -127,8 +121,6 @@ func (h *Handlers) ListLuksKeys(ctx context.Context, req *connect.Request[cadest
 	return connect.NewResponse(&cadestrov1.ListLuksKeysResponse{Current: current, History: history}), nil
 }
 
-// RevealLuksKey returns one plaintext passphrase only after the dedicated
-// reveal operation and its device/action/entry effects are durable.
 func (h *Handlers) RevealLuksKey(ctx context.Context, req *connect.Request[cadestrov1.RevealLuksKeyRequest]) (*connect.Response[cadestrov1.RevealLuksKeyResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
@@ -233,8 +225,6 @@ func (h *Handlers) recordSecretReveal(
 	return nil
 }
 
-// CreateLuksToken atomically persists a hash of a one-time owner token with
-// its audit evidence. The plaintext is returned exactly once.
 func (h *Handlers) CreateLuksToken(ctx context.Context, req *connect.Request[cadestrov1.CreateLuksTokenRequest]) (*connect.Response[cadestrov1.CreateLuksTokenResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
@@ -312,16 +302,7 @@ func (h *Handlers) CreateLuksToken(ctx context.Context, req *connect.Request[cad
 	return connect.NewResponse(&cadestrov1.CreateLuksTokenResponse{
 		Token: token,
 		Uri:   "cadestro://luks/set-passphrase?token=" + token,
-		// The advertised command carries NEITHER the token nor sudo (F2).
-		// /proc/<pid>/cmdline is world-readable and the client collects the
-		// passphrase before it dials, so a token on argv was exposed for the
-		// whole typing window while being the sole authorization for a root
-		// daemon that writes LUKS keyslots. The client prompts for the token
-		// instead (or takes --token-file / $CADESTRO_LUKS_TOKEN). sudo is gone
-		// because the sudoers rule was removed to make this client
-		// unprivileged; an operator copying it back would reinstate the
-		// escalation the daemon exists to remove. Token is returned as its own
-		// field for the UI to display.
+
 		CliCommand: "cadestrod luks set-passphrase",
 	}), nil
 }

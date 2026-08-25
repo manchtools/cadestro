@@ -17,8 +17,6 @@ import (
 
 const defaultAuthoringPageSize = int32(50)
 
-// HandlersConfig supplies the direct SQLite store and process-local seams
-// used by the authoring RPC handlers.
 type HandlersConfig struct {
 	Store  *store.Store
 	AtRest *crypto.Encryptor
@@ -26,8 +24,6 @@ type HandlersConfig struct {
 	Now    func() time.Time
 }
 
-// Handlers implements the explicit Action, ActionSet and Definition authoring
-// RPCs.
 type Handlers struct {
 	store  *store.Store
 	state  *Service
@@ -35,7 +31,6 @@ type Handlers struct {
 	atRest *crypto.Encryptor
 }
 
-// NewHandlers constructs the explicit authoring RPC handlers.
 func NewHandlers(cfg HandlersConfig) *Handlers {
 	if cfg.Store == nil || cfg.AtRest == nil {
 		panic("authoring: handler store and at-rest cipher are required")

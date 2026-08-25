@@ -11,13 +11,10 @@ import (
 
 type deviceIdentityKey struct{}
 
-// WithDeviceID binds the device identity already authenticated by the mTLS
-// listener to an AgentService request context.
 func WithDeviceID(ctx context.Context, deviceID string) context.Context {
 	return context.WithValue(ctx, deviceIdentityKey{}, deviceID)
 }
 
-// DeviceIDFromContext returns the mTLS-authenticated device identity.
 func DeviceIDFromContext(ctx context.Context) (string, bool) {
 	if ctx == nil {
 		return "", false
@@ -44,9 +41,6 @@ func writeDeadlinerFrom(ctx context.Context) writeDeadliner {
 	return deadliner
 }
 
-// MTLSMiddleware authenticates AgentService requests and binds the verified
-// certificate identity and leaf into their contexts. Serial admission is
-// enforced by the stream handler against current device state.
 func MTLSMiddleware(next http.Handler) http.Handler {
 	if next == nil {
 		panic("agentstream: mTLS middleware requires a handler")

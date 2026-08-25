@@ -13,11 +13,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-// Wire conversion. Nothing here reads the database; a caller assembles
-// the rows it wants on the response and passes them in, so the shape of
-// a response is visible at its handler rather than hidden behind a
-// loader.
-
 func timestamp(t *time.Time) *timestamppb.Timestamp {
 	if t == nil {
 		return nil
@@ -29,17 +24,13 @@ func timestampValue(t time.Time) *timestamppb.Timestamp {
 	return timestamppb.New(t)
 }
 
-// userView is everything a User message can carry. A handler fills only
-// the parts it read, so a list response is not silently N+1 queries.
 type userView struct {
 	Row            store.UserRow
 	SSHKeys        []store.UserSSHKeyRow
 	IdentityLinks  []store.IdentityLinkWithProviderRow
 	RoleGrants     []store.RoleGrantRow
 	InheritedRoles []store.InheritedRoleRow
-	// ScopeNames resolves a grant's scope id to a display name. A scope
-	// whose group was deleted is simply absent, and its name renders
-	// empty rather than the response failing.
+
 	ScopeNames map[string]string
 }
 
@@ -148,8 +139,6 @@ func grantToProto(g store.RoleGrantRow, scopeNames map[string]string) *cadestrov
 	return out
 }
 
-// scopeKindToProto maps the stored scope discriminator onto the wire
-// enum. A nil discriminator is an unscoped grant.
 func scopeKindToProto(kind *string) cadestrov1.RoleGrantScopeKind {
 	if kind == nil {
 		return cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED
@@ -164,9 +153,6 @@ func scopeKindToProto(kind *string) cadestrov1.RoleGrantScopeKind {
 	}
 }
 
-// scopeKindFromProto maps a wire scope kind onto the stored
-// discriminator. An unrecognised kind is reported as invalid rather
-// than silently becoming an unscoped (fleet-wide) grant.
 func scopeKindFromProto(kind cadestrov1.RoleGrantScopeKind) (string, bool) {
 	switch kind {
 	case cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_DEVICE_GROUP:
@@ -204,11 +190,6 @@ func linkToProto(l store.IdentityLinkWithProviderRow) *cadestrov1.IdentityLink {
 	}
 }
 
-// providerToProto renders a provider for the wire.
-//
-// client_secret_encrypted has no wire field and scim_token_hash has no
-// wire field: the secret is write-only by contract and the token is
-// shown exactly once, at the moment it is minted.
 func (h *Handlers) providerToProto(p store.IdentityProviderRow) *cadestrov1.IdentityProvider {
 	out := &cadestrov1.IdentityProvider{
 		Id:                   &cadestrov1.IdentityProviderId{Value: p.ID},
@@ -272,10 +253,6 @@ func permissionsToProto() []*cadestrov1.PermissionInfo {
 	return out
 }
 
-// idpGroupMapping decodes the provider's stored external-group map. A
-// mapping that will not decode renders as absent rather than failing
-// the read: it is display metadata, and the authorization it feeds is
-// re-derived from the same bytes at login.
 func idpGroupMapping(raw []byte) map[string]string {
 	if len(raw) == 0 {
 		return nil

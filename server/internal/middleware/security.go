@@ -2,16 +2,6 @@ package middleware
 
 import "net/http"
 
-// SecurityHeaders adds standard security headers to all responses.
-//
-// Content-Security-Policy is intentionally tight (audit F-05): the
-// control server hosts the Connect-RPC API only — never user-supplied
-// HTML or third-party iframes — so 'self'-everything is a safe
-// default. `style-src` keeps `'unsafe-inline'` because Connect-RPC
-// error pages and the test-harness fall back to inline style
-// attributes; tighten further once the surface is audited end-to-end.
-// `frame-ancestors 'none'` overlaps with X-Frame-Options DENY but is
-// the modern equivalent for browsers that ignore the legacy header.
 const contentSecurityPolicy = "default-src 'self'; " +
 	"script-src 'self'; " +
 	"style-src 'self' 'unsafe-inline'; " +

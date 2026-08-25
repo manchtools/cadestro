@@ -88,6 +88,9 @@ func (q *Queries) GetIdentityLinkByProviderAndExternalID(ctx context.Context, ar
 }
 
 const getIdentityLinkByProviderAndUser = `-- name: GetIdentityLinkByProviderAndUser :one
+
+
+
 SELECT id, user_id, provider_id, external_id, external_email, external_name, linked_at, last_login_at FROM identity_links WHERE provider_id = ? AND user_id = ?
 `
 
@@ -96,9 +99,6 @@ type GetIdentityLinkByProviderAndUserParams struct {
 	UserID     string `json:"user_id"`
 }
 
-// The ownership question: is this subject bound to this provider? No
-// row is the answer a provider gets for every subject it did not
-// provision, which is what keeps one directory out of another's users.
 func (q *Queries) GetIdentityLinkByProviderAndUser(ctx context.Context, arg GetIdentityLinkByProviderAndUserParams) (IdentityLink, error) {
 	row := q.db.QueryRowContext(ctx, getIdentityLinkByProviderAndUser, arg.ProviderID, arg.UserID)
 	var i IdentityLink
@@ -116,7 +116,6 @@ func (q *Queries) GetIdentityLinkByProviderAndUser(ctx context.Context, arg GetI
 }
 
 const insertIdentityLink = `-- name: InsertIdentityLink :one
-
 INSERT INTO identity_links (id, user_id, provider_id, external_id, external_email, external_name, linked_at, last_login_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 RETURNING id, user_id, provider_id, external_id, external_email, external_name, linked_at, last_login_at
@@ -133,9 +132,6 @@ type InsertIdentityLinkParams struct {
 	LastLoginAt   *time.Time `json:"last_login_at"`
 }
 
-// The binding between one external subject at one provider and one
-// local user. Both directions are uniquely indexed, so a second link
-// cannot be used to take over an existing account.
 func (q *Queries) InsertIdentityLink(ctx context.Context, arg InsertIdentityLinkParams) (IdentityLink, error) {
 	row := q.db.QueryRowContext(ctx, insertIdentityLink,
 		arg.ID,

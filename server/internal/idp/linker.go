@@ -20,40 +20,21 @@ import (
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
-// ErrNoMatchingAccount is what an external identity that cannot be
-// resolved to a local account gets. It is deliberately the same answer
-// for "no such account", "auto-link refused" and "auto-create
-// disabled": the caller is unauthenticated, and distinguishing those
-// cases would report whether an address exists locally.
 var ErrNoMatchingAccount = errors.New("no matching account found; contact an administrator to link your identity")
 
-// SystemActorSSO is the actor the linker attributes its writes to when
-// it provisions on an unauthenticated caller's behalf.
 const SystemActorSSO = "sso"
 
-// LinkResult is the outcome of resolving an external identity.
 type LinkResult struct {
 	UserID string
-	// IsNew reports that the subject was provisioned by this call.
+
 	IsNew bool
 }
 
-// Linker resolves an external identity to a local subject, creating the
-// binding — and, when the provider is configured for it, the subject —
-// as it goes.
-//
-// Every write happens on the transaction handle the caller passes in,
-// and every write records its effect on the caller's audit recorder. A
-// login that provisions a user and a login that merely refreshes a
-// timestamp therefore both commit atomically with their evidence.
 type Linker struct {
 	kek *crypto.Encryptor
 	now func() time.Time
 }
 
-// NewLinker creates a linker. The KEK is required: provisioning a
-// subject means minting its data-encryption key, and a subject without
-// one has no place to put class-three audit detail.
 func NewLinker(kek *crypto.Encryptor, now func() time.Time) *Linker {
 	if now == nil {
 		now = time.Now
@@ -61,15 +42,6 @@ func NewLinker(kek *crypto.Encryptor, now func() time.Time) *Linker {
 	return &Linker{kek: kek, now: now}
 }
 
-// LinkOrCreate resolves claims against provider, in this order:
-//
-//  1. an existing binding for (provider, external subject) — refresh
-//     its login timestamp and return the subject it names;
-//  2. auto-link by email, when the provider is configured for it and
-//     the takeover guard below allows it;
-//  3. auto-create, when the provider is configured for it.
-//
-// Anything else is ErrNoMatchingAccount.
 func (l *Linker) LinkOrCreate(
 	ctx context.Context,
 	tx *store.Tx,
@@ -79,11 +51,6 @@ func (l *Linker) LinkOrCreate(
 ) (*LinkResult, error) {
 	at := l.now().UTC()
 
-	// Normalize the asserted email once. A blank or whitespace-only claim folds
-	// to "" and is then treated as no email by both the auto-link and JIT
-	// branches below: an existing (provider, subject) binding still resolves
-	// without one, but a subject is never provisioned or looked up on an empty
-	// address.
 	email := normalizeEmail(claims.Email)
 
 	link, err := tx.GetIdentityLinkByProviderAndExternalID(ctx, db.GetIdentityLinkByProviderAndExternalIDParams{
@@ -92,9 +59,7 @@ func (l *Linker) LinkOrCreate(
 	})
 	switch {
 	case err == nil:
-		// A binding exists. It may still name a subject that has since
-		// been erased, in which case the binding is stale and is
-		// cleared so the flow can fall through to link or create.
+
 		_, userErr := tx.GetUser(ctx, link.UserID)
 		if userErr == nil {
 			updated, err := tx.TouchIdentityLinkLogin(ctx, db.TouchIdentityLinkLoginParams{
@@ -133,7 +98,7 @@ func (l *Linker) LinkOrCreate(
 			})
 		}
 	case store.IsNotFound(err):
-		// No binding yet; fall through.
+
 	default:
 		return nil, fmt.Errorf("look up identity link: %w", err)
 	}
@@ -142,13 +107,7 @@ func (l *Linker) LinkOrCreate(
 		user, err := tx.GetUserByEmail(ctx, email)
 		switch {
 		case err == nil:
-			// Cross-provider takeover guard. An account that is ALREADY
-			// bound to some identity provider must not be silently
-			// re-bound because a second provider asserts the same
-			// address: the asserting provider is the very party the
-			// guard defends against, so its own email_verified claim is
-			// not a backstop. An account with no binding yet is the
-			// ordinary invite flow and links freely.
+
 			linked, err := tx.CountIdentityLinksForUser(ctx, user.ID)
 			if err != nil {
 				return nil, fmt.Errorf("count existing identity links: %w", err)
@@ -165,7 +124,7 @@ func (l *Linker) LinkOrCreate(
 				"provider_id", provider.ID, "provider_slug", provider.Slug)
 			return &LinkResult{UserID: user.ID}, nil
 		case store.IsNotFound(err):
-			// Fall through to auto-create.
+
 		default:
 			return nil, fmt.Errorf("look up subject by email: %w", err)
 		}
@@ -182,10 +141,6 @@ func (l *Linker) LinkOrCreate(
 		return &LinkResult{UserID: userID, IsNew: true}, nil
 	}
 
-	// Name the gate that stopped the login: a disabled flag and a missing
-	// trusted email are different deployment mistakes with different fixes,
-	// and the operator reading this log cannot see which operand was false.
-	// The wrapped sentinel keeps the client-visible answer opaque.
 	reason := "auto_create_users is disabled on the provider"
 	if provider.AutoCreateUsers {
 		reason = "the identity carried no trusted email claim (missing or not email_verified)"
@@ -195,12 +150,6 @@ func (l *Linker) LinkOrCreate(
 	return nil, fmt.Errorf("%w: %s", ErrNoMatchingAccount, reason)
 }
 
-// createUser provisions a subject for an external identity.
-//
-// The subject's data-encryption key is minted FIRST: it is what makes
-// class-three audit detail about the subject erasable, so a subject
-// that exists without one would produce evidence that erasure cannot
-// reach.
 func (l *Linker) createUser(
 	ctx context.Context,
 	tx *store.Tx,
@@ -361,13 +310,6 @@ func (l *Linker) createLink(
 	return nil
 }
 
-// SyncGroupMemberships reconciles a subject's membership of the mapped
-// groups against the provider's group claim.
-//
-// Only groups the operator has explicitly mapped are touched: a group
-// the mapping does not name is never joined or left because of a claim.
-// Group membership confers the group's role grants, so each change is
-// recorded as its own effect.
 func (l *Linker) SyncGroupMemberships(
 	ctx context.Context,
 	tx *store.Tx,
@@ -388,8 +330,6 @@ func (l *Linker) SyncGroupMemberships(
 		}
 	}
 
-	// Iterate the mapping's distinct targets in a stable order so two
-	// runs against the same claim produce the same effect sequence.
 	targets := make([]string, 0, len(groupMapping))
 	seen := make(map[string]bool, len(groupMapping))
 	for _, groupID := range groupMapping {
@@ -413,7 +353,7 @@ func (l *Linker) SyncGroupMemberships(
 				return fmt.Errorf("add subject to mapped group: %w", err)
 			}
 			if n == 0 {
-				continue // already a member; nothing changed
+				continue
 			}
 			rec.Effect(store.AuditEffect{
 				ResourceType: "user_group_member",
@@ -449,7 +389,6 @@ func (l *Linker) SyncGroupMemberships(
 	return nil
 }
 
-// ParseGroupMapping decodes the provider's stored group mapping.
 func ParseGroupMapping(data []byte) map[string]string {
 	if len(data) == 0 {
 		return nil
@@ -461,16 +400,8 @@ func ParseGroupMapping(data []byte) map[string]string {
 	return m
 }
 
-// normalizeEmail folds an email to the canonical form the SCIM and
-// manual lookup paths store and query by. The active-unique email index
-// is COLLATE NOCASE, so a JIT write that skipped this would be unfindable
-// by a normalized lookup yet still block re-insert. Semantics match the
-// scim and identity packages' own normalizeEmail exactly.
 func normalizeEmail(v string) string { return strings.ToLower(strings.TrimSpace(v)) }
 
-// fingerprint reduces a value to its SHA-256 hex digest, which is what
-// the audit log accepts as class-two evidence. The value itself never
-// reaches an audit row.
 func fingerprint(v string) string {
 	if v == "" {
 		return ""
@@ -481,8 +412,6 @@ func fingerprint(v string) string {
 
 var linuxUsernameSanitizeRe = regexp.MustCompile(`[^a-z0-9_.\-]`)
 
-// DeriveLinuxUsername derives a Linux account name from the preferred
-// username, falling back to the local part of the email.
 func DeriveLinuxUsername(email, preferredUsername string) string {
 	var username string
 	switch {

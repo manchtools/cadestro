@@ -1,11 +1,5 @@
 package identity_test
 
-// The boot-time role reconciler is a background writer, so it lives
-// under the same audit contract as an RPC. It is exercised here rather
-// than in its own package because proving it needs a real database:
-// the point of the reconciler is what the system roles look like
-// afterwards.
-
 import (
 	"io"
 	"log/slog"
@@ -22,8 +16,6 @@ func TestReconcileSystemRoles_RefreshesTheSeededRolesFromTheRegistry(t *testing.
 	f := newFixture(t)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 
-	// Simulate a deployment whose seeded permission arrays predate a
-	// permission added in code.
 	_, err := f.raw.Exec(f.ctx(),
 		`UPDATE roles SET permissions = '["ListUsers"]' WHERE id IN ($1, $2)`,
 		auth.AdminRoleID, auth.UserRoleID)
@@ -59,8 +51,6 @@ func TestReconcileSystemRoles_RefreshesTheSeededRolesFromTheRegistry(t *testing.
 	}
 }
 
-// A role edited through the RPC surface is NOT a system role and the
-// reconciler leaves it alone.
 func TestReconcileSystemRoles_LeavesOrdinaryRolesAlone(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

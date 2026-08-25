@@ -12,7 +12,7 @@ import (
 )
 
 func testKey() string {
-	// 32 bytes = 64 hex chars
+
 	return "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 }
 
@@ -39,14 +39,12 @@ func TestNewEncryptor_InvalidHex(t *testing.T) {
 }
 
 func TestNewEncryptor_WrongLength(t *testing.T) {
-	// 16 bytes instead of 32
+
 	shortKey := hex.EncodeToString(make([]byte, 16))
 	_, err := crypto.NewEncryptor(shortKey)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "must be 32 bytes")
 }
-
-// At-rest secrets use one AAD-bound AES-256-GCM format under "enc:v1:".
 
 func TestEncryptWithContext_SingleV1Prefix(t *testing.T) {
 	enc, err := crypto.NewEncryptor(testKey())
@@ -94,18 +92,15 @@ func TestEncryptWithContext_AADBindsContext(t *testing.T) {
 	require.NoError(t, err)
 
 	aadA := crypto.DeviceSecretAAD("01HROWA", "01HDEVICEA", "luks", "01HACTIONA", 1)
-	aadB := crypto.DeviceSecretAAD("01HROWA", "01HDEVICEB", "luks", "01HACTIONA", 1) // different device
+	aadB := crypto.DeviceSecretAAD("01HROWA", "01HDEVICEB", "luks", "01HACTIONA", 1)
 
 	ct, err := enc.EncryptWithContext("super-secret", aadA)
 	require.NoError(t, err)
 
-	// Correct AAD round-trips.
 	pt, err := enc.DecryptWithContext(ct, aadA)
 	require.NoError(t, err)
 	assert.Equal(t, "super-secret", pt)
 
-	// Wrong AAD (a different row context) must fail to open — the secret is
-	// bound to its row and cannot be relocated.
 	_, err = enc.DecryptWithContext(ct, aadB)
 	require.Error(t, err, "a secret sealed for one context must not open under another")
 }
@@ -117,11 +112,9 @@ func TestRowAAD_BindsRowAndPurpose(t *testing.T) {
 	ct, err := enc.EncryptWithContext("client-secret", crypto.RowAAD("01HIDPA", crypto.PurposeIdPClientSecret))
 	require.NoError(t, err)
 
-	// Different owning row: cross-provider ciphertext swap must fail.
 	_, err = enc.DecryptWithContext(ct, crypto.RowAAD("01HIDPB", crypto.PurposeIdPClientSecret))
 	require.Error(t, err, "a ciphertext relocated to another provider row must not open")
 
-	// Same row, different purpose: cross-purpose reuse must fail.
 	_, err = enc.DecryptWithContext(ct, crypto.RowAAD("01HIDPA", "different-purpose"))
 	require.Error(t, err, "a ciphertext reused under another purpose must not open")
 }
@@ -134,7 +127,6 @@ func TestDecryptWithContext_ByteTamperedFails(t *testing.T) {
 	ct, err := enc.EncryptWithContext("rotate-me", aad)
 	require.NoError(t, err)
 
-	// Flip a mid-string char of the base64 body — GCM integrity must reject.
 	body := strings.TrimPrefix(ct, "enc:v1:")
 	b := []byte(body)
 	idx := len(b) / 2
@@ -148,15 +140,14 @@ func TestDecryptWithContext_ByteTamperedFails(t *testing.T) {
 	require.Error(t, err, "a byte-tampered ciphertext must fail GCM integrity")
 }
 
-// Unknown ciphertext formats fail closed instead of being misread.
 func TestDecryptWithContext_RetiredFormatsFailLoudly(t *testing.T) {
 	enc, err := crypto.NewEncryptor(testKey())
 	require.NoError(t, err)
 	aad := crypto.RowAAD("01HROW", crypto.PurposeIdPClientSecret)
 
 	for _, legacy := range []string{
-		"enc:v2:QUFBQUFBQUFBQUFBQUFBQQ==", // pre-rename AAD format tag
-		"enc:v3:whatever",                 // unknown future tag
+		"enc:v2:QUFBQUFBQUFBQUFBQUFBQQ==",
+		"enc:v3:whatever",
 	} {
 		_, err := enc.DecryptWithContext(legacy, aad)
 		require.Error(t, err, "retired/unknown format %q must fail loudly, never pass through", legacy)
@@ -164,7 +155,6 @@ func TestDecryptWithContext_RetiredFormatsFailLoudly(t *testing.T) {
 	}
 }
 
-// A ciphertext created for a different context fails authentication.
 func TestDecryptWithContext_WrongAADFailsAuth(t *testing.T) {
 	enc, err := crypto.NewEncryptor(testKey())
 	require.NoError(t, err)
@@ -214,7 +204,6 @@ func TestDecryptWithContext_InvalidBase64(t *testing.T) {
 	require.Error(t, err)
 }
 
-// At-rest AAD keeps LUKS and LPS domains separate for the same device/action.
 func TestDecryptWithContext_LuksBlobDoesNotOpenUnderTheLpsDomain(t *testing.T) {
 	enc, err := crypto.NewEncryptor(testKey())
 	require.NoError(t, err)
@@ -226,14 +215,10 @@ func TestDecryptWithContext_LuksBlobDoesNotOpenUnderTheLpsDomain(t *testing.T) {
 	ct, err := enc.EncryptWithContext(passphrase, crypto.DeviceSecretAAD("01HROW", deviceID, "luks", actionID, 1))
 	require.NoError(t, err)
 
-	// Positive control: the LUKS domain still opens it. Without this the
-	// negative below would also pass for a ciphertext that opens under NO
-	// domain at all.
 	pt, err := enc.DecryptWithContext(ct, crypto.DeviceSecretAAD("01HROW", deviceID, "luks", actionID, 1))
 	require.NoError(t, err)
 	require.Equal(t, passphrase, pt)
 
-	// Same device, same action, wrong domain — the whole of the separation.
 	_, err = enc.DecryptWithContext(ct, crypto.DeviceSecretAAD("01HROW", deviceID, "lps", actionID, 1))
 	require.Error(t, err, "a LUKS passphrase must not open under the LPS domain tag")
 }

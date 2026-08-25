@@ -21,8 +21,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/terminal"
 )
 
-// StartTerminal persists the authorized session and mints one short-lived,
-// single-use bearer for control's process-local WebSocket bridge.
 func (h *Handlers) StartTerminal(ctx context.Context, req *connect.Request[cadestrov1.StartTerminalRequest]) (*connect.Response[cadestrov1.StartTerminalResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
@@ -32,8 +30,7 @@ func (h *Handlers) StartTerminal(ctx context.Context, req *connect.Request[cades
 	if err := h.requireTerminalPermission(ctx, "StartTerminal", deviceID); err != nil {
 		return nil, err
 	}
-	// Apply device-group confinement before existence lookup so a scoped caller
-	// cannot distinguish an out-of-scope device from an unknown one.
+
 	if err := h.enforceDeviceScope(ctx, "StartTerminal", deviceID); err != nil {
 		return nil, err
 	}
@@ -103,8 +100,6 @@ func (h *Handlers) StartTerminal(ctx context.Context, req *connect.Request[cades
 	}), nil
 }
 
-// StopTerminal accepts an idempotent owner stop, commits it, and then closes
-// the live bridge and agent PTY on a best-effort basis as required by contract.
 func (h *Handlers) StopTerminal(ctx context.Context, req *connect.Request[cadestrov1.StopTerminalRequest]) (*connect.Response[cadestrov1.StopTerminalResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
@@ -156,8 +151,6 @@ func (h *Handlers) StopTerminal(ctx context.Context, req *connect.Request[cadest
 	return connect.NewResponse(&cadestrov1.StopTerminalResponse{}), nil
 }
 
-// ListActiveTerminalSessions enumerates only sessions with a live bridge in
-// this single control process, then applies exact filters, scope, and paging.
 func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.Request[cadestrov1.ListActiveTerminalSessionsRequest]) (*connect.Response[cadestrov1.ListActiveTerminalSessionsResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	if req.Msg.PageToken != "" {
@@ -243,8 +236,6 @@ func (h *Handlers) ListActiveTerminalSessions(ctx context.Context, req *connect.
 	}), nil
 }
 
-// TerminateTerminalSession is the forcible admin path. It records intent before
-// sending, surfaces a failed agent write, and only then commits terminal state.
 func (h *Handlers) TerminateTerminalSession(ctx context.Context, req *connect.Request[cadestrov1.TerminateTerminalSessionRequest]) (*connect.Response[cadestrov1.TerminateTerminalSessionResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {

@@ -27,9 +27,6 @@ func DeviceIDFromContext(ctx context.Context) (string, bool) {
 	return id, ok && id != ""
 }
 
-// WithPeerCertificate binds the certificate verified by the TLS stack to a
-// request. Application identity must come from this value, never from a PEM
-// field in an agent request.
 func WithPeerCertificate(ctx context.Context, cert *x509.Certificate) context.Context {
 	return context.WithValue(ctx, peerCertificateKey{}, cert)
 }
@@ -50,52 +47,23 @@ func PeerSerialFromContext(ctx context.Context) (string, bool) {
 	return cert.SerialNumber.Text(16), true
 }
 
-// PeerClass identifies the role of a mTLS peer. The internal CA
-// issues every non-CA certificate with exactly one URI SAN of the
-// form `spiffe://cadestro/<class>`, where `<class>` is one of
-// the constants below. Middleware on each listener requires a
-// specific class so a leaked cert of one class (e.g. an agent
-// cert pulled from a compromised host) cannot be used to reach
-// a listener intended for another class (e.g. the control
-// agent listener, which accepts only agent peers).
-//
-// The SPIFFE URI shape is standard, machine-readable, and puts the
-// class in a field (SAN URI) that X.509 parsers treat as structured
-// data — unlike the CN, which is a free-form string reused for
-// device IDs on agent certs.
 type PeerClass string
 
 const (
-	// PeerClassAgent identifies a managed-device cert issued by the
-	// control server's Register / RenewCertificate RPC. Agents
-	// present this on control's own mTLS listener.
 	PeerClassAgent PeerClass = "agent"
-	// PeerClassControl identifies the control server's own cert,
-	// issued out of band by setup.sh and presented on its agent
-	// listener.
+
 	PeerClassControl PeerClass = "control"
 )
 
-// peerClassURIScheme and peerClassURIHost match the URI SAN layout
-// that ca.IssueCertificateFromCSR emits for agent certs and that
-// setup.sh emits for the control cert. Keeping them in one
-// place makes it obvious where to add a new class.
 const (
 	peerClassURIScheme = "spiffe"
 	peerClassURIHost   = "cadestro"
 )
 
-// peerClassURI builds the canonical SPIFFE URI for a class. Kept in
-// one place so emitters (CA + setup.sh) and verifiers agree.
 func peerClassURI(class PeerClass) string {
 	return fmt.Sprintf("%s://%s/%s", peerClassURIScheme, peerClassURIHost, class)
 }
 
-// PeerClassFromCert inspects the URI SANs on a peer certificate and
-// returns the identified class, or an error if the cert carries no
-// `spiffe://cadestro/<class>` URI or carries more than one such
-// URI (ambiguous class is a hard error — the CA MUST emit exactly
-// one).
 func PeerClassFromCert(cert *x509.Certificate) (PeerClass, error) {
 	if cert == nil {
 		return "", errors.New("nil certificate")
@@ -128,9 +96,6 @@ func PeerClassFromCert(cert *x509.Certificate) (PeerClass, error) {
 	}
 }
 
-// PeerClassFromTLS extracts the peer class from the first peer
-// certificate of a TLS connection state. Callers that already have
-// an *x509.Certificate should use PeerClassFromCert directly.
 func PeerClassFromTLS(state *tls.ConnectionState) (PeerClass, error) {
 	if state == nil {
 		return "", errors.New("no TLS connection state")
@@ -141,17 +106,6 @@ func PeerClassFromTLS(state *tls.ConnectionState) (PeerClass, error) {
 	return PeerClassFromCert(state.PeerCertificates[0])
 }
 
-// RequirePeerClass returns middleware that extracts the peer class
-// from the client certificate and rejects requests whose peer does
-// not match one of allowed. Health endpoints (/health, /ready) are
-// passed through untouched so they work without mTLS on the ops
-// listener.
-//
-// The classes are allowed as a set (variadic) rather than a single
-// class so a listener that serves multiple peer populations (not
-// currently needed, but possible — e.g. an endpoint
-// reachable by both control and admin CLI peers) does not need to
-// be wrapped twice.
 func RequirePeerClass(logger *slog.Logger, allowed ...PeerClass) func(http.Handler) http.Handler {
 	allowSet := make(map[PeerClass]struct{}, len(allowed))
 	for _, c := range allowed {
@@ -204,10 +158,6 @@ func allowedClassString(classes []PeerClass) string {
 	return strings.Join(out, ",")
 }
 
-// PeerClassURI returns the SPIFFE URI shape a CA emitter should
-// stamp onto a newly-issued certificate for the given class. Kept
-// exported so ca.IssueCertificateFromCSR can use it without
-// duplicating the format literal.
 func PeerClassURI(class PeerClass) (*url.URL, error) {
 	switch class {
 	case PeerClassAgent, PeerClassControl:

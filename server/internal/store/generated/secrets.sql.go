@@ -127,7 +127,6 @@ func (q *Queries) GetCurrentLuksKeyForAgent(ctx context.Context, arg GetCurrentL
 }
 
 const getDeviceSecret = `-- name: GetDeviceSecret :one
-
 SELECT id, device_id, kind, subject, version, ciphertext
 FROM device_secrets
 WHERE id = ?
@@ -142,9 +141,6 @@ type GetDeviceSecretRow struct {
 	Ciphertext string `json:"ciphertext"`
 }
 
-// Current and bounded historical device-secret metadata. List queries never
-// select ciphertext; one-entry reveal queries are the only administrative
-// read path for stored secret values.
 func (q *Queries) GetDeviceSecret(ctx context.Context, id string) (GetDeviceSecretRow, error) {
 	row := q.db.QueryRowContext(ctx, getDeviceSecret, id)
 	var i GetDeviceSecretRow

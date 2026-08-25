@@ -156,8 +156,8 @@ DELETE FROM compliance_policy_rules
 WHERE action_id = ?
 RETURNING policy_id;
 
--- Compliance evidence deletes return the devices whose summary was derived from
--- the rows they remove, so the caller can recompute it in the same transaction.
+
+
 
 -- name: DeleteCompliancePolicyEvaluationsForAction :many
 DELETE FROM compliance_policy_evaluation

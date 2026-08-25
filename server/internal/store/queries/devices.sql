@@ -268,7 +268,7 @@ WHERE EXISTS (SELECT 1 FROM devices d WHERE d.id = sqlc.arg(device_id) AND d.is_
   AND EXISTS (SELECT 1 FROM users u WHERE u.id = sqlc.arg(user_id) AND u.is_deleted = FALSE)
 ON CONFLICT (device_id, user_id) DO NOTHING;
 
--- Existing enrollment retries are keyed by the Ed25519 public key in the CSR.
+
 -- name: FindEnrollmentDevice :one
 SELECT d.*
 FROM devices d
@@ -281,9 +281,9 @@ WHERE t.value_hash = sqlc.arg(value_hash)
   AND d.enrollment_identity_public_key = sqlc.arg(identity_public_key)
   AND d.is_deleted = FALSE;
 
--- The INSERT is the global-use reservation. SQLite serializes this write, and
--- the count is derived from immutable device provenance rather than a token
--- counter, so the max boundary cannot be crossed by concurrent enrollments.
+
+
+
 -- name: InsertEnrolledDevice :one
 INSERT INTO devices (
     id, hostname, agent_version,

@@ -124,7 +124,6 @@ func (q *Queries) FindSCIMUserByExternalID(ctx context.Context, arg FindSCIMUser
 }
 
 const listSCIMUsers = `-- name: ListSCIMUsers :many
-
 SELECT u.id, u.email, u.provisioning_source, u.created_at, u.updated_at, u.last_login_at, u.disabled, u.is_deleted, u.session_version, u.display_name, u.given_name, u.family_name, u.preferred_username, u.picture, u.locale, u.linux_username, u.linux_uid, u.ssh_access_enabled, u.ssh_allow_pubkey, u.ssh_allow_password, u.system_user_action_id, u.system_ssh_action_id, u.system_tty_action_id, u.user_provisioning_enabled, l.external_id
 FROM users u
 JOIN identity_links l ON l.user_id = u.id
@@ -144,12 +143,6 @@ type ListSCIMUsersRow struct {
 	ExternalID string `json:"external_id"`
 }
 
-// The subject view a SCIM directory is allowed to see.
-//
-// Every statement joins identity_links and filters on provider_id: a
-// directory addresses only the subjects it is itself bound to, so a
-// second directory's subjects are not merely hidden from the response,
-// they never enter the result set.
 func (q *Queries) ListSCIMUsers(ctx context.Context, arg ListSCIMUsersParams) ([]ListSCIMUsersRow, error) {
 	rows, err := q.db.QueryContext(ctx, listSCIMUsers, arg.ProviderID, arg.Limit, arg.Offset)
 	if err != nil {

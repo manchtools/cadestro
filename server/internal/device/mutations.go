@@ -61,7 +61,6 @@ func (h *Handlers) SetDeviceLabel(ctx context.Context, req *connect.Request[cade
 	return h.updatedDevice(ctx, req.Msg.GetId().GetValue())
 }
 
-// RemoveDeviceLabel removes one label. Missing labels are an idempotent success.
 func (h *Handlers) RemoveDeviceLabel(ctx context.Context, req *connect.Request[cadestrov1.RemoveDeviceLabelRequest]) (*connect.Response[cadestrov1.UpdateDeviceResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
@@ -94,7 +93,6 @@ func (h *Handlers) RemoveDeviceLabel(ctx context.Context, req *connect.Request[c
 	return h.updatedDevice(ctx, req.Msg.GetId().GetValue())
 }
 
-// AssignDevice assigns distinct users and groups with one audited transaction.
 func (h *Handlers) AssignDevice(ctx context.Context, req *connect.Request[cadestrov1.AssignDeviceRequest]) (*connect.Response[cadestrov1.AssignDeviceResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	userIDs := make([]string, 0, len(req.Msg.GetUserIds()))
@@ -188,7 +186,6 @@ func (h *Handlers) AssignDevice(ctx context.Context, req *connect.Request[cadest
 	return connect.NewResponse(&cadestrov1.AssignDeviceResponse{Device: h.toProto(updated)}), nil
 }
 
-// UnassignDevice removes exactly one user or group assignment.
 func (h *Handlers) UnassignDevice(ctx context.Context, req *connect.Request[cadestrov1.UnassignDeviceRequest]) (*connect.Response[cadestrov1.UnassignDeviceResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	if (req.Msg.GetUserId().GetValue() == "") == (req.Msg.GetGroupId().GetValue() == "") {
@@ -240,7 +237,6 @@ func (h *Handlers) UnassignDevice(ctx context.Context, req *connect.Request[cade
 	return connect.NewResponse(&cadestrov1.UnassignDeviceResponse{Device: h.toProto(view)}), nil
 }
 
-// SetDeviceSyncInterval writes the device-level sync override directly.
 func (h *Handlers) SetDeviceSyncInterval(ctx context.Context, req *connect.Request[cadestrov1.SetDeviceSyncIntervalRequest]) (*connect.Response[cadestrov1.UpdateDeviceResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
@@ -265,7 +261,6 @@ func (h *Handlers) SetDeviceSyncInterval(ctx context.Context, req *connect.Reque
 	return h.updatedDevice(ctx, req.Msg.GetId().GetValue())
 }
 
-// SetDeviceInventoryInterval writes the device-level inventory override.
 func (h *Handlers) SetDeviceInventoryInterval(ctx context.Context, req *connect.Request[cadestrov1.SetDeviceInventoryIntervalRequest]) (*connect.Response[cadestrov1.UpdateDeviceResponse], error) {
 	if minutes := req.Msg.InventoryIntervalMinutes; minutes != 0 && (minutes < 120 || minutes > 10080) {
 		return nil, rpcError(ctx, errValidationFailed, connect.CodeInvalidArgument, "inventory interval is out of range")
@@ -293,9 +288,6 @@ func (h *Handlers) SetDeviceInventoryInterval(ctx context.Context, req *connect.
 	return h.updatedDevice(ctx, req.Msg.GetId().GetValue())
 }
 
-// DeleteDevice atomically soft-deletes the device, revokes its current
-// certificate, and records the audit effect. The active stream closes only
-// after that transaction commits.
 func (h *Handlers) DeleteDevice(ctx context.Context, req *connect.Request[cadestrov1.DeleteDeviceRequest]) (*connect.Response[cadestrov1.DeleteDeviceResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {

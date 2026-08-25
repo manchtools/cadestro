@@ -9,11 +9,8 @@ import (
 	sqlite3 "modernc.org/sqlite/lib"
 )
 
-// ErrNotFound is the canonical "no row matched" sentinel for store reads.
-// Code outside this package uses IsNotFound instead of depending on a driver.
 var ErrNotFound = errors.New("not found")
 
-// IsNotFound reports whether err signals a missing row.
 func IsNotFound(err error) bool {
 	if err == nil {
 		return false
@@ -28,11 +25,8 @@ func translateNotFound(err error) error {
 	return err
 }
 
-// ErrConflict is the canonical "a conditional write lost" sentinel.
 var ErrConflict = errors.New("conflict")
 
-// IsConflict reports whether err is a semantic conflict or a SQLite unique
-// constraint that represents the same lost conditional write.
 func IsConflict(err error) bool {
 	if err == nil {
 		return false
@@ -48,9 +42,6 @@ func IsConflict(err error) bool {
 		sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY
 }
 
-// IsAppendOnlyViolation reports whether SQLite's audit trigger refused an
-// UPDATE or DELETE. The message check distinguishes it from unrelated trigger
-// constraints.
 func IsAppendOnlyViolation(err error) bool {
 	if err == nil {
 		return false

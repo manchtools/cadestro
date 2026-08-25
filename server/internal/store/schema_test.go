@@ -1,9 +1,5 @@
 package store_test
 
-// Schema invariants are asserted against SQLite's live catalog. Every catalog
-// query has a matches-zero guard so a misspelled or unsupported pragma cannot
-// make the test pass vacuously.
-
 import (
 	"context"
 	"testing"

@@ -8,7 +8,6 @@ import (
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
-// MountActions registers exactly the explicit Action CRUD procedures.
 func (h *Handlers) MountActions(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
 	if mux == nil {
 		panic("authoring: mux is required")
@@ -35,7 +34,6 @@ func (h *Handlers) MountActions(mux *http.ServeMux, opts ...connect.HandlerOptio
 	return mounted
 }
 
-// ActionMutationProcedures is the exact audited Action mutation surface.
 func ActionMutationProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceCreateActionProcedure,
@@ -46,7 +44,6 @@ func ActionMutationProcedures() []string {
 	}
 }
 
-// ActionReadProcedures is the exact non-mutating Action surface.
 func ActionReadProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceGetActionProcedure,
@@ -54,7 +51,6 @@ func ActionReadProcedures() []string {
 	}
 }
 
-// MountActionSets registers exactly the explicit ActionSet CRUD procedures.
 func (h *Handlers) MountActionSets(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
 	if mux == nil {
 		panic("authoring: mux is required")
@@ -87,7 +83,6 @@ func (h *Handlers) MountActionSets(mux *http.ServeMux, opts ...connect.HandlerOp
 	return mounted
 }
 
-// ActionSetMutationProcedures is the exact audited ActionSet mutation surface.
 func ActionSetMutationProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceCreateActionSetProcedure,
@@ -101,7 +96,6 @@ func ActionSetMutationProcedures() []string {
 	}
 }
 
-// ActionSetReadProcedures is the exact non-mutating ActionSet surface.
 func ActionSetReadProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceGetActionSetProcedure,
@@ -109,7 +103,6 @@ func ActionSetReadProcedures() []string {
 	}
 }
 
-// MountDefinitions registers exactly the explicit Definition CRUD procedures.
 func (h *Handlers) MountDefinitions(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
 	if mux == nil {
 		panic("authoring: mux is required")
@@ -142,8 +135,6 @@ func (h *Handlers) MountDefinitions(mux *http.ServeMux, opts ...connect.HandlerO
 	return mounted
 }
 
-// DefinitionMutationProcedures is the exact audited Definition mutation
-// surface.
 func DefinitionMutationProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceCreateDefinitionProcedure,
@@ -157,7 +148,6 @@ func DefinitionMutationProcedures() []string {
 	}
 }
 
-// DefinitionReadProcedures is the exact non-mutating Definition surface.
 func DefinitionReadProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceGetDefinitionProcedure,

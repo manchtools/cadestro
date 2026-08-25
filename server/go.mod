@@ -52,16 +52,16 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 )
 
-// The SDK import path differs from the actual GitHub repo URL
-// (monorepo-style import path, polyrepo actual layout). Map it here
-// so every `go build` uses a specific, pinned SDK version rather than
-// whatever happens to be in a local ../sdk checkout. Developers who
-// want to iterate against a local SDK override this with a per-dev
-// go.work at their workspace root — see server/README.md for setup.
 
-// The contract and the SDK are modules of this repository, resolved from their
-// sibling directories. The v0.0.0 above is a placeholder the replace makes
-// unreachable — nothing fetches these, so no version is ever consulted.
+
+
+
+
+
+
+
+
+
 replace github.com/manchtools/cadestro/contract => ../contract
 
 replace github.com/manchtools/cadestro/sdk => ../sdk

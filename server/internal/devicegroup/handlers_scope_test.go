@@ -64,11 +64,6 @@ func unrestrictedCaller() *auth.UserContext {
 	}
 }
 
-// TestListDeviceGroupsForDevice_OutOfScopeDeviceIsNotAnExistenceOracle proves a
-// scope-restricted caller cannot distinguish a device outside its scope from a
-// nonexistent one: both read as NotFound, matching how GetDeviceGroup and
-// device.GetDevice fold out-of-scope access. Before the fix an existing
-// out-of-scope device returned OK with an empty group list, leaking existence.
 func TestListDeviceGroupsForDevice_OutOfScopeDeviceIsNotAnExistenceOracle(t *testing.T) {
 	h, raw := newScopeFixture(t)
 	ctx := context.Background()

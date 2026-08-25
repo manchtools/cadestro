@@ -12,12 +12,6 @@ import (
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
-// mintSession resolves a subject's current authority from the database
-// and issues a token pair for it.
-//
-// The authority is ALWAYS re-read here rather than carried over from a
-// previous token: that is what makes a revoked role stop working at the
-// next refresh instead of at the end of the refresh token's lifetime.
 func (h *Handlers) mintSession(ctx context.Context, userID, email string, sessionVersion int32) (*auth.TokenPair, error) {
 	permissions, err := h.store.ListUserPermissions(ctx, userID)
 	if err != nil {
@@ -41,14 +35,6 @@ func (h *Handlers) mintSession(ctx context.Context, userID, email string, sessio
 	return h.jwt.GenerateTokens(userID, email, permissions, grants, sessionVersion)
 }
 
-// RefreshToken rotates a session.
-//
-// It is a public procedure: the caller has no access token, which is
-// the whole reason to be here. The refresh token itself is the
-// credential, so it is validated, checked against the revocation list,
-// and then revoked BEFORE the replacement is minted — a conditional
-// insert, so two concurrent presentations of the same token cannot both
-// produce a new session.
 func (h *Handlers) RefreshToken(ctx context.Context, req *connect.Request[cadestrov1.RefreshTokenRequest]) (*connect.Response[cadestrov1.RefreshTokenResponse], error) {
 
 	result, err := h.jwt.ValidateRefreshToken(req.Msg.RefreshToken, func(jti string) (bool, error) {
@@ -65,10 +51,7 @@ func (h *Handlers) RefreshToken(ctx context.Context, req *connect.Request[cadest
 		}
 		return nil, internalError(ctx, "failed to resolve session state")
 	}
-	// A retired or disabled subject, and a session minted under an
-	// older authority, all get the same answer: the session is over.
-	// Distinguishing them would report account state to a caller who
-	// holds only a stale token.
+
 	if state.IsDeleted || state.Disabled || state.SessionVersion != result.Claims.SessionVersion {
 		return nil, h.rejectSession(ctx, req, "session invalidated, please log in again")
 	}
@@ -78,8 +61,7 @@ func (h *Handlers) RefreshToken(ctx context.Context, req *connect.Request[cadest
 		return nil, err
 	}
 	if !rotated {
-		// The token was already spent by a concurrent refresh. That is
-		// a replay from this request's point of view.
+
 		return nil, h.rejectSession(ctx, req, "refresh token already used")
 	}
 
@@ -94,13 +76,6 @@ func (h *Handlers) RefreshToken(ctx context.Context, req *connect.Request[cadest
 	}), nil
 }
 
-// Logout revokes a refresh token so the session cannot be rotated
-// again.
-//
-// A token that does not validate is not an error: logout is best
-// described as "make sure this is dead", and reporting that a presented
-// value was not a real token tells an unauthenticated caller something
-// about it. The response is identical either way.
 func (h *Handlers) Logout(ctx context.Context, req *connect.Request[cadestrov1.LogoutRequest]) (*connect.Response[cadestrov1.LogoutResponse], error) {
 	claims, err := h.jwt.ValidateToken(req.Msg.RefreshToken, auth.TokenTypeRefresh)
 	if err != nil {
@@ -116,13 +91,6 @@ func (h *Handlers) Logout(ctx context.Context, req *connect.Request[cadestrov1.L
 	return connect.NewResponse(&cadestrov1.LogoutResponse{}), nil
 }
 
-// revokeRefreshToken records a session token id on the revocation list
-// and writes the audit evidence in the same transaction.
-//
-// Reports whether THIS call performed the revocation: the insert is
-// conditional, so a token already revoked by a concurrent caller
-// returns false rather than an error, and the caller decides whether
-// losing that race matters.
 func (h *Handlers) revokeRefreshToken(
 	ctx context.Context,
 	req connect.AnyRequest,
@@ -135,14 +103,10 @@ func (h *Handlers) revokeRefreshToken(
 		return false, nil
 	}
 	if expiresAt.IsZero() {
-		// A token with no expiry cannot age out of the revocation
-		// table, so the row is given the same bound the token would
-		// have had.
+
 		expiresAt = h.now().Add(h.jwt.AccessTokenTTL())
 	}
 
-	// The subject is the actor: presenting a valid refresh token IS the
-	// authentication for this operation.
 	actor := &auth.UserContext{ID: subjectID, Kind: auth.PrincipalUser}
 	op := h.mutationOp(req, actor, "")
 	op.AuthorizationOutcome = store.AuthorizationNotApplicable
@@ -154,14 +118,12 @@ func (h *Handlers) revokeRefreshToken(
 		case err == nil:
 			revoked = true
 		case store.IsNotFound(err):
-			// ON CONFLICT DO NOTHING returned no row: already revoked.
+
 			revoked = false
 		default:
 			return err
 		}
-		// The effect is recorded either way. "This session was already
-		// dead" is evidence too, and a revocation attempt that produced
-		// nothing is exactly what a replay looks like.
+
 		outcome := store.EffectApplied
 		if !revoked {
 			outcome = store.EffectRejected
@@ -171,10 +133,7 @@ func (h *Handlers) revokeRefreshToken(
 			ResourceID:   subjectID,
 			Action:       action,
 			Outcome:      outcome,
-			// The token id is a session identifier, not a credential,
-			// but it is recorded as a digest anyway: an audit row is
-			// readable by anyone who may read audit, and a session id
-			// is a correlation handle they do not need in the clear.
+
 			EvidenceKind:        "session_token_id_sha256",
 			EvidenceFingerprint: auth.Fingerprint(jti),
 		})
@@ -187,13 +146,6 @@ func (h *Handlers) revokeRefreshToken(
 	return revoked, nil
 }
 
-// rejectSession records a refused session operation under the
-// rejected-authentication class and returns the caller's error.
-//
-// The refresh path is public, so this is the only place a bad session
-// credential on it becomes evidence: the authentication interceptor
-// waved the request through precisely because the procedure carries no
-// access token.
 func (h *Handlers) rejectSession(ctx context.Context, req connect.AnyRequest, msg string) error {
 	op := store.AuditOperation{
 		Class:                store.ClassRejectedAuthentication,
@@ -213,11 +165,6 @@ func (h *Handlers) rejectSession(ctx context.Context, req connect.AnyRequest, ms
 	return rpcError(ctx, ErrTokenExpired, connect.CodeUnauthenticated, msg)
 }
 
-// GetCurrentUser returns the authenticated subject's own record.
-//
-// It is the one user read with no permission target: the caller is the
-// resource. A principal that is not a subject — the reserved bootstrap
-// principal — has no record to return and gets not-found.
 func (h *Handlers) GetCurrentUser(ctx context.Context, req *connect.Request[cadestrov1.GetCurrentUserRequest]) (*connect.Response[cadestrov1.GetCurrentUserResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {

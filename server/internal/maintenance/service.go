@@ -1,5 +1,3 @@
-// Package maintenance wires the fixed control-plane housekeeping jobs to the
-// durable SQLite scheduler.
 package maintenance
 
 import (
@@ -35,12 +33,10 @@ var recurring = map[string]time.Duration{
 	KindSecurityInspect:  securityInspectInterval,
 }
 
-// Notifier is the only outbound notification capability maintenance needs.
 type Notifier interface {
 	Send(context.Context, webhook.Event) error
 }
 
-// Config supplies the fixed maintenance dependencies and backup policy.
 type Config struct {
 	Store        *store.Store
 	Now          func() time.Time
@@ -49,7 +45,6 @@ type Config struct {
 	BackupMaxLag time.Duration
 }
 
-// Service implements the production maintenance job handlers.
 type Service struct {
 	store        *store.Store
 	now          func() time.Time
@@ -58,7 +53,6 @@ type Service struct {
 	backupMaxLag time.Duration
 }
 
-// New constructs the maintenance service.
 func New(cfg Config) *Service {
 	if cfg.Store == nil || cfg.BackupPath == "" || cfg.BackupMaxLag <= 0 {
 		panic("maintenance: store and backup policy are required")
@@ -73,7 +67,6 @@ func New(cfg Config) *Service {
 	}
 }
 
-// Handlers returns the complete fixed job registry.
 func (s *Service) Handlers() map[string]jobs.Handler {
 	return map[string]jobs.Handler{
 		KindAuthStateCleanup: s.CleanupAuthStates,
@@ -82,7 +75,6 @@ func (s *Service) Handlers() map[string]jobs.Handler {
 	}
 }
 
-// Recurring returns the fixed schedule used by the durable runner.
 func (s *Service) Recurring() map[string]time.Duration {
 	out := make(map[string]time.Duration, len(recurring))
 	for kind, interval := range recurring {
@@ -91,8 +83,6 @@ func (s *Service) Recurring() map[string]time.Duration {
 	return out
 }
 
-// EnsureScheduled seeds one durable singleton per maintenance kind. Existing
-// pending or claimed rows survive restarts and are left untouched.
 func (s *Service) EnsureScheduled(ctx context.Context) error {
 	if ctx == nil {
 		return errors.New("maintenance scheduling requires a context")
@@ -124,15 +114,11 @@ func (s *Service) EnsureScheduled(ctx context.Context) error {
 	return nil
 }
 
-// CleanupAuthStates removes expired one-time OIDC state through the audited
-// maintenance store path.
 func (s *Service) CleanupAuthStates(ctx context.Context, _ jobs.Job) error {
 	_, err := s.store.CleanupExpiredAuthStates(ctx)
 	return err
 }
 
-// InspectSecurity reports zero enabled global administrators. It does not
-// block identity changes: bootstrap-admin is the recovery path.
 func (s *Service) InspectSecurity(ctx context.Context, _ jobs.Job) error {
 	if ctx == nil {
 		return errors.New("security inspection requires a context")
@@ -172,8 +158,6 @@ func (s *Service) InspectSecurity(ctx context.Context, _ jobs.Job) error {
 	})
 }
 
-// InspectBackup reports a missing, invalid, or overdue verified SQLite
-// backup without changing application readiness.
 func (s *Service) InspectBackup(ctx context.Context, _ jobs.Job) error {
 	if ctx == nil {
 		return errors.New("backup inspection requires a context")

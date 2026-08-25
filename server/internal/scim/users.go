@@ -9,16 +9,11 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-// Reading the population a directory provisioned is a bulk read of
-// personal data, so it is recorded under the sensitive-read class
-// rather than left unaudited.
-
 const (
 	defaultPageSize = 100
 	maxPageSize     = 200
 )
 
-// listUsers handles GET /Users.
 func (h *Handler) listUsers(w http.ResponseWriter, r *http.Request, s *session) {
 	ctx := r.Context()
 	baseURL := baseURLFromRequest(r, s.provider.Slug)
@@ -58,8 +53,6 @@ func (h *Handler) listUsers(w http.ResponseWriter, r *http.Request, s *session) 
 	})
 }
 
-// listUsersFiltered answers the equality filters a directory uses to
-// find out whether it has already provisioned somebody.
 func (h *Handler) listUsersFiltered(w http.ResponseWriter, r *http.Request, s *session, expr string, startIndex int, baseURL string) {
 	ctx := r.Context()
 	f, err := parseFilter(expr)
@@ -104,7 +97,6 @@ func (h *Handler) listUsersFiltered(w http.ResponseWriter, r *http.Request, s *s
 	})
 }
 
-// getUser handles GET /Users/{id}.
 func (h *Handler) getUser(w http.ResponseWriter, r *http.Request, s *session) {
 	ctx := r.Context()
 	link, row, ok := h.resolveSubject(ctx, w, s, r.PathValue("id"))
@@ -126,13 +118,6 @@ func (h *Handler) getUser(w http.ResponseWriter, r *http.Request, s *session) {
 	writeJSON(w, http.StatusOK, userResource(row, link.ExternalID, baseURLFromRequest(r, s.provider.Slug)))
 }
 
-// resolveSubject is the shared front half of every subject-target
-// route: it resolves the binding this directory holds on the subject,
-// and then the subject.
-//
-// A subject bound to a DIFFERENT directory and a subject that does not
-// exist get the same not-found answer. Reporting them differently would
-// tell one directory which ids the others had provisioned.
 func (h *Handler) resolveSubject(ctx context.Context, w http.ResponseWriter, s *session, userID string) (store.IdentityLinkRow, store.UserRow, bool) {
 	if userID == "" {
 		writeError(w, http.StatusBadRequest, "missing user id")
@@ -161,12 +146,6 @@ func (h *Handler) resolveSubject(ctx context.Context, w http.ResponseWriter, s *
 	return link, row, true
 }
 
-// recordListRead writes the audited operation for a collection read.
-//
-// The effect names the DIRECTORY rather than each row it returned: an
-// effect per subject would put the whole population in the log on every
-// sync cycle, while the provider reference plus the count is what an
-// investigator actually needs — who read, and how much.
 func (h *Handler) recordListRead(ctx context.Context, w http.ResponseWriter, s *session, action string, returned int64) bool {
 	if _, err := h.store.RecordOperation(ctx, h.sensitiveReadOp(s), store.AuditEffect{
 		ResourceType: "identity_provider",
@@ -182,10 +161,6 @@ func (h *Handler) recordListRead(ctx context.Context, w http.ResponseWriter, s *
 	return true
 }
 
-// pageWindow reads the SCIM pagination parameters. startIndex is
-// 1-based per RFC 7644; a value the client cannot have meant is
-// replaced by the default rather than refused, which is what
-// directories expect.
 func pageWindow(r *http.Request) (startIndex, count int) {
 	startIndex, count = 1, defaultPageSize
 	if v, err := strconv.Atoi(r.URL.Query().Get("startIndex")); err == nil && v > 0 {

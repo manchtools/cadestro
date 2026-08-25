@@ -1,4 +1,3 @@
-// Package devicegroup owns direct device-group state.
 package devicegroup
 
 import (
@@ -27,19 +26,16 @@ var (
 	errNoChange       = errors.New("device group mutation made no change")
 )
 
-// Config supplies the direct store and clock.
 type Config struct {
 	Store *store.Store
 	Now   func() time.Time
 }
 
-// State applies device-group mutations through audited transactions.
 type State struct {
 	store *store.Store
 	now   func() time.Time
 }
 
-// NewState constructs direct device-group state.
 func NewState(cfg Config) *State {
 	if cfg.Store == nil {
 		panic("device group: store is required")
@@ -50,7 +46,6 @@ func NewState(cfg Config) *State {
 	return &State{store: cfg.Store, now: cfg.Now}
 }
 
-// CreateParams is the complete authored shape of a new group.
 type CreateParams struct {
 	Name        string
 	Description string
@@ -59,7 +54,6 @@ type CreateParams struct {
 	Query       string
 }
 
-// Create inserts one empty group.
 func (s *State) Create(ctx context.Context, op store.AuditOperation, p CreateParams) (store.DeviceGroupView, error) {
 	if ctx == nil || !validID(p.CreatedBy) || (op.ActorID != "" && op.ActorID != p.CreatedBy) ||
 		p.Name == "" || utf8.RuneCountInString(p.Name) > 255 || utf8.RuneCountInString(p.Description) > 1024 {
@@ -86,7 +80,6 @@ func (s *State) Create(ctx context.Context, op store.AuditOperation, p CreatePar
 	return s.store.GetDeviceGroup(ctx, id)
 }
 
-// Rename replaces a group name.
 func (s *State) Rename(ctx context.Context, op store.AuditOperation, id, name string) (store.DeviceGroupView, error) {
 	if ctx == nil || !validID(id) || name == "" || utf8.RuneCountInString(name) > 255 {
 		return store.DeviceGroupView{}, ErrInvalidInput
@@ -101,7 +94,6 @@ func (s *State) Rename(ctx context.Context, op store.AuditOperation, id, name st
 	return s.readAfter(ctx, id, err)
 }
 
-// UpdateDescription replaces a group description.
 func (s *State) UpdateDescription(ctx context.Context, op store.AuditOperation, id, description string) (store.DeviceGroupView, error) {
 	if ctx == nil || !validID(id) || utf8.RuneCountInString(description) > 1024 {
 		return store.DeviceGroupView{}, ErrInvalidInput
@@ -118,8 +110,6 @@ func (s *State) UpdateDescription(ctx context.Context, op store.AuditOperation, 
 	return s.readAfter(ctx, id, err)
 }
 
-// UpdateQuery replaces the membership mode and dynamic query. Membership
-// reconciliation is a separate explicit evaluation operation.
 func (s *State) UpdateQuery(ctx context.Context, op store.AuditOperation, id string, dynamic bool, raw string) (store.DeviceGroupView, error) {
 	if ctx == nil || !validID(id) {
 		return store.DeviceGroupView{}, ErrInvalidInput
@@ -137,11 +127,7 @@ func (s *State) UpdateQuery(ctx context.Context, op store.AuditOperation, id str
 			return err
 		}
 		fields := []string{"is_dynamic", "dynamic_query"}
-		// Converting a curated group hands membership to the rule, so the rows it
-		// was hand-picked from go in the SAME transaction that sets the mode.
-		// Left behind, they would make the group report members its own rule does
-		// not select until somebody evaluated it. The reverse direction keeps its
-		// rows on purpose: materializing freezes the membership the rule produced.
+
 		if dynamic && !current.IsDynamic {
 			if _, err := tx.DeleteDeviceGroupMembers(ctx, id); err != nil {
 				return err
@@ -159,7 +145,6 @@ func (s *State) UpdateQuery(ctx context.Context, op store.AuditOperation, id str
 	return s.readAfter(ctx, id, err)
 }
 
-// AddDevices adds each live device once to a static group.
 func (s *State) AddDevices(ctx context.Context, op store.AuditOperation, groupID string, deviceIDs []string) (int64, error) {
 	if ctx == nil || !validID(groupID) || len(deviceIDs) == 0 || len(deviceIDs) > maxBatchDevices {
 		return 0, ErrInvalidInput
@@ -237,7 +222,6 @@ func (s *State) AddDevices(ctx context.Context, op store.AuditOperation, groupID
 	return added, translateNotFound(err)
 }
 
-// RemoveDevice removes one live device from a static group.
 func (s *State) RemoveDevice(ctx context.Context, op store.AuditOperation, groupID, deviceID string) error {
 	if ctx == nil || !validID(groupID) || !validID(deviceID) {
 		return ErrInvalidInput
@@ -268,7 +252,6 @@ func (s *State) RemoveDevice(ctx context.Context, op store.AuditOperation, group
 	return translateNotFound(err)
 }
 
-// SetSyncInterval replaces the group's sync contribution.
 func (s *State) SetSyncInterval(ctx context.Context, op store.AuditOperation, id string, minutes int32) (store.DeviceGroupView, error) {
 	if ctx == nil || !validID(id) || minutes < 0 || minutes > 1440 {
 		return store.DeviceGroupView{}, ErrInvalidInput
@@ -285,7 +268,6 @@ func (s *State) SetSyncInterval(ctx context.Context, op store.AuditOperation, id
 	return s.readAfter(ctx, id, err)
 }
 
-// SetInventoryInterval replaces the group's inventory contribution.
 func (s *State) SetInventoryInterval(ctx context.Context, op store.AuditOperation, id string, minutes int32) (store.DeviceGroupView, error) {
 	if ctx == nil || !validID(id) || (minutes != 0 && (minutes < 120 || minutes > 10080)) {
 		return store.DeviceGroupView{}, ErrInvalidInput
@@ -319,8 +301,6 @@ func (s *State) SetMaintenanceWindow(ctx context.Context, op store.AuditOperatio
 	return s.readAfter(ctx, id, err)
 }
 
-// Delete soft-deletes a group and removes memberships, assignments and scoped
-// authority in the same transaction.
 func (s *State) Delete(ctx context.Context, op store.AuditOperation, id string) error {
 	if ctx == nil || !validID(id) {
 		return ErrInvalidInput

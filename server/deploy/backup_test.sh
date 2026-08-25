@@ -14,7 +14,7 @@ mkdir -p "$WORK_DIR/bin" "$WORK_DIR/data/backups"
 cp "$SOURCE_DIR/backup.sh" "$WORK_DIR/backup.sh"
 
 cat > "$WORK_DIR/bin/docker" <<'EOF'
-#!/usr/bin/env bash
+
 set -euo pipefail
 last="${*: -1}"
 if [[ "$*" == *" test -f /var/lib/cadestro/state/control.db"* ]]; then

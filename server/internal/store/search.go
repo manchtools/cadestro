@@ -16,17 +16,13 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store/sqlitetype"
 )
 
-// ErrInvalidSearch means a facet, filter, sort, or page bound is outside the
-// fixed search contract.
 var ErrInvalidSearch = errors.New("invalid search request")
 
-// SearchDateRange narrows one allowlisted timestamp field by Unix seconds.
 type SearchDateRange struct {
 	Field      string
 	Start, End int64
 }
 
-// SearchParams is one deterministic page within one search facet.
 type SearchParams struct {
 	Scope      string
 	Query      string
@@ -43,7 +39,6 @@ type SearchParams struct {
 	OnlineSince     time.Time
 }
 
-// SearchRow is the common wire-facing shape returned by every facet.
 type SearchRow struct {
 	ID, Name, Description string
 	MemberCount           int64
@@ -84,9 +79,6 @@ func keys(values ...string) map[string]bool {
 	return result
 }
 
-// Search reads the transactionally-maintained SQLite FTS5 document table.
-// Prefix results always precede fuzzy-only results; both tiers are filtered by
-// the same live-row authorization query before pagination.
 func (s *Store) Search(ctx context.Context, p SearchParams) ([]SearchRow, int64, error) {
 	if ctx == nil || s == nil || utf8.RuneCountInString(p.Query) > 1024 ||
 		p.Offset < 0 || p.Offset > 100_000 || p.Limit < 1 || p.Limit > 200 {
@@ -278,9 +270,6 @@ func escapeLikePrefix(value string) string {
 	return strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(value)
 }
 
-// ftsTrigramExpression is a candidate prefilter, never the final fuzzy
-// decision. Four-character tokens fall back to the bounded facet scan because
-// one adjacent transposition can replace both of their trigrams.
 func ftsTrigramExpression(query string) string {
 	seen := make(map[string]struct{})
 	parts := make([]string, 0)
@@ -460,8 +449,6 @@ func (s *Store) queryVisibleSearchIDs(ctx context.Context, scope string, request
 	}
 }
 
-// RebuildSearchIndexes rebuilds both FTS5 indexes from their authoritative
-// content table and records the operator action in the audit chain.
 func (s *Store) RebuildSearchIndexes(ctx context.Context, op AuditOperation) error {
 	_, err := s.WithAudit(ctx, op, func(ctx context.Context, tx *Tx, rec *AuditRecorder) error {
 		if err := rebuildSearchDocuments(ctx, tx.Queries); err != nil {

@@ -1,5 +1,3 @@
-// Package terminalbridge connects an authenticated browser WebSocket directly
-// to an agent's existing mTLS stream.
 package terminalbridge
 
 import (
@@ -33,7 +31,6 @@ var (
 	errTerminalEnded        = errors.New("terminal ended before it started")
 )
 
-// Config supplies the one-process terminal state and transport.
 type Config struct {
 	Manager        *connection.Manager
 	Sessions       *connection.TerminalSessionRegistry
@@ -45,7 +42,6 @@ type Config struct {
 	Now            func() time.Time
 }
 
-// Handler serves the control-owned terminal WebSocket endpoint.
 type Handler struct {
 	manager        *connection.Manager
 	sessions       *connection.TerminalSessionRegistry
@@ -57,7 +53,6 @@ type Handler struct {
 	now            func() time.Time
 }
 
-// New constructs a direct terminal bridge.
 func New(cfg Config) *Handler {
 	if cfg.Manager == nil || cfg.Sessions == nil || cfg.Tokens == nil || cfg.Store == nil {
 		panic("terminalbridge: manager, sessions, tokens, and store are required")
@@ -78,8 +73,6 @@ func New(cfg Config) *Handler {
 	}
 }
 
-// ServeHTTP redeems one short-lived token and owns the bridge until either
-// endpoint closes. No terminal bytes are logged or copied into audit records.
 func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	sessionID := request.URL.Query().Get("session_id")
 	token, subprotocol := terminalToken(request)
@@ -104,11 +97,7 @@ func (h *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request)
 		http.Error(response, "device unavailable", http.StatusServiceUnavailable)
 		return
 	}
-	// The public server bounds ordinary request bodies with ReadTimeout. A
-	// WebSocket becomes a long-lived terminal transport after the upgrade, so
-	// it must not inherit that one-request deadline. Fail closed if the concrete
-	// server response writer cannot remove it; accepting would produce a shell
-	// that is guaranteed to die when the original deadline expires.
+
 	if err := http.NewResponseController(response).SetReadDeadline(time.Time{}); err != nil {
 		h.logger.Error("clear terminal read deadline", "code", "TRANSPORT_UNSUPPORTED")
 		http.Error(response, "terminal session unavailable", http.StatusServiceUnavailable)

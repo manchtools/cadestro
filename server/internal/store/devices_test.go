@@ -76,8 +76,6 @@ func TestDeviceCRUD_ViewsAndFilters(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Scope setup belongs to the future device-group mutation slice. This
-	// test only needs a real relation to prove the device list's read filter.
 	_, err = pool.Exec(ctx, `INSERT INTO device_groups (id, name) VALUES ($1, 'scope-a')`, deviceGroupID)
 	require.NoError(t, err)
 	_, err = pool.Exec(ctx, `INSERT INTO device_group_members (group_id, device_id) VALUES ($1, $2)`, deviceGroupID, deviceIDs[1])

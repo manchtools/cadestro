@@ -1,4 +1,3 @@
-// Package idp provides identity provider integration for OIDC SSO.
 package idp
 
 import (
@@ -16,37 +15,18 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// OIDCProvider wraps the go-oidc provider and OAuth2 config.
 type OIDCProvider struct {
 	Provider    *oidc.Provider
 	OAuth2Cfg   oauth2.Config
 	Verifier    *oidc.IDTokenVerifier
 	GroupClaim  string
 	UserinfoURL string
-	// httpClient bounds every outbound OIDC call (discovery, token exchange,
-	// lazy JWKS keyset fetch) with connect/handshake/response timeouts (WS5
-	// #6/#14). Without it go-oidc falls back to http.DefaultClient, which has
-	// no timeout — a slow/hung IdP (or an attacker-controlled one reached via a
-	// public SSOCallback) could hang a request indefinitely. Threaded into
-	// every call via oidc.ClientContext.
+
 	httpClient *http.Client
 }
 
-// oidcHTTPTimeout is the overall per-request ceiling for outbound OIDC calls.
-// A package var (not a const) so tests can shrink it to assert the timeout
-// fires without a multi-second wait.
 var oidcHTTPTimeout = 12 * time.Second
 
-// ssrfSafeDialControl is a net.Dialer.Control hook (spec 29 S4) that refuses to
-// connect to internal addresses. It runs AFTER DNS resolution with the concrete
-// IP being dialed, so it defends against SSRF regardless of the configured
-// issuer/token URL (including DNS that resolves a public name to a private IP).
-// Blocks loopback, RFC1918/ULA private, link-local (incl. 169.254.169.254 cloud
-// metadata), and the unspecified address.
-// oidcDialControl is the dial-control installed on the OIDC HTTP client. A
-// package var (like oidcHTTPTimeout) so the idp test binary can disable it —
-// httptest servers listen on loopback, which the guard correctly blocks in
-// production; the guard's logic is unit-tested via ssrfSafeDialControl directly.
 var oidcDialControl = ssrfSafeDialControl
 
 func ssrfSafeDialControl(_, address string, _ syscall.RawConn) error {
@@ -58,16 +38,13 @@ func ssrfSafeDialControl(_, address string, _ syscall.RawConn) error {
 	if ip == nil {
 		return fmt.Errorf("ssrf guard: dial address %q is not an IP", host)
 	}
-	// net.IP.IsPrivate covers RFC1918 + ULA but NOT RFC 6598 shared address space
-	// (100.64.0.0/10), reachable as internal services behind CGNAT / in some cloud
-	// VPCs — block it explicitly.
+
 	if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() || cgnatNet.Contains(ip) {
 		return fmt.Errorf("ssrf guard: refusing to dial internal address %s", ip)
 	}
 	return nil
 }
 
-// cgnatNet is RFC 6598 Shared Address Space (100.64.0.0/10).
 var cgnatNet = func() *net.IPNet {
 	_, n, err := net.ParseCIDR("100.64.0.0/10")
 	if err != nil {
@@ -76,10 +53,6 @@ var cgnatNet = func() *net.IPNet {
 	return n
 }()
 
-// newBoundedOIDCClient returns an *http.Client with connect, TLS-handshake,
-// response-header and overall timeouts so no outbound OIDC call can hang, plus an
-// SSRF dial-control denylist (spec 29 S4) so a misconfigured/attacker-set
-// issuer/token URL cannot make the server probe its internal network.
 func newBoundedOIDCClient() *http.Client {
 	return &http.Client{
 		Timeout: oidcHTTPTimeout,
@@ -94,7 +67,6 @@ func newBoundedOIDCClient() *http.Client {
 	}
 }
 
-// ProviderConfig holds the configuration needed to create an OIDC provider.
 type ProviderConfig struct {
 	IssuerURL        string
 	AuthorizationURL string
@@ -107,12 +79,9 @@ type ProviderConfig struct {
 	GroupClaim       string
 }
 
-// NewOIDCProvider creates a new OIDC provider by performing discovery.
 func NewOIDCProvider(ctx context.Context, cfg ProviderConfig) (*OIDCProvider, error) {
 	httpClient := newBoundedOIDCClient()
-	// Inject the bounded client BEFORE discovery; go-oidc stores it
-	// (getClient(ctx)) and threads it into the lazy keyset fetch the Verifier
-	// uses, so the JWKS GET inherits the same timeout.
+
 	ctx = oidc.ClientContext(ctx, httpClient)
 	provider, err := oidc.NewProvider(ctx, cfg.IssuerURL)
 	if err != nil {
@@ -146,7 +115,7 @@ func NewOIDCProvider(ctx context.Context, cfg ProviderConfig) (*OIDCProvider, er
 
 	userinfoURL := cfg.UserinfoURL
 	if userinfoURL == "" {
-		// Use the one from discovery
+
 		var claims struct {
 			UserinfoEndpoint string `json:"userinfo_endpoint"`
 		}
@@ -165,8 +134,6 @@ func NewOIDCProvider(ctx context.Context, cfg ProviderConfig) (*OIDCProvider, er
 	}, nil
 }
 
-// clientCtx threads the bounded HTTP client onto ctx so token exchange and the
-// lazy JWKS keyset fetch (during Verify) inherit the connect/response timeouts.
 func (p *OIDCProvider) clientCtx(ctx context.Context) context.Context {
 	if p.httpClient == nil {
 		return ctx
@@ -174,7 +141,6 @@ func (p *OIDCProvider) clientCtx(ctx context.Context) context.Context {
 	return oidc.ClientContext(ctx, p.httpClient)
 }
 
-// AuthCodeURL generates the authorization URL with PKCE and nonce.
 func (p *OIDCProvider) AuthCodeURL(state, nonce, codeVerifier string) string {
 	opts := []oauth2.AuthCodeOption{
 		oidc.Nonce(nonce),
@@ -183,7 +149,6 @@ func (p *OIDCProvider) AuthCodeURL(state, nonce, codeVerifier string) string {
 	return p.OAuth2Cfg.AuthCodeURL(state, opts...)
 }
 
-// ExchangeCode exchanges an authorization code for tokens.
 func (p *OIDCProvider) ExchangeCode(ctx context.Context, code, codeVerifier string) (*oauth2.Token, error) {
 	opts := []oauth2.AuthCodeOption{
 		oauth2.VerifierOption(codeVerifier),
@@ -191,7 +156,6 @@ func (p *OIDCProvider) ExchangeCode(ctx context.Context, code, codeVerifier stri
 	return p.OAuth2Cfg.Exchange(p.clientCtx(ctx), code, opts...)
 }
 
-// UserClaims holds the extracted claims from an OIDC id_token or userinfo.
 type UserClaims struct {
 	Subject           string
 	Email             string
@@ -206,7 +170,6 @@ type UserClaims struct {
 
 type oidcClaims map[string]json.RawMessage
 
-// VerifyAndExtractClaims verifies the id_token and extracts claims.
 func (p *OIDCProvider) VerifyAndExtractClaims(ctx context.Context, oauth2Token *oauth2.Token, expectedNonce string) (*UserClaims, error) {
 	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
 	if !ok {
@@ -215,7 +178,6 @@ func (p *OIDCProvider) VerifyAndExtractClaims(ctx context.Context, oauth2Token *
 	return p.VerifyIDToken(ctx, rawIDToken, expectedNonce)
 }
 
-// VerifyIDToken verifies a raw OIDC assertion received from a public client.
 func (p *OIDCProvider) VerifyIDToken(ctx context.Context, rawIDToken, expectedNonce string) (*UserClaims, error) {
 	idToken, err := p.Verifier.Verify(p.clientCtx(ctx), rawIDToken)
 	if err != nil {

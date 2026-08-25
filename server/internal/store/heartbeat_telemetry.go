@@ -10,15 +10,8 @@ import (
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
-// heartbeatBatchSize bounds one telemetry transaction. The store serializes
-// writers, so flushing a whole fleet in one transaction holds the writer for
-// the entire snapshot and delays dispatch, revocation, identity and terminal
-// state. Bounding it caps that wait at one batch instead of the fleet.
 const heartbeatBatchSize = 256
 
-// RecordHeartbeatTelemetry is the sole unaudited state writer. Heartbeats are
-// high-rate liveness telemetry, not security evidence; callers coalesce live
-// connection timestamps before reaching this bounded batch path.
 func (s *Store) RecordHeartbeatTelemetry(ctx context.Context, snapshot map[string]time.Time) error {
 	if ctx == nil || s == nil {
 		return errors.New("heartbeat telemetry requires a store and context")

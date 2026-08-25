@@ -12,7 +12,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-// CreateActionSet writes one independently scheduled and failure-governed set.
 func (h *Handlers) CreateActionSet(ctx context.Context, req *connect.Request[cadestrov1.CreateActionSetRequest]) (*connect.Response[cadestrov1.CreateActionSetResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
@@ -36,7 +35,6 @@ func (h *Handlers) CreateActionSet(ctx context.Context, req *connect.Request[cad
 	return connect.NewResponse(&cadestrov1.CreateActionSetResponse{Set: set}), nil
 }
 
-// GetActionSet returns one visible set and its live ordered members.
 func (h *Handlers) GetActionSet(ctx context.Context, req *connect.Request[cadestrov1.GetActionSetRequest]) (*connect.Response[cadestrov1.GetActionSetResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
@@ -64,7 +62,6 @@ func (h *Handlers) GetActionSet(ctx context.Context, req *connect.Request[cadest
 	}), nil
 }
 
-// ListActionSets returns a deterministic SQLite keyset page.
 func (h *Handlers) ListActionSets(ctx context.Context, req *connect.Request[cadestrov1.ListActionSetsRequest]) (*connect.Response[cadestrov1.ListActionSetsResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
@@ -113,7 +110,6 @@ func (h *Handlers) ListActionSets(ctx context.Context, req *connect.Request[cade
 	}), nil
 }
 
-// RenameActionSet replaces a set name.
 func (h *Handlers) RenameActionSet(ctx context.Context, req *connect.Request[cadestrov1.RenameActionSetRequest]) (*connect.Response[cadestrov1.UpdateActionSetResponse], error) {
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.GetId().GetValue(), "RenameActionSet")
 	if err != nil {
@@ -124,7 +120,6 @@ func (h *Handlers) RenameActionSet(ctx context.Context, req *connect.Request[cad
 	return h.updatedActionSet(ctx, "rename action set", row, err)
 }
 
-// UpdateActionSetDescription replaces a set description.
 func (h *Handlers) UpdateActionSetDescription(ctx context.Context, req *connect.Request[cadestrov1.UpdateActionSetDescriptionRequest]) (*connect.Response[cadestrov1.UpdateActionSetResponse], error) {
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.GetId().GetValue(), "UpdateActionSetDescription")
 	if err != nil {
@@ -136,7 +131,6 @@ func (h *Handlers) UpdateActionSetDescription(ctx context.Context, req *connect.
 	return h.updatedActionSet(ctx, "update action set description", row, err)
 }
 
-// UpdateActionSetSchedule replaces the set schedule and failure policy.
 func (h *Handlers) UpdateActionSetSchedule(ctx context.Context, req *connect.Request[cadestrov1.UpdateActionSetScheduleRequest]) (*connect.Response[cadestrov1.UpdateActionSetResponse], error) {
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.GetId().GetValue(), "UpdateActionSetSchedule")
 	if err != nil {
@@ -148,7 +142,6 @@ func (h *Handlers) UpdateActionSetSchedule(ctx context.Context, req *connect.Req
 	return h.updatedActionSet(ctx, "update action set policy", row, err)
 }
 
-// DeleteActionSet soft-deletes a set and removes its composition edges.
 func (h *Handlers) DeleteActionSet(ctx context.Context, req *connect.Request[cadestrov1.DeleteActionSetRequest]) (*connect.Response[cadestrov1.DeleteActionSetResponse], error) {
 	actor, err := h.mutationActionSetActor(ctx, req.Msg.GetId().GetValue(), "DeleteActionSet")
 	if err != nil {
@@ -161,7 +154,6 @@ func (h *Handlers) DeleteActionSet(ctx context.Context, req *connect.Request[cad
 	return connect.NewResponse(&cadestrov1.DeleteActionSetResponse{}), nil
 }
 
-// AddActionToSet adds one visible, ordinary Action occurrence to a set.
 func (h *Handlers) AddActionToSet(ctx context.Context, req *connect.Request[cadestrov1.AddActionToSetRequest]) (*connect.Response[cadestrov1.AddActionToSetResponse], error) {
 	setID, actionID := req.Msg.GetSetId().GetValue(), req.Msg.GetActionId().GetValue()
 	actor, err := h.mutationActionSetActor(ctx, setID, "AddActionToSet")
@@ -193,7 +185,6 @@ func (h *Handlers) AddActionToSet(ctx context.Context, req *connect.Request[cade
 	return connect.NewResponse(&cadestrov1.AddActionToSetResponse{Set: set}), nil
 }
 
-// RemoveActionFromSet removes one occurrence edge.
 func (h *Handlers) RemoveActionFromSet(ctx context.Context, req *connect.Request[cadestrov1.RemoveActionFromSetRequest]) (*connect.Response[cadestrov1.RemoveActionFromSetResponse], error) {
 	setID, actionID := req.Msg.GetSetId().GetValue(), req.Msg.GetActionId().GetValue()
 	actor, err := h.mutationActionSetActor(ctx, setID, "RemoveActionFromSet")
@@ -212,7 +203,6 @@ func (h *Handlers) RemoveActionFromSet(ctx context.Context, req *connect.Request
 	return connect.NewResponse(&cadestrov1.RemoveActionFromSetResponse{Set: set}), nil
 }
 
-// ReorderActionInSet replaces one occurrence's authored position.
 func (h *Handlers) ReorderActionInSet(ctx context.Context, req *connect.Request[cadestrov1.ReorderActionInSetRequest]) (*connect.Response[cadestrov1.ReorderActionInSetResponse], error) {
 	setID, actionID := req.Msg.GetSetId().GetValue(), req.Msg.GetActionId().GetValue()
 	actor, err := h.mutationActionSetActor(ctx, setID, "ReorderActionInSet")

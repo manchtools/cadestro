@@ -1,6 +1,3 @@
-// Package agentsecrets owns the narrow control-side sinks for LUKS and LPS
-// transport fields. Plaintext exists only at the authenticated mTLS boundary
-// and is never written to audit or logs.
 package agentsecrets
 
 import (
@@ -26,14 +23,12 @@ var (
 	ErrDuplicateUsername = errors.New("LPS batch repeats a username")
 )
 
-// Config supplies persistence and the mandatory at-rest cipher.
 type Config struct {
 	Store  *store.Store
 	AtRest *crypto.Encryptor
 	Now    func() time.Time
 }
 
-// Service implements the authenticated agent secret operations.
 type Service struct {
 	store     *store.Store
 	atRest    *crypto.Encryptor
@@ -41,8 +36,6 @@ type Service struct {
 	validator protovalidate.Validator
 }
 
-// New constructs the authenticated-stream secret service. At-rest encryption
-// remains mandatory; transport does not add a second envelope to mTLS.
 func New(cfg Config) *Service {
 	if cfg.Store == nil || cfg.AtRest == nil {
 		panic("agentsecrets: store and at-rest cipher are required")
@@ -56,7 +49,6 @@ func New(cfg Config) *Service {
 	}
 }
 
-// ValidateLuksToken consumes one device-bound token and returns its policy.
 func (s *Service) ValidateLuksToken(ctx context.Context, deviceID string, request *cadestrov1.ValidateLuksTokenRequest) (*cadestrov1.ValidateLuksTokenResponse, error) {
 	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Validate(request) != nil {
 		return nil, ErrInvalidInput
@@ -98,7 +90,6 @@ func (s *Service) ValidateLuksToken(ctx context.Context, deviceID string, reques
 	}, nil
 }
 
-// GetLuksKey opens at-rest ciphertext for the authenticated device stream.
 func (s *Service) GetLuksKey(ctx context.Context, deviceID string, request *cadestrov1.GetLuksKeyRequest) (*cadestrov1.GetLuksKeyResponse, error) {
 	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Validate(request) != nil {
 		return nil, ErrInvalidInput
@@ -128,8 +119,6 @@ func (s *Service) GetLuksKey(ctx context.Context, deviceID string, request *cade
 	return &cadestrov1.GetLuksKeyResponse{Passphrase: []byte(plaintext)}, nil
 }
 
-// StoreLuksKey encrypts an agent-to-control field at rest in the same audited
-// transaction that rotates the current row.
 func (s *Service) StoreLuksKey(ctx context.Context, deviceID string, request *cadestrov1.StoreLuksKeyRequest) (*cadestrov1.StoreLuksKeyResponse, error) {
 	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Validate(request) != nil {
 		return nil, ErrInvalidInput
@@ -143,10 +132,7 @@ func (s *Service) StoreLuksKey(ctx context.Context, deviceID string, request *ca
 		return nil, err
 	}
 	defer clear(plaintext)
-	// The at-rest AAD binds the row's immutable id, so mint it before sealing
-	// and insert the row under the same id. The device_path is shared by every
-	// rotation row for this disk; only the row id makes the ciphertext
-	// non-relocatable onto a sibling rotation row.
+
 	rowID := ulid.Make().String()
 	genericCiphertext, err := s.atRest.EncryptWithContext(string(plaintext),
 		crypto.DeviceSecretAAD(rowID, deviceID, "luks", actionID, 1))
@@ -184,9 +170,6 @@ func (s *Service) StoreLuksKey(ctx context.Context, deviceID string, request *ca
 	return &cadestrov1.StoreLuksKeyResponse{Success: true}, nil
 }
 
-// StoreLpsPasswords commits the whole already-performed rotation batch or none
-// of it. Malformed timestamps fall back to receipt time so credentials are not
-// discarded after the irreversible local change.
 func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, request *cadestrov1.StoreLpsPasswordsRequest) (*cadestrov1.StoreLpsPasswordsResponse, error) {
 	if ctx == nil || !validID(deviceID) || request == nil || s.validator.Validate(request) != nil {
 		return nil, ErrInvalidInput
@@ -214,10 +197,7 @@ func (s *Service) StoreLpsPasswords(ctx context.Context, deviceID string, reques
 		if err != nil {
 			return nil, err
 		}
-		// The at-rest AAD binds the row's immutable id, minted before sealing
-		// and reused for the insert below. Sibling rotation rows for one
-		// username each seal under their own id, so a DB attacker cannot swap
-		// ciphertext between them; the username is not a unique discriminator.
+
 		rowID := ulid.Make().String()
 		genericCiphertext, genericEncryptErr := s.atRest.EncryptWithContext(string(plaintext),
 			crypto.DeviceSecretAAD(rowID, deviceID, "lps", actionID, 1))
@@ -270,8 +250,7 @@ func copySecret(value []byte) ([]byte, error) {
 	if len(value) == 0 {
 		return nil, ErrInvalidInput
 	}
-	// mTLS authenticates and encrypts this stream. The bytes are the plaintext
-	// value; never persist this representation directly.
+
 	return append([]byte(nil), value...), nil
 }
 

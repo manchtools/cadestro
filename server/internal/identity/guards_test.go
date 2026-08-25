@@ -1,10 +1,5 @@
 package identity_test
 
-// Structural guards. These assert properties of the registry and the
-// mounted surface rather than of one request, so a future change that
-// quietly widens authorization fails here before it reaches a handler
-// test.
-
 import (
 	"testing"
 
@@ -15,9 +10,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/identity"
 )
 
-// Every permission key this package gates on must exist in the
-// registry. A typo would gate on a permission nobody holds, which reads
-// as "closed" until somebody widens a role to make it work.
 func TestGatedPermissions_AreAllRegistered(t *testing.T) {
 	t.Parallel()
 	gated := identity.GatedPermissions()
@@ -30,8 +22,6 @@ func TestGatedPermissions_AreAllRegistered(t *testing.T) {
 	}
 }
 
-// A permission that can create or widen authority must not be scopable,
-// because a scope on it would not confine the authority it mints.
 func TestPrivilegeGrantingPermissions_AreNeverScopable(t *testing.T) {
 	t.Parallel()
 	all := auth.AllPermissions()
@@ -51,8 +41,6 @@ func TestPrivilegeGrantingPermissions_AreNeverScopable(t *testing.T) {
 		"the registry marks nothing privilege-granting; the global-only rule would be unenforced")
 }
 
-// An unknown key is treated as privilege-granting. A key the registry
-// cannot classify must not be scopable by default.
 func TestUnknownPermission_IsTreatedAsPrivilegeGranting(t *testing.T) {
 	t.Parallel()
 	assert.True(t, auth.IsPrivilegeGranting("SomePermissionAddedTomorrow"),
@@ -66,8 +54,6 @@ func TestUnknownPermission_IsTreatedAsPrivilegeGranting(t *testing.T) {
 	assert.False(t, found, "an ordinary read-only role is scopable")
 }
 
-// No local-credential machinery survives in the registry: human
-// identity is the identity provider's business.
 func TestRegistry_HasNoLocalCredentialPermissions(t *testing.T) {
 	t.Parallel()
 	all := auth.AllPermissions()
@@ -90,9 +76,6 @@ func TestRegistry_HasNoLocalCredentialPermissions(t *testing.T) {
 	}
 }
 
-// The public procedure set is exactly the SSO handshake plus the
-// session and certificate procedures that cannot carry a session token.
-// Anything else appearing here would be an unauthenticated hole.
 func TestPublicProcedures_AreExactlyTheUnauthenticatedSurface(t *testing.T) {
 	t.Parallel()
 	expected := map[string]bool{
@@ -109,14 +92,12 @@ func TestPublicProcedures_AreExactlyTheUnauthenticatedSurface(t *testing.T) {
 	for procedure := range auth.PublicProcedures {
 		assert.True(t, expected[procedure], "%s was made public", procedure)
 	}
-	// No password-login procedure can be public because none exists.
+
 	for procedure := range auth.PublicProcedures {
 		assert.NotContains(t, procedure, "Login/")
 		assert.NotContains(t, procedure, "TOTP")
 	}
-	// The CLI login pair was removed with the operator CLI. Re-adding either
-	// name would put an unauthenticated procedure back on the public surface,
-	// so the absence is asserted rather than left to the size check alone.
+
 	for _, removed := range []string{
 		"/cadestro.v1.ControlService/BeginCLILogin",
 		"/cadestro.v1.ControlService/ExchangeCLISession",
@@ -126,8 +107,6 @@ func TestPublicProcedures_AreExactlyTheUnauthenticatedSurface(t *testing.T) {
 	}
 }
 
-// Every procedure path this package mounts belongs to the control
-// service and matches the contract's canonical form.
 func TestMountedProcedures_UseTheCanonicalContractPaths(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

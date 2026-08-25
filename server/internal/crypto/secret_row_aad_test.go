@@ -9,13 +9,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/crypto"
 )
 
-// TestDeviceSecretAAD_BindsImmutableRowID proves the at-rest AAD binds the
-// per-row discriminator, which is the row's immutable ULID primary key. LPS and
-// LUKS keep multiple rotation rows per (device, action, username|device_path):
-// the current row plus its history. Each row seals under its OWN row id, so a
-// ciphertext sealed for one row cannot be relocated onto a sibling row — even a
-// later rotation of the SAME username — and opened under its context. The
-// positive controls confirm the very same row still opens.
 func TestDeviceSecretAAD_BindsImmutableRowID(t *testing.T) {
 	enc, err := crypto.NewEncryptor(testKey())
 	require.NoError(t, err)
@@ -41,11 +34,7 @@ func TestDeviceSecretAAD_BindsImmutableRowID(t *testing.T) {
 	})
 
 	t.Run("sibling rotation rows for one username are not interchangeable", func(t *testing.T) {
-		// Two rotation rows for the SAME LPS username: only the immutable row
-		// id differs. Binding to the username alone would leave the two
-		// ciphertexts interchangeable, so a DB-level attacker could swap the
-		// retired row's ciphertext onto the current row. Binding to the row id
-		// does not.
+
 		const currentRow, historicalRow = "01HROWNEW", "01HROWOLD"
 		ctOld, err := enc.EncryptWithContext("retired-secret",
 			crypto.DeviceSecretAAD(historicalRow, deviceID, "lps", actionID, 1))

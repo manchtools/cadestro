@@ -1,4 +1,3 @@
-// Package controlruntime assembles the single control process.
 package controlruntime
 
 import (
@@ -47,8 +46,6 @@ const (
 	heartbeatTelemetryInterval = 2 * time.Minute
 )
 
-// Config contains the already-loaded durable dependencies and ordinary
-// deployment settings for one control process.
 type Config struct {
 	Store                  *store.Store
 	CA                     *ca.CA
@@ -68,7 +65,6 @@ type Config struct {
 	Readiness              func(context.Context) error
 }
 
-// Runtime owns the HTTP surfaces and heartbeat telemetry flush.
 type Runtime struct {
 	PublicHandler http.Handler
 	AgentHandler  http.Handler
@@ -81,7 +77,6 @@ type Runtime struct {
 	close         sync.Once
 }
 
-// New wires every retained RPC to its direct domain owner.
 func New(cfg Config) *Runtime {
 	if cfg.Store == nil || cfg.CA == nil || cfg.JWT == nil || cfg.AtRest == nil || cfg.Readiness == nil {
 		panic("controlruntime: store, CA, JWT, at-rest cipher, and readiness check are required")
@@ -178,8 +173,7 @@ func New(cfg Config) *Runtime {
 		agentService, connect.WithReadMaxBytes(maxAgentFrameBytes))
 	agentMux := http.NewServeMux()
 	agentMux.Handle(agentPath, directAgentHandler)
-	// Renewal and AgentService share the same TLS-authenticated listener; the
-	// handler binds the verified leaf into context before either path runs.
+
 	enrollmentHandler.MountRenewal(agentMux, controlOptions...)
 	agentMux.HandleFunc("/health", health)
 	agentMux.HandleFunc("/ready", readinessHandler(cfg.Readiness))
@@ -192,7 +186,6 @@ func New(cfg Config) *Runtime {
 	}
 }
 
-// Run blocks until ctx is cancelled while coalesced heartbeat telemetry flushes.
 func (r *Runtime) Run(ctx context.Context) error {
 	if ctx == nil || r == nil || r.store == nil || r.Connections == nil {
 		return errors.New("control runtime is not initialized")
@@ -220,7 +213,6 @@ func (r *Runtime) flushHeartbeatTelemetry(ctx context.Context) {
 	}
 }
 
-// Close releases process-local rate limiter and SCIM resources.
 func (r *Runtime) Close() {
 	if r == nil {
 		return

@@ -16,16 +16,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/testdb"
 )
 
-// CHARTER — agent-originated audit evidence.
-//
-// Both writers on this file's path record an operation and a single effect
-// through the real store. They are the only durable trace of a device that
-// reported tampering or that flooded the single-writer control plane, so a
-// test that stops at "the function returned" proves nothing: the assertions
-// below read the committed rows back.
-
-// auditFixture opens one real SQLite file and a raw handle onto the same
-// database, so a test can read the rows the audited write actually committed.
 func auditFixture(t *testing.T) (*store.Store, *testdb.DB) {
 	t.Helper()
 	ctx := context.Background()
@@ -39,14 +29,10 @@ func auditFixture(t *testing.T) (*store.Store, *testdb.DB) {
 	return st, raw
 }
 
-// auditHandler is the smallest Handler that can reach the audit writers: the
-// real store plus a discarding logger. The frame-drop budget is left nil so
-// every call records rather than being throttled by the test's own repetition.
 func auditHandler(st *store.Store) *Handler {
 	return &Handler{store: st, logger: slog.New(slog.NewTextHandler(io.Discard, nil))}
 }
 
-// countRows returns the number of rows the query matches.
 func countRows(t *testing.T, raw *testdb.DB, query string, args ...any) int {
 	t.Helper()
 	var count int
@@ -59,8 +45,6 @@ func TestRecordSecurityAlertCommitsOperationAndEffect(t *testing.T) {
 	handler := auditHandler(st)
 	deviceID := ulid.Make().String()
 
-	// The longest alert name in the enum: 47 characters, which is what makes
-	// the discriminator's column choice load-bearing.
 	alert := &cadestrov1.SecurityAlert{
 		Type:    cadestrov1.SecurityAlertType_SECURITY_ALERT_TYPE_SERVER_REASSIGNMENT_ATTEMPT,
 		Message: "control endpoint was rewritten under the agent",
@@ -78,8 +62,6 @@ func TestRecordSecurityAlertCommitsOperationAndEffect(t *testing.T) {
 		  AND e.resource_type = 'device' AND e.action = 'SECURITY_ALERT'`,
 		descriptor, deviceID), "the alert must leave exactly one effect row")
 
-	// The alert TYPE is the whole point of the record; losing it would leave
-	// an indistinguishable "something happened" row.
 	var resultCode string
 	require.NoError(t, raw.QueryRow(context.Background(),
 		`SELECT result_code FROM audit_operations WHERE request_descriptor = $1 AND actor_id = $2`,
@@ -87,8 +69,6 @@ func TestRecordSecurityAlertCommitsOperationAndEffect(t *testing.T) {
 	assert.Equal(t, alert.Type.String(), resultCode,
 		"the alert type must survive in a column the schema accepts")
 
-	// after_ref names another ROW. A discriminator there is rejected by the
-	// schema, which is what silently rolled the whole operation back.
 	assert.Equal(t, 0, countRows(t, raw, `
 		SELECT COUNT(*) FROM audit_effects e
 		JOIN audit_operations o ON o.operation_id = e.operation_id
@@ -134,10 +114,6 @@ func TestRecordFrameDropCommitsOperationAndEffect(t *testing.T) {
 		"a reference column must not carry a discriminator")
 }
 
-// The guard that keeps the next call site from repeating either defect:
-// before_ref and after_ref name other rows, and the store refuses anything
-// else BEFORE it opens a transaction, so the failure is loud instead of a
-// silent rollback that takes the whole operation with it.
 func TestAuditEffectReferenceColumnsRejectNonULIDsBeforeAnyWrite(t *testing.T) {
 	st, raw := auditFixture(t)
 	deviceID := ulid.Make().String()

@@ -25,10 +25,7 @@ func TestDeploymentIsTheThreeServiceTarget(t *testing.T) {
 		if inServices && line != "" && line[0] != ' ' {
 			break
 		}
-		// A comment is not a service. The scanner used to accept any
-		// two-space-indented line ending in ':', so the prose introducing the
-		// UI service — which ends in a colon — was counted as a service of its
-		// own and the exact-set assertion failed with a nonsense name in it.
+
 		if strings.HasPrefix(strings.TrimSpace(line), "#") {
 			continue
 		}
@@ -39,11 +36,7 @@ func TestDeploymentIsTheThreeServiceTarget(t *testing.T) {
 	if err := scanner.Err(); err != nil {
 		t.Fatalf("scan compose services: %v", err)
 	}
-	// The deployment ships the administration UI beside control behind the same
-	// edge, so the target is three services, not two. The set stays EXACT: an
-	// extra service is the failure this guard exists to catch, and widening it
-	// to "at least these" is how a reintroduced Valkey or indexer would slip
-	// past.
+
 	want := map[string]struct{}{"traefik": {}, "control": {}, "web": {}}
 	if len(services) != len(want) {
 		t.Fatalf("deployment services = %v; want exactly %v", services, want)
@@ -84,20 +77,7 @@ func TestDeploymentIsTheThreeServiceTarget(t *testing.T) {
 			t.Errorf("static route configuration is missing %q", required)
 		}
 	}
-	// Backend transport, per service. The blanket "no `url: http://` anywhere"
-	// this replaces stopped expressing the rule the moment the administration
-	// UI joined the deployment: that container serves static build output over
-	// plain HTTP on the internal compose bridge and holds no secret, so the
-	// blanket check could only be satisfied by deleting it.
-	//
-	// The rule it stands for is still enforced, and now says what it means:
-	// every backend hop is TLS unless the service is explicitly excused, and
-	// the only excused service is the one whose hop carries nothing worth
-	// protecting. Control is NOT excused — its hop carries sessions, secrets,
-	// and the agent bridge — so a future edit that downgrades it to http fails
-	// here, which the old check would also have caught, while an added
-	// plaintext backend for any OTHER service fails too, which it would not
-	// have distinguished.
+
 	plaintextExcused := map[string]string{
 		"web": "static build output on the internal bridge; no secret crosses this hop",
 	}
@@ -121,9 +101,7 @@ func TestDeploymentIsTheThreeServiceTarget(t *testing.T) {
 				t.Errorf("service %s uses plaintext backend %q; every backend hop is TLS unless the service is explicitly excused in this test", service, url)
 				continue
 			}
-			// An excuse is about an internal hop. A plaintext URL naming
-			// anything but a compose service host has left the bridge the
-			// excuse depends on.
+
 			host := strings.TrimPrefix(url, "http://")
 			host, _, _ = strings.Cut(host, "/")
 			host, _, _ = strings.Cut(host, ":")
@@ -141,10 +119,6 @@ func TestDeploymentIsTheThreeServiceTarget(t *testing.T) {
 	}
 }
 
-// traefikHTTPBackends maps each service under `http.services` to the backend
-// URLs its load balancer declares. It reads the `http:` section only, so the
-// `tcp:` agent passthrough — which declares an address, not a URL, and is
-// deliberately not terminated here — is out of scope.
 func traefikHTTPBackends(t *testing.T, routes string) map[string][]string {
 	t.Helper()
 	backends := map[string][]string{}
@@ -158,9 +132,9 @@ func traefikHTTPBackends(t *testing.T, routes string) map[string][]string {
 			continue
 		}
 		switch {
-		case !strings.HasPrefix(line, " "): // http: / tcp:
+		case !strings.HasPrefix(line, " "):
 			section, inServices, service = strings.TrimSuffix(trimmed, ":"), false, ""
-		case !strings.HasPrefix(line, "    "): // routers: / services: / middlewares: …
+		case !strings.HasPrefix(line, "    "):
 			inServices, service = strings.TrimSuffix(trimmed, ":") == "services", ""
 		case section == "http" && inServices && !strings.HasPrefix(line, "      "):
 			service = strings.TrimSuffix(trimmed, ":")
@@ -201,10 +175,6 @@ func TestReleaseBuildsEachContainerForItsTargetPlatform(t *testing.T) {
 	}
 }
 
-// moduleRoot is the server module root — server/ — which owns deploy/ and the
-// rest of the control plane. This is what the old, misnamed `repositoryRoot`
-// always returned: when the server had a repository to itself the two were the
-// same directory, and they no longer are.
 func moduleRoot(t *testing.T) string {
 	t.Helper()
 	_, file, _, ok := runtime.Caller(0)
@@ -214,15 +184,6 @@ func moduleRoot(t *testing.T) string {
 	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
 }
 
-// repositoryRoot is the monorepo root, above the server module. GitHub honours
-// workflows only there, so the release workflow this file asserts against is a
-// repository file rather than a server file.
-//
-// It is discovered by walking up from the module root's parent for a directory
-// carrying .github/workflows, not assumed to be one level up: a hardcoded
-// depth reports a clean tree the moment the layout moves, and starting above
-// the module means a stray server/.github/workflows cannot satisfy the search
-// and send this test at a file GitHub never runs.
 func repositoryRoot(t *testing.T) string {
 	t.Helper()
 	module := moduleRoot(t)

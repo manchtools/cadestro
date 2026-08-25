@@ -63,7 +63,6 @@ func TestUpdateRole_RefusesSystemRolesAndInvalidatesHolderSessions(t *testing.T)
 	assert.Equal(t, connect.CodeFailedPrecondition, connectCodeOf(t, err),
 		"a system role is reconciled from the code registry; an edit here would be silently undone")
 
-	// An ordinary role, held by a subject, then edited.
 	created, err := f.client.CreateRole(f.ctx(), authed(&cadestrov1.CreateRoleRequest{
 		Name: "Operators", Permissions: []string{"ListUsers"},
 	}, admin.Token))
@@ -135,7 +134,6 @@ func TestDeleteRole_RefusesARoleSomebodyStillHolds(t *testing.T) {
 	assert.Equal(t, connect.CodeFailedPrecondition, connectCodeOf(t, err),
 		"dropping a held role would be an authorization change disguised as a catalogue edit")
 
-	// Once nobody holds it, the delete goes through.
 	_, err = f.raw.Exec(f.ctx(), `DELETE FROM user_roles WHERE role_id = $1`, created.Msg.Role.GetId().GetValue())
 	require.NoError(t, err)
 	_, err = f.client.DeleteRole(f.ctx(), authed(&cadestrov1.DeleteRoleRequest{Id: &cadestrov1.RoleId{Value: created.Msg.Role.GetId().GetValue()}}, admin.Token))
@@ -229,9 +227,6 @@ func TestAssignRoleToUserGroup_RefusesAdminRoleWithoutAdminAuthority(t *testing.
 	assert.Equal(t, beforeAudit, f.countAuditOperations(), "a denied group grant leaves audit state unchanged")
 }
 
-// The same role can be held globally and at two scopes at once, so the
-// unique indexes must allow it and each grant must be independently
-// revocable.
 func TestAssignRoleToUser_SameRoleGlobalAndAtTwoScopes(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -253,7 +248,6 @@ func TestAssignRoleToUser_SameRoleGlobalAndAtTwoScopes(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, grants, 3, "one role, three distinct grants")
 
-	// Revoking "the unscoped grant" takes exactly that one.
 	_, err = f.client.RevokeRoleFromUser(f.ctx(), authed(&cadestrov1.RevokeRoleFromUserRequest{
 		UserId: &cadestrov1.UserId{Value: subject.ID}, RoleId: &cadestrov1.RoleId{Value: role},
 	}, admin.Token))
@@ -265,8 +259,6 @@ func TestAssignRoleToUser_SameRoleGlobalAndAtTwoScopes(t *testing.T) {
 		assert.NotNil(t, g.ScopeID, "only the unscoped grant was named, so only it was removed")
 	}
 
-	// Revoking it a second time matches nothing and says so, rather
-	// than silently taking a scoped grant.
 	_, err = f.client.RevokeRoleFromUser(f.ctx(), authed(&cadestrov1.RevokeRoleFromUserRequest{
 		UserId: &cadestrov1.UserId{Value: subject.ID}, RoleId: &cadestrov1.RoleId{Value: role},
 	}, admin.Token))
@@ -290,9 +282,6 @@ func TestAssignRoleToUser_RejectsDuplicateGrantAtTheSameScope(t *testing.T) {
 	assert.Equal(t, connect.CodeAlreadyExists, connectCodeOf(t, err))
 }
 
-// A role that can grant or widen privilege is global-only. Scoping it
-// would be a lie: the authority its holder mints inside the scope is
-// not itself confined to that scope.
 func TestAssignRoleToUser_RefusesScopedGrantOfPrivilegeGrantingRole(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -313,16 +302,12 @@ func TestAssignRoleToUser_RefusesScopedGrantOfPrivilegeGrantingRole(t *testing.T
 	require.NoError(t, err)
 	assert.Empty(t, grants, "the refused grant was never written")
 
-	// The same role granted globally is allowed because the actor holds the
-	// privilege it confers; the restriction is on scoped privilege grants.
 	_, err = f.client.AssignRoleToUser(f.ctx(), authed(&cadestrov1.AssignRoleToUserRequest{
 		UserId: &cadestrov1.UserId{Value: subject.ID}, RoleId: &cadestrov1.RoleId{Value: privileged},
 	}, admin.Token))
 	require.NoError(t, err)
 }
 
-// Every permission the registry marks privilege-granting must be
-// refused when scoped, not just the one the test above picked.
 func TestAssignRoleToUser_EveryPrivilegeGrantingPermissionRefusesAScope(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -354,8 +339,6 @@ func TestAssignRoleToUser_EveryPrivilegeGrantingPermissionRefusesAScope(t *testi
 	}
 }
 
-// A permission that acts on devices cannot be confined by a user-group
-// scope: the scope would not constrain it at all.
 func TestAssignRoleToUser_RefusesAScopeOfTheWrongKind(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -398,9 +381,6 @@ func TestAssignRoleToUser_RejectsHalfSetScope(t *testing.T) {
 		"guessing which half of a scope was meant is how an unscoped grant gets minted by accident")
 }
 
-// A scope-limited administrator — one who holds AssignRoleScope only at
-// a scope — may not mint an unscoped grant, and may not attach a scope
-// outside their own authority.
 func TestAssignRoleToUser_ScopeLimitedAdminCannotEscapeTheirScope(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -499,8 +479,6 @@ func TestAssignRoleToUserGroup_GrantsAndRevokesByScope(t *testing.T) {
 	assert.Empty(t, grants)
 }
 
-// userSearchRow returns the single users-scope search row for a subject,
-// found by query, so an assertion reads exactly what the users list renders.
 func userSearchRow(t *testing.T, f *fixture, userID, query string) store.SearchRow {
 	t.Helper()
 	rows, _, err := f.store.Search(f.ctx(), store.SearchParams{
@@ -516,10 +494,6 @@ func userSearchRow(t *testing.T, f *fixture, userID, query string) store.SearchR
 	return store.SearchRow{}
 }
 
-// The users LIST renders direct role-grant chips from search documents, so
-// every grant mutation must land the role's name and id in the subject's
-// document in the same transaction — and a rename must not leave the old
-// name behind.
 func TestUserSearchDocument_TracksDirectRoleGrantLifecycle(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -564,9 +538,6 @@ func TestUserSearchDocument_TracksDirectRoleGrantLifecycle(t *testing.T) {
 	assert.Equal(t, "", doc.Fields["role_ids"])
 }
 
-// Group-conferred roles render as their own chip cluster, so group grant
-// mutations must maintain the inherited fields — and never leak into the
-// direct-grant fields.
 func TestUserSearchDocument_TracksGroupInheritedRoleFields(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -643,8 +614,6 @@ func TestRevokeRoleFromUserGroup_AllowsRemovingFinalAdminGrant(t *testing.T) {
 	assert.Empty(t, grants)
 }
 
-// A role held through a group confers its permissions, and the token
-// resolution sees them.
 func TestGroupInheritedRole_ConfersItsPermissions(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -722,10 +691,6 @@ func TestListPermissions_ExposesTheRegistryWithTargetKinds(t *testing.T) {
 	assert.Equal(t, cadestrov1.PermissionTargetKind_PERMISSION_TARGET_KIND_UNSPECIFIED, byKey["CreateRole"].TargetKind,
 		"a privilege-granting permission is never scopable, so it declares no target kind")
 
-	// No local-credential or second-factor permission survives: human
-	// identity is the identity provider's business. ListLpsPasswords and
-	// RevealLpsPassword concern a MANAGED DEVICE's rotated local-administrator
-	// password, not how a human signs in here.
 	for _, gone := range []string{
 		"UpdateUserPassword", "UpdateUserPassword:self",
 		"SetupTOTP", "VerifyTOTP", "DisableTOTP", "GetTOTPStatus",

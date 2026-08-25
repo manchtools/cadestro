@@ -17,7 +17,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-// HandlersConfig supplies the durable store and live-control sender.
 type HandlersConfig struct {
 	Store  *store.Store
 	Sender func(deviceID string, message *cadestrov1.ServerMessage) error
@@ -25,7 +24,6 @@ type HandlersConfig struct {
 	Now    func() time.Time
 }
 
-// Handlers implements live device-control RPCs.
 type Handlers struct {
 	store    *store.Store
 	compiler *manifest.Compiler
@@ -48,7 +46,6 @@ type liveOperationResult struct {
 
 const liveOperationTimeout = 20 * time.Second
 
-// NewHandlers constructs live device-control handlers.
 func NewHandlers(cfg HandlersConfig) *Handlers {
 	if cfg.Store == nil {
 		panic("devicecontrol: handler store is required")
@@ -130,7 +127,6 @@ func (h *Handlers) internal(ctx context.Context, operation string, err error) *c
 	return rpcError(ctx, errInternal, connect.CodeInternal, "internal error")
 }
 
-// SyncDevice asks a connected agent to run its normal full Sync.
 func (h *Handlers) SyncDevice(ctx context.Context, req *connect.Request[cadestrov1.SyncDeviceRequest]) (*connect.Response[cadestrov1.SyncDeviceResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)
@@ -148,7 +144,6 @@ func (h *Handlers) SyncDevice(ctx context.Context, req *connect.Request[cadestro
 	return connect.NewResponse(&cadestrov1.SyncDeviceResponse{}), nil
 }
 
-// RebootDevice asks a connected agent to schedule its safe delayed reboot.
 func (h *Handlers) RebootDevice(ctx context.Context, req *connect.Request[cadestrov1.RebootDeviceRequest]) (*connect.Response[cadestrov1.RebootDeviceResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.actor(ctx)

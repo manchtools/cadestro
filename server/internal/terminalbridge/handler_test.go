@@ -75,8 +75,6 @@ func TestServeHTTPClearsPublicRequestReadDeadlineBeforeUpgrade(t *testing.T) {
 	request.Header.Set("Sec-WebSocket-Protocol", "bearer."+minted.Token)
 	response := &readDeadlineRecorder{ResponseRecorder: httptest.NewRecorder()}
 
-	// The recorder stops at the WebSocket hijack itself. At that exact boundary,
-	// the public server's ordinary-request deadline must already be gone.
 	handler.ServeHTTP(response, request)
 
 	assert.True(t, response.hijackCalled, "the test must reach the real WebSocket upgrade boundary")

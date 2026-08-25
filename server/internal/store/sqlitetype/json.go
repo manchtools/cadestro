@@ -1,5 +1,3 @@
-// Package sqlitetype contains the small database/sql adapters needed for
-// SQLite values that deliberately retain their JSON shape in Go.
 package sqlitetype
 
 import (
@@ -9,11 +7,8 @@ import (
 	"fmt"
 )
 
-// JSON stores validated JSON text while retaining []byte ergonomics at call
-// sites. SQLite validates the same value again with schema CHECK constraints.
 type JSON []byte
 
-// Scan implements sql.Scanner.
 func (j *JSON) Scan(src any) error {
 	if j == nil {
 		return errors.New("sqlite JSON scan requires a destination")
@@ -38,7 +33,6 @@ func (j *JSON) Scan(src any) error {
 	return nil
 }
 
-// Value implements driver.Valuer.
 func (j JSON) Value() (driver.Value, error) {
 	if j == nil {
 		return nil, nil
@@ -49,10 +43,8 @@ func (j JSON) Value() (driver.Value, error) {
 	return string(j), nil
 }
 
-// StringList stores a JSON array of strings as a native Go slice.
 type StringList []string
 
-// Scan implements sql.Scanner.
 func (s *StringList) Scan(src any) error {
 	if s == nil {
 		return errors.New("sqlite string-list scan requires a destination")
@@ -80,10 +72,8 @@ func (s *StringList) Scan(src any) error {
 	return nil
 }
 
-// Value implements driver.Valuer.
 func (s StringList) Value() (driver.Value, error) {
-	// Every StringList-backed schema column is NOT NULL. A nil Go slice is
-	// therefore the empty JSON array, while SQL NULL remains unrepresentable.
+
 	if s == nil {
 		s = StringList{}
 	}

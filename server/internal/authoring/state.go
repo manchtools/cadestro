@@ -1,6 +1,3 @@
-// Package authoring owns direct CRUD state transitions for Actions,
-// ActionSets and Definitions. It does not append domain events or maintain
-// projections; every mutation commits through the Store audit primitive.
 package authoring
 
 import (
@@ -37,19 +34,16 @@ var (
 	ErrSystemAction = errors.New("system action cannot be changed by an operator")
 )
 
-// Config supplies the direct store and the clock used for authored rows.
 type Config struct {
 	Store *store.Store
 	Now   func() time.Time
 }
 
-// Service changes authored state in audited SQLite transactions.
 type Service struct {
 	store *store.Store
 	now   func() time.Time
 }
 
-// New constructs the authoring state service.
 func New(cfg Config) *Service {
 	if cfg.Store == nil {
 		panic("authoring: store is required")
@@ -60,7 +54,6 @@ func New(cfg Config) *Service {
 	return &Service{store: cfg.Store, now: cfg.Now}
 }
 
-// CreateActionParams is the complete stored shape of a new Action.
 type CreateActionParams struct {
 	ID             string
 	Name           string
@@ -74,9 +67,6 @@ type CreateActionParams struct {
 	System         bool
 }
 
-// UpdateActionParams replaces the mutable execution fields of an Action.
-// Zero timeout and nil schedule preserve their current stored values, matching
-// the existing explicit RPC contract.
 type UpdateActionParams struct {
 	ID             string
 	DesiredState   cadestrov1.DesiredState
@@ -86,7 +76,6 @@ type UpdateActionParams struct {
 	AllowSystem    bool
 }
 
-// CreateAction inserts one ordinary authored row and its audit effect.
 func (s *Service) CreateAction(ctx context.Context, op store.AuditOperation, p CreateActionParams) (store.ActionRow, error) {
 	if ctx == nil || !validID(p.CreatedBy) || (op.ActorID != "" && op.ActorID != p.CreatedBy) ||
 		p.Name == "" || utf8.RuneCountInString(p.Name) > 255 || utf8.RuneCountInString(p.Description) > 1024 {
@@ -134,7 +123,6 @@ func (s *Service) CreateAction(ctx context.Context, op store.AuditOperation, p C
 	return out, nil
 }
 
-// RenameAction replaces an Action name with last-write-wins semantics.
 func (s *Service) RenameAction(ctx context.Context, op store.AuditOperation, id, name string, allowSystem bool) (store.ActionRow, error) {
 	if ctx == nil || !validID(id) || name == "" || utf8.RuneCountInString(name) > 255 {
 		return store.ActionRow{}, ErrInvalidInput
@@ -155,7 +143,6 @@ func (s *Service) RenameAction(ctx context.Context, op store.AuditOperation, id,
 	return out, s.classifyWriteError(ctx, id, allowSystem, err)
 }
 
-// UpdateActionDescription replaces an Action description.
 func (s *Service) UpdateActionDescription(ctx context.Context, op store.AuditOperation, id, description string, allowSystem bool) (store.ActionRow, error) {
 	if ctx == nil || !validID(id) || utf8.RuneCountInString(description) > 1024 {
 		return store.ActionRow{}, ErrInvalidInput
@@ -176,8 +163,6 @@ func (s *Service) UpdateActionDescription(ctx context.Context, op store.AuditOpe
 	return out, s.classifyWriteError(ctx, id, allowSystem, err)
 }
 
-// UpdateActionParams replaces params and desired state and, when present,
-// timeout and schedule. Action type remains immutable.
 func (s *Service) UpdateActionParams(ctx context.Context, op store.AuditOperation, p UpdateActionParams) (store.ActionRow, error) {
 	if ctx == nil || !validID(p.ID) {
 		return store.ActionRow{}, ErrInvalidInput
@@ -245,8 +230,6 @@ func boolInt32(value bool) int32 {
 	return 0
 }
 
-// DeleteAction soft-deletes the authored row and removes composition edges in
-// the same audited transaction.
 func (s *Service) DeleteAction(ctx context.Context, op store.AuditOperation, id string, allowSystem bool) error {
 	if ctx == nil || !validID(id) {
 		return ErrInvalidInput
@@ -347,15 +330,13 @@ func normalizeStoredSecretsForValidation(params proto.Message) error {
 	return nil
 }
 
-// ValidateExecutableAction applies the same type, parameter, and safety rules
-// used by persisted Actions to an inline Action before it enters a manifest.
 func ValidateExecutableAction(action *cadestrov1.Action) error {
 	if action == nil || !validID(action.GetId().GetValue()) {
 		return ErrInvalidInput
 	}
 	params := actionparams.ExtractParamsMsg(action)
 	if params == nil {
-		// UPDATE is the only action whose empty params oneof is meaningful.
+
 		if action.Type != cadestrov1.ActionType_ACTION_TYPE_UPDATE {
 			return ErrInvalidInput
 		}

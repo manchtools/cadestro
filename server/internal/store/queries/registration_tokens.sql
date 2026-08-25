@@ -1,5 +1,5 @@
--- Registration-token CRUD. The reserved host bootstrap token is deliberately
--- absent from this surface: it has its own consume-once boundary.
+
+
 
 -- name: GetRegistrationToken :one
 SELECT * FROM tokens
@@ -59,6 +59,6 @@ WHERE id = sqlc.arg(id)
   AND name <> sqlc.arg(reserved_name)
 RETURNING *;
 
--- Usage is immutable device provenance, including soft-deleted devices.
+
 -- name: CountRegistrationTokenUses :one
 SELECT COUNT(*) FROM devices WHERE registration_token_id = sqlc.arg(token_id);

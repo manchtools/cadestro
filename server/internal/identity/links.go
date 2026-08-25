@@ -9,11 +9,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-// ListIdentityLinks returns the caller's OWN external identities.
-//
-// The RPC takes no subject: it is self-service by construction, so
-// there is no id a caller could substitute to read somebody else's
-// linked accounts.
 func (h *Handlers) ListIdentityLinks(ctx context.Context, req *connect.Request[cadestrov1.ListIdentityLinksRequest]) (*connect.Response[cadestrov1.ListIdentityLinksResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
@@ -23,7 +18,7 @@ func (h *Handlers) ListIdentityLinks(ctx context.Context, req *connect.Request[c
 		return nil, err
 	}
 	if !actor.CanOwnResources() {
-		// A principal that is no subject owns no links.
+
 		return connect.NewResponse(&cadestrov1.ListIdentityLinksResponse{}), nil
 	}
 	links, err := h.store.ListIdentityLinksForUser(ctx, actor.ID)
@@ -37,13 +32,6 @@ func (h *Handlers) ListIdentityLinks(ctx context.Context, req *connect.Request[c
 	return connect.NewResponse(resp), nil
 }
 
-// UnlinkIdentity removes one of the caller's own external identities.
-//
-// Two guards, in this order. A link that belongs to somebody else reads
-// as not-found, so the id space cannot be probed for other people's
-// bindings. And the caller's LAST link cannot be removed: human login
-// is OIDC only, so unlinking the last one would lock the subject out of
-// their own account with no local credential to fall back on.
 func (h *Handlers) UnlinkIdentity(ctx context.Context, req *connect.Request[cadestrov1.UnlinkIdentityRequest]) (*connect.Response[cadestrov1.UnlinkIdentityResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {

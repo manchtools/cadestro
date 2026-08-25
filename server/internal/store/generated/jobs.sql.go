@@ -43,6 +43,10 @@ func (q *Queries) CancelPendingJob(ctx context.Context, arg CancelPendingJobPara
 }
 
 const claimJob = `-- name: ClaimJob :execrows
+
+
+
+
 UPDATE jobs
 SET state = 'CLAIMED',
     claimed_at = ?1,
@@ -64,10 +68,6 @@ type ClaimJobParams struct {
 	JobID        string     `json:"job_id"`
 }
 
-// The conditional transition that makes claiming safe without a lock
-// table: a row is claimable when it is due and unclaimed, or when a
-// previous claim's lease has expired. Two workers racing on the same
-// row produce one winner and one zero-row UPDATE.
 func (q *Queries) ClaimJob(ctx context.Context, arg ClaimJobParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, claimJob,
 		arg.Now,
@@ -82,12 +82,12 @@ func (q *Queries) ClaimJob(ctx context.Context, arg ClaimJobParams) (int64, erro
 }
 
 const deleteTerminalJobsBefore = `-- name: DeleteTerminalJobsBefore :execrows
+
+
 DELETE FROM jobs
 WHERE terminal_at IS NOT NULL AND terminal_at < ?
 `
 
-// Terminal jobs are ordinary state with no evidentiary value; the
-// audit log holds the record of what ran.
 func (q *Queries) DeleteTerminalJobsBefore(ctx context.Context, terminalAt *time.Time) (int64, error) {
 	result, err := q.db.ExecContext(ctx, deleteTerminalJobsBefore, terminalAt)
 	if err != nil {
@@ -191,7 +191,6 @@ func (q *Queries) GetLiveJobByDedupe(ctx context.Context, dedupeKey *string) (Jo
 }
 
 const insertJob = `-- name: InsertJob :one
-
 INSERT INTO jobs (job_id, kind, payload, state, due_at, max_attempts, dedupe_key)
 VALUES (?, ?, ?, 'PENDING', ?, ?, ?)
 RETURNING job_id, kind, payload, state, due_at, claimed_at, claimed_until, claimed_by, attempt_count, max_attempts, result_code, dedupe_key, created_at, updated_at, terminal_at
@@ -206,7 +205,6 @@ type InsertJobParams struct {
 	DedupeKey   *string         `json:"dedupe_key"`
 }
 
-// Database-backed scheduled work.
 func (q *Queries) InsertJob(ctx context.Context, arg InsertJobParams) (Job, error) {
 	row := q.db.QueryRowContext(ctx, insertJob,
 		arg.JobID,
@@ -238,6 +236,8 @@ func (q *Queries) InsertJob(ctx context.Context, arg InsertJobParams) (Job, erro
 }
 
 const listClaimableJobs = `-- name: ListClaimableJobs :many
+
+
 SELECT job_id, kind, payload, state, due_at, claimed_at, claimed_until, claimed_by, attempt_count, max_attempts, result_code, dedupe_key, created_at, updated_at, terminal_at FROM jobs
 WHERE (state = 'PENDING' AND due_at <= ?1)
    OR (state = 'CLAIMED' AND claimed_until <= ?1)
@@ -250,8 +250,6 @@ type ListClaimableJobsParams struct {
 	PageSize int64     `json:"page_size"`
 }
 
-// Candidates for the scheduler tick. ClaimJob is the arbiter; concurrent
-// runners may see the same candidate but only one conditional UPDATE wins.
 func (q *Queries) ListClaimableJobs(ctx context.Context, arg ListClaimableJobsParams) ([]Job, error) {
 	rows, err := q.db.QueryContext(ctx, listClaimableJobs, arg.Now, arg.PageSize)
 	if err != nil {
@@ -292,6 +290,7 @@ func (q *Queries) ListClaimableJobs(ctx context.Context, arg ListClaimableJobsPa
 }
 
 const releaseJobClaim = `-- name: ReleaseJobClaim :execrows
+
 UPDATE jobs
 SET state = 'PENDING',
     claimed_at = NULL,
@@ -313,7 +312,6 @@ type ReleaseJobClaimParams struct {
 	ClaimedBy  string    `json:"claimed_by"`
 }
 
-// Hand a claimed row back for a later retry.
 func (q *Queries) ReleaseJobClaim(ctx context.Context, arg ReleaseJobClaimParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, releaseJobClaim,
 		arg.DueAt,
@@ -329,6 +327,8 @@ func (q *Queries) ReleaseJobClaim(ctx context.Context, arg ReleaseJobClaimParams
 }
 
 const rescheduleJob = `-- name: RescheduleJob :execrows
+
+
 UPDATE jobs
 SET state = 'PENDING',
     due_at = ?,
@@ -350,8 +350,6 @@ type RescheduleJobParams struct {
 	ClaimedBy string    `json:"claimed_by"`
 }
 
-// A successful recurring job keeps its durable identity and returns to the
-// pending state with a fresh retry budget.
 func (q *Queries) RescheduleJob(ctx context.Context, arg RescheduleJobParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, rescheduleJob,
 		arg.DueAt,

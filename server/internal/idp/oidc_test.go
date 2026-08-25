@@ -1,18 +1,5 @@
 package idp_test
 
-// OIDC discovery + AuthCodeURL coverage
-// (archived server#161 follow-up). The full happy-path
-// SSOCallback flow needs a signed-id_token fixture (substantial
-// JWS infrastructure); this test covers the slice that doesn't —
-// NewOIDCProvider's discovery probe + AuthCodeURL's state/nonce/PKCE
-// emission. That's the part of the OIDC stack we actually wrote
-// (vs. relying on go-oidc + golang.org/x/oauth2 internals).
-//
-// Strategy: stand up an httptest.Server with the minimum endpoints
-// go-oidc's discovery walks: /.well-known/openid-configuration +
-// jwks_uri. The JWKS is empty — fine for discovery + URL emission;
-// would only matter if we exercised id_token verification too.
-
 import (
 	"context"
 	"encoding/json"
@@ -28,10 +15,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/idp"
 )
 
-// fakeOIDCServer stands up the minimum endpoints go-oidc's discovery
-// requires. The issuer field MUST equal the server's URL — go-oidc
-// rejects a discovery doc whose issuer doesn't match the URL it
-// loaded the doc from (RFC 8414 § 3.3).
 func fakeOIDCServer(t *testing.T) *httptest.Server {
 	t.Helper()
 	mux := http.NewServeMux()
@@ -52,8 +35,6 @@ func fakeOIDCServer(t *testing.T) *httptest.Server {
 		})
 	})
 
-	// Empty JWKS — fine for discovery + AuthCodeURL emission. Would
-	// fail at actual id_token verification, which is out of scope.
 	mux.HandleFunc("/jwks.json", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{"keys": []any{}})
@@ -78,8 +59,7 @@ func TestNewOIDCProvider_DiscoverySucceeds(t *testing.T) {
 }
 
 func TestNewOIDCProvider_DiscoveryFailsOnUnreachableIssuer(t *testing.T) {
-	// Point at a port nothing is listening on. Discovery must surface
-	// the transport error rather than return a half-built provider.
+
 	_, err := idp.NewOIDCProvider(context.Background(), idp.ProviderConfig{
 		IssuerURL: "http://127.0.0.1:1",
 		ClientID:  "test",
@@ -90,9 +70,7 @@ func TestNewOIDCProvider_DiscoveryFailsOnUnreachableIssuer(t *testing.T) {
 }
 
 func TestNewOIDCProvider_DefaultsScopesWhenEmpty(t *testing.T) {
-	// Empty Scopes → defaults to openid + profile + email per the
-	// constructor's documented behaviour. Verify by checking the
-	// AuthCodeURL emits all three.
+
 	srv := fakeOIDCServer(t)
 	p, err := idp.NewOIDCProvider(context.Background(), idp.ProviderConfig{
 		IssuerURL:   srv.URL,
@@ -136,10 +114,7 @@ func TestOIDCProvider_AuthCodeURL_EmitsStateNoncePKCE(t *testing.T) {
 }
 
 func TestOIDCProvider_AuthCodeURL_HonoursAuthorizationURLOverride(t *testing.T) {
-	// Some providers (e.g. older Azure AD) need the authorization
-	// endpoint pinned independently from discovery. The override is
-	// optional in ProviderConfig; when set, the emitted URL should
-	// use it instead of the discovered authorization_endpoint.
+
 	srv := fakeOIDCServer(t)
 	p, err := idp.NewOIDCProvider(context.Background(), idp.ProviderConfig{
 		IssuerURL:        srv.URL,

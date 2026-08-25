@@ -20,7 +20,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/mtls"
 )
 
-// generateTestCA creates a self-signed CA cert and key for testing.
 func generateTestCA(t *testing.T) (certPEM, keyPEM []byte) {
 	t.Helper()
 
@@ -52,7 +51,6 @@ func generateTestCA(t *testing.T) (certPEM, keyPEM []byte) {
 	return certPEM, keyPEM
 }
 
-// generateCSR creates a CSR PEM for a given device ID.
 func generateCSR(t *testing.T, deviceID string) (csrPEM []byte, key ed25519.PrivateKey) {
 	t.Helper()
 
@@ -72,8 +70,6 @@ func generateCSR(t *testing.T, deviceID string) (csrPEM []byte, key ed25519.Priv
 	return csrPEM, key
 }
 
-// csrForKey builds a CSR PEM for deviceID signed by the given key. Unlike
-// generateCSR it lets the caller reuse a key, which is what renewal does.
 func csrForKey(t *testing.T, deviceID string, key ed25519.PrivateKey) []byte {
 	t.Helper()
 	der, err := x509.CreateCertificateRequest(rand.Reader,
@@ -82,9 +78,6 @@ func csrForKey(t *testing.T, deviceID string, key ed25519.PrivateKey) []byte {
 	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: der})
 }
 
-// TestAssertCSRMatchesCert covers the renewal proof-of-possession helper
-// (#361): a renewal CSR is accepted only when its public key equals the current
-// certificate's.
 func TestAssertCSRMatchesCert(t *testing.T) {
 	certPEM, keyPEM := generateTestCA(t)
 	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
@@ -226,19 +219,13 @@ func TestIssueCertificateFromCSR_Success(t *testing.T) {
 	assert.True(t, cert.NotAfter.After(time.Now()))
 }
 
-// TestIssueCertificateFromCSR_IdentityComesFromServerNotCSR pins the
-// anti-impersonation contract: the issued identity (CN + Subject.SerialNumber)
-// is taken from the SERVER-supplied deviceID, never the attacker-controlled CSR
-// Subject. The CSR CN is set to a DIFFERENT value than the server id so the test
-// cannot pass by coincidence — the Success test above used the same string for
-// both, which could not distinguish "id from server" from "id from CSR".
 func TestIssueCertificateFromCSR_IdentityComesFromServerNotCSR(t *testing.T) {
 	certPEM, keyPEM := generateTestCA(t)
 	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
 	require.NoError(t, err)
 
-	const csrChosenID = "attacker-chosen-id"      // whatever the agent put in the CSR
-	const serverAuthoritativeID = "real-device-7" // the server's own authoritative id
+	const csrChosenID = "attacker-chosen-id"
+	const serverAuthoritativeID = "real-device-7"
 	csrPEM, _ := generateCSR(t, csrChosenID)
 
 	cert, err := c.IssueCertificateFromCSR(serverAuthoritativeID, csrPEM)
@@ -253,7 +240,6 @@ func TestIssueCertificateFromCSR_IdentityComesFromServerNotCSR(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, serverAuthoritativeID, gotPEM)
 
-	// Parse the issued cert: BOTH identity fields must be the server id.
 	block, _ := pem.Decode(cert.CertPEM)
 	require.NotNil(t, block)
 	parsed, err := x509.ParseCertificate(block.Bytes)
@@ -263,10 +249,6 @@ func TestIssueCertificateFromCSR_IdentityComesFromServerNotCSR(t *testing.T) {
 	assert.NotEqual(t, csrChosenID, parsed.Subject.CommonName, "the attacker-controlled CSR CN must never become the cert identity")
 }
 
-// generateCSRWithSAN builds a CSR for deviceID after letting the caller stamp a
-// subject-alternative-name onto the template — used to prove the CA rejects any
-// caller-supplied SAN (which would otherwise let an enrolling agent mint a
-// non-agent peer-class identity).
 func generateCSRWithSAN(t *testing.T, deviceID string, modify func(*x509.CertificateRequest)) []byte {
 	t.Helper()
 	_, key, err := ed25519.GenerateKey(rand.Reader)
@@ -278,12 +260,6 @@ func generateCSRWithSAN(t *testing.T, deviceID string, modify func(*x509.Certifi
 	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: der})
 }
 
-// TestIssueCertificateFromCSR_RejectsSAN pins WS14 #1: the CA must reject ANY
-// CSR carrying a SAN. "Wrong" cases are sourced from intent — identities an
-// enrolling agent must never be able to mint (a gateway/control peer class, a
-// server hostname/IP) — not from the validation rule. The load-bearing one is
-// the spiffe gateway URI: without the SAN rejection an agent could request a
-// gateway peer class and reach the InternalService.
 func TestIssueCertificateFromCSR_RejectsSAN(t *testing.T) {
 	certPEM, keyPEM := generateTestCA(t)
 	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
@@ -311,17 +287,12 @@ func TestIssueCertificateFromCSR_RejectsSAN(t *testing.T) {
 		})
 	}
 
-	// Correct/absent: a plain CSR (no SAN) still issues.
 	csrPEM, _ := generateCSR(t, "device-001")
 	cert, err := c.IssueCertificateFromCSR("device-001", csrPEM)
 	require.NoError(t, err)
 	require.NotNil(t, cert)
 }
 
-// TestIssueCertificateFromCSR_StampsExactlyAgentPeerClass pins WS14 #1's
-// positive half: an issued cert carries EXACTLY one URI SAN, the agent peer
-// class — so an enrolling agent can never obtain a non-agent class, even via a
-// CN/name collision.
 func TestIssueCertificateFromCSR_StampsExactlyAgentPeerClass(t *testing.T) {
 	certPEM, keyPEM := generateTestCA(t)
 	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
@@ -344,12 +315,6 @@ func TestIssueCertificateFromCSR_StampsExactlyAgentPeerClass(t *testing.T) {
 	assert.Equal(t, mtls.PeerClassAgent, class, "an issued cert must always be the agent peer class")
 }
 
-// TestIssueCertificateFromCSR_ValidityWindowFromClock pins that the
-// issued certificate's validity window derives from the injected clock,
-// not the wall clock: NotBefore = clock - 1m (skew allowance) and
-// NotAfter = clock + validity. Using a clock fixed in the PAST proves the
-// window cannot have come from time.Now() — the cert would be expired
-// today, which a wall-clock implementation could never produce.
 func TestIssueCertificateFromCSR_ValidityWindowFromClock(t *testing.T) {
 	certPEM, keyPEM := generateTestCA(t)
 	fixed := time.Date(2020, 6, 1, 12, 0, 0, 0, time.UTC)
@@ -361,14 +326,11 @@ func TestIssueCertificateFromCSR_ValidityWindowFromClock(t *testing.T) {
 	cert, err := c.IssueCertificateFromCSR("device-001", csrPEM)
 	require.NoError(t, err)
 
-	// NotAfter is exposed on the Certificate struct at full precision.
 	assert.True(t, cert.NotAfter.Equal(fixed.Add(validity)),
 		"NotAfter must be clock+validity; got %s want %s", cert.NotAfter, fixed.Add(validity))
 	assert.True(t, cert.NotAfter.Before(time.Now()),
 		"a cert issued under a past clock must already be expired, proving the window is not from the wall clock")
 
-	// NotBefore lives on the encoded cert; ASN.1 truncates to the second,
-	// which is lossless here (fixed has zero sub-second component).
 	block, _ := pem.Decode(cert.CertPEM)
 	require.NotNil(t, block)
 	parsed, err := x509.ParseCertificate(block.Bytes)
@@ -415,20 +377,11 @@ func TestEnrollmentIdentityFromCSRRejectsWrongPEMType(t *testing.T) {
 	assert.Contains(t, err.Error(), "unexpected PEM block type")
 }
 
-// TestIssueCertificateFromCSR_ForgedSignatureRejected pins the csr.CheckSignature
-// gate: a CSR whose ASN.1 structure is valid but whose signature does NOT verify
-// (tampered in transit, or minted by someone who does not hold the private key)
-// must be refused. The InvalidCSR test above only feeds garbage PEM; this covers
-// the structurally-valid-but-forged-signature branch — an uncovered edge that
-// guards proof-of-possession at issuance.
 func TestIssueCertificateFromCSR_ForgedSignatureRejected(t *testing.T) {
 	certPEM, keyPEM := generateTestCA(t)
 	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
 	require.NoError(t, err)
 
-	// A structurally valid CSR, then corrupt its signature: the last byte of the
-	// DER lies in the signatureValue, so ParseCertificateRequest still succeeds
-	// while CheckSignature must fail.
 	csrPEM, _ := generateCSR(t, "device-001")
 	block, _ := pem.Decode(csrPEM)
 	require.NotNil(t, block)
@@ -436,8 +389,6 @@ func TestIssueCertificateFromCSR_ForgedSignatureRejected(t *testing.T) {
 	der[len(der)-1] ^= 0xFF
 	forged := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: der})
 
-	// Sanity: the forged CSR still parses, so we are exercising CheckSignature,
-	// not the parse path the InvalidCSR test already covers.
 	_, perr := x509.ParseCertificateRequest(der)
 	require.NoError(t, perr, "forged CSR must remain structurally parseable")
 
@@ -446,17 +397,14 @@ func TestIssueCertificateFromCSR_ForgedSignatureRejected(t *testing.T) {
 	assert.Contains(t, err.Error(), "invalid CSR signature")
 }
 
-// A control server certificate carries the server identity, the control peer
-// class, its assigned DNS name, and a fixed validity distinct from agent certs.
 func TestIssueServerCertificateFromCSR_StampsControlClassAndValidity(t *testing.T) {
 	certPEM, keyPEM := generateTestCA(t)
 	fixed := time.Date(2020, 6, 1, 12, 0, 0, 0, time.UTC)
-	// Agent validity is deliberately NOT 45d so the assertion below distinguishes
-	// the control-server validity from the CA default.
+
 	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour, ca.WithClock(func() time.Time { return fixed }))
 	require.NoError(t, err)
 
-	const controlID = "control-01JABCDEF" // server id; CSR CN is different on purpose
+	const controlID = "control-01JABCDEF"
 	const controlHost = "control.example.com"
 	csrPEM := generateCSRWithSAN(t, "csr-chosen-id", func(*x509.CertificateRequest) {})
 
@@ -480,20 +428,14 @@ func TestIssueServerCertificateFromCSR_StampsControlClassAndValidity(t *testing.
 	assert.True(t, cert.NotAfter.Equal(fixed.Add(want45d)),
 		"control NotAfter must be clock+45d; got %s want %s", cert.NotAfter, fixed.Add(want45d))
 
-	// The helper can issue the control certificate used by mTLS integration tests.
 	assert.Contains(t, parsed.ExtKeyUsage, x509.ExtKeyUsageClientAuth)
 	assert.Contains(t, parsed.ExtKeyUsage, x509.ExtKeyUsageServerAuth,
 		"a control cert must be usable as a TLS server cert")
 
-	// The hostname must be stamped as a DNS SAN (server-chosen), so the agent's
-	// standard TLS verification can match the gateway's public name.
 	assert.Equal(t, []string{controlHost}, parsed.DNSNames,
 		"the control hostname must be stamped as a DNS SAN")
 }
 
-// TestIssueCertificateFromCSR_AgentIsClientAuthOnly pins that agent certs do NOT
-// gain ServerAuth. An agent is an mTLS client and never a server, so granting it would be
-// unnecessary authority.
 func TestIssueCertificateFromCSR_AgentIsClientAuthOnly(t *testing.T) {
 	certPEM, keyPEM := generateTestCA(t)
 	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
@@ -509,7 +451,6 @@ func TestIssueCertificateFromCSR_AgentIsClientAuthOnly(t *testing.T) {
 		"an agent cert must be client-auth only")
 }
 
-// The server-certificate path rejects caller-chosen SANs.
 func TestIssueServerCertificateFromCSR_RejectsSAN(t *testing.T) {
 	certPEM, keyPEM := generateTestCA(t)
 	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
@@ -552,12 +493,10 @@ func TestVerifyCertificate_WrongCA(t *testing.T) {
 	c2, err := ca.NewFromPEM(certPEM2, keyPEM2, 24*time.Hour)
 	require.NoError(t, err)
 
-	// Issue cert with CA1
 	csrPEM, _ := generateCSR(t, "device-001")
 	issued, err := c1.IssueCertificateFromCSR("device-001", csrPEM)
 	require.NoError(t, err)
 
-	// Verify with CA2 should fail
 	_, err = c2.VerifyCertificate(issued.CertPEM)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "verification failed")
@@ -614,8 +553,6 @@ func TestTrustPool(t *testing.T) {
 	assert.NotNil(t, pool)
 }
 
-// TestFingerprintFromCert_NilSafe pins the defensive nil guard — the gateway
-// mTLS path must never panic computing a revocation fingerprint.
 func TestFingerprintFromCert_NilSafe(t *testing.T) {
 	assert.Empty(t, ca.FingerprintFromCert(nil))
 }

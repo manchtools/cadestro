@@ -1,13 +1,5 @@
 package identity_test
 
-// The request-boundary fixture: real handlers, real interceptor chain,
-// real Connect transport, real SQLite.
-//
-// Nothing here stubs the store, the authorizer or the token manager. A
-// test that wants an unauthorized caller mints a real token for a real
-// subject holding a real role, and drives a real HTTP request through
-// the same chain production uses.
-
 import (
 	"context"
 	"crypto/ed25519"
@@ -36,9 +28,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-// testKEK is a fixed 32-byte key. It is a TEST key: the fixture needs a
-// deterministic KEK so a sealed value can be re-opened in an assertion,
-// and nothing outside this binary ever sees it.
 const testKEK = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 const testBaseURL = "https://control.test.example"
@@ -55,27 +44,16 @@ type fixture struct {
 	client   cadestrov1connect.ControlServiceClient
 	mounted  []string
 	now      time.Time
-	// clock backs every injected time source in this fixture; advance
-	// moves it.
+
 	clock *time.Time
-	// sessionKey is the Ed25519 key the server verifies against. The
-	// fixture keeps it so a test can mint a token the server TRUSTS but
-	// which fails for some other reason — expiry, wrong type, a
-	// mismatched session version.
+
 	sessionKey ed25519.PrivateKey
 }
 
-// newFixture builds the whole identity surface over a fresh database.
 func newFixture(t *testing.T, opts ...fixtureOption) *fixture {
 	t.Helper()
 	st, raw := setupSQLite(t)
 
-	// The fixture clock is the real one, captured once. The handlers,
-	// the token manager and SQLite timestamps all have to agree
-	// about freshness — a frozen clock in one of them and a live clock
-	// in another is skew, and skew is exactly what expiry checks are
-	// sensitive to. Determinism comes from capturing it, not freezing
-	// it at a fixed date.
 	cfg := &fixtureConfig{now: time.Now().UTC().Truncate(time.Microsecond)}
 	for _, o := range opts {
 		o(cfg)
@@ -97,8 +75,7 @@ func newFixture(t *testing.T, opts ...fixtureOption) *fixture {
 	require.NoError(t, err)
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	// Production reconciles these snapshots before serving. Seed the fixture at
-	// that post-boot boundary without adding unrelated audit rows to each test.
+
 	_, err = raw.Exec(t.Context(), `UPDATE roles SET permissions = $1 WHERE id = $2`, auth.AdminPermissions(), auth.AdminRoleID)
 	require.NoError(t, err)
 	_, err = raw.Exec(t.Context(), `UPDATE roles SET permissions = $1 WHERE id = $2`, auth.DefaultUserPermissions(), auth.UserRoleID)
@@ -114,8 +91,6 @@ func newFixture(t *testing.T, opts ...fixtureOption) *fixture {
 	})
 	boot := identity.NewBootstrapper(st, testBaseURL, cfg.bootstrapTTL, tick)
 
-	// The production chain, in production order: validate at the
-	// transport boundary, then authenticate, then authorize.
 	chain := connect.WithInterceptors(
 		connectvalidate.NewInterceptor(),
 		auth.NewAuthInterceptor(logger, jwt, auth.RateLimiters{}, auth.NewRejectionRecorder(st)).
@@ -145,10 +120,6 @@ func newFixture(t *testing.T, opts ...fixtureOption) *fixture {
 	}
 }
 
-// advance moves the fixture clock forward. Everything that reads it —
-// the handlers, the token manager, the bootstrap token freshness bound
-// — sees the new instant, so a lifetime can be crossed without
-// sleeping.
 func (f *fixture) advance(d time.Duration) {
 	*f.clock = f.clock.Add(d)
 }
@@ -178,19 +149,13 @@ func withBootstrapTTL(d time.Duration) fixtureOption {
 	return func(c *fixtureConfig) { c.bootstrapTTL = d }
 }
 
-// ---------------------------------------------------------------------------
-// Seeding
-// ---------------------------------------------------------------------------
-
-// grant describes one role grant to plant on a subject.
 type grant struct {
 	Permissions []string
-	// ScopeKind and ScopeID are empty together for a global grant.
+
 	ScopeKind string
 	ScopeID   string
 }
 
-// actor is a seeded subject plus a session token for them.
 type actor struct {
 	ID     string
 	Email  string
@@ -198,17 +163,10 @@ type actor struct {
 	RoleID string
 }
 
-// seedActor creates a subject, a role carrying the requested
-// permissions, and a grant binding them — then mints a token by
-// resolving that subject's authority through the REAL store queries, so
-// the token reflects what the database says rather than what the test
-// intended.
 func (f *fixture) seedActor(grants ...grant) *actor {
 	f.t.Helper()
 	userID := newULID()
-	// Lowercased: the handlers normalise an address before storing it,
-	// so a fixture that seeds mixed case would not collide with what a
-	// handler writes and a uniqueness assertion would silently pass.
+
 	email := "actor-" + strings.ToLower(userID[20:]) + "@test.example"
 	f.insertUser(userID, email)
 
@@ -222,8 +180,6 @@ func (f *fixture) seedActor(grants ...grant) *actor {
 	return a
 }
 
-// seedSubject creates a subject with no authority — a target, not a
-// caller.
 func (f *fixture) seedSubject() *actor {
 	f.t.Helper()
 	userID := newULID()
@@ -275,9 +231,7 @@ func (f *fixture) insertUserWithSource(id, email, source string) {
 		`INSERT INTO users (id, email, provisioning_source, created_at, updated_at) VALUES ($1, $2, $3, $4, $4)`,
 		id, email, source, f.now)
 	require.NoError(f.t, err)
-	// Every subject owns a data-encryption key from the moment they
-	// exist; without one, class-three audit detail about them could not
-	// be sealed and the handler would fail closed.
+
 	wrapped, err := crypto.GenerateWrappedDEK(f.kek, id)
 	require.NoError(f.t, err)
 	_, err = f.raw.Exec(f.ctx(),
@@ -339,7 +293,6 @@ func (f *fixture) insertDeviceGroup() string {
 	return groupID
 }
 
-// insertProvider plants an identity provider with a sealed secret.
 func (f *fixture) insertProvider(slug string, mutate func(*providerSeed)) string {
 	f.t.Helper()
 	seed := providerSeed{Enabled: true, ClientID: "client-id", Secret: "client-secret", GroupMapping: "{}"}
@@ -386,11 +339,6 @@ func (f *fixture) insertIdentityLink(userID, providerID, externalID string) stri
 	return linkID
 }
 
-// ---------------------------------------------------------------------------
-// Requests
-// ---------------------------------------------------------------------------
-
-// authed wraps a request with a bearer token.
 func authed[T any](msg *T, token string) *connect.Request[T] {
 	req := connect.NewRequest(msg)
 	if token != "" {
@@ -399,8 +347,6 @@ func authed[T any](msg *T, token string) *connect.Request[T] {
 	return req
 }
 
-// bootstrapAuthed wraps a request with a host-authorized setup token,
-// under its own scheme so it can never be mistaken for a session.
 func bootstrapAuthed[T any](msg *T, token string) *connect.Request[T] {
 	req := connect.NewRequest(msg)
 	req.Header().Set("Authorization", auth.BootstrapTokenScheme+" "+token)
@@ -409,7 +355,6 @@ func bootstrapAuthed[T any](msg *T, token string) *connect.Request[T] {
 
 func (f *fixture) ctx() context.Context { return f.t.Context() }
 
-// expiredToken mints a token that was valid in the past.
 func (f *fixture) expiredToken(userID, email string) string {
 	f.t.Helper()
 	past := f.now.Add(-24 * time.Hour)
@@ -423,9 +368,6 @@ func (f *fixture) expiredToken(userID, email string) string {
 	return pair.AccessToken
 }
 
-// forgedToken mints a well-formed token under a DIFFERENT Ed25519 key:
-// the claims are whatever the forger wants, and only the signature is
-// wrong.
 func (f *fixture) forgedToken(userID, email string, perms []string) string {
 	f.t.Helper()
 	_, priv, err := ed25519.GenerateKey(rand.Reader)
@@ -440,9 +382,6 @@ func (f *fixture) forgedToken(userID, email string, perms []string) string {
 	return pair.AccessToken
 }
 
-// signingKey exposes the fixture's own session key so an expired-token
-// helper can sign with the key the server trusts — the point of that
-// case is expiry, not a bad signature.
 func (f *fixture) signingKey() ed25519.PrivateKey {
 	f.t.Helper()
 	if f.sessionKey == nil {
@@ -451,12 +390,6 @@ func (f *fixture) signingKey() ed25519.PrivateKey {
 	return f.sessionKey
 }
 
-// ---------------------------------------------------------------------------
-// Audit assertions
-// ---------------------------------------------------------------------------
-
-// auditOperation is one recorded operation row, as the test reads it
-// back from the append-only tables.
 type auditOperation struct {
 	OperationID          string
 	Class                string
@@ -472,7 +405,6 @@ type auditOperation struct {
 	ResultCode           string
 }
 
-// auditEffect is one recorded effect row.
 type auditEffect struct {
 	ResourceType        string
 	ResourceID          string
@@ -491,8 +423,6 @@ type auditEffect struct {
 	SealedDetailSubject *string
 }
 
-// operationsFor returns every audit operation recorded for a procedure,
-// oldest first.
 func (f *fixture) operationsFor(descriptor string) []auditOperation {
 	f.t.Helper()
 	rows, err := f.raw.Query(f.ctx(),
@@ -516,8 +446,6 @@ func (f *fixture) operationsFor(descriptor string) []auditOperation {
 	return out
 }
 
-// onlyOperationFor asserts exactly one operation exists for a procedure
-// and returns it.
 func (f *fixture) onlyOperationFor(descriptor string) auditOperation {
 	f.t.Helper()
 	ops := f.operationsFor(descriptor)
@@ -525,11 +453,6 @@ func (f *fixture) onlyOperationFor(descriptor string) auditOperation {
 	return ops[0]
 }
 
-// operationOfClass returns the single operation of a given class for a
-// procedure. A request that writes in two steps — the SSO callback
-// spends its one-time state before it can talk to the identity
-// provider, so the spend commits separately from the login — produces
-// one record per step, and an assertion must name which one it means.
 func (f *fixture) operationOfClass(descriptor, class string) auditOperation {
 	f.t.Helper()
 	var found []auditOperation
@@ -542,7 +465,6 @@ func (f *fixture) operationOfClass(descriptor, class string) auditOperation {
 	return found[0]
 }
 
-// effectsOf returns an operation's effects in recorded order.
 func (f *fixture) effectsOf(operationID string) []auditEffect {
 	f.t.Helper()
 	rows, err := f.raw.Query(f.ctx(),
@@ -566,8 +488,6 @@ func (f *fixture) effectsOf(operationID string) []auditEffect {
 	return out
 }
 
-// effectWithAction finds the single effect carrying an action, failing
-// if there is not exactly one.
 func (f *fixture) effectWithAction(effects []auditEffect, action string) auditEffect {
 	f.t.Helper()
 	var found []auditEffect
@@ -580,7 +500,6 @@ func (f *fixture) effectWithAction(effects []auditEffect, action string) auditEf
 	return found[0]
 }
 
-// countAuditOperations returns how many operation rows exist in total.
 func (f *fixture) countAuditOperations() int64 {
 	f.t.Helper()
 	var n int64
@@ -588,9 +507,6 @@ func (f *fixture) countAuditOperations() int64 {
 	return n
 }
 
-// openSealedDetail decrypts class-three audit detail with the subject's
-// own key, proving the value is recoverable while the key lives and
-// unrecoverable once it is destroyed.
 func (f *fixture) openSealedDetail(subjectID string, sealed []byte, field string) (string, error) {
 	f.t.Helper()
 	var wrapped string
@@ -605,10 +521,6 @@ func (f *fixture) openSealedDetail(subjectID string, sealed []byte, field string
 	return dek.OpenField(string(sealed), field)
 }
 
-// ---------------------------------------------------------------------------
-// Misc helpers
-// ---------------------------------------------------------------------------
-
 func newULID() string { return ulid.Make().String() }
 
 func sha256Hex(v string) string {
@@ -616,8 +528,6 @@ func sha256Hex(v string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// connectCodeOf extracts the Connect code from an error, failing if the
-// error is not a Connect error at all.
 func connectCodeOf(t *testing.T, err error) connect.Code {
 	t.Helper()
 	require.Error(t, err)
@@ -626,9 +536,6 @@ func connectCodeOf(t *testing.T, err error) connect.Code {
 	return cerr.Code()
 }
 
-// discardProviderFactory refuses to build an OIDC client. Tests that do
-// not exercise the SSO exchange use it so a stray call fails loudly
-// instead of reaching the network.
 func discardProviderFactory(context.Context, idp.ProviderConfig) (*idp.OIDCProvider, error) {
 	return nil, errNoProviderInTest
 }
@@ -641,8 +548,6 @@ func (errNoProvider) Error() string {
 	return "identity test: no OIDC provider is wired in this fixture"
 }
 
-// mintPair issues a full access/refresh pair for a subject, for tests
-// that need the refresh half.
 func (f *fixture) mintPair(userID, email string) *auth.TokenPair {
 	f.t.Helper()
 	perms, err := f.store.ListUserPermissions(f.ctx(), userID)
@@ -654,9 +559,6 @@ func (f *fixture) mintPair(userID, email string) *auth.TokenPair {
 	return pair
 }
 
-// allPermissionKeys is every registered permission. Tests use it to
-// build the most privileged caller the registry can express, so a
-// rejection that still fires is a rejection nothing could bypass.
 func allPermissionKeys() []string {
 	all := auth.AllPermissions()
 	keys := make([]string, len(all))

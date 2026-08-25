@@ -12,7 +12,6 @@ import (
 
 const serverSettingsID = "00000000000000000000000003"
 
-// GetServerSettings returns the singleton fleet settings row.
 func (h *Handlers) GetServerSettings(ctx context.Context, req *connect.Request[cadestrov1.GetServerSettingsRequest]) (*connect.Response[cadestrov1.GetServerSettingsResponse], error) {
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
@@ -27,7 +26,6 @@ func (h *Handlers) GetServerSettings(ctx context.Context, req *connect.Request[c
 	return connect.NewResponse(&cadestrov1.GetServerSettingsResponse{Settings: settingsToProto(row)}), nil
 }
 
-// UpdateServerSettings replaces the two fleet-wide toggles directly.
 func (h *Handlers) UpdateServerSettings(ctx context.Context, req *connect.Request[cadestrov1.UpdateServerSettingsRequest]) (*connect.Response[cadestrov1.UpdateServerSettingsResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {

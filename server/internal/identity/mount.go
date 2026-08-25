@@ -8,23 +8,13 @@ import (
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
-// Mount registers the identity procedures on mux.
-//
-// Each procedure is mounted at its own canonical Connect path with the
-// shared interceptor chain, rather than through the whole-service
-// constructor: the identity handlers are one part of the control
-// service, and mounting only what this package implements keeps the
-// wiring honest about which procedures are actually served.
-//
-// Procedures returns the exact set that was mounted, so a test can
-// assert the surface rather than trusting this list.
 func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
 	var mounted []string
 	register := func(procedure string, handler http.Handler) {
 		mux.Handle(procedure, handler)
 		mounted = append(mounted, procedure)
 	}
-	// Sessions.
+
 	register(cadestrov1connect.ControlServiceRefreshTokenProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceRefreshTokenProcedure, h.RefreshToken, opts...))
 	register(cadestrov1connect.ControlServiceLogoutProcedure,
@@ -32,7 +22,6 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 	register(cadestrov1connect.ControlServiceGetCurrentUserProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceGetCurrentUserProcedure, h.GetCurrentUser, opts...))
 
-	// Single sign-on.
 	register(cadestrov1connect.ControlServiceListAuthMethodsProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceListAuthMethodsProcedure, h.ListAuthMethods, opts...))
 	register(cadestrov1connect.ControlServiceGetSSOLoginURLProcedure,
@@ -40,7 +29,6 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 	register(cadestrov1connect.ControlServiceSSOCallbackProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceSSOCallbackProcedure, h.SSOCallback, opts...))
 
-	// Identity providers.
 	register(cadestrov1connect.ControlServiceCreateIdentityProviderProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceCreateIdentityProviderProcedure, h.CreateIdentityProvider, opts...))
 	register(cadestrov1connect.ControlServiceGetIdentityProviderProcedure,
@@ -58,13 +46,11 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 	register(cadestrov1connect.ControlServiceRotateSCIMTokenProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceRotateSCIMTokenProcedure, h.RotateSCIMToken, opts...))
 
-	// Identity links.
 	register(cadestrov1connect.ControlServiceListIdentityLinksProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceListIdentityLinksProcedure, h.ListIdentityLinks, opts...))
 	register(cadestrov1connect.ControlServiceUnlinkIdentityProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceUnlinkIdentityProcedure, h.UnlinkIdentity, opts...))
 
-	// Users.
 	register(cadestrov1connect.ControlServiceEraseJITUserProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceEraseJITUserProcedure, h.EraseJITUser, opts...))
 	register(cadestrov1connect.ControlServiceGetUserProcedure,
@@ -87,7 +73,7 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceRemoveUserSshKeyProcedure, h.RemoveUserSshKey, opts...))
 	register(cadestrov1connect.ControlServiceSetUserProvisioningEnabledProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceSetUserProvisioningEnabledProcedure, h.SetUserProvisioningEnabled, opts...))
-	// User groups and membership.
+
 	register(cadestrov1connect.ControlServiceCreateUserGroupProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceCreateUserGroupProcedure, h.CreateUserGroup, opts...))
 	register(cadestrov1connect.ControlServiceGetUserGroupProcedure,
@@ -113,7 +99,6 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 	register(cadestrov1connect.ControlServiceEvaluateDynamicUserGroupProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceEvaluateDynamicUserGroupProcedure, h.EvaluateDynamicUserGroup, opts...))
 
-	// Roles and grants.
 	register(cadestrov1connect.ControlServiceCreateRoleProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceCreateRoleProcedure, h.CreateRole, opts...))
 	register(cadestrov1connect.ControlServiceGetRoleProcedure,
@@ -135,13 +120,11 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 	register(cadestrov1connect.ControlServiceListPermissionsProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceListPermissionsProcedure, h.ListPermissions, opts...))
 
-	// Fleet settings.
 	register(cadestrov1connect.ControlServiceGetServerSettingsProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceGetServerSettingsProcedure, h.GetServerSettings, opts...))
 	register(cadestrov1connect.ControlServiceUpdateServerSettingsProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceUpdateServerSettingsProcedure, h.UpdateServerSettings, opts...))
 
-	// Append-only audit evidence.
 	register(cadestrov1connect.ControlServiceListAuditEventsProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceListAuditEventsProcedure, h.ListAuditEvents, opts...))
 	register(cadestrov1connect.ControlServiceExportAuditEventsProcedure,
@@ -150,11 +133,6 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 	return mounted
 }
 
-// MutationProcedures is the exact set of identity procedures that
-// change state. It is what an audit-coverage test enumerates: every
-// entry must be shown to write its operation and effects in the same
-// transaction as its mutation, and an entry added to Mount without
-// being classified here fails that test.
 func MutationProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceRefreshTokenProcedure,
@@ -196,8 +174,6 @@ func MutationProcedures() []string {
 	}
 }
 
-// ReadProcedures is the exact set of identity procedures that change
-// nothing.
 func ReadProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceGetCurrentUserProcedure,
@@ -219,8 +195,6 @@ func ReadProcedures() []string {
 	}
 }
 
-// SensitiveReadProcedures is the exact read surface that must append audit
-// evidence before returning protected material.
 func SensitiveReadProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceExportAuditEventsProcedure,

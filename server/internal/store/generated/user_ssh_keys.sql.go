@@ -55,7 +55,6 @@ func (q *Queries) GetUserSshKey(ctx context.Context, arg GetUserSshKeyParams) (U
 }
 
 const insertUserSshKey = `-- name: InsertUserSshKey :one
-
 INSERT INTO user_ssh_keys (user_id, key_id, public_key, comment, added_at)
 VALUES (?, ?, ?, ?, ?)
 RETURNING user_id, key_id, public_key, comment, added_at
@@ -69,10 +68,6 @@ type InsertUserSshKeyParams struct {
 	AddedAt   time.Time `json:"added_at"`
 }
 
-// Authorized SSH public keys per user. Public key material is not a
-// secret, but it is the credential that admits a session on a managed
-// device, so every write is an audited mutation and the audit record
-// carries the key's fingerprint rather than the key.
 func (q *Queries) InsertUserSshKey(ctx context.Context, arg InsertUserSshKeyParams) (UserSshKey, error) {
 	row := q.db.QueryRowContext(ctx, insertUserSshKey,
 		arg.UserID,

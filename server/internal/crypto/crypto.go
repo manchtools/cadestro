@@ -1,17 +1,3 @@
-// Package crypto provides application-level encryption for sensitive data
-// stored in the database: LUKS passphrases, LPS passwords, IdP client secrets,
-// and per-subject audit-detail keys.
-//
-// The at-rest format is AAD-bound AES-256-GCM under the prefix "enc:v1:". Every ciphertext is
-// bound to its row context via additional authenticated data, so a
-// DB-level attacker cannot relocate a secret from one row (or purpose)
-// to another and have it decrypt. There is deliberately NO nil-AAD API:
-// the naked Encrypt/Decrypt pair was removed so a new call site cannot
-// regress to unbound ciphertext (a guard test additionally pins that
-// AEAD primitives are not used outside this package).
-//
-// The encryption key is loaded by the control server from its configured secret
-// file or deployment override.
 package crypto
 
 import (
@@ -24,12 +10,8 @@ import (
 	sdkcrypto "github.com/manchtools/cadestro/sdk/crypto"
 )
 
-// prefix identifies the single AAD-bound AES-256-GCM at-rest format.
-// Values carrying any other format, including plaintext, fail closed.
 const prefix = "enc:v1:"
 
-// Purpose tags for RowAAD — shared constants so the write and read
-// paths can never drift apart on the AAD purpose dimension.
 const (
 	PurposeIdPClientSecret              = "idp-client-secret"
 	PurposeActionEncryptionPresharedKey = "action-encryption-preshared-key"
@@ -37,32 +19,20 @@ const (
 	PurposeActionWifiClientKey          = "action-wifi-client-key"
 )
 
-// IsEncryptedValue reports whether value uses the only supported at-rest
-// envelope. It is a shape check for metadata-only read paths; authenticated
-// validity is established only by DecryptWithContext at the execution sink.
 func IsEncryptedValue(value string) bool { return strings.HasPrefix(value, prefix) }
 
-// DeviceSecretAAD makes the generic encrypted-row context explicit for new
-// AEAD without another persistence abstraction.
 func DeviceSecretAAD(rowID, deviceID, kind, subject string, version uint32) []byte {
 	return []byte(fmt.Sprintf("%s|%s|%s|%s|v%d", rowID, deviceID, kind, subject, version))
 }
 
-// RowAAD builds the AAD for a secret owned by a single row: the owning
-// row's ULID plus a fixed purpose literal (see the Purpose* constants).
-// Mirrors SecretAAD's unambiguous '|' concatenation; the two shapes
-// cannot collide because SecretAAD always has three segments.
 func RowAAD(rowID, purpose string) []byte {
 	return []byte(rowID + "|" + purpose)
 }
 
-// Encryptor handles AES-256-GCM encryption and decryption of secret values.
 type Encryptor struct {
 	key []byte
 }
 
-// NewEncryptor creates a new Encryptor from a hex-encoded 32-byte key.
-// An empty key is rejected; control cannot run without at-rest encryption.
 func NewEncryptor(keyHex string) (*Encryptor, error) {
 	if keyHex == "" {
 		return nil, errors.New("encryption key is required")
@@ -79,12 +49,6 @@ func NewEncryptor(keyHex string) (*Encryptor, error) {
 	return &Encryptor{key: append([]byte(nil), key...)}, nil
 }
 
-// EncryptWithContext encrypts plaintext bound to aad and returns an
-// "enc:v1:<base64>" string. The aad is authenticated (not stored in the
-// ciphertext) — DecryptWithContext must be given the SAME aad to open
-// it, so a secret sealed for one row context cannot be opened in
-// another. A missing encryptor or empty AAD is refused. Empty plaintext remains
-// empty, but non-empty plaintext always becomes ciphertext.
 func (e *Encryptor) EncryptWithContext(plaintext string, aad []byte) (string, error) {
 	if e == nil {
 		return "", errors.New("crypto: encryptor is required")
@@ -103,13 +67,6 @@ func (e *Encryptor) EncryptWithContext(plaintext string, aad []byte) (string, er
 	return prefix + base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
-// DecryptWithContext decrypts an "enc:v1:<base64>" AAD-bound value.
-//
-//   - "enc:v1:" values open with the SAME aad they were sealed under;
-//     a mismatched aad or tampered ciphertext fails GCM authentication.
-//   - any other "enc:*" prefix is rejected;
-//   - non-empty plaintext is rejected; and
-//   - an empty value round-trips as empty.
 func (e *Encryptor) DecryptWithContext(value string, aad []byte) (string, error) {
 	if e == nil {
 		return "", errors.New("crypto: encryptor is required")
@@ -132,7 +89,7 @@ func (e *Encryptor) DecryptWithContext(value string, aad []byte) (string, error)
 		}
 		return string(plaintext), nil
 	case strings.HasPrefix(value, "enc:"):
-		// Report only the format tag, never ciphertext bytes.
+
 		tag := value
 		if i := strings.Index(value[len("enc:"):], ":"); i >= 0 {
 			tag = value[:len("enc:")+i]

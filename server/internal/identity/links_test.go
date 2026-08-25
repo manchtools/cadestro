@@ -52,8 +52,6 @@ func TestUnlinkIdentity_RemovesTheCallersOwnBinding(t *testing.T) {
 	assert.Equal(t, sha256Hex("first-subject"), effect.EvidenceFingerprint)
 }
 
-// Human sign-in is OIDC only, so removing the last binding would lock
-// the subject out of their own account with nothing to fall back on.
 func TestUnlinkIdentity_RefusesToRemoveTheLastSignInMethod(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -69,8 +67,6 @@ func TestUnlinkIdentity_RefusesToRemoveTheLastSignInMethod(t *testing.T) {
 	assert.Len(t, links, 1, "the refused request removed nothing")
 }
 
-// Another subject's binding reads as absent, so the id space cannot be
-// probed for who is linked where.
 func TestUnlinkIdentity_ReportsAnotherSubjectsBindingAsNotFound(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -89,9 +85,6 @@ func TestUnlinkIdentity_ReportsAnotherSubjectsBindingAsNotFound(t *testing.T) {
 	assert.Len(t, links, 1)
 }
 
-// Two callers presenting the SAME refresh token at the same time: the
-// rotation is a conditional insert, so exactly one may win. Without it
-// both would mint a session from one credential.
 func TestRefreshToken_ConcurrentPresentationsOfOneTokenYieldOneSession(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

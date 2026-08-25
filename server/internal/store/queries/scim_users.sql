@@ -1,9 +1,9 @@
--- The subject view a SCIM directory is allowed to see.
---
--- Every statement joins identity_links and filters on provider_id: a
--- directory addresses only the subjects it is itself bound to, so a
--- second directory's subjects are not merely hidden from the response,
--- they never enter the result set.
+
+
+
+
+
+
 
 -- name: ListSCIMUsers :many
 SELECT sqlc.embed(u), l.external_id

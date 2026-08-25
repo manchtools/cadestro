@@ -432,10 +432,6 @@ func TestSQLiteSearch_FuzzyCandidateCorpus(t *testing.T) {
 	}
 }
 
-// The user-groups LIST renders a SCIM-managed chip from search documents, and
-// the canonical group reads derive that flag from the existence of a
-// scim_group_mapping row. The document must mirror the same derivation, or the
-// list has no honest value to render.
 func TestSQLiteSearch_UserGroupDocumentCarriesScimManaged(t *testing.T) {
 	st, raw := setupSQLite(t)
 	ctx := context.Background()
@@ -475,12 +471,6 @@ func TestSQLiteSearch_UserGroupDocumentCarriesScimManaged(t *testing.T) {
 		"a group without a mapping is locally managed")
 }
 
-// The users LIST renders direct role-grant chips and group-inherited chips as
-// two distinct clusters, deduplicated by role id. The union `role` filter
-// field cannot say which side a name came from, so the document carries both
-// sides separately, names and ids aligned, mirroring the canonical
-// ListUserRoleGrants and ListInheritedRolesForUser reads — including their
-// exclusion of retired roles and retired groups.
 func TestSQLiteSearch_UserDocumentCarriesDirectAndInheritedRoleFields(t *testing.T) {
 	st, raw := setupSQLite(t)
 	ctx := context.Background()
@@ -557,14 +547,6 @@ func requireOneSearchRow(t *testing.T, rows []store.SearchRow) store.SearchRow {
 	return rows[0]
 }
 
-// The actions LIST is rendered from search documents, not from ListActions, so
-// any field the list shows has to be IN the document. `desired_state` was not,
-// and the web adapter had no honest value to fall back on: it hardcoded
-// PRESENT, so every action in the list read "Install" no matter what it was —
-// including the remove-actions the detail page correctly showed as "Remove".
-//
-// A field the UI renders but the document omits is a fabrication waiting to
-// happen, which is why this asserts the document rather than the rendering.
 func TestSQLiteSearch_ActionDocumentCarriesDesiredState(t *testing.T) {
 	st, raw := setupSQLite(t)
 	ctx := context.Background()

@@ -10,7 +10,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// TestValidateActionSafetyRequiresSignedAgentUpdateManifest pins fail-closed source validation.
 func TestValidateActionSafetyRequiresSignedAgentUpdateManifest(t *testing.T) {
 	t.Parallel()
 	validBinaryURL := "https://releases.example/cadestrod-linux-amd64"
@@ -28,8 +27,6 @@ func TestValidateActionSafetyRequiresSignedAgentUpdateManifest(t *testing.T) {
 		{name: "hostless checksum URL", arch: &cadestrov1.AgentUpdateArch{BinaryUrl: validBinaryURL, ChecksumUrl: "https://"}},
 	}
 
-	// Field 3 was the disposable pre-alpha expected_sha256 bypass. Old binary
-	// protobuf input must not make an update valid after that field is removed.
 	legacyWire := protowire.AppendTag(nil, 1, protowire.BytesType)
 	legacyWire = protowire.AppendString(legacyWire, validBinaryURL)
 	legacyWire = protowire.AppendTag(legacyWire, 3, protowire.BytesType)

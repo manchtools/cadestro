@@ -18,7 +18,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/middleware"
 )
 
-// Error code constants carried in the structured error detail.
 const (
 	errRateLimited      = cadestrov1.ErrorCode_ERROR_CODE_RATE_LIMITED
 	errNotAuthenticated = cadestrov1.ErrorCode_ERROR_CODE_NOT_AUTHENTICATED
@@ -26,16 +25,8 @@ const (
 	errPermissionDenied = cadestrov1.ErrorCode_ERROR_CODE_PERMISSION_DENIED
 )
 
-// ControlProcedurePrefix is the Connect path prefix every control
-// procedure shares.
 const ControlProcedurePrefix = "/" + cadestrov1connect.ControlServiceName + "/"
 
-// PublicProcedures are the procedures that carry no session token.
-//
-// Human login is OIDC only, so the public set is the SSO handshake, the
-// session lifecycle a client must be able to drive without a valid
-// access token, and the two device-certificate procedures whose caller
-// authenticates with an enrollment token or its existing certificate.
 var PublicProcedures = map[string]bool{
 	cadestrov1connect.ControlServiceRefreshTokenProcedure:     true,
 	cadestrov1connect.ControlServiceLogoutProcedure:           true,
@@ -46,22 +37,6 @@ var PublicProcedures = map[string]bool{
 	cadestrov1connect.ControlServiceSSOCallbackProcedure:      true,
 }
 
-// procedureAlternatives maps a procedure to the permission keys that
-// can authorize it. The authorization interceptor passes the procedure
-// when the actor holds ANY of the alternatives; the handler then
-// narrows to the specific permission for the request shape.
-//
-// It exists for procedures whose authorization depends on a runtime
-// property of the request — CreateDeviceGroup is satisfied by either
-// the static or the dynamic creation permission depending on whether
-// the request carries a query. A procedure listed here is gated
-// EXCLUSIVELY by its alternatives; the default base-key path is not a
-// fallback.
-//
-// Unexported: an exported mutable map of authorization rules is a
-// runtime-tampering surface. Out-of-package callers read
-// ProcedureAlternativesSnapshot. The map is written once at package
-// init and only read afterwards, so concurrent reads are safe.
 var procedureAlternatives = map[string][]string{
 	cadestrov1connect.ControlServiceCreateDeviceGroupProcedure: {
 		"CreateStaticDeviceGroup",
@@ -71,26 +46,19 @@ var procedureAlternatives = map[string][]string{
 		"CreateStaticUserGroup",
 		"CreateDynamicUserGroup",
 	},
-	// The query-update procedures are dynamic-only: a static-group
-	// admin cannot satisfy them because only the dynamic permission is
-	// listed.
+
 	cadestrov1connect.ControlServiceUpdateDeviceGroupQueryProcedure: {
 		"UpdateDynamicDeviceGroupQuery",
 	},
 	cadestrov1connect.ControlServiceUpdateUserGroupQueryProcedure: {
 		"UpdateDynamicUserGroupQuery",
 	},
-	// The export is a re-serialisation of what the list already
-	// returns, so a separate permission could only drift wider or
-	// narrower than the data it re-serves.
+
 	cadestrov1connect.ControlServiceExportAuditEventsProcedure: {
 		"ListAuditEvents",
 	},
 }
 
-// ProcedureAlternativesSnapshot returns a deep copy of the
-// procedure-alternatives map. The returned value is freshly allocated;
-// mutating it does not affect the live authorization policy.
 func ProcedureAlternativesSnapshot() map[string][]string {
 	out := make(map[string][]string, len(procedureAlternatives))
 	for k, v := range procedureAlternatives {
@@ -99,8 +67,6 @@ func ProcedureAlternativesSnapshot() map[string][]string {
 	return out
 }
 
-// PermissionIsAlternative reports whether a permission key gates some
-// procedure through the alternatives map.
 func PermissionIsAlternative(permKey string) bool {
 	for _, alts := range procedureAlternatives {
 		for _, perm := range alts {
@@ -112,13 +78,8 @@ func PermissionIsAlternative(permKey string) bool {
 	return false
 }
 
-// TrustedProxies is the set of addresses trusted to set X-Forwarded-For
-// / X-Real-IP. Empty means proxy headers are ignored entirely and the
-// direct peer address is always used.
 var TrustedProxies []*net.IPNet
 
-// SetTrustedProxies parses CIDR strings and installs them as the
-// trusted proxy set. A bare IP is treated as /32 or /128.
 func SetTrustedProxies(cidrs []string) {
 	var nets []*net.IPNet
 	for _, cidr := range cidrs {
@@ -157,17 +118,6 @@ func isTrustedProxy(addr string) bool {
 	return false
 }
 
-// resolveClientIP applies trusted-proxy semantics to a direct peer
-// address and its forwarded headers.
-//
-// Proxy headers are honoured only when the direct peer is itself a
-// trusted proxy. X-Forwarded-For is walked RIGHT TO LEFT: trusted hops
-// are skipped and the first untrusted address is the client, which
-// defeats a spoofed leftmost entry. A malformed hop encountered before
-// a trustworthy client is established, or an all-trusted chain, falls
-// back to the direct peer rather than to a farther-left,
-// attacker-controllable value. X-Real-IP is consulted only when
-// X-Forwarded-For is absent.
 func resolveClientIP(peerIP, xff, xri string) string {
 	if !isTrustedProxy(peerIP) {
 		return peerIP
@@ -194,13 +144,6 @@ func resolveClientIP(peerIP, xff, xri string) string {
 	return peerIP
 }
 
-// ClientIPFromHTTP is the http.Request analogue of clientIP, for
-// handlers outside the Connect chain (SCIM, health, the OIDC callback).
-//
-// It returns the empty string when neither the peer address nor the
-// proxy headers yield a parsable IP: callers treat that as "could not
-// identify" rather than coalescing every anonymous request onto one
-// bucket by accident.
 func ClientIPFromHTTP(r *http.Request) string {
 	peerIP := r.RemoteAddr
 	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
@@ -213,10 +156,6 @@ func ClientIPFromHTTP(r *http.Request) string {
 	return ""
 }
 
-// clientIP resolves the attributable client address of a Connect
-// request. An unparsable peer yields "", which is also the safer
-// limiter key: unidentifiable peers share one restrictive bucket
-// instead of each getting a fresh one from an attacker-varied string.
 func clientIP(req connect.AnyRequest) string {
 	peerAddr := req.Peer().Addr
 	peerIP := peerAddr
@@ -230,55 +169,29 @@ func clientIP(req connect.AnyRequest) string {
 	return ""
 }
 
-// ClientIP is the exported form of clientIP, for handlers that gate
-// themselves outside the interceptor chain.
 func ClientIP(req connect.AnyRequest) string { return clientIP(req) }
 
-// RateLimiters bundles the per-procedure-family limiters the
-// authentication interceptor consults. A nil field disables that gate.
-//
-// Every limiter is a PROCESS-LOCAL sliding window, which is exactly
-// right for the single control instance this design targets: the
-// ceiling is the configured ceiling, with no shared store on the
-// request path.
 type RateLimiters struct {
-	// SSOCallback throttles the code-exchange leg of the login flow.
 	SSOCallback *RateLimiter
-	// Refresh throttles session rotation.
+
 	Refresh *RateLimiter
-	// Register and RenewCert throttle the two certificate procedures,
-	// each of which runs a CA signing operation and a database write.
+
 	Register  *RateLimiter
 	RenewCert *RateLimiter
-	// Logout is public, so without a ceiling anyone who learned a
-	// refresh token could invalidate that session arbitrarily often.
+
 	Logout *RateLimiter
-	// AuthMethods throttles the unauthenticated provider list, which
-	// reflects deployment configuration to anonymous callers.
+
 	AuthMethods *RateLimiter
-	// SSO throttles GetSSOLoginURL: the most expensive unauthenticated
-	// endpoint, since each call writes an auth_state row, decrypts the
-	// provider secret and performs outbound OIDC discovery.
+
 	SSO *RateLimiter
-	// Authenticated is the general per-user ceiling applied to every
-	// authenticated procedure once the token validates. Keyed by the
-	// subject id, so two subjects never share a bucket.
+
 	Authenticated *RateLimiter
-	// Expensive is a tighter per-user ceiling layered on top for the
-	// self-discovered heavy set (see isExpensiveProcedure).
+
 	Expensive *RateLimiter
-	// Rejected bounds how fast one source address can produce
-	// authentication FAILURES. It gates the rejection-audit write, so
-	// a credential-stuffing flood cannot turn the audit log into an
-	// amplification target.
+
 	Rejected *RateLimiter
 }
 
-// expensiveProcedureActions is the reviewed set of authenticated procedures
-// whose query evaluation, search, rebuild, fan-out, or bulk export warrants a
-// tighter per-user ceiling. The descriptor-backed exact-set test makes renames
-// and additions explicit instead of inferring security policy from a method
-// name prefix.
 var expensiveProcedureActions = map[string]bool{
 	"DispatchOSQuery":          true,
 	"EvaluateDynamicGroup":     true,
@@ -297,50 +210,27 @@ func isExpensiveProcedure(action string) bool {
 	return expensiveProcedureActions[action]
 }
 
-// IsExpensiveProcedure reports whether an action is in the reviewed heavy set.
-// Exported for the descriptor-backed exact-set guard.
 func IsExpensiveProcedure(action string) bool { return isExpensiveProcedure(action) }
 
-// ProcedureAction extracts the trailing method name from a Connect
-// procedure path.
 func ProcedureAction(procedure string) string {
 	parts := strings.Split(procedure, "/")
 	return parts[len(parts)-1]
 }
 
-// RejectionRecorder is the audit seam the authentication interceptor
-// uses for the dedicated rejected-authentication operation class. It is
-// satisfied by *store.Store; declared as an interface here so the auth
-// package does not depend on a concrete store for a single call.
 type RejectionRecorder interface {
 	RecordRejectedAuthentication(ctx context.Context, att RejectedAuthentication) error
 }
 
-// RejectedAuthentication describes one failed authentication attempt.
-// Every field is code-derived or a digest: the presented credential
-// never appears, only the SHA-256 of it, and the peer address is
-// likewise reduced to a digest because it is personal data.
 type RejectedAuthentication struct {
-	// Procedure is the full Connect method that was attempted.
 	Procedure string
-	// Reason is a fixed code constant naming why the attempt failed.
+
 	Reason string
-	// CredentialFingerprint is the SHA-256 hex digest of the presented
-	// bearer value, empty when none was presented.
+
 	CredentialFingerprint string
-	// OriginFingerprint is the SHA-256 hex digest of the client
-	// address, empty when the peer could not be identified.
+
 	OriginFingerprint string
 }
 
-// There is deliberately no claimed-subject field. A rejected attempt
-// never authenticated, so it has no actor; recording the id a forged
-// token asserted would put an attacker-chosen value in the column that
-// means "who did this".
-
-// Fingerprint reduces a value to its SHA-256 hex digest. The empty
-// string maps to the empty string rather than to the digest of nothing,
-// so "absent" and "present but empty" do not collide.
 func Fingerprint(v string) string {
 	if v == "" {
 		return ""
@@ -349,43 +239,30 @@ func Fingerprint(v string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// AuthInterceptor authenticates Connect requests.
 type AuthInterceptor struct {
 	logger     *slog.Logger
 	jwtManager *JWTManager
 	limiters   RateLimiters
 	rejections RejectionRecorder
-	// bootstrap admits the host-authorized setup principal. Nil when
-	// no bootstrap path is wired.
+
 	bootstrap BootstrapAuthenticator
 }
 
-// BootstrapAuthenticator consumes a host-authorized bootstrap token and
-// returns the reserved principal it admits. Consumption is single-use
-// and audited by the implementation.
 type BootstrapAuthenticator interface {
 	AuthenticateBootstrapToken(ctx context.Context, token string) (*UserContext, error)
 }
 
-// NewAuthInterceptor creates the authentication interceptor.
 func NewAuthInterceptor(logger *slog.Logger, jwtManager *JWTManager, limiters RateLimiters, rejections RejectionRecorder) *AuthInterceptor {
 	return &AuthInterceptor{logger: logger, jwtManager: jwtManager, limiters: limiters, rejections: rejections}
 }
 
-// WithBootstrapAuthenticator wires the host-authorized setup path.
 func (i *AuthInterceptor) WithBootstrapAuthenticator(b BootstrapAuthenticator) *AuthInterceptor {
 	i.bootstrap = b
 	return i
 }
 
-// BootstrapTokenScheme is the Authorization scheme a host-authorized
-// bootstrap token is presented under. It is deliberately NOT "Bearer":
-// a bootstrap token must never be accepted anywhere a session token is
-// expected, and a distinct scheme makes that a parse-level property
-// rather than a validation-order one.
 const BootstrapTokenScheme = "Cadestro-Bootstrap"
 
-// WrapUnary implements connect.Interceptor.
 func (i *AuthInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 		procedure := req.Spec().Procedure
@@ -414,12 +291,7 @@ func (i *AuthInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 
 		claims, err := i.jwtManager.ValidateToken(credential, TokenTypeAccess)
 		if err != nil {
-			// An expired token is separated from every other failure so
-			// the client can distinguish "refresh and retry" from "this
-			// value can never become valid, log in again". Signature,
-			// algorithm, issuer and token-type failures all collapse
-			// into the second case: telling a caller WHICH check their
-			// forgery failed is an oracle.
+
 			code, msg := errNotAuthenticated, "invalid token"
 			if errors.Is(err, jwt.ErrTokenExpired) {
 				code, msg = errTokenExpired, "token expired"
@@ -450,8 +322,6 @@ func (i *AuthInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	}
 }
 
-// authenticateBootstrap consumes a host-authorized setup token. The
-// token is single-use, so a rejection here is terminal for that value.
 func (i *AuthInterceptor) authenticateBootstrap(
 	ctx context.Context,
 	next connect.UnaryFunc,
@@ -470,8 +340,6 @@ func (i *AuthInterceptor) authenticateBootstrap(
 	return next(WithUser(ctx, principal), req)
 }
 
-// applyPublicLimiters runs the per-procedure ceilings that gate the
-// unauthenticated surface, before any handler work.
 func (i *AuthInterceptor) applyPublicLimiters(ctx context.Context, procedure string, req connect.AnyRequest) error {
 	type gate struct {
 		limiter *RateLimiter
@@ -507,14 +375,6 @@ func (i *AuthInterceptor) applyPublicLimiters(ctx context.Context, procedure str
 	return nil
 }
 
-// rejectAuthentication records the attempt under the dedicated
-// rejected-authentication operation class and returns the error the
-// caller sees.
-//
-// The audit write is gated by the Rejected limiter: a flood of bad
-// credentials from one source is throttled, so the audit log cannot be
-// used as a write amplifier. The rejection itself is unconditional —
-// throttling changes what is RECORDED, never what is ADMITTED.
 func (i *AuthInterceptor) rejectAuthentication(
 	ctx context.Context,
 	req connect.AnyRequest,
@@ -540,9 +400,6 @@ func (i *AuthInterceptor) rejectAuthentication(
 	return authErrorCtx(ctx, reason, code, message)
 }
 
-// parseAuthorization splits an Authorization header into its scheme and
-// credential. A missing header, a malformed one and an empty credential
-// are all reported as the same "no usable credential" condition.
 func parseAuthorization(header string) (scheme, credential string, err error) {
 	if header == "" {
 		return "", "", errors.New("missing authentication credentials")
@@ -558,29 +415,20 @@ func parseAuthorization(header string) (scheme, credential string, err error) {
 	return scheme, credential, nil
 }
 
-// WrapStreamingClient implements connect.Interceptor.
 func (i *AuthInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
 	return next
 }
 
-// WrapStreamingHandler refuses streaming: the control API is unary
-// only, and an unauthenticated streaming path would be a hole around
-// the unary gate above.
 func (i *AuthInterceptor) WrapStreamingHandler(connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
 	return func(context.Context, connect.StreamingHandlerConn) error {
 		return connect.NewError(connect.CodeUnimplemented, errors.New("streaming RPCs are not supported on the control server"))
 	}
 }
 
-// AuthzInterceptor is the coarse permission gate. It answers "does this
-// actor hold anything that could authorize this procedure"; each
-// handler still expresses its own resource-specific authorization.
 type AuthzInterceptor struct{}
 
-// NewAuthzInterceptor creates the authorization interceptor.
 func NewAuthzInterceptor() *AuthzInterceptor { return &AuthzInterceptor{} }
 
-// WrapUnary implements connect.Interceptor.
 func (i *AuthzInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 		procedure := req.Spec().Procedure
@@ -616,22 +464,16 @@ func (i *AuthzInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	}
 }
 
-// WrapStreamingClient implements connect.Interceptor.
 func (i *AuthzInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
 	return next
 }
 
-// WrapStreamingHandler refuses streaming, matching the authentication
-// interceptor.
 func (i *AuthzInterceptor) WrapStreamingHandler(connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
 	return func(context.Context, connect.StreamingHandlerConn) error {
 		return connect.NewError(connect.CodeUnimplemented, errors.New("streaming RPCs are not supported on the control server"))
 	}
 }
 
-// authErrorCtx builds a connect error carrying the structured detail
-// the web client correlates on. The message is a fixed string; no
-// request input and no credential material reaches it.
 func authErrorCtx(ctx context.Context, code cadestrov1.ErrorCode, connectCode connect.Code, msg string) *connect.Error {
 	e := connect.NewError(connectCode, errors.New(msg))
 	detail := &cadestrov1.ErrorDetail{Code: code, RequestId: &cadestrov1.RequestId{Value: middleware.RequestIDFromContext(ctx)}}

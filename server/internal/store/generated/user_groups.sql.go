@@ -238,7 +238,6 @@ func (q *Queries) GetUserGroupView(ctx context.Context, id string) (GetUserGroup
 }
 
 const insertUserGroup = `-- name: InsertUserGroup :one
-
 INSERT INTO user_groups (id, name, description, created_at, created_by, updated_at, is_dynamic, dynamic_query)
 VALUES (?, ?, ?, ?, ?, ?, ?7, ?8)
 RETURNING id, name, description, member_count, created_at, created_by, updated_at, is_deleted, is_dynamic, dynamic_query, maintenance_window
@@ -255,9 +254,6 @@ type InsertUserGroupParams struct {
 	DynamicQuery *string   `json:"dynamic_query"`
 }
 
-// User groups. A group is a container for subjects; the authority it
-// confers lives in user_group_roles, so a membership write is an
-// authorization change and every one of them is audited.
 func (q *Queries) InsertUserGroup(ctx context.Context, arg InsertUserGroupParams) (UserGroup, error) {
 	row := q.db.QueryRowContext(ctx, insertUserGroup,
 		arg.ID,

@@ -10,8 +10,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-// ActionToProto decodes one trusted stored Action for API consumers that need
-// the same complete authoring representation as the Action handlers.
 func ActionToProto(row store.ActionRow) (*cadestrov1.ManagedAction, error) {
 	action := &cadestrov1.ManagedAction{
 		Id: &cadestrov1.ActionId{Value: row.ID}, Name: row.Name, Type: cadestrov1.ActionType(row.ActionType),
@@ -38,7 +36,6 @@ func ActionToProto(row store.ActionRow) (*cadestrov1.ManagedAction, error) {
 	return action, nil
 }
 
-// ActionSetToProto decodes one trusted stored ActionSet.
 func ActionSetToProto(row store.ActionSetRow, memberCount int64) (*cadestrov1.ActionSet, error) {
 	if !validFailurePolicy(cadestrov1.OnFailure(row.OnFailure)) {
 		return nil, fmt.Errorf("authoring: invalid stored action set failure policy %d", row.OnFailure)
@@ -64,7 +61,6 @@ func ActionSetToProto(row store.ActionSetRow, memberCount int64) (*cadestrov1.Ac
 	return set, nil
 }
 
-// ActionSetMembersToProto converts the ordered member edge list.
 func ActionSetMembersToProto(rows []store.ActionSetMemberView) []*cadestrov1.ActionSetMember {
 	members := make([]*cadestrov1.ActionSetMember, len(rows))
 	for i, row := range rows {
@@ -76,7 +72,6 @@ func ActionSetMembersToProto(rows []store.ActionSetMemberView) []*cadestrov1.Act
 	return members
 }
 
-// DefinitionToProto decodes one trusted stored Definition.
 func DefinitionToProto(row store.DefinitionRow, memberCount int64) (*cadestrov1.Definition, error) {
 	schedule, err := actionparams.ParseSchedule(row.Schedule)
 	if err != nil {
@@ -98,7 +93,6 @@ func DefinitionToProto(row store.DefinitionRow, memberCount int64) (*cadestrov1.
 	return definition, nil
 }
 
-// DefinitionMembersToProto converts the ordered member edge list.
 func DefinitionMembersToProto(rows []store.DefinitionMemberView) []*cadestrov1.DefinitionMember {
 	members := make([]*cadestrov1.DefinitionMember, len(rows))
 	for i, row := range rows {

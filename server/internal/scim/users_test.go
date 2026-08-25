@@ -1,9 +1,5 @@
 package scim_test
 
-// The user cluster: provisioning, idempotent re-assertion, PATCH
-// semantics, deactivation, erasure, cross-directory isolation, and the
-// audit evidence each of them writes.
-
 import (
 	"net/http"
 	"testing"
@@ -24,7 +20,6 @@ func scimUser(userName, externalID string) map[string]any {
 	}
 }
 
-// createUser POSTs a subject and returns the id the directory got back.
 func (f *fixture) createUser(p *provider, body map[string]any) string {
 	f.t.Helper()
 	resp := f.do(http.MethodPost, p.Slug, p.Token, "/Users", body)
@@ -33,10 +28,6 @@ func (f *fixture) createUser(p *provider, body map[string]any) string {
 	require.NotEmpty(f.t, id)
 	return id
 }
-
-// ---------------------------------------------------------------------------
-// Create
-// ---------------------------------------------------------------------------
 
 func TestUsers_CreateProvisionsSubject(t *testing.T) {
 	f := newFixture(t)
@@ -51,9 +42,6 @@ func TestUsers_CreateProvisionsSubject(t *testing.T) {
 	assert.Equal(t, "ext-1", got["externalId"])
 	assert.Equal(t, true, got["active"])
 
-	// The subject is provisionable on managed devices: an empty Linux
-	// account name or a zero uid would be written to every device and
-	// silently do nothing.
 	row, err := f.store.GetUser(f.ctx(), got["id"].(string))
 	require.NoError(t, err)
 	assert.Equal(t, store.UserProvisioningSourceSCIM, row.ProvisioningSource)
@@ -99,8 +87,6 @@ func TestUsers_CreateFallsBackToPrimaryEmail(t *testing.T) {
 	assert.Equal(t, "fallback@example.com", resp.JSON()["userName"])
 }
 
-// A directory that grants a default role at creation must produce a
-// grant the authorizer can see, not a role name in a column.
 func TestUsers_CreateAppliesTheProviderDefaultRole(t *testing.T) {
 	f := newFixture(t)
 	roleID := f.insertRole([]string{"ListDevices"})
@@ -113,8 +99,6 @@ func TestUsers_CreateAppliesTheProviderDefaultRole(t *testing.T) {
 	assert.Contains(t, perms, "ListDevices")
 }
 
-// The create commits the subject, its key, its grant and its binding in
-// ONE transaction with its evidence.
 func TestUsers_CreateIsAuditedInOneOperation(t *testing.T) {
 	f := newFixture(t)
 	roleID := f.insertRole([]string{"ListDevices"})
@@ -134,8 +118,6 @@ func TestUsers_CreateIsAuditedInOneOperation(t *testing.T) {
 	assert.Equal(t, sha256Hex("audited@example.com"), created.EvidenceFingerprint)
 	assert.Equal(t, "email_sha256", created.EvidenceKind)
 
-	// The address is personal data, so the readable form is sealed
-	// under the subject's own key and dies with it.
 	require.NotEmpty(t, created.SealedDetail)
 	require.NotNil(t, created.SealedDetailSubject)
 	assert.Equal(t, id, *created.SealedDetailSubject)
@@ -154,8 +136,6 @@ func TestUsers_CreateIsAuditedInOneOperation(t *testing.T) {
 	assert.Equal(t, id, *link.AfterRef)
 }
 
-// Re-POSTing the same externalId is a sync, not a conflict: directories
-// re-assert their whole population on every cycle.
 func TestUsers_RepostByExternalIDSyncsInsteadOfDuplicating(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -178,13 +158,6 @@ func TestUsers_RepostByExternalIDSyncsInsteadOfDuplicating(t *testing.T) {
 	assert.Equal(t, int64(1), total, "a re-assertion must not mint a second subject")
 }
 
-// ---------------------------------------------------------------------------
-// Auto-link by address
-// ---------------------------------------------------------------------------
-
-// A directory can assert any address. Binding one to an account that is
-// ALREADY bound to some other directory would hand that account over,
-// so it is refused unless the operator delegated identity explicitly.
 func TestUsers_AutoLinkRefusesAnAlreadyBoundAccount(t *testing.T) {
 	f := newFixture(t)
 	other := f.seedProvider(nil)
@@ -217,7 +190,6 @@ func TestUsers_AutoLinkAllowedWhenTheOperatorTrustsAssertions(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-// An account with no binding at all is the ordinary invite flow.
 func TestUsers_AutoLinkBindsAnUnboundAccount(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(func(s *providerSeed) { s.AutoLinkByEmail = true })
@@ -234,8 +206,6 @@ func TestUsers_AutoLinkBindsAnUnboundAccount(t *testing.T) {
 	assert.Equal(t, "ext-unbound", link.ExternalID)
 }
 
-// With auto-link off, a matching address is not a match at all: a fresh
-// subject is provisioned.
 func TestUsers_AutoLinkOffCreatesASeparateSubject(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -247,10 +217,6 @@ func TestUsers_AutoLinkOffCreatesASeparateSubject(t *testing.T) {
 	require.Equal(t, http.StatusCreated, resp.Code, "body: %s", resp)
 	assert.NotEqual(t, unbound, resp.JSON()["id"])
 }
-
-// ---------------------------------------------------------------------------
-// Read
-// ---------------------------------------------------------------------------
 
 func TestUsers_GetReturnsTheSubject(t *testing.T) {
 	f := newFixture(t)
@@ -323,9 +289,6 @@ func TestUsers_ListFilters(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, bad.Code, "body: %s", bad)
 }
 
-// Reading the directory's population is a bulk read of personal data,
-// so it is recorded under the sensitive-read class with the volume it
-// returned.
 func TestUsers_ListIsAuditedAsASensitiveRead(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -356,10 +319,6 @@ func TestUsers_GetIsAuditedAsASensitiveRead(t *testing.T) {
 	assert.Equal(t, id, effect.ResourceID)
 }
 
-// ---------------------------------------------------------------------------
-// Replace
-// ---------------------------------------------------------------------------
-
 func TestUsers_ReplaceUpdatesTheAddress(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -374,9 +333,6 @@ func TestUsers_ReplaceUpdatesTheAddress(t *testing.T) {
 	assert.Equal(t, "after@example.com", row.Email)
 }
 
-// The directory is the source of truth for the profile, so an
-// explicitly empty name object CLEARS it while an omitted one leaves it
-// alone. Collapsing those two would make a deliberate clear impossible.
 func TestUsers_ReplaceDistinguishesOmittedFromEmptyName(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -405,8 +361,6 @@ func TestUsers_ReplaceDistinguishesOmittedFromEmptyName(t *testing.T) {
 	assert.Empty(t, after.DisplayName)
 }
 
-// Every field the PUT changed lands in one transaction with one
-// operation row, so a partly-applied assertion is not representable.
 func TestUsers_ReplaceIsAuditedInOneOperation(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -435,10 +389,6 @@ func TestUsers_ReplaceIsAuditedInOneOperation(t *testing.T) {
 	f.effectWithAction(effects, "SYNC_LINK")
 }
 
-// ---------------------------------------------------------------------------
-// Patch
-// ---------------------------------------------------------------------------
-
 func patchOps(ops ...map[string]any) map[string]any {
 	return map[string]any{
 		"schemas":    []string{scim.PatchOpSchema},
@@ -461,8 +411,6 @@ func TestUsers_PatchDeactivates(t *testing.T) {
 	assert.True(t, row.Disabled)
 }
 
-// Deactivation retires the subject's authority, so every session minted
-// under it stops validating.
 func TestUsers_PatchDeactivationInvalidatesSessions(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -479,8 +427,6 @@ func TestUsers_PatchDeactivationInvalidatesSessions(t *testing.T) {
 	assert.Greater(t, after.SessionVersion, before.SessionVersion)
 }
 
-// Deactivation is not erasure: the key that makes the subject's sealed
-// evidence readable must survive.
 func TestUsers_PatchDeactivationKeepsTheSubjectKey(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -506,8 +452,6 @@ func TestUsers_PatchReactivates(t *testing.T) {
 	assert.Equal(t, true, resp.JSON()["active"])
 }
 
-// Directories vary in how they spell the verb and the path; the
-// vocabulary is matched case-insensitively per RFC 7644.
 func TestUsers_PatchAcceptsMixedCaseVerbAndPath(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -519,7 +463,6 @@ func TestUsers_PatchAcceptsMixedCaseVerbAndPath(t *testing.T) {
 	assert.Equal(t, false, resp.JSON()["active"])
 }
 
-// Some directories send the flag as a string.
 func TestUsers_PatchAcceptsStringActiveValue(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -576,8 +519,6 @@ func TestUsers_PatchReplacesNameObjectAndSubPaths(t *testing.T) {
 	assert.Equal(t, "Grace", row.GivenName)
 }
 
-// A replace with no path carries a map of attributes; each key is the
-// path of an implied operation.
 func TestUsers_PatchWithoutPathFansOutOverTheValueMap(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -596,8 +537,6 @@ func TestUsers_PatchWithoutPathFansOutOverTheValueMap(t *testing.T) {
 	assert.Equal(t, "nopath-new@example.com", got["userName"])
 }
 
-// A patch that changes several attributes commits them together, so a
-// half-applied assertion cannot be observed.
 func TestUsers_PatchIsAuditedInOneOperation(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -616,8 +555,6 @@ func TestUsers_PatchIsAuditedInOneOperation(t *testing.T) {
 	f.effectWithAction(effects, "SYNC_LINK")
 }
 
-// RFC 7644 defines exactly three verbs. An unknown one is a malformed
-// request, not a silent no-op.
 func TestUsers_PatchRejectsAnUnknownVerb(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -628,9 +565,6 @@ func TestUsers_PatchRejectsAnUnknownVerb(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, resp.Code, "body: %s", resp)
 }
 
-// add and remove are valid SCIM verbs that this resource does not
-// implement; they are refused explicitly rather than accepted and
-// dropped.
 func TestUsers_PatchRejectsUnsupportedVerbsOnUsers(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -645,8 +579,6 @@ func TestUsers_PatchRejectsUnsupportedVerbsOnUsers(t *testing.T) {
 	}
 }
 
-// A malformed value is the client's mistake. Reporting it as a server
-// failure would make a directory retry forever.
 func TestUsers_PatchRejectsAMalformedValue(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -657,8 +589,6 @@ func TestUsers_PatchRejectsAMalformedValue(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, resp.Code, "body: %s", resp)
 }
 
-// A rejected patch writes nothing at all — not the change, and not an
-// operation row claiming one happened.
 func TestUsers_RejectedPatchLeavesNoStateAndNoOperation(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -673,13 +603,6 @@ func TestUsers_RejectedPatchLeavesNoStateAndNoOperation(t *testing.T) {
 	assert.Empty(t, f.operationsFor(scim.DescUsersPatch))
 }
 
-// ---------------------------------------------------------------------------
-// Delete
-// ---------------------------------------------------------------------------
-
-// The last binding is what keeps the subject reachable. Removing it
-// erases the subject and destroys the key that made their sealed
-// evidence readable.
 func TestUsers_DeleteOfTheLastBindingErasesTheSubject(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -697,8 +620,6 @@ func TestUsers_DeleteOfTheLastBindingErasesTheSubject(t *testing.T) {
 	assert.True(t, store.IsNotFound(err), "erasure destroys the subject's key")
 }
 
-// A subject bound to a second directory is only unbound, never erased:
-// the other directory still provisions them.
 func TestUsers_DeleteWithAnotherBindingOnlyUnbinds(t *testing.T) {
 	f := newFixture(t)
 	a := f.seedProvider(nil)
@@ -721,9 +642,6 @@ func TestUsers_DeleteWithAnotherBindingOnlyUnbinds(t *testing.T) {
 	assert.NoError(t, err, "the other directory's binding must survive")
 }
 
-// A SCIM binding may be added to an account that originally entered through
-// OIDC JIT. Removing that binding must not let SCIM erase a JIT-owned subject;
-// the operator uses EraseJITUser for that explicit local lifecycle decision.
 func TestUsers_DeleteOfJITUsersLastSCIMBindingOnlyUnbinds(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -752,9 +670,6 @@ func TestUsers_DeleteOfJITUsersLastSCIMBindingOnlyUnbinds(t *testing.T) {
 	assert.False(t, f.hasEffectWithAction(effects, "DESTROY_KEY"))
 }
 
-// The erasure record itself carries no sealed detail: it would be
-// sealed under a key the same transaction destroys, and would be born
-// unreadable.
 func TestUsers_DeleteIsAuditedWithoutSealedDetail(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -778,7 +693,6 @@ func TestUsers_DeleteIsAuditedWithoutSealedDetail(t *testing.T) {
 	}
 }
 
-// An unbind that is not an erasure records the unbind and nothing else.
 func TestUsers_DeleteWithAnotherBindingRecordsNoErasure(t *testing.T) {
 	f := newFixture(t)
 	a := f.seedProvider(nil)
@@ -799,13 +713,6 @@ func TestUsers_DeleteWithAnotherBindingRecordsNoErasure(t *testing.T) {
 	assert.False(t, f.hasEffectWithAction(effects, "DESTROY_KEY"))
 }
 
-// ---------------------------------------------------------------------------
-// Cross-directory isolation
-// ---------------------------------------------------------------------------
-
-// A directory addresses only the subjects bound to it. Another
-// directory's subject reads as absent under every verb, so the id space
-// cannot be probed.
 func TestUsers_OtherDirectorysSubjectIsNotFoundUnderEveryVerb(t *testing.T) {
 	f := newFixture(t)
 	a := f.seedProvider(nil)
@@ -829,12 +736,9 @@ func TestUsers_OtherDirectorysSubjectIsNotFoundUnderEveryVerb(t *testing.T) {
 		})
 	}
 
-	// Positive control: the owning directory reaches the same subject,
-	// so the refusals above are scoping rather than a blanket failure.
 	assert.Equal(t, http.StatusOK, f.do(http.MethodGet, a.Slug, a.Token, "/Users/"+id, nil).Code)
 }
 
-// One directory's list never contains another's subjects.
 func TestUsers_ListIsConfinedToTheAskingDirectory(t *testing.T) {
 	f := newFixture(t)
 	a := f.seedProvider(nil)

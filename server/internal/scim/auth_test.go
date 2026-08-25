@@ -1,8 +1,5 @@
 package scim_test
 
-// The credential cluster: what the SCIM bearer gate admits, what it
-// refuses, and what a refusal records.
-
 import (
 	"crypto/sha256"
 	"encoding/hex"
@@ -25,9 +22,6 @@ func TestAuth_ValidTokenAdmitted(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp.Code, "body: %s", resp)
 }
 
-// Every malformed or wrong credential is refused with 401. The matrix
-// is exhaustive over the branches of the gate, so a branch that stopped
-// rejecting is a failing row rather than an untested path.
 func TestAuth_RejectionMatrix(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -56,10 +50,6 @@ func TestAuth_RejectionMatrix(t *testing.T) {
 	})
 }
 
-// A provider disabled for login must reject SCIM even while its token
-// is still valid: one switch turns the whole provider off, and a
-// directory that kept provisioning through a disabled provider would
-// keep minting subjects nobody can sign in as.
 func TestAuth_LoginDisabledProviderRejected(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -69,8 +59,6 @@ func TestAuth_LoginDisabledProviderRejected(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, resp.Code, "body: %s", resp)
 }
 
-// A provider with SCIM off holds no token digest, so no bearer value
-// authenticates against it.
 func TestAuth_DisabledSCIMRejectsPreviouslyValidToken(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -83,8 +71,6 @@ func TestAuth_DisabledSCIMRejectsPreviouslyValidToken(t *testing.T) {
 		"a provider whose SCIM is off must authenticate no bearer value: %s", resp)
 }
 
-// Rotation overwrites the single stored digest, so exactly one token
-// authenticates at a time: the one rotation returned.
 func TestAuth_RotationInvalidatesTheOldToken(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -99,9 +85,6 @@ func TestAuth_RotationInvalidatesTheOldToken(t *testing.T) {
 		"the token rotation returned must be accepted")
 }
 
-// The unknown-slug answer and the wrong-token answer are the same
-// answer. A client that could tell them apart could enumerate which
-// directories are configured.
 func TestAuth_NoProviderExistenceOracle(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -116,9 +99,6 @@ func TestAuth_NoProviderExistenceOracle(t *testing.T) {
 	assert.Contains(t, unknown.String(), "invalid credentials")
 }
 
-// A refused credential is recorded under the dedicated
-// rejected-authentication class, with no actor id, the presented token
-// only as a digest, and the peer address only as a digest.
 func TestAuth_RejectionIsAudited(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -149,8 +129,6 @@ func TestAuth_RejectionIsAudited(t *testing.T) {
 		"a refused credential affected no resource, so it records no effect")
 }
 
-// A credential that was never presented has no digest to record:
-// "absent" and "present but empty" must not collide.
 func TestAuth_MissingCredentialRecordsNoTokenDigest(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -163,9 +141,6 @@ func TestAuth_MissingCredentialRecordsNoTokenDigest(t *testing.T) {
 	assert.Empty(t, rejected[0].ActorFingerprint)
 }
 
-// An admitted request is attributed to the directory that made it: the
-// provider's own ULID as the actor, and the token's digest as proof of
-// which credential acted.
 func TestAuth_AdmittedRequestIsAttributedToTheProvider(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -183,8 +158,6 @@ func TestAuth_AdmittedRequestIsAttributedToTheProvider(t *testing.T) {
 	assert.Equal(t, string(store.ResultSuccess), op.Result)
 }
 
-// Content type is a request-shape rule, so it is enforced before the
-// credential is looked at.
 func TestAuth_UnsupportedContentTypeRefused(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -198,9 +171,6 @@ func TestAuth_UnsupportedContentTypeRefused(t *testing.T) {
 	assert.Equal(t, http.StatusUnsupportedMediaType, f.send(req).Code)
 }
 
-// Discovery sits behind the same credential as everything else: the
-// responses confirm a slug exists, and an anonymous caller must not be
-// able to enumerate configured directories that way.
 func TestAuth_DiscoveryRequiresCredential(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -213,9 +183,6 @@ func TestAuth_DiscoveryRequiresCredential(t *testing.T) {
 	}
 }
 
-// Discovery describes the service, not any subject, so it records
-// nothing: an audited operation per poll would be volume without
-// evidence.
 func TestAuth_DiscoveryRecordsNothing(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)

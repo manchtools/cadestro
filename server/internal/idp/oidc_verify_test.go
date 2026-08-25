@@ -1,19 +1,5 @@
 package idp_test
 
-// OIDC token-verify happy-path coverage — extends the discovery
-// fixture from #217 with a real RSA-signed id_token so
-// VerifyAndExtractClaims can be exercised end-to-end. Closes the
-// "OIDC token+verify follow-up" item from
-// archived server#161.
-//
-// Strategy: generate an in-test RSA key pair, sign a JWT with
-// go-jose/v4, expose the public key via the existing fake JWKS
-// endpoint pattern, and hand the signed token to
-// VerifyAndExtractClaims via an oauth2.Token whose id_token Extra
-// is the signed JWS. Skips the network ExchangeCode round-trip —
-// that's just golang.org/x/oauth2 internals which the upstream
-// library tests already cover.
-
 import (
 	"context"
 	"crypto/rand"
@@ -34,10 +20,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/idp"
 )
 
-// signedOIDCFixture stands up an httptest.Server that publishes a
-// discovery doc + JWKS containing the test RSA public key.
-// signIDToken signs a JWT against the same key so VerifyAndExtractClaims
-// will accept it.
 type signedOIDCFixture struct {
 	srv  *httptest.Server
 	priv *rsa.PrivateKey
@@ -83,10 +65,6 @@ func newSignedOIDCFixture(t *testing.T) *signedOIDCFixture {
 	return &signedOIDCFixture{srv: srv, priv: priv, kid: kid}
 }
 
-// signIDToken builds + signs a minimal id_token with the given
-// custom claims merged on top of the standard JWT claims. The
-// fixture's RSA key signs it; go-oidc's verifier will then accept
-// it via the JWKS published by the fixture.
 func (f *signedOIDCFixture) signIDToken(t *testing.T, audience, nonce string, extra map[string]any) string {
 	t.Helper()
 
@@ -142,12 +120,6 @@ func TestVerifyAndExtractClaims_HappyPath(t *testing.T) {
 	assert.Equal(t, []string{"admin", "operator"}, claims.Groups)
 }
 
-// TestVerifyAndExtractClaims_EmailVerifiedGate pins the #359 fix: an email
-// claim is only populated (and thus usable for auto-link / auto-create) when
-// email_verified is true. An attacker who can set an arbitrary, UNVERIFIED
-// email at the IdP (common with multi-tenant Azure AD / self-service IdPs)
-// must not be able to drive account linking by claiming a victim's address.
-// The subject is always populated — identity is keyed on sub, not email.
 func TestVerifyAndExtractClaims_EmailVerifiedGate(t *testing.T) {
 	cases := []struct {
 		name            string
@@ -195,10 +167,7 @@ func TestVerifyAndExtractClaims_EmailVerifiedGate(t *testing.T) {
 }
 
 func TestVerifyAndExtractClaims_NonceMismatch(t *testing.T) {
-	// Critical anti-replay defence: an id_token that doesn't carry
-	// the nonce the SSO handler issued in the auth request must
-	// fail verification. Without this, a captured-and-replayed
-	// id_token from another session could be accepted.
+
 	f := newSignedOIDCFixture(t)
 	p, err := idp.NewOIDCProvider(context.Background(), idp.ProviderConfig{
 		IssuerURL:   f.srv.URL,
@@ -217,9 +186,7 @@ func TestVerifyAndExtractClaims_NonceMismatch(t *testing.T) {
 }
 
 func TestVerifyAndExtractClaims_NoIDToken(t *testing.T) {
-	// An oauth2.Token without an id_token (e.g. a non-OIDC OAuth2
-	// flow) must fail verification — we never want to silently
-	// accept "the access_token must be valid because it exists".
+
 	f := newSignedOIDCFixture(t)
 	p, err := idp.NewOIDCProvider(context.Background(), idp.ProviderConfig{
 		IssuerURL:   f.srv.URL,
@@ -228,14 +195,14 @@ func TestVerifyAndExtractClaims_NoIDToken(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	tokWithoutID := &oauth2.Token{} // no id_token Extra
+	tokWithoutID := &oauth2.Token{}
 	_, err = p.VerifyAndExtractClaims(context.Background(), tokWithoutID, "any")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no id_token in token response")
 }
 
 func TestVerifyAndExtractClaims_InvalidSignature(t *testing.T) {
-	// id_token signed with a different key (not in JWKS) must fail.
+
 	f := newSignedOIDCFixture(t)
 	p, err := idp.NewOIDCProvider(context.Background(), idp.ProviderConfig{
 		IssuerURL:   f.srv.URL,
@@ -244,7 +211,6 @@ func TestVerifyAndExtractClaims_InvalidSignature(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Sign with a fresh key the fixture's JWKS doesn't publish.
 	otherKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	require.NoError(t, err)
 	signer, err := jose.NewSigner(
@@ -269,8 +235,6 @@ func TestVerifyAndExtractClaims_InvalidSignature(t *testing.T) {
 	assert.Contains(t, err.Error(), "verify id_token")
 }
 
-// verifyProviderForFixture builds a provider bound to the fixture for the WS5
-// #12 rejection tests.
 func verifyProviderForFixture(t *testing.T, f *signedOIDCFixture) *idp.OIDCProvider {
 	t.Helper()
 	p, err := idp.NewOIDCProvider(context.Background(), idp.ProviderConfig{
@@ -282,9 +246,6 @@ func verifyProviderForFixture(t *testing.T, f *signedOIDCFixture) *idp.OIDCProvi
 	return p
 }
 
-// TestVerifyAndExtractClaims_RejectsWrongAudience pins WS5 #12: an id_token
-// minted for a DIFFERENT client (aud != ClientID) must be rejected — otherwise
-// a token issued to another relying party could be replayed here.
 func TestVerifyAndExtractClaims_RejectsWrongAudience(t *testing.T) {
 	f := newSignedOIDCFixture(t)
 	p := verifyProviderForFixture(t, f)
@@ -295,13 +256,11 @@ func TestVerifyAndExtractClaims_RejectsWrongAudience(t *testing.T) {
 	assert.Contains(t, err.Error(), "verify id_token")
 }
 
-// TestVerifyAndExtractClaims_RejectsExpired pins WS5 #12: an expired id_token is
-// rejected (exp in the past).
 func TestVerifyAndExtractClaims_RejectsExpired(t *testing.T) {
 	f := newSignedOIDCFixture(t)
 	p := verifyProviderForFixture(t, f)
 	idToken := f.signIDToken(t, "test-client", "n", map[string]any{
-		"exp": time.Now().Add(-1 * time.Hour).Unix(), // overrides the standard claim
+		"exp": time.Now().Add(-1 * time.Hour).Unix(),
 	})
 	tok := (&oauth2.Token{}).WithExtra(map[string]any{"id_token": idToken})
 	_, err := p.VerifyAndExtractClaims(context.Background(), tok, "n")
@@ -309,13 +268,11 @@ func TestVerifyAndExtractClaims_RejectsExpired(t *testing.T) {
 	assert.Contains(t, err.Error(), "verify id_token")
 }
 
-// TestVerifyAndExtractClaims_RejectsWrongIssuer pins WS5 #12: an id_token whose
-// iss is not this provider's issuer is rejected.
 func TestVerifyAndExtractClaims_RejectsWrongIssuer(t *testing.T) {
 	f := newSignedOIDCFixture(t)
 	p := verifyProviderForFixture(t, f)
 	idToken := f.signIDToken(t, "test-client", "n", map[string]any{
-		"iss": "https://evil.example", // overrides the standard claim
+		"iss": "https://evil.example",
 	})
 	tok := (&oauth2.Token{}).WithExtra(map[string]any{"id_token": idToken})
 	_, err := p.VerifyAndExtractClaims(context.Background(), tok, "n")
@@ -323,20 +280,11 @@ func TestVerifyAndExtractClaims_RejectsWrongIssuer(t *testing.T) {
 	assert.Contains(t, err.Error(), "verify id_token")
 }
 
-// TestVerifyAndExtractClaims_ByteTamperedSignature pins WS5 #12: flipping a
-// single character of a validly-signed token's signature segment is rejected —
-// proving the signature BYTES are checked, not just the kid/structure (distinct
-// from the wrong-key case above).
 func TestVerifyAndExtractClaims_ByteTamperedSignature(t *testing.T) {
 	f := newSignedOIDCFixture(t)
 	p := verifyProviderForFixture(t, f)
 	idToken := f.signIDToken(t, "test-client", "n", map[string]any{"email_verified": true})
 
-	// JWS is header.payload.signature; tamper one char of the signature.
-	// Mutate a NON-terminal char: the final base64url char of an RS256
-	// signature carries only a couple of meaningful bits, so flipping it can
-	// decode to the same bytes (a no-op that would let verification pass).
-	// A mid-segment char always changes the decoded signature bytes.
 	parts := strings.Split(idToken, ".")
 	require.Len(t, parts, 3)
 	sig := []byte(parts[2])

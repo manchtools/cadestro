@@ -10,10 +10,10 @@ REQUESTED_IMAGE_TAG="${PUBLISHED_IMAGE_TAG:-smoke-$$}"
 CONTROL_IMAGE="ghcr.io/manchtools/cadestro:$REQUESTED_IMAGE_TAG"
 BUILT_IMAGE=""
 
-# Compose substitutes from the process environment before any env file, and CI
-# exports IMAGE_TAG as an empty string, which resolves compose.yml's
-# ${IMAGE_TAG:-latest} to the stale published image instead of this run's tag.
-# Export the tag this run actually uses so environment and .env agree.
+
+
+
+
 export IMAGE_TAG="$REQUESTED_IMAGE_TAG"
 
 compose() {
@@ -21,9 +21,9 @@ compose() {
         --env-file "$WORK_DIR/.env" "$@"
 }
 
-# Control and backup.sh write into the state directories as root,
-# and the host user running this script cannot unlink what they leave in the
-# directories root creates underneath. Empty those from a container instead.
+
+
+
 remove_root_owned_content() {
     local directory="$1"
     [[ -d "$directory" ]] || return 0
@@ -48,9 +48,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# The value of one variable in the rendered configuration. A name rendered zero
-# times, or twice, fails here rather than yielding an empty string the caller
-# would go on to compare.
+
+
+
 control_env_value() {
     local name="$1" matches value
     matches="$(grep -c "^$name=" "$WORK_DIR/config/control.env" || true)"

@@ -20,21 +20,12 @@ import (
 )
 
 const (
-	// optionPrefix marks the variables control owns. Every variable carrying
-	// it must be declared on configEnvironment, so a misspelled variable fails
-	// startup instead of leaving the option it meant to set at its default.
 	optionPrefix   = "CADESTRO_"
 	maxSecretBytes = 64 << 10
 )
 
-// configEnviron reports the process environment. It is a package variable so
-// tests can drive the loader without inheriting CADESTRO_ variables that
-// already exist in the surrounding shell.
 var configEnviron = os.Environ
 
-// configEnvironment declares every recognized option exactly once: the tag
-// names its variable and the field type selects its parser. The recognized set
-// is derived from these declarations rather than from a second list.
 type configEnvironment struct {
 	PublicListen          string        `env:"CADESTRO_PUBLIC_LISTEN"`
 	AgentListen           string        `env:"CADESTRO_AGENT_LISTEN"`
@@ -96,8 +87,6 @@ type Config struct {
 	SessionSigningKey   ed25519.PrivateKey
 }
 
-// loadConfig builds the control configuration from the CADESTRO_
-// environment. There is no configuration file.
 func loadConfig() (*Config, error) {
 	document, err := readEnvironment(configEnviron())
 	if err != nil {
@@ -145,10 +134,6 @@ func loadConfig() (*Config, error) {
 	return cfg, nil
 }
 
-// readEnvironment resolves the declared options from the raw environment
-// entries. Unrecognized CADESTRO_ variables are rejected before anything
-// is parsed, and only variable names are reported because values may be
-// secrets.
 func readEnvironment(entries []string) (configEnvironment, error) {
 	document := defaultEnvironment()
 	declared := declaredOptions()
@@ -169,9 +154,6 @@ func readEnvironment(entries []string) (configEnvironment, error) {
 	return document, nil
 }
 
-// declaredOptions is the recognized variable set, derived from the
-// configEnvironment declarations so that declaring an option extends the
-// fail-closed guard with it.
 func declaredOptions() map[string]struct{} {
 	fields := reflect.VisibleFields(reflect.TypeOf(configEnvironment{}))
 	declared := make(map[string]struct{}, len(fields))
@@ -183,8 +165,6 @@ func declaredOptions() map[string]struct{} {
 	return declared
 }
 
-// applyEnvironment overwrites the defaults with the variables that carry a
-// value. Malformed values fail closed and name their variable.
 func applyEnvironment(document *configEnvironment, values map[string]string) error {
 	fields := reflect.ValueOf(document).Elem()
 	for _, field := range reflect.VisibleFields(fields.Type()) {
@@ -192,8 +172,7 @@ func applyEnvironment(document *configEnvironment, values map[string]string) err
 		if name == "" {
 			return fmt.Errorf("option %s declares no environment variable", field.Name)
 		}
-		// A blank variable leaves a scalar at its default; a blank list option
-		// is an empty list, which is what an unset list means too.
+
 		raw := strings.TrimSpace(values[name])
 		if raw == "" && field.Type.Kind() != reflect.Slice {
 			continue
@@ -227,9 +206,6 @@ func applyEnvironment(document *configEnvironment, values map[string]string) err
 	return nil
 }
 
-// parseList splits a comma-separated option and trims each entry. An empty
-// entry is a typo rather than an intent to configure nothing, so it fails
-// closed instead of being dropped silently.
 func parseList(name, raw string) ([]string, error) {
 	if raw == "" {
 		return nil, nil
@@ -393,10 +369,6 @@ func originHosts(origins []string) []string {
 	return hosts
 }
 
-// loadSecret resolves a secret from either its direct value variable or its
-// file variable and reports which one supplied it. Naming both is a
-// configuration mistake rather than a precedence question, so it fails closed.
-// Errors name variables only; secret values are never echoed.
 func loadSecret(valueVariable, value, fileVariable, file string) (string, string, error) {
 	switch {
 	case value != "" && file != "":

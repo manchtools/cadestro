@@ -17,15 +17,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// environmentFixture is a configuration that loads successfully, so each test
-// can express exactly one deviation from it.
 type environmentFixture struct {
 	values     map[string]string
 	sessionKey ed25519.PrivateKey
 }
 
-// newEnvironmentFixture writes the key material a full configuration needs and
-// returns the variables that make loadConfig succeed.
 func newEnvironmentFixture(t *testing.T) environmentFixture {
 	t.Helper()
 	directory := t.TempDir()
@@ -66,10 +62,6 @@ func newEnvironmentFixture(t *testing.T) environmentFixture {
 	}
 }
 
-// setEnvironment installs exactly the given variables for one test. The loader
-// reads the environment through configEnviron, so CADESTRO_ variables that
-// happen to exist in the developer's shell cannot leak into a fixture;
-// t.Setenv keeps the real process environment in agreement with the seam.
 func setEnvironment(t *testing.T, values map[string]string) {
 	t.Helper()
 	entries := make([]string, 0, len(values))
@@ -106,7 +98,6 @@ func TestLoadConfigResolvesEveryOptionFromTheEnvironment(t *testing.T) {
 	assert.Equal(t, "/certs/control.crt", cfg.AgentTLSCertFile)
 	assert.Equal(t, "/certs/control.key", cfg.AgentTLSKeyFile)
 
-	// Comma lists tolerate padding around entries but never invent one.
 	assert.Equal(t, []string{"https://manage.example", "https://admin.example"}, cfg.CORSOrigins)
 	assert.Equal(t, []string{"10.0.0.1", "10.0.0.2"}, cfg.TrustedProxies)
 	assert.Equal(t, []string{"172.30.0.2"}, cfg.AgentProxySources)
@@ -114,7 +105,6 @@ func TestLoadConfigResolvesEveryOptionFromTheEnvironment(t *testing.T) {
 	assert.Equal(t, []string{"manage.example", "admin.example"}, cfg.TerminalOrigins,
 		"an unset terminal origin list follows the CORS origins")
 
-	// Options nobody set keep their documented defaults.
 	assert.Equal(t, ":8081", cfg.PublicListen)
 	assert.Equal(t, ":8082", cfg.AgentListen)
 	assert.Equal(t, "json", cfg.LogFormat)
@@ -123,7 +113,6 @@ func TestLoadConfigResolvesEveryOptionFromTheEnvironment(t *testing.T) {
 	assert.Empty(t, cfg.PublicTLSCertFile)
 	assert.Empty(t, cfg.PublicTLSKeyFile)
 
-	// Set options win over those defaults.
 	assert.Equal(t, "debug", cfg.LogLevel)
 	assert.Equal(t, 45*time.Second, cfg.HeartbeatInterval)
 
@@ -314,8 +303,6 @@ func TestLoadConfigKeepsExistingValidationSemantics(t *testing.T) {
 	}
 }
 
-// TestLoadConfigErrorsNeverEchoSecretValues holds the logging and diagnostics
-// boundary: a rejected secret is reported by the variable that carried it.
 func TestLoadConfigRejectsRetiredSealingConfiguration(t *testing.T) {
 	fixture := newEnvironmentFixture(t)
 	fixture.values["CADESTRO_SEALING_KEY"] = "retired"
@@ -327,10 +314,6 @@ func TestLoadConfigRejectsRetiredSealingConfiguration(t *testing.T) {
 	assert.ErrorContains(t, err, "CADESTRO_SEALING_KEY")
 }
 
-// TestEveryConfigOptionDeclaresItsVariable keeps the recognized set derived
-// from the option declarations. A new option without a variable, or one whose
-// variable does not follow CADESTRO_<UPPER_SNAKE>, fails here instead of
-// becoming silently unconfigurable or unrecognized.
 func TestEveryConfigOptionDeclaresItsVariable(t *testing.T) {
 	fields := reflect.VisibleFields(reflect.TypeOf(configEnvironment{}))
 	require.NotEmpty(t, fields, "the option table must declare at least one option")
@@ -345,8 +328,6 @@ func TestEveryConfigOptionDeclaresItsVariable(t *testing.T) {
 	}
 }
 
-// upperSnake derives the expected variable suffix from a field name
-// independently of the struct tags, so a mistyped tag cannot pass the guard.
 func upperSnake(name string) string {
 	runes := []rune(name)
 	var builder strings.Builder

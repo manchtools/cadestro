@@ -16,21 +16,10 @@ import (
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
-// actorSCIM attributes the rows a directory writes on nobody's behalf.
 const actorSCIM = "scim"
 
-// errNoChange aborts an audited transaction that turned out to have
-// nothing to do.
-//
-// A directory re-asserts its whole population on every sync cycle, and
-// most cycles change nothing. Returning this rolls the transaction back
-// so no operation row is appended: the audit log is evidence of change,
-// and an empty operation per poll would bury the changes in noise. The
-// callback wrote nothing, so there is nothing to lose in the rollback.
 var errNoChange = errors.New("scim: the assertion changed nothing")
 
-// noChangeIfNothingRecorded ends a mutation callback: it commits when
-// the callback recorded an effect, and aborts when it did not.
 func noChangeIfNothingRecorded(rec *store.AuditRecorder) error {
 	if rec.Len() == 0 {
 		return errNoChange
@@ -38,9 +27,6 @@ func noChangeIfNothingRecorded(rec *store.AuditRecorder) error {
 	return nil
 }
 
-// subjectAssertion is what a directory said a subject should look like.
-// A nil field was not asserted and is left alone; a non-nil field is
-// asserted and overwrites, including with an empty value.
 type subjectAssertion struct {
 	Email       *string
 	Active      *bool
@@ -49,16 +35,10 @@ type subjectAssertion struct {
 	FamilyName  *string
 }
 
-// assertsProfile reports whether any name field was asserted.
 func (a subjectAssertion) assertsProfile() bool {
 	return a.DisplayName != nil || a.GivenName != nil || a.FamilyName != nil
 }
 
-// assertionFromResource reads a full user resource as an assertion.
-//
-// An omitted name object leaves the profile alone; an explicitly empty
-// one clears it. Collapsing those two would make a deliberate clear
-// impossible, and the directory is the source of truth for the profile.
 func assertionFromResource(u SCIMUser) subjectAssertion {
 	a := subjectAssertion{Active: u.Active}
 	if email := resourceEmail(u); email != "" {
@@ -74,8 +54,6 @@ func assertionFromResource(u SCIMUser) subjectAssertion {
 	return a
 }
 
-// resourceEmail picks the address a user resource carries: userName
-// first, then the first email entry.
 func resourceEmail(u SCIMUser) string {
 	if u.UserName != "" {
 		return u.UserName
@@ -86,15 +64,6 @@ func resourceEmail(u SCIMUser) string {
 	return ""
 }
 
-// ---------------------------------------------------------------------------
-// Create
-// ---------------------------------------------------------------------------
-
-// createUser handles POST /Users.
-//
-// A directory re-asserts its whole population on every sync cycle, so a
-// POST for something already provisioned is a sync and answers 200. Only
-// a subject this directory has never seen is a create.
 func (h *Handler) createUser(w http.ResponseWriter, r *http.Request, s *session) {
 	ctx := r.Context()
 	var resource SCIMUser
@@ -110,8 +79,6 @@ func (h *Handler) createUser(w http.ResponseWriter, r *http.Request, s *session)
 	baseURL := baseURLFromRequest(r, s.provider.Slug)
 	assertion := assertionFromResource(resource)
 
-	// Already bound under this external identifier: the directory is
-	// re-asserting, not creating.
 	if resource.ExternalID != "" {
 		existing, err := h.store.FindSCIMUserByExternalID(ctx, s.provider.ID, resource.ExternalID)
 		switch {
@@ -155,14 +122,6 @@ func (h *Handler) createUser(w http.ResponseWriter, r *http.Request, s *session)
 	h.provisionSubject(w, r, s, resource, email, baseURL)
 }
 
-// mayBindByAddress applies the account-takeover guard.
-//
-// A directory can assert any address. Binding one to an account that is
-// ALREADY bound to some other directory would hand that account over,
-// and the asserting directory is the very party the guard defends
-// against — so its own claim that the address is verified is not a
-// backstop. An account with no binding yet is the ordinary invite flow.
-// The same invariant governs the SSO auto-link path in internal/idp.
 func (h *Handler) mayBindByAddress(ctx context.Context, w http.ResponseWriter, s *session, userID string) bool {
 	if s.provider.TrustEmailAssertions {
 		return true
@@ -181,7 +140,6 @@ func (h *Handler) mayBindByAddress(ctx context.Context, w http.ResponseWriter, s
 	return true
 }
 
-// bindExistingSubject binds an unbound local account to this directory.
 func (h *Handler) bindExistingSubject(w http.ResponseWriter, r *http.Request, s *session, existing store.UserRow, resource SCIMUser, baseURL string) {
 	ctx := r.Context()
 	linkID := ulid.Make().String()
@@ -209,12 +167,6 @@ func (h *Handler) bindExistingSubject(w http.ResponseWriter, r *http.Request, s 
 	writeJSON(w, http.StatusCreated, userResource(existing, resource.ExternalID, baseURL))
 }
 
-// provisionSubject creates a subject and its binding.
-//
-// The subject's data-encryption key is minted FIRST and inside the same
-// transaction: the audit record carries the address as class-three
-// sealed detail, and sealing needs the key to already exist and to be
-// the one erasure will later destroy.
 func (h *Handler) provisionSubject(w http.ResponseWriter, r *http.Request, s *session, resource SCIMUser, email, baseURL string) {
 	ctx := r.Context()
 	userID := ulid.Make().String()
@@ -271,9 +223,6 @@ func (h *Handler) provisionSubject(w http.ResponseWriter, r *http.Request, s *se
 			SealedDetailSubject: userID,
 		})
 
-		// The provider's default role is the only authority this
-		// surface grants at creation. Anything else is an operator
-		// decision, made through the role RPCs.
 		if s.provider.DefaultRoleID != "" {
 			grantID := ulid.Make().String()
 			if _, err := tx.InsertUserRoleGrant(ctx, db.InsertUserRoleGrantParams{
@@ -299,10 +248,6 @@ func (h *Handler) provisionSubject(w http.ResponseWriter, r *http.Request, s *se
 			return err
 		}
 
-		// A directory may provision a subject already deactivated. The
-		// insert carries no such column, so the state is asserted right
-		// after it — inside the same transaction, so a deactivated
-		// subject is never briefly usable.
 		if !resource.IsActive() {
 			if _, err := tx.SetUserDisabled(ctx, db.SetUserDisabledParams{
 				ID: userID, Disabled: true, UpdatedAt: &at,
@@ -344,8 +289,6 @@ func (h *Handler) provisionSubject(w http.ResponseWriter, r *http.Request, s *se
 	writeJSON(w, http.StatusCreated, userResource(created, resource.ExternalID, baseURL))
 }
 
-// applyDeploymentDefaults applies the deployment-wide switches a newly
-// provisioned subject inherits.
 func (h *Handler) applyDeploymentDefaults(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder, userID string, at time.Time) error {
 	settings, err := tx.GetServerSettings(ctx)
 	if err != nil {
@@ -425,11 +368,6 @@ func (h *Handler) insertBinding(ctx context.Context, tx *store.Tx, rec *store.Au
 	return nil
 }
 
-// ---------------------------------------------------------------------------
-// Replace and patch
-// ---------------------------------------------------------------------------
-
-// replaceUser handles PUT /Users/{id}.
 func (h *Handler) replaceUser(w http.ResponseWriter, r *http.Request, s *session) {
 	ctx := r.Context()
 	_, before, ok := h.resolveSubject(ctx, w, s, r.PathValue("id"))
@@ -444,11 +382,6 @@ func (h *Handler) replaceUser(w http.ResponseWriter, r *http.Request, s *session
 		baseURLFromRequest(r, s.provider.Slug), http.StatusOK)
 }
 
-// patchUser handles PATCH /Users/{id}.
-//
-// Every operation in the request is folded into ONE assertion and
-// applied in ONE transaction, so a request that changes several
-// attributes cannot be observed half-applied.
 func (h *Handler) patchUser(w http.ResponseWriter, r *http.Request, s *session) {
 	ctx := r.Context()
 	_, before, ok := h.resolveSubject(ctx, w, s, r.PathValue("id"))
@@ -462,10 +395,7 @@ func (h *Handler) patchUser(w http.ResponseWriter, r *http.Request, s *session) 
 
 	var assertion subjectAssertion
 	for _, op := range patch.Operations {
-		// RFC 7644 §3.5.2 defines exactly three verbs. An unknown one
-		// is a malformed request; add and remove are valid verbs this
-		// resource does not implement, and both are refused rather than
-		// accepted and quietly dropped.
+
 		if !op.Op.IsValid() {
 			writeError(w, http.StatusBadRequest, "unsupported patch op")
 			return
@@ -483,11 +413,6 @@ func (h *Handler) patchUser(w http.ResponseWriter, r *http.Request, s *session) 
 	h.syncSubject(w, r, s, before, "", assertion, baseURLFromRequest(r, s.provider.Slug), http.StatusOK)
 }
 
-// syncSubject applies an assertion to a subject and answers with the
-// committed state.
-//
-// Everything the assertion changed, plus the refreshed binding, lands in
-// one transaction with one audit operation.
 func (h *Handler) syncSubject(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -524,8 +449,6 @@ func (h *Handler) syncSubject(
 		return
 	}
 
-	// Re-read so the directory sees committed state rather than what
-	// the handler believed it wrote.
 	after, err := h.store.GetUser(ctx, before.ID)
 	if err != nil {
 		h.logger.Error("scim: failed to read back the subject", "error", err)
@@ -541,9 +464,6 @@ func (h *Handler) syncSubject(
 	writeJSON(w, okStatus, userResource(after, link.ExternalID, baseURL))
 }
 
-// applyAssertion writes the asserted subject fields. Each statement runs
-// only when the assertion actually changes something, so a directory's
-// idle sync cycle does not fill the log with no-op effects.
 func (h *Handler) applyAssertion(
 	ctx context.Context,
 	tx *store.Tx,
@@ -562,8 +482,7 @@ func (h *Handler) applyAssertion(
 		if n == 0 {
 			return store.ErrNotFound
 		}
-		// Both addresses are the evidence and both are personal data,
-		// so the readable form is sealed under the subject's own key.
+
 		sealed, err := h.sealTransition(ctx, tx, before.ID, "email", before.Email, *a.Email)
 		if err != nil {
 			return err
@@ -584,9 +503,7 @@ func (h *Handler) applyAssertion(
 	if a.Active != nil {
 		disabled := !*a.Active
 		if disabled != before.Disabled {
-			// The statement bumps session_version in the same write, so
-			// every session issued under the previous state stops
-			// validating at once.
+
 			if _, err := tx.SetUserDisabled(ctx, db.SetUserDisabledParams{
 				ID: before.ID, Disabled: disabled, UpdatedAt: &at,
 			}); err != nil {
@@ -606,9 +523,7 @@ func (h *Handler) applyAssertion(
 	}
 
 	if a.assertsProfile() {
-		// The statement rewrites every profile column, so the ones the
-		// directory did not assert are carried over from the row rather
-		// than cleared as a side effect.
+
 		if _, err := tx.UpdateUserProfile(ctx, db.UpdateUserProfileParams{
 			ID:                before.ID,
 			DisplayName:       valueOr(a.DisplayName, before.DisplayName),
@@ -632,13 +547,6 @@ func (h *Handler) applyAssertion(
 	return nil
 }
 
-// refreshBinding writes the directory's current view of the subject onto
-// the binding, and only when that view differs from what the binding
-// already holds.
-//
-// The external identifier is only overwritten when the directory
-// asserted one: a sync keyed on the address must not blank the
-// identifier the subject was originally bound under.
 func (h *Handler) refreshBinding(
 	ctx context.Context,
 	tx *store.Tx,
@@ -693,15 +601,6 @@ func (h *Handler) refreshBinding(
 	return nil
 }
 
-// ---------------------------------------------------------------------------
-// Delete
-// ---------------------------------------------------------------------------
-
-// deleteUser handles DELETE /Users/{id}.
-//
-// It removes THIS directory's binding. A SCIM-created subject is erased only
-// after its last binding is gone; a JIT-created subject is only unbound and
-// remains owned by the explicit EraseJITUser path.
 func (h *Handler) deleteUser(w http.ResponseWriter, r *http.Request, s *session) {
 	ctx := r.Context()
 	link, before, ok := h.resolveSubject(ctx, w, s, r.PathValue("id"))
@@ -742,17 +641,6 @@ func (h *Handler) deleteUser(w http.ResponseWriter, r *http.Request, s *session)
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// ---------------------------------------------------------------------------
-// Subject keys
-// ---------------------------------------------------------------------------
-
-// mintSubjectDEK creates a subject's data-encryption key inside the
-// caller's transaction and returns the wrapped form.
-//
-// The insert is first-write-wins: a key that already exists is kept,
-// because replacing one would irreversibly erase everything already
-// sealed under it. The wrapped value is read back so the caller seals
-// against whichever key actually survived.
 func (h *Handler) mintSubjectDEK(ctx context.Context, tx *store.Tx, subjectID string) (string, error) {
 	wrapped, err := crypto.GenerateWrappedDEK(h.kek, subjectID)
 	if err != nil {
@@ -771,9 +659,6 @@ func (h *Handler) mintSubjectDEK(ctx context.Context, tx *store.Tx, subjectID st
 	return row.WrappedDek, nil
 }
 
-// sealForSubject seals a value under a subject's own key, producing
-// class-three audit detail: evidence that is only meaningful as its
-// value, readable only while the subject's key exists.
 func (h *Handler) sealForSubject(subjectID, wrappedDEK, field, value string) ([]byte, error) {
 	dek, err := crypto.UnwrapDEK(h.kek, subjectID, wrappedDEK)
 	if err != nil {
@@ -786,11 +671,6 @@ func (h *Handler) sealForSubject(subjectID, wrappedDEK, field, value string) ([]
 	return []byte(sealed), nil
 }
 
-// sealTransition seals a before/after pair.
-//
-// The key is read INSIDE the caller's transaction: a subject erased
-// concurrently would leave no key, and the seal must fail rather than
-// silently fall back to recording the values in a readable form.
 func (h *Handler) sealTransition(ctx context.Context, tx *store.Tx, subjectID, field, before, after string) ([]byte, error) {
 	key, err := tx.GetUserEncryptionKey(ctx, subjectID)
 	if err != nil {
@@ -799,12 +679,6 @@ func (h *Handler) sealTransition(ctx context.Context, tx *store.Tx, subjectID, f
 	return h.sealForSubject(subjectID, key.WrappedDek, field, before+" -> "+after)
 }
 
-// ---------------------------------------------------------------------------
-// Body and value helpers
-// ---------------------------------------------------------------------------
-
-// decodeBody reads a size-limited JSON body. A body that does not parse
-// is the client's mistake and is reported as one.
 func decodeBody(w http.ResponseWriter, r *http.Request, into any) bool {
 	limitBody(w, r)
 	if err := json.NewDecoder(r.Body).Decode(into); err != nil {

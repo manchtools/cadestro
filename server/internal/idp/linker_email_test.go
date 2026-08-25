@@ -15,7 +15,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/testdb"
 )
 
-// A 32-byte KEK in hex; the linker mints each subject's DEK under it.
 const linkerTestKEK = "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
 
 func newLinkerStore(t *testing.T) (*store.Store, *testdb.DB) {
@@ -51,8 +50,6 @@ func newTestLinker(t *testing.T, at time.Time) *Linker {
 	return NewLinker(kek, func() time.Time { return at })
 }
 
-// seedProvider inserts the identity_providers row the created identity link
-// foreign-keys to, and returns the provider the linker resolves claims against.
 func seedProvider(t *testing.T, raw *testdb.DB, autoCreate, autoLink bool) store.IdentityProviderRow {
 	t.Helper()
 	id := ulid.Make().String()
@@ -66,11 +63,6 @@ func seedProvider(t *testing.T, raw *testdb.DB, autoCreate, autoLink bool) store
 	}
 }
 
-// TestLinker_JITStoresNormalizedEmail proves the OIDC JIT write path folds the
-// asserted email to the same canonical form SCIM and manual lookups store and
-// query by. A mixed-case JIT write that skipped this would be unfindable by a
-// normalized GetUserByEmail yet still block re-insert on the COLLATE NOCASE
-// active-unique index, leaving the subject permanently unmanageable.
 func TestLinker_JITStoresNormalizedEmail(t *testing.T) {
 	ctx := context.Background()
 	st, raw := newLinkerStore(t)
@@ -93,19 +85,12 @@ func TestLinker_JITStoresNormalizedEmail(t *testing.T) {
 	require.NotNil(t, result)
 	assert.True(t, result.IsNew, "an absent subject is provisioned by JIT")
 
-	// Stored normalized: a normalized lookup must resolve the JIT subject.
 	user, err := st.GetUserByEmail(ctx, "first.last@company.com")
 	require.NoError(t, err, "a normalized lookup must find the JIT-provisioned subject")
 	assert.Equal(t, result.UserID, user.ID)
 	assert.Equal(t, "first.last@company.com", user.Email, "the JIT write must store the normalized email")
 }
 
-// TestLinker_PaddedEmailDerivesUsernameFromNormalizedForm proves the JIT write
-// derives the Linux username from the SAME normalized email it stores. A valid
-// address with surrounding whitespace ("  Padded.User@Corp.com  ") folds to
-// "padded.user@corp.com"; deriving the username from the raw claim instead would
-// leak the leading whitespace into it (sanitized to leading underscores),
-// producing a username inconsistent with the stored canonical email.
 func TestLinker_PaddedEmailDerivesUsernameFromNormalizedForm(t *testing.T) {
 	ctx := context.Background()
 	st, raw := newLinkerStore(t)
@@ -131,16 +116,12 @@ func TestLinker_PaddedEmailDerivesUsernameFromNormalizedForm(t *testing.T) {
 		"the Linux username must derive from the normalized email, not the padded raw claim")
 }
 
-// TestLinker_AutoLinkFindsNormalizedUser proves the cross-provider auto-link
-// guard resolves an existing (unbound) subject even when the asserted email
-// differs only in case, because the lookup normalizes first.
 func TestLinker_AutoLinkFindsNormalizedUser(t *testing.T) {
 	ctx := context.Background()
 	st, raw := newLinkerStore(t)
 	at := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
 	linker := newTestLinker(t, at)
 
-	// An invited, unbound subject already stored in canonical form.
 	existingID := ulid.Make().String()
 	_, err := raw.Exec(ctx, `INSERT INTO users (id, email) VALUES ($1, $2)`,
 		existingID, "first.last@company.com")
@@ -161,19 +142,12 @@ func TestLinker_AutoLinkFindsNormalizedUser(t *testing.T) {
 	assert.False(t, result.IsNew, "auto-link must not provision a duplicate subject")
 }
 
-// TestLinker_WhitespaceEmailIsRefused proves a whitespace-only email claim is
-// treated as no email: it is neither auto-linked nor JIT-provisioned, even with
-// both provider modes enabled. The raw claim is non-empty ("   "), so a gate on
-// claims.Email alone would provision a subject whose normalized email is empty —
-// unfindable by a normalized GetUserByEmail lookup yet still blocking re-insert
-// on the active-unique COLLATE NOCASE index.
 func TestLinker_WhitespaceEmailIsRefused(t *testing.T) {
 	ctx := context.Background()
 	st, raw := newLinkerStore(t)
 	at := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
 	linker := newTestLinker(t, at)
 
-	// Both auto-create and auto-link enabled: neither may act on an empty email.
 	provider := seedProvider(t, raw, true, true)
 	claims := &UserClaims{Subject: "ext-blank-1", Email: "   ", Name: "Blank"}
 
@@ -182,39 +156,25 @@ func TestLinker_WhitespaceEmailIsRefused(t *testing.T) {
 		return e
 	})
 	require.Error(t, err, "a whitespace-only email must not provision or link a subject")
-	// An empty canonical email is treated as no email: neither auto-link nor
-	// auto-create acts, so the login resolves to the same unauthenticated
-	// no-matching-account answer as any other unresolvable identity.
+
 	assert.ErrorIs(t, err, ErrNoMatchingAccount)
 
-	// No subject with an empty email may exist. The refusal aborts the audited
-	// transaction, so this also confirms createUser never ran.
 	var count int
 	require.NoError(t, raw.QueryRow(ctx,
 		`SELECT count(*) FROM users WHERE email = ''`).Scan(&count))
 	assert.Zero(t, count, "no empty-email subject may be created")
 
-	// Auto-link must not have acted either: no identity link may have been
-	// created on an empty address.
 	var links int
 	require.NoError(t, raw.QueryRow(ctx,
 		`SELECT count(*) FROM identity_links`).Scan(&links))
 	assert.Zero(t, links, "no identity link may be created on an empty email")
 }
 
-// The two refusal tests prove an operator reading the refusal can tell WHICH
-// auto-create gate stopped the login without reading this package: a disabled
-// provider flag and a missing trusted email are different deployment mistakes
-// with different fixes. The client-visible answer stays the opaque
-// no-matching-account sentinel either way.
-
 func TestLinker_RefusalNamesTheDisabledAutoCreateFlag(t *testing.T) {
 	ctx := context.Background()
 	st, raw := newLinkerStore(t)
 	linker := newTestLinker(t, time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC))
 
-	// A fully trusted email cannot help a disabled provider, and the refusal
-	// must name the flag, not the email.
 	disabled := seedProvider(t, raw, false, false)
 	_, err := st.WithAudit(ctx, linkerOp(), func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 		_, e := linker.LinkOrCreate(ctx, tx, rec, disabled,
@@ -232,8 +192,6 @@ func TestLinker_RefusalNamesTheMissingTrustedEmail(t *testing.T) {
 	st, raw := newLinkerStore(t)
 	linker := newTestLinker(t, time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC))
 
-	// Auto-create is enabled but no trusted email survived claim extraction.
-	// The refusal must name the missing claim, not the flag.
 	enabled := seedProvider(t, raw, true, false)
 	_, err := st.WithAudit(ctx, linkerOp(), func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
 		_, e := linker.LinkOrCreate(ctx, tx, rec, enabled,

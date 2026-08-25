@@ -1,12 +1,5 @@
 package store_test
 
-// The audit contract made mechanical.
-//
-// Every ordinary state mutation commits through a primitive that requires its
-// audit operation. The sole high-rate telemetry exception is named explicitly
-// below. This is a property of the package's exported surface, so a new writer
-// fails this test the day it is added, before it has a caller.
-
 import (
 	"reflect"
 	"sort"
@@ -18,23 +11,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-// mutationCapableExports is the complete set of exported Store methods
-// allowed to change database state. Each one writes its own evidence
-// in the same transaction as the change it makes:
-//
-//   - WithAudit         the mutation door; refuses without an operation
-//   - RecordOperation   WithAudit with no state change (sensitive read,
-//     rejected authentication)
-//   - WithAuditEffects  a continuation of an operation already recorded;
-//     appends effects, rewrites nothing
-//   - RebuildSearchIndexes reindexes fixed SQLite FTS5 facets and records
-//     its maintenance effect in the same transaction
-//   - RecordHeartbeatTelemetry is the one deliberate unaudited telemetry
-//     writer; it coalesces live connection timestamps in bounded batches
-//   - CleanupExpiredAuthStates deletes expired one-time OIDC state and records
-//     the maintenance effect in the same transaction
-//
-// Adding an entry here is a deliberate act that has to survive review.
 var mutationCapableExports = map[string]string{
 	"WithAudit":                  "the audited mutation door",
 	"RecordOperation":            "audited operation with no state change",
@@ -46,10 +22,6 @@ var mutationCapableExports = map[string]string{
 	"RecordPolicyManifestResult": "audited policy result ingestion",
 }
 
-// nonMutatingExports is every other exported method, each with the
-// reason it cannot change state. Listing them explicitly is what makes
-// the check exhaustive: an unlisted method fails, so a new export must
-// be classified rather than silently admitted.
 var nonMutatingExports = map[string]string{
 	"Close":                            "releases the pool",
 	"Ping":                             "read-only connectivity check",
@@ -130,7 +102,6 @@ var nonMutatingExports = map[string]string{
 	"CountUsers":                       "read",
 	"GetUserEncryptionKey":             "read",
 
-	// Identity reads.
 	"GetUserByEmail":                         "read",
 	"GetUserSessionState":                    "read",
 	"ListUsers":                              "read",
@@ -164,7 +135,6 @@ var nonMutatingExports = map[string]string{
 	"CountLiveBootstrapAdminTokens":          "read",
 	"Search":                                 "read",
 
-	// Directory-provisioning reads.
 	"ListSCIMUsers":                    "read",
 	"CountSCIMUsers":                   "read",
 	"FindSCIMUserByEmail":              "read",
@@ -178,9 +148,6 @@ var nonMutatingExports = map[string]string{
 	"ListSCIMGroupMappings":            "read",
 }
 
-// forbiddenExports are the shapes that would hand a caller a generic
-// way into the database. Named separately so the failure message says
-// what went wrong rather than only that an unknown method appeared.
 var forbiddenExports = map[string]string{
 	"Queries":     "would hand out the generated mutation surface",
 	"Pool":        "would hand out the connection pool",
@@ -204,15 +171,11 @@ func exportedStoreMethods(t *testing.T) []string {
 		names = append(names, typ.Method(i).Name)
 	}
 	sort.Strings(names)
-	// Matches-zero guard: an empty enumeration would make every
-	// assertion below vacuously true.
+
 	require.NotEmpty(t, names, "no exported Store methods were enumerated; the reflection is mis-scoped")
 	return names
 }
 
-// Every exported method is classified, and only the audited primitives
-// may change state. An unclassified method fails: the default for a
-// new export is "not allowed", not "assumed harmless".
 func TestStoreAPI_OnlyAuditedPrimitivesCanMutate(t *testing.T) {
 	var unclassified []string
 	for _, name := range exportedStoreMethods(t) {
@@ -235,9 +198,6 @@ func TestStoreAPI_OnlyAuditedPrimitivesCanMutate(t *testing.T) {
 		unclassified)
 }
 
-// The allowlist is not allowed to drift out of existence either: a
-// method named in it that no longer exists is a stale entry that would
-// silently widen the check.
 func TestStoreAPI_ClassificationHasNoStaleEntries(t *testing.T) {
 	present := map[string]bool{}
 	for _, name := range exportedStoreMethods(t) {
@@ -259,8 +219,6 @@ func TestStoreAPI_ClassificationHasNoStaleEntries(t *testing.T) {
 	assert.Empty(t, stale, "the API classification names methods that no longer exist: %v", stale)
 }
 
-// The store must expose no exported FIELD either — an exported pool or
-// query handle would be the same escape hatch by another route.
 func TestStoreAPI_HasNoExportedFields(t *testing.T) {
 	typ := reflect.TypeOf(store.Store{})
 	require.Positive(t, typ.NumField(), "matches-zero guard: Store has no fields to inspect")

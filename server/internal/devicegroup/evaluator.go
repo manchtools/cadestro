@@ -14,14 +14,12 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store/sqlitetype"
 )
 
-// EvaluationResult is the committed membership delta and resulting group.
 type EvaluationResult struct {
 	Group   store.DeviceGroupView
 	Added   int64
 	Removed int64
 }
 
-// CountMatchingDevices validates a query and counts its current matches.
 func (s *State) CountMatchingDevices(ctx context.Context, raw string) (int64, error) {
 	query, err := parseDeviceQuery(raw)
 	if err != nil {
@@ -35,8 +33,6 @@ func (s *State) CountMatchingDevices(ctx context.Context, raw string) (int64, er
 	return int64(len(matches)), err
 }
 
-// EvaluateDynamicGroup replaces one dynamic group's materialized membership in
-// the same transaction as its audit record.
 func (s *State) EvaluateDynamicGroup(ctx context.Context, op store.AuditOperation, id string) (EvaluationResult, error) {
 	if ctx == nil || !validID(id) {
 		return EvaluationResult{}, ErrInvalidInput

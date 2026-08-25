@@ -65,10 +65,7 @@ func (f *tokenHandlerFixture) actor(perms ...string) context.Context {
 
 func TestTokenHandlers_ValidateBeforeAuthentication(t *testing.T) {
 	f := newTokenHandlerFixture(t)
-	// A malformed id is rejected before the caller is authenticated, and a
-	// well-formed one from the same anonymous caller gets as far as
-	// authentication. Asserted on both a read and a mutation so the ordering
-	// is a property of the package, not of one handler.
+
 	_, err := validated(f.handlers.RenameToken)(context.Background(), connect.NewRequest(&cadestrov1.RenameTokenRequest{Id: &cadestrov1.RegistrationTokenId{Value: "bad"}, Name: "n"}))
 	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 
@@ -120,8 +117,6 @@ func TestTokenHandlers_CRUDIsDirectAuditedState(t *testing.T) {
 	assert.Equal(t, hex.EncodeToString(digest[:]), storedHash)
 	assert.NotEqual(t, plaintext, storedHash)
 
-	// The list is the only read path, so it is where the "a stored bearer
-	// value is never recoverable" property has to hold.
 	stored, err := f.handlers.ListTokens(ctx, connect.NewRequest(&cadestrov1.ListTokensRequest{}))
 	require.NoError(t, err)
 	require.Len(t, stored.Msg.Tokens, 1)
@@ -194,11 +189,6 @@ func TestTokenHandlers_SelfCreationAndReservedTokenIsolation(t *testing.T) {
 	require.Len(t, listed.Msg.Tokens, 1, "only the ordinary self token is visible")
 	assert.Equal(t, self.Msg.Token.GetId().GetValue(), listed.Msg.Tokens[0].GetId().GetValue())
 
-	// The bootstrap token must be unreachable through EVERY read the surface
-	// still offers, not merely through the default page. The single-token read
-	// that used to carry this assertion is gone, so the widest list — the one
-	// that deliberately includes disabled rows — has to carry it instead: an
-	// exclusion that only held for the narrow page would be no exclusion.
 	for name, req := range map[string]*cadestrov1.ListTokensRequest{
 		"default page":       {},
 		"including disabled": {IncludeDisabled: true},

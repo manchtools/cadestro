@@ -159,6 +159,9 @@ func (q *Queries) DeleteUnscopedUserGroupRoleGrant(ctx context.Context, arg Dele
 }
 
 const deleteUnscopedUserRoleGrant = `-- name: DeleteUnscopedUserRoleGrant :one
+
+
+
 DELETE FROM user_roles
 WHERE user_id = ? AND role_id = ? AND scope_id IS NULL
 RETURNING grant_id, user_id, role_id, assigned_at, assigned_by, scope_kind, scope_id
@@ -169,9 +172,6 @@ type DeleteUnscopedUserRoleGrantParams struct {
 	RoleID string `json:"role_id"`
 }
 
-// Conditional on the grant being the UNSCOPED one: a caller asking to
-// revoke the global grant must not silently take a scoped grant
-// instead. No row means the caller's description did not match.
 func (q *Queries) DeleteUnscopedUserRoleGrant(ctx context.Context, arg DeleteUnscopedUserRoleGrantParams) (UserRole, error) {
 	row := q.db.QueryRowContext(ctx, deleteUnscopedUserRoleGrant, arg.UserID, arg.RoleID)
 	var i UserRole
@@ -251,7 +251,6 @@ func (q *Queries) InsertUserGroupRoleGrant(ctx context.Context, arg InsertUserGr
 }
 
 const insertUserRoleGrant = `-- name: InsertUserRoleGrant :one
-
 INSERT INTO user_roles (grant_id, user_id, role_id, assigned_at, assigned_by, scope_kind, scope_id)
 VALUES (?, ?, ?, ?, ?, ?, ?)
 RETURNING grant_id, user_id, role_id, assigned_at, assigned_by, scope_kind, scope_id
@@ -267,12 +266,6 @@ type InsertUserRoleGrantParams struct {
 	ScopeID    *string   `json:"scope_id"`
 }
 
-// Role grants: which subject holds which role, and at which scope.
-//
-// A grant is identified by its own ULID because one subject may hold
-// the same role globally AND at several distinct scopes at once.
-// scope_kind/scope_id are paired-or-neither; both NULL is a global
-// grant. Revocation names one grant, never "the role".
 func (q *Queries) InsertUserRoleGrant(ctx context.Context, arg InsertUserRoleGrantParams) (UserRole, error) {
 	row := q.db.QueryRowContext(ctx, insertUserRoleGrant,
 		arg.GrantID,
@@ -297,6 +290,9 @@ func (q *Queries) InsertUserRoleGrant(ctx context.Context, arg InsertUserRoleGra
 }
 
 const listInheritedRolesForUser = `-- name: ListInheritedRolesForUser :many
+
+
+
 SELECT
     r.id   AS role_id,
     r.name AS role_name,
@@ -317,9 +313,6 @@ type ListInheritedRolesForUserRow struct {
 	GroupName string `json:"group_name"`
 }
 
-// Roles the subject holds because of a group they belong to. Reported
-// separately from direct grants so a UI can show where authority came
-// from without inventing a second grant surface.
 func (q *Queries) ListInheritedRolesForUser(ctx context.Context, userID string) ([]ListInheritedRolesForUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, listInheritedRolesForUser, userID)
 	if err != nil {
@@ -473,6 +466,8 @@ func (q *Queries) ListUserGroupRoleGrants(ctx context.Context, groupID string) (
 }
 
 const listUserPermissions = `-- name: ListUserPermissions :many
+
+
 SELECT DISTINCT s.permission AS permission
 FROM (
     SELECT CAST(permission.value AS TEXT) AS permission
@@ -492,8 +487,6 @@ FROM (
 ORDER BY permission
 `
 
-// The flat permission set the session token carries: the union of every
-// permission in every role the subject holds, directly or by group.
 func (q *Queries) ListUserPermissions(ctx context.Context, userID string) ([]string, error) {
 	rows, err := q.db.QueryContext(ctx, listUserPermissions, userID)
 	if err != nil {
@@ -573,6 +566,9 @@ func (q *Queries) ListUserRoleGrants(ctx context.Context, userID string) ([]List
 }
 
 const listUserScopedGrants = `-- name: ListUserScopedGrants :many
+
+
+
 SELECT DISTINCT s.permission AS permission, s.scope_kind, s.scope_id
 FROM (
     SELECT CAST(permission.value AS TEXT) AS permission, ur.scope_kind, ur.scope_id
@@ -598,9 +594,6 @@ type ListUserScopedGrantsRow struct {
 	ScopeID    *string `json:"scope_id"`
 }
 
-// The same permissions, one row per (permission, scope) tuple. A NULL
-// scope is the global grant of that permission; the evaluator treats
-// it as fleet-wide and a group scope as confinement.
 func (q *Queries) ListUserScopedGrants(ctx context.Context, userID string) ([]ListUserScopedGrantsRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUserScopedGrants, userID)
 	if err != nil {

@@ -17,11 +17,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/execution"
 )
 
-// complianceIngestFixture drives the real ingestion path: an agent result
-// arrives at the execution service and the answer is read back through the
-// mounted compliance RPCs. No test in this package writes compliance_results
-// or compliance_policy_evaluation itself, so a missing writer cannot be masked
-// by a manufactured row. TestComplianceStateHasOneWriter guards that.
 type complianceIngestFixture struct {
 	*deviceHandlerFixture
 	service *execution.Service
@@ -38,8 +33,6 @@ func newComplianceIngestFixture(t *testing.T) *complianceIngestFixture {
 	}
 }
 
-// complianceAction authors a detection-only SHELL action exactly as the
-// authoring layer would: is_compliance with a non-empty detection script.
 func (f *complianceIngestFixture) complianceAction(t *testing.T, name string) string {
 	t.Helper()
 	return f.shellAction(t, name, &cadestrov1.ShellParams{DetectionScript: "test -f /etc/os-release", IsCompliance: true})
@@ -74,9 +67,6 @@ func (f *complianceIngestFixture) policy(t *testing.T, name string, rules map[st
 	return id
 }
 
-// report runs one occurrence of an action on a device end to end: a policy run
-// the agent acknowledged, an execution row, and the agent's ActionResult
-// applied through the real execution service.
 func (f *complianceIngestFixture) report(
 	t *testing.T, deviceID, actionID string,
 	status cadestrov1.ExecutionStatus, compliant bool,
@@ -118,9 +108,6 @@ func (f *complianceIngestFixture) searchStatus(t *testing.T, deviceID string) st
 	return status
 }
 
-// A device that ran a compliance check and failed it must report failing —
-// through the RPC an auditor reads, and in the search document the fleet list
-// renders. Reporting UNKNOWN with zero checks is a confident wrong answer.
 func TestComplianceIngest_FailedCheckIsReadableThroughTheRPCs(t *testing.T) {
 	f := newComplianceIngestFixture(t)
 	actionID := f.complianceAction(t, "os-release present")
@@ -164,7 +151,6 @@ func TestComplianceIngest_FailedCheckIsReadableThroughTheRPCs(t *testing.T) {
 		"a compliance state change is a mutation and needs audit evidence")
 }
 
-// Never-checked and checked-and-failed must not collapse into the same answer.
 func TestComplianceIngest_UncheckedDeviceStaysUnknown(t *testing.T) {
 	f := newComplianceIngestFixture(t)
 	actionID := f.complianceAction(t, "os-release present")
@@ -191,8 +177,6 @@ func TestComplianceIngest_UncheckedDeviceStaysUnknown(t *testing.T) {
 	assert.Equal(t, "0", f.searchStatus(t, f.directID))
 }
 
-// The grace period runs from the first failure, survives a re-check, and is
-// discarded the moment the device comes back into compliance.
 func TestComplianceIngest_GracePeriodTracksRecheckAndRecovery(t *testing.T) {
 	f := newComplianceIngestFixture(t)
 	actionID := f.complianceAction(t, "graced check")
@@ -209,15 +193,12 @@ func TestComplianceIngest_GracePeriodTracksRecheckAndRecovery(t *testing.T) {
 		f.compliance(t, f.groupID).Status)
 	assert.Equal(t, "3", f.searchStatus(t, f.groupID))
 
-	// Still failing two hours later: inside the four-hour grace, and the clock
-	// must not restart on the re-check.
 	f.report(t, f.groupID, actionID, cadestrov1.ExecutionStatus_EXECUTION_STATUS_FAILED, false,
 		&cadestrov1.CommandOutput{ExitCode: 1}, firstFailure.Add(2*time.Hour))
 	rule = f.policyStatus(t, f.groupID).Policies[0].Rules[0]
 	assert.Equal(t, cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_IN_GRACE_PERIOD, rule.Status)
 	assert.True(t, rule.FirstFailedAt.AsTime().Equal(firstFailure))
 
-	// Still failing after the grace expires.
 	f.report(t, f.groupID, actionID, cadestrov1.ExecutionStatus_EXECUTION_STATUS_FAILED, false,
 		&cadestrov1.CommandOutput{ExitCode: 1}, firstFailure.Add(5*time.Hour))
 	rule = f.policyStatus(t, f.groupID).Policies[0].Rules[0]
@@ -226,7 +207,6 @@ func TestComplianceIngest_GracePeriodTracksRecheckAndRecovery(t *testing.T) {
 	assert.Equal(t, cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT,
 		f.compliance(t, f.groupID).Status)
 
-	// Recovery clears the failure entirely.
 	f.report(t, f.groupID, actionID, cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS, true,
 		&cadestrov1.CommandOutput{ExitCode: 0}, firstFailure.Add(6*time.Hour))
 	rule = f.policyStatus(t, f.groupID).Policies[0].Rules[0]
@@ -239,15 +219,11 @@ func TestComplianceIngest_GracePeriodTracksRecheckAndRecovery(t *testing.T) {
 	assert.Equal(t, "1", f.searchStatus(t, f.groupID))
 }
 
-// Detection-only means the only evidence of compliance is a detection script
-// that ran and passed. Every other terminal outcome fails closed.
 func TestComplianceIngest_FailsClosedWhenDetectionNeverRan(t *testing.T) {
 	f := newComplianceIngestFixture(t)
 	actionID := f.complianceAction(t, "unrunnable check")
 	f.policy(t, "baseline", map[string]int32{actionID: 24})
 
-	// The agent could not run the detection script at all: no detection output,
-	// and the compliance flag it reports is the zero value.
 	f.report(t, f.groupID, actionID, cadestrov1.ExecutionStatus_EXECUTION_STATUS_FAILED, false, nil, f.now)
 
 	compliance := f.compliance(t, f.groupID)
@@ -256,8 +232,6 @@ func TestComplianceIngest_FailsClosedWhenDetectionNeverRan(t *testing.T) {
 	assert.False(t, compliance.Checks[0].Compliant)
 	assert.Nil(t, compliance.Checks[0].DetectionOutput)
 
-	// A timeout is not evidence of compliance either, even if the agent's
-	// compliant flag were somehow set.
 	other := f.complianceAction(t, "timed out check")
 	f.policy(t, "second", map[string]int32{other: 0})
 	f.report(t, f.groupID, other, cadestrov1.ExecutionStatus_EXECUTION_STATUS_TIMEOUT, true,
@@ -270,10 +244,6 @@ func TestComplianceIngest_FailsClosedWhenDetectionNeverRan(t *testing.T) {
 	assert.Equal(t, cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT, f.compliance(t, f.groupID).Status)
 }
 
-// Deleting the check or the policy it belongs to removes the evidence, so the
-// device summary derived from that evidence has to follow. A device left
-// reporting NON_COMPLIANT with nothing to point at is the same confident wrong
-// answer in the other direction.
 func TestComplianceIngest_RemovingTheEvidenceClearsTheDeviceStatus(t *testing.T) {
 	f := newComplianceIngestFixture(t)
 	actions := authoring.New(authoring.Config{Store: f.store, Now: func() time.Time { return f.now }})
@@ -317,8 +287,6 @@ func TestComplianceIngest_RemovingTheEvidenceClearsTheDeviceStatus(t *testing.T)
 	assert.Nil(t, device.ComplianceCheckedAt, "a device with no check has no check time")
 }
 
-// Detaching a rule from its policy retires that evaluation. Leaving the row
-// behind would let a stale status reappear the moment the rule is reattached.
 func TestComplianceIngest_DetachingARuleRetiresItsEvaluation(t *testing.T) {
 	f := newComplianceIngestFixture(t)
 	policies := compliance.NewState(compliance.StateConfig{Store: f.store, Now: func() time.Time { return f.now }})
@@ -344,9 +312,6 @@ func TestComplianceIngest_DetachingARuleRetiresItsEvaluation(t *testing.T) {
 	assert.Equal(t, 0, orphans, "the detached rule leaves no evaluation behind")
 }
 
-// The ingestion path recognises exactly the actions the policy layer accepts:
-// an ordinary shell action never becomes compliance evidence, and a check that
-// belongs to no rule still reports through the direct surface.
 func TestComplianceIngest_OnlyDetectionOnlyActionsProduceFindings(t *testing.T) {
 	f := newComplianceIngestFixture(t)
 	ordinary := f.shellAction(t, "ordinary shell", &cadestrov1.ShellParams{Script: "true"})
@@ -356,7 +321,6 @@ func TestComplianceIngest_OnlyDetectionOnlyActionsProduceFindings(t *testing.T) 
 		"a non-compliance action must not manufacture a compliance finding")
 	assert.Equal(t, cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_UNKNOWN, f.compliance(t, f.groupID).Status)
 
-	// A policy with no rules evaluates nothing and must not claim otherwise.
 	unattached := f.complianceAction(t, "unattached check")
 	f.policy(t, "empty", nil)
 	f.report(t, f.groupID, unattached, cadestrov1.ExecutionStatus_EXECUTION_STATUS_FAILED, false,

@@ -75,7 +75,6 @@ func (q *Queries) GetSCIMGroupMappingByUserGroup(ctx context.Context, arg GetSCI
 }
 
 const insertSCIMGroupMapping = `-- name: InsertSCIMGroupMapping :one
-
 INSERT INTO scim_group_mapping (id, provider_id, scim_group_id, scim_display_name, user_group_id, created_at)
 VALUES (?, ?, ?, ?, ?, ?)
 RETURNING id, provider_id, scim_group_id, scim_display_name, user_group_id, created_at
@@ -90,9 +89,6 @@ type InsertSCIMGroupMappingParams struct {
 	CreatedAt       time.Time `json:"created_at"`
 }
 
-// The binding between one group at one SCIM directory and one local
-// user group. (provider_id, scim_group_id) is uniquely indexed, so a
-// directory group can never be mapped to two local groups at once.
 func (q *Queries) InsertSCIMGroupMapping(ctx context.Context, arg InsertSCIMGroupMappingParams) (ScimGroupMapping, error) {
 	row := q.db.QueryRowContext(ctx, insertSCIMGroupMapping,
 		arg.ID,

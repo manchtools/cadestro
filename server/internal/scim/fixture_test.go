@@ -1,14 +1,5 @@
 package scim_test
 
-// The request-boundary fixture: real SCIM routes, real HTTP transport,
-// real SQLite, and the real ControlService identity handlers that
-// own the SCIM token lifecycle.
-//
-// Nothing here stubs the store or the credential gate. A test that
-// wants a valid bearer token calls the real EnableSCIM RPC and uses
-// what it returned; a test that wants the token invalidated calls the
-// real RotateSCIMToken.
-
 import (
 	"bytes"
 	"context"
@@ -36,9 +27,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-// testKEK is a fixed 32-byte key. It is a TEST key: the fixture needs a
-// deterministic KEK so a sealed value can be re-opened in an assertion,
-// and nothing outside this binary ever sees it.
 const testKEK = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 const testBaseURL = "https://control.test.example"
@@ -54,12 +42,8 @@ type fixture struct {
 	mounted []string
 	now     time.Time
 
-	// control is the real ControlService client, used for the SCIM
-	// token lifecycle (enable, rotate, disable).
 	control cadestrov1connect.ControlServiceClient
-	// adminToken is a session token for a subject holding every
-	// permission, so a lifecycle call in a fixture helper is never the
-	// thing under test.
+
 	adminToken string
 }
 
@@ -125,9 +109,6 @@ func newFixture(t *testing.T) *fixture {
 
 func (f *fixture) ctx() context.Context { return f.t.Context() }
 
-// seedAdmin plants a subject holding every registered permission and
-// mints a session token for them by resolving their authority through
-// the REAL store queries.
 func (f *fixture) seedAdmin(jwt *auth.JWTManager) string {
 	f.t.Helper()
 	userID := newULID()
@@ -155,10 +136,6 @@ func (f *fixture) seedAdmin(jwt *auth.JWTManager) string {
 	return pair.AccessToken
 }
 
-// ---------------------------------------------------------------------------
-// Seeding
-// ---------------------------------------------------------------------------
-
 func (f *fixture) insertUser(id, email string) {
 	f.insertUserWithSource(id, email, "scim")
 }
@@ -169,9 +146,7 @@ func (f *fixture) insertUserWithSource(id, email, source string) {
 		`INSERT INTO users (id, email, provisioning_source, created_at, updated_at) VALUES ($1, $2, $3, $4, $4)`,
 		id, email, source, f.now)
 	require.NoError(f.t, err)
-	// Every subject owns a data-encryption key from the moment they
-	// exist; without one, class-three audit detail about them could not
-	// be sealed and the handler would fail closed.
+
 	wrapped, err := crypto.GenerateWrappedDEK(f.kek, id)
 	require.NoError(f.t, err)
 	_, err = f.raw.Exec(f.ctx(),
@@ -187,17 +162,12 @@ type providerSeed struct {
 	DefaultRoleID        string
 }
 
-// provider is a seeded directory: its row, its slug and, once
-// seedProvider has enabled SCIM through the real RPC, its bearer token.
 type provider struct {
 	ID    string
 	Slug  string
 	Token string
 }
 
-// seedProvider plants an identity provider and turns SCIM on through
-// the real EnableSCIM RPC, so the token a test presents is one the
-// production mint produced.
 func (f *fixture) seedProvider(mutate func(*providerSeed)) *provider {
 	f.t.Helper()
 	seed := providerSeed{Enabled: true}
@@ -223,8 +193,6 @@ func (f *fixture) seedProvider(mutate func(*providerSeed)) *provider {
 	return &provider{ID: providerID, Slug: slug, Token: f.enableSCIM(providerID)}
 }
 
-// setProviderEnabled toggles the provider's login switch directly. It
-// models an operator disabling the provider outside the SCIM surface.
 func (f *fixture) setProviderEnabled(providerID string, enabled bool) {
 	f.t.Helper()
 	_, err := f.raw.Exec(f.ctx(),
@@ -243,9 +211,6 @@ func (f *fixture) insertRole(perms []string) string {
 	return roleID
 }
 
-// grantRoleToUserGroup attaches a role to a user group, which is how an
-// operator gives a SCIM-provisioned group its authority. Membership is
-// what confers it on the subject.
 func (f *fixture) grantRoleToUserGroup(groupID, roleID string) {
 	f.t.Helper()
 	_, err := f.raw.Exec(f.ctx(),
@@ -254,10 +219,6 @@ func (f *fixture) grantRoleToUserGroup(groupID, roleID string) {
 		newULID(), groupID, roleID, f.now)
 	require.NoError(f.t, err)
 }
-
-// ---------------------------------------------------------------------------
-// SCIM token lifecycle, through the real RPCs
-// ---------------------------------------------------------------------------
 
 func (f *fixture) enableSCIM(providerID string) string {
 	f.t.Helper()
@@ -281,19 +242,12 @@ func (f *fixture) disableSCIM(providerID string) {
 	require.NoError(f.t, err)
 }
 
-// authed wraps a ControlService request with a bearer token.
 func authed[T any](msg *T, token string) *connect.Request[T] {
 	req := connect.NewRequest(msg)
 	req.Header().Set("Authorization", "Bearer "+token)
 	return req
 }
 
-// ---------------------------------------------------------------------------
-// SCIM requests
-// ---------------------------------------------------------------------------
-
-// do issues a SCIM request over the real transport as the given
-// (slug, token) pair.
 func (f *fixture) do(method, slug, token, path string, body any) *response {
 	f.t.Helper()
 	var payload io.Reader
@@ -313,8 +267,6 @@ func (f *fixture) do(method, slug, token, path string, body any) *response {
 	return f.send(req)
 }
 
-// raw issues a SCIM request with an explicit Authorization header
-// value, so a test can present a malformed credential.
 func (f *fixture) rawAuth(method, slug, header, path string) *response {
 	f.t.Helper()
 	req, err := http.NewRequestWithContext(f.ctx(), method, f.server.URL+"/scim/v2/"+slug+path, nil)
@@ -341,7 +293,6 @@ type response struct {
 	Body []byte
 }
 
-// JSON decodes the response body into a generic map.
 func (r *response) JSON() map[string]any {
 	r.t.Helper()
 	var out map[string]any
@@ -350,10 +301,6 @@ func (r *response) JSON() map[string]any {
 }
 
 func (r *response) String() string { return string(r.Body) }
-
-// ---------------------------------------------------------------------------
-// Audit assertions
-// ---------------------------------------------------------------------------
 
 type auditOperation struct {
 	OperationID          string
@@ -441,8 +388,6 @@ func (f *fixture) effectsOf(operationID string) []auditEffect {
 	return out
 }
 
-// effectWithAction finds the single effect carrying an action, failing
-// if there is not exactly one.
 func (f *fixture) effectWithAction(effects []auditEffect, action string) auditEffect {
 	f.t.Helper()
 	var found []auditEffect
@@ -464,8 +409,6 @@ func (f *fixture) hasEffectWithAction(effects []auditEffect, action string) bool
 	return false
 }
 
-// rejections returns every recorded rejected-authentication operation
-// for a route, oldest first.
 func (f *fixture) rejections(descriptor string) []auditOperation {
 	f.t.Helper()
 	var out []auditOperation
@@ -477,8 +420,6 @@ func (f *fixture) rejections(descriptor string) []auditOperation {
 	return out
 }
 
-// openSealedDetail decrypts class-three audit detail with the subject's
-// own key.
 func (f *fixture) openSealedDetail(subjectID string, sealed []byte, field string) (string, error) {
 	f.t.Helper()
 	var wrapped string
@@ -492,10 +433,6 @@ func (f *fixture) openSealedDetail(subjectID string, sealed []byte, field string
 	}
 	return dek.OpenField(string(sealed), field)
 }
-
-// ---------------------------------------------------------------------------
-// Misc
-// ---------------------------------------------------------------------------
 
 func newULID() string { return ulid.Make().String() }
 

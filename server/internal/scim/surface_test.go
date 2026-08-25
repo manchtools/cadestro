@@ -1,13 +1,5 @@
 package scim_test
 
-// The audit contract for a non-RPC writer made mechanical.
-//
-// The design enumerates writers such as SCIM from their writable
-// surface and requires each to be tested through the real route. That
-// only holds if the enumeration cannot drift from what is actually
-// mounted, so the classification is checked against the mount table
-// rather than trusted to review.
-
 import (
 	"net/http"
 	"sort"
@@ -24,14 +16,11 @@ func mountedDescriptors(t *testing.T) []string {
 	h := scim.New(scim.Config{})
 	t.Cleanup(h.Close)
 	mounted := h.Mount(http.NewServeMux())
-	// Matches-zero guard: an empty mount would make every assertion
-	// below vacuously true.
+
 	require.NotEmpty(t, mounted, "no SCIM routes were mounted; the mount table is mis-scoped")
 	return mounted
 }
 
-// Every mounted route is classified exactly once. A route added to
-// Mount without being classified fails here, before it has a caller.
 func TestSurface_EveryMountedRouteIsClassified(t *testing.T) {
 	classified := map[string]string{}
 	add := func(kind string, routes []string) {
@@ -59,9 +48,6 @@ func TestSurface_EveryMountedRouteIsClassified(t *testing.T) {
 		unclassified)
 }
 
-// The classification is not allowed to drift out of existence either: a
-// route named in it that is no longer mounted is a stale entry that
-// would silently widen the check.
 func TestSurface_ClassificationHasNoStaleEntries(t *testing.T) {
 	mounted := map[string]bool{}
 	for _, r := range mountedDescriptors(t) {
@@ -84,10 +70,6 @@ func TestSurface_ClassificationHasNoStaleEntries(t *testing.T) {
 	assert.Empty(t, stale, "the SCIM route classification names routes that are not mounted: %v", stale)
 }
 
-// Every route classified as a mutation writes an operation row of the
-// non-RPC-writer class, with at least one effect, on a real request.
-// This is the coverage claim itself: exercised through the real route,
-// against a real database, for the exact enumerated set.
 func TestSurface_EveryMutationRouteRecordsItsOperationAndEffects(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -95,8 +77,6 @@ func TestSurface_EveryMutationRouteRecordsItsOperationAndEffects(t *testing.T) {
 	subject := f.createUser(p, scimUser("surface@example.com", "ext-surface"))
 	groupID := f.createGroup(p, scimGroup("Surface", "grp-surface"))
 
-	// One request per mutation route, in an order where each one has
-	// something to change.
 	exercise := []struct {
 		descriptor string
 		run        func()
@@ -137,8 +117,6 @@ func TestSurface_EveryMutationRouteRecordsItsOperationAndEffects(t *testing.T) {
 		covered[e.descriptor] = true
 	}
 
-	// The exercise set must be the enumerated set, not a subset that
-	// happens to pass.
 	for _, descriptor := range scim.MutationRoutes() {
 		assert.Truef(t, covered[descriptor], "mutation route %s is enumerated but never exercised", descriptor)
 	}
@@ -157,8 +135,6 @@ func TestSurface_EveryMutationRouteRecordsItsOperationAndEffects(t *testing.T) {
 	}
 }
 
-// Every route classified as a sensitive read records an operation of
-// that class on a real request.
 func TestSurface_EverySensitiveReadRouteRecordsItsOperation(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)

@@ -117,6 +117,7 @@ func (q *Queries) DeleteUserGroupMember(ctx context.Context, arg DeleteUserGroup
 
 const insertUserGroupMember = `-- name: InsertUserGroupMember :execrows
 
+
 INSERT INTO user_group_members (group_id, user_id, added_at, added_by)
 VALUES (?, ?, ?, ?)
 ON CONFLICT (group_id, user_id) DO NOTHING
@@ -129,10 +130,6 @@ type InsertUserGroupMemberParams struct {
 	AddedBy string    `json:"added_by"`
 }
 
-// User-group membership. Membership confers the group's role grants,
-// so every write here is an audited mutation.
-// Idempotent: re-asserting a membership the subject already has is not
-// an error, and must not look like a fresh grant in the audit record.
 func (q *Queries) InsertUserGroupMember(ctx context.Context, arg InsertUserGroupMemberParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, insertUserGroupMember,
 		arg.GroupID,

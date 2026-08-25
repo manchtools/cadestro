@@ -1,12 +1,5 @@
 package store_test
 
-// Job schema behaviour.
-//
-// These tables carry their state machines in CHECK constraints and
-// their claim semantics in conditional UPDATEs, so the invariants are
-// exercised where they live: against the real database, through the
-// real statements the job runner will issue.
-
 import (
 	"context"
 	"testing"
@@ -26,8 +19,6 @@ func seedDevice(t *testing.T, pool *testdb.DB) string {
 	return id
 }
 
-// Two workers racing for the same due job produce one winner: the
-// second conditional UPDATE matches nothing.
 func TestJobs_ConditionalClaimAdmitsExactlyOneWorker(t *testing.T) {
 	_, pool := setupSQLite(t)
 	ctx := context.Background()
@@ -53,8 +44,6 @@ func TestJobs_ConditionalClaimAdmitsExactlyOneWorker(t *testing.T) {
 	require.NoError(t, err)
 	assert.Zero(t, tag.RowsAffected(), "a live claim must not be stealable")
 
-	// Once the lease expires the row is reclaimable, which is how a
-	// worker that died holding it does not strand the job.
 	later := now.Add(2 * time.Minute)
 	tag, err = pool.Exec(ctx, claim, id, later, later.Add(time.Minute), workerB)
 	require.NoError(t, err)
@@ -68,8 +57,6 @@ func TestJobs_ConditionalClaimAdmitsExactlyOneWorker(t *testing.T) {
 	assert.Equal(t, workerB, by)
 }
 
-// A scheduled singleton cannot be enqueued twice while one is live,
-// and becomes enqueueable again once the previous run is terminal.
 func TestJobs_DedupeKeyAdmitsOneLiveRow(t *testing.T) {
 	_, pool := setupSQLite(t)
 	ctx := context.Background()

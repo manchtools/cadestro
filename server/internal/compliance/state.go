@@ -1,4 +1,3 @@
-// Package compliance owns direct compliance-policy state and read handlers.
 package compliance
 
 import (
@@ -24,25 +23,20 @@ var (
 	ErrRuleExists          = errors.New("compliance policy rule already exists")
 	ErrRuleNotFound        = errors.New("compliance policy rule not found")
 	ErrActionNotCompliance = errors.New("action is not a compliance action")
-	// ErrComplianceActionNeedsDetection means a compliance-classified shell
-	// action carries no detection script. Compliance actions are detection-only,
-	// so such an action can never produce a finding.
+
 	ErrComplianceActionNeedsDetection = errors.New("compliance action needs a detection script")
 )
 
-// StateConfig supplies the direct store and clock.
 type StateConfig struct {
 	Store *store.Store
 	Now   func() time.Time
 }
 
-// State applies compliance-policy mutations through audited transactions.
 type State struct {
 	store *store.Store
 	now   func() time.Time
 }
 
-// NewState constructs direct compliance-policy state.
 func NewState(cfg StateConfig) *State {
 	if cfg.Store == nil {
 		panic("compliance: store is required")
@@ -53,14 +47,12 @@ func NewState(cfg StateConfig) *State {
 	return &State{store: cfg.Store, now: cfg.Now}
 }
 
-// CreateParams is the complete stored shape of a new policy.
 type CreateParams struct {
 	Name        string
 	Description string
 	CreatedBy   string
 }
 
-// Create inserts one compliance policy.
 func (s *State) Create(ctx context.Context, op store.AuditOperation, p CreateParams) (store.CompliancePolicyRow, error) {
 	if ctx == nil || !validID(p.CreatedBy) || (op.ActorID != "" && op.ActorID != p.CreatedBy) ||
 		p.Name == "" || utf8.RuneCountInString(p.Name) > 255 || utf8.RuneCountInString(p.Description) > 1024 {
@@ -86,7 +78,6 @@ func (s *State) Create(ctx context.Context, op store.AuditOperation, p CreatePar
 	return out, nil
 }
 
-// Rename replaces a policy name.
 func (s *State) Rename(ctx context.Context, op store.AuditOperation, id, name string) (store.CompliancePolicyRow, error) {
 	if ctx == nil || !validID(id) || name == "" || utf8.RuneCountInString(name) > 255 {
 		return store.CompliancePolicyRow{}, ErrInvalidInput
@@ -104,7 +95,6 @@ func (s *State) Rename(ctx context.Context, op store.AuditOperation, id, name st
 	return out, translateNotFound(err)
 }
 
-// UpdateDescription replaces a policy description.
 func (s *State) UpdateDescription(ctx context.Context, op store.AuditOperation, id, description string) (store.CompliancePolicyRow, error) {
 	if ctx == nil || !validID(id) || utf8.RuneCountInString(description) > 1024 {
 		return store.CompliancePolicyRow{}, ErrInvalidInput
@@ -124,7 +114,6 @@ func (s *State) UpdateDescription(ctx context.Context, op store.AuditOperation, 
 	return out, translateNotFound(err)
 }
 
-// AddRule inserts one compliance Action edge.
 func (s *State) AddRule(ctx context.Context, op store.AuditOperation, policyID, actionID string, graceHours int32) error {
 	if ctx == nil || !validID(policyID) || !validID(actionID) || graceHours < 0 || graceHours > maxGracePeriodHours {
 		return ErrInvalidInput
@@ -166,7 +155,6 @@ func (s *State) AddRule(ctx context.Context, op store.AuditOperation, policyID, 
 	return err
 }
 
-// RemoveRule removes one policy Action edge.
 func (s *State) RemoveRule(ctx context.Context, op store.AuditOperation, policyID, actionID string) error {
 	if ctx == nil || !validID(policyID) || !validID(actionID) {
 		return ErrInvalidInput
@@ -199,7 +187,6 @@ func (s *State) RemoveRule(ctx context.Context, op store.AuditOperation, policyI
 	return err
 }
 
-// UpdateRule replaces a rule's grace period.
 func (s *State) UpdateRule(ctx context.Context, op store.AuditOperation, policyID, actionID string, graceHours int32) error {
 	if ctx == nil || !validID(policyID) || !validID(actionID) || graceHours < 0 || graceHours > maxGracePeriodHours {
 		return ErrInvalidInput
@@ -219,8 +206,6 @@ func (s *State) UpdateRule(ctx context.Context, op store.AuditOperation, policyI
 	return err
 }
 
-// Delete soft-deletes a policy and removes its rules, evaluations and
-// assignments in the same transaction.
 func (s *State) Delete(ctx context.Context, op store.AuditOperation, id string) error {
 	if ctx == nil || !validID(id) {
 		return ErrInvalidInput
@@ -252,9 +237,6 @@ func (s *State) Delete(ctx context.Context, op store.AuditOperation, id string) 
 	return translateNotFound(err)
 }
 
-// IsComplianceAction reports whether an authored action is a compliance check.
-// Result ingestion asks this rather than re-deriving the rule, so the set of
-// actions that can produce a finding is exactly the set attachment accepts.
 func IsComplianceAction(row store.ActionRow) bool {
 	return validateComplianceAction(row) == nil
 }
@@ -271,9 +253,7 @@ func validateComplianceAction(row store.ActionRow) error {
 	if shell == nil || !shell.IsCompliance {
 		return ErrActionNotCompliance
 	}
-	// A compliance action is detection-only. Without a detection script it can
-	// never report a finding, so attachment fails closed instead of enrolling a
-	// rule that would silently evaluate nothing.
+
 	if strings.TrimSpace(shell.DetectionScript) == "" {
 		return ErrComplianceActionNeedsDetection
 	}

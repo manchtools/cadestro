@@ -16,8 +16,6 @@ import (
 
 var errConferredAuthority = errors.New("conferred authority exceeds actor authority")
 
-// ListPermissions returns the permission registry, so a role builder
-// can show what a role may contain and which scopes each key accepts.
 func (h *Handlers) ListPermissions(ctx context.Context, req *connect.Request[cadestrov1.ListPermissionsRequest]) (*connect.Response[cadestrov1.ListPermissionsResponse], error) {
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
@@ -28,12 +26,6 @@ func (h *Handlers) ListPermissions(ctx context.Context, req *connect.Request[cad
 	return connect.NewResponse(&cadestrov1.ListPermissionsResponse{Permissions: permissionsToProto()}), nil
 }
 
-// CreateRole defines a new role.
-//
-// Every requested permission must be a registered key. An unknown key
-// would sit in the array doing nothing — invisible dead weight in the
-// role builder, and a silent authorization gap if it was a typo for a
-// real one.
 func (h *Handlers) CreateRole(ctx context.Context, req *connect.Request[cadestrov1.CreateRoleRequest]) (*connect.Response[cadestrov1.CreateRoleResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
@@ -84,7 +76,6 @@ func (h *Handlers) CreateRole(ctx context.Context, req *connect.Request[cadestro
 	return connect.NewResponse(&cadestrov1.CreateRoleResponse{Role: roleToProto(created)}), nil
 }
 
-// GetRole returns one role and how many subjects hold it.
 func (h *Handlers) GetRole(ctx context.Context, req *connect.Request[cadestrov1.GetRoleRequest]) (*connect.Response[cadestrov1.GetRoleResponse], error) {
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
@@ -109,7 +100,6 @@ func (h *Handlers) GetRole(ctx context.Context, req *connect.Request[cadestrov1.
 	}), nil
 }
 
-// ListRoles pages the role catalogue.
 func (h *Handlers) ListRoles(ctx context.Context, req *connect.Request[cadestrov1.ListRolesRequest]) (*connect.Response[cadestrov1.ListRolesResponse], error) {
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
@@ -136,11 +126,6 @@ func (h *Handlers) ListRoles(ctx context.Context, req *connect.Request[cadestrov
 	return connect.NewResponse(resp), nil
 }
 
-// UpdateRole rewrites a role's name, description and permission set.
-//
-// System roles are refused: the reconciler rewrites their permissions
-// from the code registry on every boot, so an edit here would be
-// silently undone rather than rejected.
 func (h *Handlers) UpdateRole(ctx context.Context, req *connect.Request[cadestrov1.UpdateRoleRequest]) (*connect.Response[cadestrov1.UpdateRoleResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
@@ -182,9 +167,7 @@ func (h *Handlers) UpdateRole(ctx context.Context, req *connect.Request[cadestro
 			if err != nil {
 				return err
 			}
-			// Changing what a role may do changes what everyone holding
-			// it may do, so every session minted under the old
-			// permission set is invalidated in the same transaction.
+
 			if err := h.invalidateRoleHolderSessions(ctx, tx, rec, before.ID); err != nil {
 				return err
 			}
@@ -216,11 +199,6 @@ func (h *Handlers) UpdateRole(ctx context.Context, req *connect.Request[cadestro
 	return connect.NewResponse(&cadestrov1.UpdateRoleResponse{Role: roleToProto(updated)}), nil
 }
 
-// DeleteRole retires a role.
-//
-// A role that anyone still holds is refused rather than deleted out
-// from under them: silently dropping a grant is an authorization change
-// disguised as a catalogue edit.
 func (h *Handlers) DeleteRole(ctx context.Context, req *connect.Request[cadestrov1.DeleteRoleRequest]) (*connect.Response[cadestrov1.DeleteRoleResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
@@ -277,7 +255,6 @@ func (h *Handlers) DeleteRole(ctx context.Context, req *connect.Request[cadestro
 	return connect.NewResponse(&cadestrov1.DeleteRoleResponse{}), nil
 }
 
-// AssignRoleToUser grants a role to a subject, optionally at a scope.
 func (h *Handlers) AssignRoleToUser(ctx context.Context, req *connect.Request[cadestrov1.AssignRoleToUserRequest]) (*connect.Response[cadestrov1.AssignRoleToUserResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
@@ -355,12 +332,6 @@ func (h *Handlers) AssignRoleToUser(ctx context.Context, req *connect.Request[ca
 	return connect.NewResponse(&cadestrov1.AssignRoleToUserResponse{}), nil
 }
 
-// RevokeRoleFromUser removes ONE named grant.
-//
-// The request describes which grant by its scope, and the delete is
-// conditional on that description matching. Asking to revoke the
-// unscoped grant when only scoped ones exist reports not-found rather
-// than silently taking a scoped grant or silently doing nothing.
 func (h *Handlers) RevokeRoleFromUser(ctx context.Context, req *connect.Request[cadestrov1.RevokeRoleFromUserRequest]) (*connect.Response[cadestrov1.RevokeRoleFromUserResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
@@ -421,7 +392,6 @@ func (h *Handlers) RevokeRoleFromUser(ctx context.Context, req *connect.Request[
 	return connect.NewResponse(&cadestrov1.RevokeRoleFromUserResponse{}), nil
 }
 
-// AssignRoleToUserGroup grants a role to every member of a group.
 func (h *Handlers) AssignRoleToUserGroup(ctx context.Context, req *connect.Request[cadestrov1.AssignRoleToUserGroupRequest]) (*connect.Response[cadestrov1.AssignRoleToUserGroupResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
@@ -485,15 +455,12 @@ func (h *Handlers) AssignRoleToUserGroup(ctx context.Context, req *connect.Reque
 		if errors.Is(err, errConferredAuthority) {
 			return nil, rpcError(ctx, ErrPermissionDenied, connect.CodePermissionDenied, "cannot grant authority you do not hold")
 		}
-		// A grant naming a group or role that does not exist violates a
-		// foreign key; the caller is told the target is unknown rather
-		// than shown a constraint name.
+
 		return nil, notFound(ctx, ErrRoleNotFound, "group or role not found")
 	}
 	return connect.NewResponse(&cadestrov1.AssignRoleToUserGroupResponse{}), nil
 }
 
-// RevokeRoleFromUserGroup removes one named group grant.
 func (h *Handlers) RevokeRoleFromUserGroup(ctx context.Context, req *connect.Request[cadestrov1.RevokeRoleFromUserGroupRequest]) (*connect.Response[cadestrov1.RevokeRoleFromUserGroupResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
@@ -547,8 +514,6 @@ func (h *Handlers) RevokeRoleFromUserGroup(ctx context.Context, req *connect.Req
 	return connect.NewResponse(&cadestrov1.RevokeRoleFromUserGroupResponse{}), nil
 }
 
-// checkPermissionKeys rejects any permission that is not in the
-// registry and returns the set in a stable order.
 func (h *Handlers) checkPermissionKeys(ctx context.Context, keys []string) ([]string, error) {
 	valid := auth.ValidPermissionKeys()
 	out := make([]string, 0, len(keys))
@@ -567,21 +532,6 @@ func (h *Handlers) checkPermissionKeys(ctx context.Context, keys []string) ([]st
 	return out, nil
 }
 
-// checkGrantScope validates a requested grant scope against the roles
-// being granted, and against the actor's own authority to attach it.
-//
-// Three separate refusals, in order:
-//
-//  1. a role containing a PRIVILEGE-GRANTING permission cannot be
-//     scoped at all. Such a permission mints or widens authority, and
-//     the authority it mints is not itself confined to the scope, so a
-//     scope on it would be a lie;
-//  2. every permission in the role must accept this KIND of scope. A
-//     device-group scope on a user-target permission would silently
-//     fail to constrain it;
-//  3. the actor must hold the authority to attach this particular
-//     scope, and a scope-confined admin may not create an unscoped
-//     grant at all — that would extend their reach to the whole fleet.
 func (h *Handlers) checkGrantScope(
 	ctx context.Context,
 	kind cadestrov1.RoleGrantScopeKind,
@@ -600,9 +550,6 @@ func (h *Handlers) checkGrantScope(
 		return nil, nil, nil
 	}
 
-	// Paired-or-neither. A half-set scope is a request whose meaning is
-	// undefined, and guessing which half was intended is how an
-	// unscoped grant gets minted by accident.
 	if kind == cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED || scopeID == "" {
 		return nil, nil, rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument,
 			"scope_kind and scope_id must be set together or both omitted")
@@ -612,11 +559,6 @@ func (h *Handlers) checkGrantScope(
 		return nil, nil, rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument, "unknown scope_kind")
 	}
 
-	// Attaching a scope is its own authority, separate from the
-	// authority to grant the role. Checked explicitly here rather than
-	// left to fall out of the scope-bound check below, so a caller who
-	// holds no scope authority at all is refused by a branch that says
-	// so instead of by the shape of an empty filter.
 	if !auth.HasPermission(ctx, auth.AssignRoleScopePermission) {
 		return nil, nil, rpcError(ctx, ErrPermissionDenied, connect.CodePermissionDenied,
 			"attaching a scope to a role grant requires the scope-assignment authority")
@@ -647,9 +589,6 @@ func (h *Handlers) checkGrantScope(
 	return &storedKind, &scopeID, nil
 }
 
-// enforceConferredAuthority prevents a role grant from conferring any
-// permission the actor does not already hold. The host-authorized bootstrap
-// principal is the deliberate first-admin exception.
 func (h *Handlers) enforceConferredAuthority(ctx context.Context, roleIDs []string) error {
 	actor, _ := auth.UserFromContext(ctx)
 	if actor != nil && actor.Kind == auth.PrincipalBootstrapAdmin {
@@ -700,10 +639,6 @@ func checkPermissionSubset(actor, conferred []string) error {
 	return nil
 }
 
-// describedScope parses the scope a revoke request names. Unlike a
-// grant it validates only the shape: the caller is describing which
-// existing grant to remove, and whether that description matches is
-// decided by the conditional delete.
 func (h *Handlers) describedScope(ctx context.Context, kind cadestrov1.RoleGrantScopeKind, scopeID string) (*string, *string, error) {
 	if kind == cadestrov1.RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED && scopeID == "" {
 		return nil, nil, nil
@@ -719,8 +654,6 @@ func (h *Handlers) describedScope(ctx context.Context, kind cadestrov1.RoleGrant
 	return &storedKind, &scopeID, nil
 }
 
-// invalidateSubjectSessions bumps a subject's session version so every
-// token minted under their previous authority stops validating.
 func (h *Handlers) invalidateSubjectSessions(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder, userID string) (int32, error) {
 	at := h.now().UTC()
 	version, err := tx.BumpUserSessionVersion(ctx, db.BumpUserSessionVersionParams{ID: userID, UpdatedAt: &at})
@@ -742,9 +675,6 @@ func (h *Handlers) invalidateSubjectSessions(ctx context.Context, tx *store.Tx, 
 	return version, nil
 }
 
-// invalidateRoleHolderSessions bumps the session version of every
-// subject that holds the role, directly or through a group, so no
-// session outlives the authority it was minted under.
 func (h *Handlers) invalidateRoleHolderSessions(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder, roleID string) error {
 	holderIDs, err := tx.ListRoleHolderIDs(ctx, roleID)
 	if err != nil {
@@ -795,8 +725,6 @@ func (h *Handlers) invalidateGroupMemberSessions(ctx context.Context, tx *store.
 	return nil
 }
 
-// requestedRoleIDs merges the singular and repeated role fields the
-// contract offers, dropping duplicates and preserving request order.
 func requestedRoleIDs(single string, many []string) []string {
 	out := make([]string, 0, len(many)+1)
 	seen := make(map[string]bool, len(many)+1)

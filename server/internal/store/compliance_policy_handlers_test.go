@@ -210,10 +210,6 @@ func TestCompliancePolicyHandlers_RejectsOrdinaryAndOutOfScopeActions(t *testing
 	require.NoError(t, err)
 }
 
-// insertDetectionlessComplianceAction stores a compliance-classified shell
-// action whose detection script is absent or blank. It bypasses authoring so
-// the attachment guard is proven on its own rather than through the authoring
-// guard that also refuses this shape.
 func insertDetectionlessComplianceAction(t *testing.T, raw *testdb.DB, name, detection string) string {
 	t.Helper()
 	params, err := actionparams.MarshalActionParams(&cadestrov1.ShellParams{
@@ -231,11 +227,6 @@ func insertDetectionlessComplianceAction(t *testing.T, raw *testdb.DB, name, det
 	return id
 }
 
-// A compliance action is detection-only, so attaching one without a detection
-// script must fail closed. The positive control — attaching a compliance action
-// that has a detection script — is covered by
-// TestCompliancePolicyHandlers_CRUDRulesAndAudit and
-// TestCompliancePolicyHandlers_RejectsOrdinaryAndOutOfScopeActions.
 func TestCompliancePolicyHandlers_RefuseComplianceActionWithoutDetectionScript(t *testing.T) {
 	f := newComplianceHandlerFixture(t)
 	policyState := compliance.NewState(compliance.StateConfig{Store: f.store})

@@ -1,72 +1,27 @@
 package auth
 
-// PermissionTargetKind classifies the target kind a permission acts
-// on, which determines whether (and how) it can be scoped on a role
-// grant.
-//
-// Fail-closed semantic: a permission that does not explicitly
-// declare a target kind stays at the zero value (TargetUnspecified)
-// and is NOT scopable. Granting it with any scope_kind is rejected
-// by the role-assignment handler. New permissions added without an
-// explicit kind silently land at the safe default — the inverse
-// (default-scopable) is the classic stale-allowlist failure mode.
-//
-// Use TargetDevice / TargetUser only when the permission's
-// authorization decision can be expressed as "scope-id matches a
-// group containing this device/user". Org-tier permissions
-// (CreateRole, server settings, IDP/SCIM, audit) and permissions
-// that can perturb other actors' scopes (dynamic-group ops, labels)
-// stay TargetUnspecified.
 type PermissionTargetKind int
 
 const (
-	// TargetUnspecified — not scopable. The zero value is the safe
-	// default for any permission that hasn't been explicitly
-	// classified.
 	TargetUnspecified PermissionTargetKind = iota
-	// TargetDevice — scopable with
-	// RoleGrantScopeKind=DEVICE_GROUP only.
+
 	TargetDevice
-	// TargetUser — scopable with
-	// RoleGrantScopeKind=USER_GROUP only.
+
 	TargetUser
 )
 
-// PermissionInfo describes a single permission.
 type PermissionInfo struct {
-	Key         string // e.g. "CreateAction", "GetUser:self"
-	Group       string // UI group: "Users", "Devices", etc.
+	Key         string
+	Group       string
 	Description string
-	// TargetKind classifies what kind of target this permission
-	// acts on, used by the role-assignment handler to gate scoped
-	// grants. TargetUnspecified (zero value) means the permission
-	// is not scopable.
+
 	TargetKind PermissionTargetKind
-	// PrivilegeGranting marks a permission whose holder can create or
-	// widen authority — define a role, attach a role to a subject,
-	// place a subject in a group that carries roles, mint a subject,
-	// or configure an identity source that mints subjects.
-	//
-	// Such a permission is GLOBAL-ONLY: attaching a scope to a role
-	// containing one is refused. A scope would be a lie, because the
-	// authority the holder mints inside their scope is not itself
-	// confined to that scope — a scope-confined admin who may add a
-	// user to a role-bearing group can add themselves and inherit
-	// whatever that group carries.
-	//
-	// The narrower question "does this permission's EFFECT stay inside
-	// the scope" is what keeps device-side privileges (terminal sudo
-	// policy, SSH settings, provisioning) scopable: they act only on
-	// the members of the scope they were granted for.
+
 	PrivilegeGranting bool
 }
 
-// privilegeGrantingKeys is the set of permissions that can create or
-// widen authority. Listed once, applied to the registry below, so the
-// classification is auditable in a single place rather than spread
-// across a hundred struct literals.
 var privilegeGrantingKeys = map[string]bool{
-	// Defining what a role may do, and who holds it.
+
 	"CreateRole":              true,
 	"UpdateRole":              true,
 	"DeleteRole":              true,
@@ -75,30 +30,22 @@ var privilegeGrantingKeys = map[string]bool{
 	"AssignRoleToUserGroup":   true,
 	"RevokeRoleFromUserGroup": true,
 	"AssignRoleScope":         true,
-	// Group membership confers the group's roles, so placing a subject
-	// in a group is a role grant by another name.
+
 	"AddUserToGroup":      true,
 	"RemoveUserFromGroup": true,
-	// Re-enabling subjects.
+
 	"SetUserDisabled": true,
-	// Identity sources that mint subjects and map external groups onto
-	// local ones.
+
 	"CreateIdentityProvider": true,
 	"UpdateIdentityProvider": true,
 	"DeleteIdentityProvider": true,
 	"EnableSCIM":             true,
 	"DisableSCIM":            true,
 	"RotateSCIMToken":        true,
-	// Deployment-wide switches for provisioning and SSH.
+
 	"UpdateServerSettings": true,
 }
 
-// AllPermissions returns every available permission with metadata.
-//
-// The registry literals below carry key, group, description and target
-// kind; the privilege-granting flag is applied here from
-// privilegeGrantingKeys so that classification lives in exactly one
-// readable place.
 func AllPermissions() []PermissionInfo {
 	raw := registryPermissions()
 	perms := make([]PermissionInfo, len(raw))
@@ -114,8 +61,6 @@ func AllPermissions() []PermissionInfo {
 	return perms
 }
 
-// permEntry is one registry line. Positional fields: key, UI group,
-// description, target kind.
 type permEntry struct {
 	key         string
 	group       string
@@ -123,10 +68,9 @@ type permEntry struct {
 	targetKind  PermissionTargetKind
 }
 
-// registryPermissions is the raw registry.
 func registryPermissions() []permEntry {
 	return []permEntry{
-		// Users
+
 		{"GetCurrentUser", "Users", "View own profile", TargetUnspecified},
 		{"GetUser", "Users", "View any user", TargetUser},
 		{"GetUser:self", "Users", "View own profile only", TargetUnspecified},
@@ -134,54 +78,40 @@ func registryPermissions() []permEntry {
 		{"EraseJITUser", "Users", "Erase OIDC JIT users", TargetUser},
 		{"UpdateUserEmail", "Users", "Change any user's email", TargetUser},
 		{"UpdateUserEmail:self", "Users", "Change own email", TargetUnspecified},
-		// Re-enabling a subject restores every authority it held, so
-		// this is privilege-granting and stays global-only.
+
 		{"SetUserDisabled", "Users", "Disable/enable users", TargetUnspecified},
 		{"UpdateUserProfile", "Users", "Update any user's profile", TargetUser},
 		{"UpdateUserProfile:self", "Users", "Update own profile", TargetUnspecified},
 		{"UpdateUserSshSettings", "Users", "Update any user's SSH settings", TargetUser},
 		{"UpdateUserSshSettings:self", "Users", "Update own SSH settings", TargetUnspecified},
-		// linux_username keys cadestro-tty/sudo account naming on managed devices, so
-		// it is ADMIN-ONLY: there is intentionally NO :self variant (#354). The
-		// interceptor admits any :self holder (Authorize short-circuits :self
-		// when the interceptor passes an empty ResourceID), and the handler did
-		// not enforce self-scope — so a self grant let any user rewrite any
-		// user's linux_username. Only the base TargetUser permission gates it.
+
 		{"UpdateUserLinuxUsername", "Users", "Change any user's linux username", TargetUser},
 		{"AddUserSshKey", "Users", "Add SSH key to any user", TargetUser},
 		{"AddUserSshKey:self", "Users", "Add own SSH key", TargetUnspecified},
 		{"RemoveUserSshKey", "Users", "Remove SSH key from any user", TargetUser},
 		{"RemoveUserSshKey:self", "Users", "Remove own SSH key", TargetUnspecified},
-		// Devices
+
 		{"ListDevices", "Devices", "List all devices", TargetDevice},
 		{"ListDevices:assigned", "Devices", "List own assigned devices", TargetUnspecified},
 		{"GetDevice", "Devices", "View any device", TargetDevice},
 		{"GetDevice:assigned", "Devices", "View own assigned devices", TargetUnspecified},
-		// SetDeviceLabel / RemoveDeviceLabel are intentionally NOT
-		// scopable: labels feed dynamic device-group queries, so
-		// scoping the labels permission would let a scope-confined
-		// admin perturb OTHER admins' dynamic-group scopes. T-S2.
+
 		{"SetDeviceLabel", "Devices", "Set device labels", TargetUnspecified},
 		{"RemoveDeviceLabel", "Devices", "Remove device labels", TargetUnspecified},
-		// AssignDevice / UnassignDevice manage the device-user
-		// relationship; scoping them creates cross-kind semantics
-		// that V1 explicitly excludes per kinds-don't-mix. Org-tier
-		// for V1.
+
 		{"AssignDevice", "Devices", "Assign devices to users or groups", TargetUnspecified},
 		{"UnassignDevice", "Devices", "Unassign devices from users or groups", TargetUnspecified},
 		{"ListDeviceAssignees", "Devices", "List device assignees", TargetUnspecified},
 		{"SetDeviceSyncInterval", "Devices", "Set device sync interval", TargetDevice},
 		{"SetDeviceInventoryInterval", "Devices", "Set device inventory collection interval", TargetDevice},
 		{"DeleteDevice", "Devices", "Delete devices", TargetDevice},
-		// Tokens
+
 		{"CreateToken", "Tokens", "Create registration tokens", TargetUnspecified},
 		{"ListTokens", "Tokens", "List tokens", TargetUnspecified},
 		{"RenameToken", "Tokens", "Rename tokens", TargetUnspecified},
 		{"SetTokenDisabled", "Tokens", "Disable/enable tokens", TargetUnspecified},
 		{"DeleteToken", "Tokens", "Delete tokens", TargetUnspecified},
-		// Actions — org-tier objects (authored once, assigned
-		// per-device); scoping happens on assignment and live-control RPCs, not
-		// the action CRUD.
+
 		{"CreateAction", "Actions", "Create actions", TargetUnspecified},
 		{"GetAction", "Actions", "View actions", TargetUnspecified},
 		{"ListActions", "Actions", "List actions", TargetUnspecified},
@@ -189,7 +119,7 @@ func registryPermissions() []permEntry {
 		{"UpdateActionDescription", "Actions", "Update action descriptions", TargetUnspecified},
 		{"UpdateActionParams", "Actions", "Update action parameters", TargetUnspecified},
 		{"DeleteAction", "Actions", "Delete actions", TargetUnspecified},
-		// Action Sets — org-tier objects
+
 		{"CreateActionSet", "Action Sets", "Create action sets", TargetUnspecified},
 		{"GetActionSet", "Action Sets", "View action sets", TargetUnspecified},
 		{"ListActionSets", "Action Sets", "List action sets", TargetUnspecified},
@@ -200,7 +130,7 @@ func registryPermissions() []permEntry {
 		{"AddActionToSet", "Action Sets", "Add actions to sets", TargetUnspecified},
 		{"RemoveActionFromSet", "Action Sets", "Remove actions from sets", TargetUnspecified},
 		{"ReorderActionInSet", "Action Sets", "Reorder actions in sets", TargetUnspecified},
-		// Definitions — org-tier objects
+
 		{"CreateDefinition", "Definitions", "Create definitions", TargetUnspecified},
 		{"GetDefinition", "Definitions", "View definitions", TargetUnspecified},
 		{"ListDefinitions", "Definitions", "List definitions", TargetUnspecified},
@@ -211,20 +141,7 @@ func registryPermissions() []permEntry {
 		{"AddActionSetToDefinition", "Definitions", "Add action sets to definitions", TargetUnspecified},
 		{"RemoveActionSetFromDefinition", "Definitions", "Remove action sets from definitions", TargetUnspecified},
 		{"ReorderActionSetInDefinition", "Definitions", "Reorder action sets in definitions", TargetUnspecified},
-		// Device Groups
-		//
-		// CreateDeviceGroup was split into a static and a dynamic
-		// variant in server #7. BOTH creation permissions are
-		// org-tier (TargetUnspecified, NOT scopable): a brand-new
-		// group has no id and no members, so there is nothing for a
-		// scope to confine at create time. Making create "scopable"
-		// would be advisory-only — exactly the dishonesty the
-		// scopable==enforced rule forbids. Scope is enforced on the
-		// downstream group-management + membership operations instead
-		// (GetDeviceGroup, RenameDeviceGroup, AddDeviceToGroup, …).
-		// Dynamic-group creation additionally stays org-tier because
-		// the query language matches arbitrary device sets and could
-		// perturb other actors' scopes — see T-S2 in the #7 design.
+
 		{"CreateStaticDeviceGroup", "Device Groups", "Create static device groups", TargetUnspecified},
 		{"CreateDynamicDeviceGroup", "Device Groups", "Create dynamic device groups", TargetUnspecified},
 		{"GetDeviceGroup", "Device Groups", "View device groups", TargetDevice},
@@ -241,30 +158,30 @@ func registryPermissions() []permEntry {
 		{"SetDeviceGroupSyncInterval", "Device Groups", "Set device group sync interval", TargetDevice},
 		{"SetDeviceGroupInventoryInterval", "Device Groups", "Set device group inventory collection interval", TargetDevice},
 		{"SetDeviceGroupMaintenanceWindow", "Device Groups", "Set device group maintenance window", TargetDevice},
-		// Assignments
+
 		{"CreateAssignment", "Assignments", "Create assignments", TargetUnspecified},
 		{"DeleteAssignment", "Assignments", "Delete assignments", TargetUnspecified},
 		{"ListAssignments", "Assignments", "List assignments", TargetUnspecified},
 		{"GetDeviceAssignments", "Assignments", "View device assignments", TargetUnspecified},
 		{"GetUserAssignments", "Assignments", "View user assignments", TargetUnspecified},
-		// User Selections
+
 		{"SetUserSelection", "User Selections", "Manage user selections", TargetUnspecified},
 		{"ListAvailableActions", "User Selections", "List available actions", TargetUnspecified},
-		// Live control
+
 		{"SyncDevice", "Live Control", "Sync device", TargetDevice},
 		{"RebootDevice", "Live Control", "Reboot device", TargetDevice},
-		// OSQuery
+
 		{"DispatchOSQuery", "OSQuery", "Run OSQuery on device", TargetDevice},
 		{"GetOSQueryResult", "OSQuery", "View OSQuery results", TargetDevice},
 		{"GetDeviceInventory", "OSQuery", "View device inventory", TargetDevice},
 		{"RefreshDeviceInventory", "OSQuery", "Refresh device inventory", TargetDevice},
-		// Device Logs
+
 		{"QueryDeviceLogs", "Device Logs", "Query device logs", TargetDevice},
 		{"GetDeviceLogResult", "Device Logs", "View device log results", TargetDevice},
-		// Compliance
+
 		{"GetDeviceCompliance", "Compliance", "View device compliance", TargetDevice},
 		{"GetDeviceCompliance:assigned", "Compliance", "View compliance for assigned devices", TargetUnspecified},
-		// Compliance Policies — org-tier
+
 		{"CreateCompliancePolicy", "Compliance Policies", "Create compliance policies", TargetUnspecified},
 		{"GetCompliancePolicy", "Compliance Policies", "View compliance policies", TargetUnspecified},
 		{"ListCompliancePolicies", "Compliance Policies", "List compliance policies", TargetUnspecified},
@@ -276,19 +193,17 @@ func registryPermissions() []permEntry {
 		{"UpdateCompliancePolicyRule", "Compliance Policies", "Update compliance policy rules", TargetUnspecified},
 		{"GetDeviceCompliancePolicyStatus", "Compliance Policies", "View device compliance policy status", TargetDevice},
 		{"GetDeviceCompliancePolicyStatus:assigned", "Compliance Policies", "View compliance policy status for assigned devices", TargetUnspecified},
-		// Audit — org-tier (V2 may revisit)
+
 		{"ListAuditEvents", "Audit", "View audit log", TargetUnspecified},
-		// LPS — metadata and plaintext reveal are independently assignable.
+
 		{"ListLpsPasswords", "LPS", "List LPS password metadata", TargetUnspecified},
 		{"RevealLpsPassword", "LPS", "Reveal one LPS password", TargetUnspecified},
-		// LUKS — metadata and plaintext reveal are independently assignable.
+
 		{"ListLuksKeys", "LUKS", "List LUKS key metadata", TargetUnspecified},
 		{"RevealLuksKey", "LUKS", "Reveal one LUKS key", TargetUnspecified},
 		{"CreateLuksToken", "LUKS", "Create LUKS recovery token", TargetUnspecified},
 		{"RevokeLuksDeviceKey", "LUKS", "Revoke LUKS device key", TargetUnspecified},
-		// Roles — org-tier. AssignRoleScope grants the authority to
-		// attach a scope to a role grant (paired-or-neither
-		// scope_kind+scope_id). server #7.
+
 		{"CreateRole", "Roles", "Create roles", TargetUnspecified},
 		{"GetRole", "Roles", "View roles", TargetUnspecified},
 		{"ListRoles", "Roles", "List roles", TargetUnspecified},
@@ -298,21 +213,14 @@ func registryPermissions() []permEntry {
 		{"RevokeRoleFromUser", "Roles", "Revoke roles from users", TargetUnspecified},
 		{"AssignRoleScope", "Roles", "Attach a scope (device group / user group) to a role grant", TargetUnspecified},
 		{"ListPermissions", "Roles", "List available permissions", TargetUnspecified},
-		// User Groups
-		//
-		// CreateUserGroup split into static + dynamic variants in
-		// server #7. BOTH are org-tier (TargetUnspecified, NOT
-		// scopable), same rationale as CreateDeviceGroup: nothing to
-		// confine at create time; scope is enforced on the downstream
-		// group-management + membership operations. T-S2.
+
 		{"CreateStaticUserGroup", "User Groups", "Create static user groups", TargetUnspecified},
 		{"CreateDynamicUserGroup", "User Groups", "Create dynamic user groups", TargetUnspecified},
 		{"GetUserGroup", "User Groups", "View user groups", TargetUser},
 		{"ListUserGroups", "User Groups", "List user groups", TargetUser},
 		{"UpdateUserGroup", "User Groups", "Update user groups", TargetUser},
 		{"DeleteUserGroup", "User Groups", "Delete user groups", TargetUser},
-		// Membership confers the group's roles, so these are privilege-
-		// granting and therefore global-only, not user-group scopable.
+
 		{"AddUserToGroup", "User Groups", "Add users to groups", TargetUnspecified},
 		{"RemoveUserFromGroup", "User Groups", "Remove users from groups", TargetUnspecified},
 		{"AssignRoleToUserGroup", "User Groups", "Assign roles to user groups", TargetUnspecified},
@@ -322,7 +230,7 @@ func registryPermissions() []permEntry {
 		{"ValidateUserGroupQuery", "User Groups", "Validate user group queries", TargetUnspecified},
 		{"EvaluateDynamicUserGroup", "User Groups", "Evaluate dynamic user groups", TargetUnspecified},
 		{"SetUserGroupMaintenanceWindow", "User Groups", "Set user group maintenance window", TargetUser},
-		// Identity Providers — org-tier
+
 		{"CreateIdentityProvider", "Identity Providers", "Create identity providers", TargetUnspecified},
 		{"GetIdentityProvider", "Identity Providers", "View identity providers", TargetUnspecified},
 		{"ListIdentityProviders", "Identity Providers", "List identity providers", TargetUnspecified},
@@ -331,24 +239,18 @@ func registryPermissions() []permEntry {
 		{"EnableSCIM", "Identity Providers", "Enable SCIM provisioning", TargetUnspecified},
 		{"DisableSCIM", "Identity Providers", "Disable SCIM provisioning", TargetUnspecified},
 		{"RotateSCIMToken", "Identity Providers", "Rotate SCIM token", TargetUnspecified},
-		// Identity Links
+
 		{"ListIdentityLinks", "Authentication", "View own linked identities", TargetUnspecified},
 		{"UnlinkIdentity", "Authentication", "Unlink own identity", TargetUnspecified},
-		// Search — single gate-only permission; per-facet scope
-		// inherits from ListDevices / ListUsers / ListActions
-		// already in the actor's JWT. Search itself stays
-		// TargetUnspecified so the kind-matching invariant doesn't
-		// constrain it.
+
 		{"Search", "Search", "Search across entities", TargetUnspecified},
 		{"RebuildSearchIndex", "Search", "Force rebuild search index", TargetUnspecified},
-		// Server Settings — org-tier
+
 		{"GetServerSettings", "Server Settings", "View server settings", TargetUnspecified},
 		{"UpdateServerSettings", "Server Settings", "Update server settings", TargetUnspecified},
-		// User Provisioning
+
 		{"SetUserProvisioningEnabled", "Users", "Toggle user provisioning per user", TargetUser},
-		// Remote Terminal — the V1 user-facing consumer of scoping.
-		// TerminalAdmin* per-scope grants drive the cohort
-		// computation in the reconciler (#7 S6).
+
 		{"StartTerminal", "Remote Terminal", "Open a remote terminal session on a device", TargetDevice},
 		{"StopTerminal", "Remote Terminal", "Stop a remote terminal session you opened", TargetDevice},
 		{"ListActiveTerminalSessions", "Remote Terminal", "View active terminal sessions across all devices (admin)", TargetDevice},
@@ -358,7 +260,6 @@ func registryPermissions() []permEntry {
 	}
 }
 
-// AdminPermissions returns all permission keys for the Admin role.
 func AdminPermissions() []string {
 	perms := make([]string, len(AllPermissions()))
 	for i, p := range AllPermissions() {
@@ -367,7 +268,6 @@ func AdminPermissions() []string {
 	return perms
 }
 
-// DefaultUserPermissions returns the self-service permission set for the User role.
 func DefaultUserPermissions() []string {
 	return []string{
 		"GetCurrentUser",
@@ -382,14 +282,13 @@ func DefaultUserPermissions() []string {
 		"UnlinkIdentity",
 		"GetDeviceCompliance:assigned",
 		"UpdateUserSshSettings:self",
-		// UpdateUserLinuxUsername is admin-only — no :self for the User role (#354).
+
 		"AddUserSshKey:self",
 		"RemoveUserSshKey:self",
 		"StopTerminal",
 	}
 }
 
-// ValidPermissionKeys returns a set of all valid permission keys.
 func ValidPermissionKeys() map[string]bool {
 	m := make(map[string]bool)
 	for _, p := range AllPermissions() {
@@ -398,9 +297,6 @@ func ValidPermissionKeys() map[string]bool {
 	return m
 }
 
-// permTargetKinds indexes permission key -> target kind, built once from
-// AllPermissions so the role-assignment handler can validate scopability
-// without rescanning the slice per call.
 var permTargetKinds = func() map[string]PermissionTargetKind {
 	m := make(map[string]PermissionTargetKind)
 	for _, p := range AllPermissions() {
@@ -409,17 +305,10 @@ var permTargetKinds = func() map[string]PermissionTargetKind {
 	return m
 }()
 
-// TargetKindFor returns the target kind of a permission key. An unknown
-// key (or the zero value) is TargetUnspecified — not scopable — which is
-// the safe default for the self-discovering scopability check.
 func TargetKindFor(key string) PermissionTargetKind {
 	return permTargetKinds[key]
 }
 
-// IsPrivilegeGranting reports whether a permission key can create or
-// widen authority and is therefore global-only. An unknown key is
-// treated as privilege-granting: refusing to scope something the
-// registry cannot classify is the fail-closed answer.
 func IsPrivilegeGranting(key string) bool {
 	if privilegeGrantingKeys[key] {
 		return true
@@ -427,9 +316,6 @@ func IsPrivilegeGranting(key string) bool {
 	return !ValidPermissionKeys()[key]
 }
 
-// FirstPrivilegeGranting returns the first permission in perms that is
-// global-only, and whether one was found. The role-assignment handler
-// uses it to refuse a scoped grant of a role that could mint authority.
 func FirstPrivilegeGranting(perms []string) (string, bool) {
 	for _, p := range perms {
 		if IsPrivilegeGranting(p) {

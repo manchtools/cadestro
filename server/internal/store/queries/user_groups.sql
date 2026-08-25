@@ -1,6 +1,6 @@
--- User groups. A group is a container for subjects; the authority it
--- confers lives in user_group_roles, so a membership write is an
--- authorization change and every one of them is audited.
+
+
+
 
 -- name: InsertUserGroup :one
 INSERT INTO user_groups (id, name, description, created_at, created_by, updated_at, is_dynamic, dynamic_query)

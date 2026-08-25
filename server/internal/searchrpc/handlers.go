@@ -65,14 +65,12 @@ var sortFields = map[cadestrov1.SortField]string{
 	cadestrov1.SortField_SORT_FIELD_OCCURRED_AT:       "occurred_at",
 }
 
-// Handlers implements SQLite FTS5-backed search and its maintenance RPC.
 type Handlers struct {
 	store  *store.Store
 	logger *slog.Logger
 	now    func() time.Time
 }
 
-// NewHandlers constructs search handlers over authoritative SQLite state.
 func NewHandlers(st *store.Store, logger *slog.Logger, now func() time.Time) *Handlers {
 	if st == nil {
 		panic("search: store is required")
@@ -121,7 +119,6 @@ func (h *Handlers) operation(req connect.AnyRequest, actor *auth.UserContext, cl
 	return op
 }
 
-// Search returns one deterministic SQLite FTS5 page per requested facet.
 func (h *Handlers) Search(ctx context.Context, req *connect.Request[cadestrov1.SearchRequest]) (*connect.Response[cadestrov1.SearchResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
@@ -226,8 +223,6 @@ func (h *Handlers) Search(ctx context.Context, req *connect.Request[cadestrov1.S
 	return connect.NewResponse(response), nil
 }
 
-// RebuildSearchIndex performs explicit physical maintenance on the generated
-// SQLite search indexes and records the operation atomically.
 func (h *Handlers) RebuildSearchIndex(ctx context.Context, req *connect.Request[cadestrov1.RebuildSearchIndexRequest]) (*connect.Response[cadestrov1.RebuildSearchIndexResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {

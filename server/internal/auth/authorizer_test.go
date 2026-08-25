@@ -38,14 +38,10 @@ func TestAuthorize_SelfTierIsConfinedToTheActor(t *testing.T) {
 	other.ResourceID = subjectB
 	assert.False(t, auth.Authorize(other), "the self tier does not reach another subject")
 
-	// No identified resource is a creation whose ownership the handler
-	// pins; the coarse gate admits it so the handler can decide.
 	unidentified := base
 	assert.True(t, auth.Authorize(unidentified))
 }
 
-// A principal that cannot own resources can never take the self path,
-// even asked about its own id.
 func TestAuthorize_SelfTierRefusesAPrincipalThatOwnsNothing(t *testing.T) {
 	t.Parallel()
 	assert.False(t, auth.Authorize(auth.AuthzInput{
@@ -56,8 +52,6 @@ func TestAuthorize_SelfTierRefusesAPrincipalThatOwnsNothing(t *testing.T) {
 		ResourceID:   auth.BootstrapPrincipalID,
 	}))
 
-	// And with no identified resource either: the creation short-cut is
-	// still a self grant.
 	assert.False(t, auth.Authorize(auth.AuthzInput{
 		Permissions:  []string{"CreateToken:self"},
 		SubjectID:    auth.BootstrapPrincipalID,
@@ -93,8 +87,6 @@ func TestAuthorize_RefusesWhatTheActorDoesNotHold(t *testing.T) {
 	}))
 }
 
-// A permission is matched exactly: a scoped variant must not satisfy a
-// lookup for a different action that shares a prefix.
 func TestAuthorize_MatchesPermissionKeysExactly(t *testing.T) {
 	t.Parallel()
 	assert.False(t, auth.Authorize(auth.AuthzInput{

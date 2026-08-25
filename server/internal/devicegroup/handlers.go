@@ -24,21 +24,18 @@ import (
 
 const defaultPageSize = int32(50)
 
-// HandlersConfig supplies the direct store and process-local seams.
 type HandlersConfig struct {
 	Store  *store.Store
 	Logger *slog.Logger
 	Now    func() time.Time
 }
 
-// Handlers implements explicit device-group CRUD and static membership.
 type Handlers struct {
 	store  *store.Store
 	state  *State
 	logger *slog.Logger
 }
 
-// NewHandlers constructs direct device-group handlers.
 func NewHandlers(cfg HandlersConfig) *Handlers {
 	if cfg.Store == nil {
 		panic("device group: handler store is required")
@@ -104,7 +101,6 @@ func (h *Handlers) operation(req connect.AnyRequest, actor *auth.UserContext, pr
 	return op
 }
 
-// CreateDeviceGroup creates one static or dynamic group.
 func (h *Handlers) CreateDeviceGroup(ctx context.Context, req *connect.Request[cadestrov1.CreateDeviceGroupRequest]) (*connect.Response[cadestrov1.CreateDeviceGroupResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
@@ -132,7 +128,6 @@ func (h *Handlers) CreateDeviceGroup(ctx context.Context, req *connect.Request[c
 	return connect.NewResponse(&cadestrov1.CreateDeviceGroupResponse{Group: group}), nil
 }
 
-// GetDeviceGroup returns one visible group and its live members.
 func (h *Handlers) GetDeviceGroup(ctx context.Context, req *connect.Request[cadestrov1.GetDeviceGroupRequest]) (*connect.Response[cadestrov1.GetDeviceGroupResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
@@ -174,7 +169,6 @@ func (h *Handlers) GetDeviceGroup(ctx context.Context, req *connect.Request[cade
 	}), nil
 }
 
-// ListDeviceGroups returns a scoped SQLite keyset page.
 func (h *Handlers) ListDeviceGroups(ctx context.Context, req *connect.Request[cadestrov1.ListDeviceGroupsRequest]) (*connect.Response[cadestrov1.ListDeviceGroupsResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
@@ -222,7 +216,6 @@ func (h *Handlers) ListDeviceGroups(ctx context.Context, req *connect.Request[ca
 	}), nil
 }
 
-// ListDeviceGroupsForDevice returns visible groups containing one live device.
 func (h *Handlers) ListDeviceGroupsForDevice(ctx context.Context, req *connect.Request[cadestrov1.ListDeviceGroupsForDeviceRequest]) (*connect.Response[cadestrov1.ListDeviceGroupsForDeviceResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	if _, err := h.actor(ctx); err != nil {
@@ -237,9 +230,7 @@ func (h *Handlers) ListDeviceGroupsForDevice(ctx context.Context, req *connect.R
 		}
 		return nil, h.internal(ctx, "read device for groups", err)
 	}
-	// A scope-restricted caller must not learn that a device outside its scope
-	// exists: an out-of-scope device reads as not found, exactly as
-	// device.GetDevice folds it, rather than returning OK with an empty list.
+
 	if err := h.enforceDeviceReadScope(ctx, "ListDeviceGroupsForDevice", deviceID); err != nil {
 		return nil, err
 	}
@@ -260,7 +251,6 @@ func (h *Handlers) ListDeviceGroupsForDevice(ctx context.Context, req *connect.R
 	return connect.NewResponse(&cadestrov1.ListDeviceGroupsForDeviceResponse{Groups: out}), nil
 }
 
-// RenameDeviceGroup replaces a group name.
 func (h *Handlers) RenameDeviceGroup(ctx context.Context, req *connect.Request[cadestrov1.RenameDeviceGroupRequest]) (*connect.Response[cadestrov1.UpdateDeviceGroupResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "RenameDeviceGroup")
 	if err != nil {
@@ -271,7 +261,6 @@ func (h *Handlers) RenameDeviceGroup(ctx context.Context, req *connect.Request[c
 	return h.updated(ctx, "rename device group", row, err)
 }
 
-// UpdateDeviceGroupDescription replaces a description.
 func (h *Handlers) UpdateDeviceGroupDescription(ctx context.Context, req *connect.Request[cadestrov1.UpdateDeviceGroupDescriptionRequest]) (*connect.Response[cadestrov1.UpdateDeviceGroupResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "UpdateDeviceGroupDescription")
 	if err != nil {
@@ -283,7 +272,6 @@ func (h *Handlers) UpdateDeviceGroupDescription(ctx context.Context, req *connec
 	return h.updated(ctx, "update device group description", row, err)
 }
 
-// UpdateDeviceGroupQuery replaces the group's membership mode and query.
 func (h *Handlers) UpdateDeviceGroupQuery(ctx context.Context, req *connect.Request[cadestrov1.UpdateDeviceGroupQueryRequest]) (*connect.Response[cadestrov1.UpdateDeviceGroupQueryResponse], error) {
 	const permission = "UpdateDynamicDeviceGroupQuery"
 	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), permission)
@@ -303,7 +291,6 @@ func (h *Handlers) UpdateDeviceGroupQuery(ctx context.Context, req *connect.Requ
 	return connect.NewResponse(&cadestrov1.UpdateDeviceGroupQueryResponse{Group: group}), nil
 }
 
-// DeleteDeviceGroup deletes a group and ordinary dependent state.
 func (h *Handlers) DeleteDeviceGroup(ctx context.Context, req *connect.Request[cadestrov1.DeleteDeviceGroupRequest]) (*connect.Response[cadestrov1.DeleteDeviceGroupResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "DeleteDeviceGroup")
 	if err != nil {
@@ -316,7 +303,6 @@ func (h *Handlers) DeleteDeviceGroup(ctx context.Context, req *connect.Request[c
 	return connect.NewResponse(&cadestrov1.DeleteDeviceGroupResponse{}), nil
 }
 
-// AddDeviceToGroup adds one or more devices to a static group.
 func (h *Handlers) AddDeviceToGroup(ctx context.Context, req *connect.Request[cadestrov1.AddDeviceToGroupRequest]) (*connect.Response[cadestrov1.AddDeviceToGroupResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	ids := make([]string, 0, len(req.Msg.GetDeviceIds()))
@@ -355,7 +341,6 @@ func (h *Handlers) AddDeviceToGroup(ctx context.Context, req *connect.Request[ca
 	return connect.NewResponse(&cadestrov1.AddDeviceToGroupResponse{Group: group}), nil
 }
 
-// RemoveDeviceFromGroup removes one device from a static group.
 func (h *Handlers) RemoveDeviceFromGroup(ctx context.Context, req *connect.Request[cadestrov1.RemoveDeviceFromGroupRequest]) (*connect.Response[cadestrov1.RemoveDeviceFromGroupResponse], error) {
 	deviceID := req.Msg.GetDeviceId().GetValue()
 	actor, err := h.mutationActor(ctx, req.Msg.GetGroupId().GetValue(), "RemoveDeviceFromGroup")
@@ -374,7 +359,6 @@ func (h *Handlers) RemoveDeviceFromGroup(ctx context.Context, req *connect.Reque
 	return connect.NewResponse(&cadestrov1.RemoveDeviceFromGroupResponse{Group: group}), nil
 }
 
-// ValidateDynamicQuery validates a query and previews its current match count.
 func (h *Handlers) ValidateDynamicQuery(ctx context.Context, req *connect.Request[cadestrov1.ValidateDynamicQueryRequest]) (*connect.Response[cadestrov1.ValidateDynamicQueryResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
@@ -394,7 +378,6 @@ func (h *Handlers) ValidateDynamicQuery(ctx context.Context, req *connect.Reques
 	}), nil
 }
 
-// EvaluateDynamicGroup reconciles one materialized dynamic membership.
 func (h *Handlers) EvaluateDynamicGroup(ctx context.Context, req *connect.Request[cadestrov1.EvaluateDynamicGroupRequest]) (*connect.Response[cadestrov1.EvaluateDynamicGroupResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
@@ -417,7 +400,6 @@ func (h *Handlers) EvaluateDynamicGroup(ctx context.Context, req *connect.Reques
 	}), nil
 }
 
-// SetDeviceGroupSyncInterval replaces the sync contribution.
 func (h *Handlers) SetDeviceGroupSyncInterval(ctx context.Context, req *connect.Request[cadestrov1.SetDeviceGroupSyncIntervalRequest]) (*connect.Response[cadestrov1.UpdateDeviceGroupResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "SetDeviceGroupSyncInterval")
 	if err != nil {
@@ -429,7 +411,6 @@ func (h *Handlers) SetDeviceGroupSyncInterval(ctx context.Context, req *connect.
 	return h.updated(ctx, "set device group sync interval", row, err)
 }
 
-// SetDeviceGroupInventoryInterval replaces the inventory contribution.
 func (h *Handlers) SetDeviceGroupInventoryInterval(ctx context.Context, req *connect.Request[cadestrov1.SetDeviceGroupInventoryIntervalRequest]) (*connect.Response[cadestrov1.UpdateDeviceGroupResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "SetDeviceGroupInventoryInterval")
 	if err != nil {
@@ -441,7 +422,6 @@ func (h *Handlers) SetDeviceGroupInventoryInterval(ctx context.Context, req *con
 	return h.updated(ctx, "set device group inventory interval", row, err)
 }
 
-// SetDeviceGroupMaintenanceWindow replaces the device-local dispatch window.
 func (h *Handlers) SetDeviceGroupMaintenanceWindow(ctx context.Context, req *connect.Request[cadestrov1.SetDeviceGroupMaintenanceWindowRequest]) (*connect.Response[cadestrov1.UpdateDeviceGroupResponse], error) {
 	if err := maintenance.Validate(req.Msg.MaintenanceWindow); err != nil {
 		return nil, rpcError(ctx, cadestrov1.ErrorCode_ERROR_CODE_VALIDATION_FAILED, connect.CodeInvalidArgument, err.Error())
@@ -502,9 +482,6 @@ func (h *Handlers) enforceDeviceScope(ctx context.Context, permission, deviceID 
 	return rpcError(ctx, cadestrov1.ErrorCode_ERROR_CODE_PERMISSION_DENIED, connect.CodePermissionDenied, "permission denied")
 }
 
-// enforceDeviceReadScope is the read-path counterpart of enforceDeviceScope: an
-// out-of-scope device folds to device_not_found rather than permission_denied,
-// so a scope-restricted caller cannot use this read as an existence oracle.
 func (h *Handlers) enforceDeviceReadScope(ctx context.Context, permission, deviceID string) error {
 	err := auth.EnforceDeviceScopeOnBaseTier(ctx, scopeResolver{h.store}, permission, deviceID)
 	if err == nil {
@@ -623,7 +600,6 @@ func rpcError(ctx context.Context, code cadestrov1.ErrorCode, connectCode connec
 	return err
 }
 
-// Mount registers the complete direct device-group surface.
 func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
 	if mux == nil {
 		panic("device group: mux is required")
@@ -651,7 +627,6 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 	return mounted
 }
 
-// MutationProcedures is the exact audited device-group mutation surface.
 func MutationProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceCreateDeviceGroupProcedure,
@@ -668,7 +643,6 @@ func MutationProcedures() []string {
 	}
 }
 
-// ReadProcedures is the exact non-mutating device-group surface.
 func ReadProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceGetDeviceGroupProcedure,

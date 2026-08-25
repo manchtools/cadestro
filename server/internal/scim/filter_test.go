@@ -105,7 +105,7 @@ func TestParseFilter_Errors(t *testing.T) {
 }
 
 func TestParseFilter_QuoteHandling(t *testing.T) {
-	// Double-quoted value should have quotes stripped
+
 	f, err := parseFilter(`userName eq "quoted"`)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -114,7 +114,6 @@ func TestParseFilter_QuoteHandling(t *testing.T) {
 		t.Errorf("Value = %q, want %q", f.Value, "quoted")
 	}
 
-	// Single character value in quotes
 	f2, err := parseFilter(`userName eq "x"`)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

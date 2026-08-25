@@ -14,7 +14,6 @@ const countRegistrationTokenUses = `-- name: CountRegistrationTokenUses :one
 SELECT COUNT(*) FROM devices WHERE registration_token_id = ?1
 `
 
-// Usage is immutable device provenance, including soft-deleted devices.
 func (q *Queries) CountRegistrationTokenUses(ctx context.Context, tokenID *string) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countRegistrationTokenUses, tokenID)
 	var count int64
@@ -42,7 +41,6 @@ func (q *Queries) CountRegistrationTokens(ctx context.Context, arg CountRegistra
 }
 
 const getRegistrationToken = `-- name: GetRegistrationToken :one
-
 SELECT id, value_hash, name, max_uses, expires_at, created_at, created_by, disabled, is_deleted FROM tokens
 WHERE id = ?1
   AND is_deleted = FALSE
@@ -54,8 +52,6 @@ type GetRegistrationTokenParams struct {
 	ReservedName string `json:"reserved_name"`
 }
 
-// Registration-token CRUD. The reserved host bootstrap token is deliberately
-// absent from this surface: it has its own consume-once boundary.
 func (q *Queries) GetRegistrationToken(ctx context.Context, arg GetRegistrationTokenParams) (Token, error) {
 	row := q.db.QueryRowContext(ctx, getRegistrationToken, arg.ID, arg.ReservedName)
 	var i Token

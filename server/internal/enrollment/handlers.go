@@ -25,7 +25,6 @@ import (
 
 var errCredentialRejected = errors.New("enrollment credential rejected")
 
-// Config supplies enrollment's direct SQLite and PKI dependencies.
 type Config struct {
 	Store      *store.Store
 	CA         *ca.CA
@@ -34,7 +33,6 @@ type Config struct {
 	ControlURL string
 }
 
-// Handlers implements first enrollment and certificate renewal.
 type Handlers struct {
 	store      *store.Store
 	ca         *ca.CA
@@ -43,7 +41,6 @@ type Handlers struct {
 	controlURL string
 }
 
-// New constructs enrollment handlers and rejects incomplete boot wiring.
 func New(cfg Config) *Handlers {
 	if cfg.Store == nil || cfg.CA == nil {
 		panic("enrollment: store and CA are required")
@@ -86,9 +83,6 @@ func (h *Handlers) recordRejected(ctx context.Context, req connect.AnyRequest, p
 	return err
 }
 
-// Register binds one reusable token to one canonical Ed25519 device identity.
-// The device relation is the token's durable use record; no mutable token
-// counter or human ownership is involved.
 func (h *Handlers) Register(ctx context.Context, req *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
 	identityKey, err := ca.EnrollmentIdentityFromCSR(req.Msg.Csr)
 	if err != nil {
@@ -108,8 +102,7 @@ func (h *Handlers) Register(ctx context.Context, req *connect.Request[cadestrov1
 	var device db.Device
 	var cert *ca.Certificate
 	_, err = h.store.WithAudit(ctx, op, func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error {
-		// Validate token usability even on a retry. Revocation and expiry must
-		// never be bypassed by an identity that enrolled earlier.
+
 		existing, findErr := tx.FindEnrollmentDevice(ctx, db.FindEnrollmentDeviceParams{
 			ValueHash: tokenFingerprint, ReservedName: store.BootstrapAdminTokenName,
 			EnrolledAt: now, IdentityPublicKey: identityKey,
@@ -150,11 +143,7 @@ func (h *Handlers) Register(ctx context.Context, req *connect.Request[cadestrov1
 			return errCredentialRejected
 		}
 		if insertErr != nil {
-			// Any conditional insert conflict means this attempt lost a
-			// concurrent enrollment decision. Re-read/retry is intentionally
-			// not implicit here: a soft-deleted identity must never resurrect,
-			// and a caller with a different key must not receive another
-			// certificate from a failed reservation.
+
 			if store.IsConflict(insertErr) {
 				return errCredentialRejected
 			}
@@ -197,9 +186,6 @@ func (h *Handlers) Register(ctx context.Context, req *connect.Request[cadestrov1
 	}), nil
 }
 
-// RenewCertificate issues at most one pending successor for the authenticated
-// TLS peer. The existing certificate remains active until a fresh Hello over a
-// connection presenting the successor promotes it.
 func (h *Handlers) RenewCertificate(ctx context.Context, req *connect.Request[cadestrov1.RenewCertificateRequest]) (*connect.Response[cadestrov1.RenewCertificateResponse], error) {
 	peer, ok := mtls.PeerCertificateFromContext(ctx)
 	if !ok {

@@ -1,6 +1,6 @@
 -- docref: anchor sqlite-baseline
--- Cadestro SQLite baseline. The project is pre-alpha: PostgreSQL data is
--- not migrated and a SQLite installation always starts from this schema.
+
+
 
 -- +goose Up
 
@@ -50,15 +50,15 @@ CREATE TABLE user_ssh_keys (
 );
 CREATE INDEX idx_user_ssh_keys_user ON user_ssh_keys(user_id);
 
--- Deliberately not foreign-keyed: removing this row crypto-shreds the user's
--- sealed detail even after the user row is erased.
+
+
 CREATE TABLE user_encryption_keys (
     user_id     text PRIMARY KEY,
     wrapped_dek text NOT NULL,
     created_at  timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
--- JSON arrays are used for the three list-valued columns. This keeps the
--- schema native to SQLite and lets json_each provide indexed set membership.
+
+
 CREATE TABLE roles (
     id          text PRIMARY KEY,
     name        text NOT NULL,
@@ -233,17 +233,17 @@ CREATE TABLE devices (
     id                         text PRIMARY KEY,
     hostname                   text NOT NULL DEFAULT '',
     agent_version              text NOT NULL DEFAULT '',
-    -- The Ed25519 key in the enrollment CSR is the immutable device identity.
-    -- New enrollment always sets the immutable CSR identity.
+
+
     enrollment_identity_public_key blob CHECK (enrollment_identity_public_key IS NULL OR length(enrollment_identity_public_key) = 32),
     certificate_pem            blob,
-    -- Canonical certificate lifecycle identity.
+
     active_cert_serial         text,
     pending_certificate_pem    blob,
     pending_cert_serial        text,
     registered_at              timestamp,
     last_seen_at               timestamp,
-    -- Immutable provenance: global token use is COUNT(devices.registration_token_id).
+
     registration_token_id      text REFERENCES tokens(id) ON DELETE RESTRICT,
     is_deleted                 boolean NOT NULL DEFAULT false,
     sync_interval_minutes      integer NOT NULL DEFAULT 0,
@@ -277,8 +277,8 @@ BEGIN
 END;
 -- +goose StatementEnd
 
--- Enrollment provenance is append-only; an established identity or token
--- relation cannot change.
+
+
 -- +goose StatementBegin
 CREATE TRIGGER devices_registration_token_immutable
 BEFORE UPDATE OF registration_token_id ON devices
@@ -444,8 +444,8 @@ CREATE TABLE actions (
     is_deleted       boolean NOT NULL DEFAULT false
 );
 
--- Generic device-owned secret rows. The typed tables retain only
--- feature-specific metadata and reference this row by id.
+
+
 CREATE TABLE device_secrets (
     id          text PRIMARY KEY,
     device_id   text NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
@@ -627,9 +627,9 @@ CREATE TABLE server_settings (
     updated_at                timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Append-only audit evidence. Mutations and sensitive reads are written in the
--- same transaction as their state change. Rows are queryable without a
--- separate storage or integrity side channel.
+
+
+
 CREATE TABLE audit_operations (
     operation_id          text PRIMARY KEY CHECK (
                               length(operation_id) = 26
@@ -748,7 +748,7 @@ WHEN EXISTS (
 END;
 -- +goose StatementEnd
 
--- API-facing projection excludes sealed details and other classified values.
+
 CREATE VIEW audit_event_rows AS
 SELECT
     e.effect_id AS id, e.chain_seq, e.resource_type AS stream_type,
@@ -840,8 +840,8 @@ CREATE UNIQUE INDEX jobs_dedupe_live_key ON jobs(dedupe_key)
     WHERE dedupe_key IS NOT NULL AND state IN ('PENDING', 'CLAIMED');
 
 -- docref: anchor sqlite-search
--- All facets share one explicit document table. Owning-row and cross-row
--- updates will write this table in the same transaction as the CRUD mutation.
+
+
 CREATE TABLE search_documents (
     rowid        integer PRIMARY KEY,
     scope        text NOT NULL,

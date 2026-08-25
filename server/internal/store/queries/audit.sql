@@ -1,5 +1,5 @@
--- Transactional, append-only audit operations and effects. The operation carries
--- authenticated actor/request context; each effect carries the action and subject.
+
+
 
 -- name: NextAuditEventSeq :one
 SELECT CAST(COALESCE(MAX(chain_seq), 0) + 1 AS INTEGER)

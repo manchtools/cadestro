@@ -21,7 +21,7 @@ func TestRequestID_AddsHeader(t *testing.T) {
 	if id == "" {
 		t.Fatal("expected X-Request-ID header to be set")
 	}
-	// ULID is 26 characters
+
 	if len(id) != 26 {
 		t.Fatalf("expected ULID (26 chars), got %d chars: %s", len(id), id)
 	}

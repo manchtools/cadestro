@@ -1,9 +1,5 @@
 package scim_test
 
-// The group cluster: mapping a directory group onto a local user group,
-// reconciling its membership, the cross-directory guard on every
-// member-add sink, and the authority a membership actually confers.
-
 import (
 	"encoding/json"
 	"net/http"
@@ -33,7 +29,6 @@ func scimGroup(displayName, externalID string, memberIDs ...string) map[string]a
 	return body
 }
 
-// createGroup POSTs a group and returns the local user-group id.
 func (f *fixture) createGroup(p *provider, body map[string]any) string {
 	f.t.Helper()
 	resp := f.do(http.MethodPost, p.Slug, p.Token, "/Groups", body)
@@ -54,10 +49,6 @@ func memberValues(t *testing.T, body map[string]any) []string {
 	}
 	return out
 }
-
-// ---------------------------------------------------------------------------
-// Create and read
-// ---------------------------------------------------------------------------
 
 func TestGroups_CreateMapsADirectoryGroup(t *testing.T) {
 	f := newFixture(t)
@@ -146,9 +137,6 @@ func TestGroups_ListIsConfinedToTheAskingDirectory(t *testing.T) {
 	assert.Equal(t, float64(0), resp.JSON()["totalResults"])
 }
 
-// Re-POSTing an already-mapped group renames it rather than minting a
-// second local group; a directory re-asserts its whole population on
-// every sync.
 func TestGroups_RepostRenamesInsteadOfDuplicating(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -167,10 +155,6 @@ func TestGroups_RepostRenamesInsteadOfDuplicating(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, mappings, 1, "a re-assertion must not mint a second mapping")
 }
-
-// ---------------------------------------------------------------------------
-// Membership
-// ---------------------------------------------------------------------------
 
 func TestGroups_PatchAddsAndRemovesMembers(t *testing.T) {
 	f := newFixture(t)
@@ -232,8 +216,6 @@ func TestGroups_PatchRejectsAnUnknownVerb(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, resp.Code, "body: %s", resp)
 }
 
-// A PUT that omits `members` is not asserting an empty membership: the
-// field is absent, so the current set is left alone.
 func TestGroups_ReplaceWithoutMembersPreservesThem(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -249,7 +231,6 @@ func TestGroups_ReplaceWithoutMembersPreservesThem(t *testing.T) {
 	assert.Equal(t, []string{member}, memberValues(t, resp.JSON()))
 }
 
-// An explicitly empty member list IS an assertion: the group is emptied.
 func TestGroups_ReplaceWithEmptyMembersEmptiesTheGroup(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -263,8 +244,6 @@ func TestGroups_ReplaceWithEmptyMembersEmptiesTheGroup(t *testing.T) {
 	assert.Empty(t, memberValues(t, resp.JSON()))
 }
 
-// The directory is the source of truth for membership, so a PUT
-// re-adds a member that was removed server-side.
 func TestGroups_ReplaceReconcilesAServerSideRemoval(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -280,13 +259,6 @@ func TestGroups_ReplaceReconcilesAServerSideRemoval(t *testing.T) {
 	assert.Equal(t, []string{member}, memberValues(t, resp.JSON()))
 }
 
-// ---------------------------------------------------------------------------
-// Cross-directory guard on every member-add sink
-// ---------------------------------------------------------------------------
-
-// Membership confers the group's role grants, so adding a subject a
-// directory does not own would let it grant authority to somebody
-// else's account. Every sink that can add a member refuses it.
 func TestGroups_MemberAddRefusesAnotherDirectorysSubject(t *testing.T) {
 	f := newFixture(t)
 	a := f.seedProvider(nil)
@@ -342,7 +314,6 @@ func TestGroups_MemberAddRefusesAnotherDirectorysSubject(t *testing.T) {
 	})
 }
 
-// Another directory's group reads as absent under every verb.
 func TestGroups_OtherDirectorysGroupIsNotFoundUnderEveryVerb(t *testing.T) {
 	f := newFixture(t)
 	a := f.seedProvider(nil)
@@ -368,13 +339,6 @@ func TestGroups_OtherDirectorysGroupIsNotFoundUnderEveryVerb(t *testing.T) {
 	assert.Equal(t, http.StatusOK, f.do(http.MethodGet, a.Slug, a.Token, "/Groups/"+id, nil).Code)
 }
 
-// ---------------------------------------------------------------------------
-// Delete
-// ---------------------------------------------------------------------------
-
-// Deleting a directory group removes the mapping only. The local group
-// may carry role grants an operator configured, so it is not destroyed
-// because a directory stopped syncing it.
 func TestGroups_DeleteUnmapsAndKeepsTheLocalGroup(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -388,8 +352,6 @@ func TestGroups_DeleteUnmapsAndKeepsTheLocalGroup(t *testing.T) {
 	assert.Equal(t, "Temp", group.Name)
 }
 
-// searchDocumentFields reads one entity's search-document field map, which is
-// exactly what a list page receives for that row.
 func (f *fixture) searchDocumentFields(scope, entityID string) map[string]string {
 	f.t.Helper()
 	var raw []byte
@@ -401,10 +363,6 @@ func (f *fixture) searchDocumentFields(scope, entityID string) map[string]string
 	return fields
 }
 
-// Mapping and unmapping a directory group are the writes that change whether a
-// local group is SCIM-managed, and the user-groups LIST renders that state
-// from the search document — so both writes must refresh the group's document
-// in their own transaction.
 func TestGroups_MappingRefreshesTheScimManagedDocumentField(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -419,10 +377,6 @@ func TestGroups_MappingRefreshesTheScimManagedDocumentField(t *testing.T) {
 	assert.Equal(t, "false", f.searchDocumentFields("user_groups", id)["is_scim_managed"],
 		"unmapping must refresh the surviving group's document in the same transaction")
 }
-
-// ---------------------------------------------------------------------------
-// Audit
-// ---------------------------------------------------------------------------
 
 func TestGroups_CreateIsAuditedInOneOperation(t *testing.T) {
 	f := newFixture(t)
@@ -504,14 +458,6 @@ func TestGroups_ReadsAreAuditedAsSensitiveReads(t *testing.T) {
 	assert.Equal(t, id, read.ResourceID)
 }
 
-// ---------------------------------------------------------------------------
-// The authority a membership confers
-// ---------------------------------------------------------------------------
-
-// The end-to-end claim of the whole group surface: a subject the
-// directory provisioned, added to a group an operator gave a role,
-// holds that role's permission in the authorizer's evaluation — and
-// loses it when the directory removes them.
 func TestGroups_MembershipConfersTheGroupsRoleGrant(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)
@@ -534,7 +480,6 @@ func TestGroups_MembershipConfersTheGroupsRoleGrant(t *testing.T) {
 	require.Contains(t, perms, "ListDevices",
 		"membership of a role-bearing group must confer that role's permission")
 
-	// The authorizer evaluates the same authority the store resolved.
 	grants, err := f.store.ListUserScopedGrants(f.ctx(), subject)
 	require.NoError(t, err)
 	scoped := make([]auth.ScopedGrant, 0, len(grants))
@@ -558,7 +503,6 @@ func TestGroups_MembershipConfersTheGroupsRoleGrant(t *testing.T) {
 	assert.True(t, auth.HasPermission(ctx, "ListDevices"),
 		"the authorizer must see the authority the group conferred")
 
-	// Removing the membership withdraws it again.
 	require.Equal(t, http.StatusOK, f.do(http.MethodPatch, p.Slug, p.Token, "/Groups/"+groupID, patchOps(map[string]any{
 		"op": "remove", "path": `members[value eq "` + subject + `"]`,
 	})).Code)
@@ -567,8 +511,6 @@ func TestGroups_MembershipConfersTheGroupsRoleGrant(t *testing.T) {
 	assert.NotContains(t, after, "ListDevices")
 }
 
-// A membership change is an authorization change, so the sessions
-// minted under the previous authority stop validating.
 func TestGroups_MembershipChangeInvalidatesTheSubjectsSessions(t *testing.T) {
 	f := newFixture(t)
 	p := f.seedProvider(nil)

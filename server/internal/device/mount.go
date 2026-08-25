@@ -8,7 +8,6 @@ import (
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
-// Mount registers exactly the device CRUD procedures implemented here.
 func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
 	if mux == nil {
 		panic("device: mux is required")
@@ -77,7 +76,6 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 	return mounted
 }
 
-// MutationProcedures is the exact audited device mutation surface.
 func MutationProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceSetDeviceLabelProcedure,
@@ -98,7 +96,6 @@ func MutationProcedures() []string {
 	}
 }
 
-// ReadProcedures is the exact non-mutating device surface.
 func ReadProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceListDevicesProcedure,
@@ -107,8 +104,6 @@ func ReadProcedures() []string {
 	}
 }
 
-// SensitiveReadProcedures is the protected device-data surface that records
-// evidence before returning inventory, query output, logs, or detection data.
 func SensitiveReadProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceGetDeviceInventoryProcedure,

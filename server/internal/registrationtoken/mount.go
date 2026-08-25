@@ -8,7 +8,6 @@ import (
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
-// Mount registers exactly the explicit registration-token procedures.
 func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
 	if mux == nil {
 		panic("registrationtoken: mux is required")
@@ -31,7 +30,6 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 	return mounted
 }
 
-// MutationProcedures is the exact audited registration-token mutation set.
 func MutationProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceCreateTokenProcedure,
@@ -41,7 +39,6 @@ func MutationProcedures() []string {
 	}
 }
 
-// ReadProcedures is the exact non-mutating registration-token set.
 func ReadProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceListTokensProcedure,

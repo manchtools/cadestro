@@ -104,9 +104,6 @@ func TestDeviceGroupHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, windowed.Msg.Group.MaintenanceWindow.Schedule, 1)
 
-	// The mode is a property the owner may change in either direction (target
-	// design §5.1). This group still has one hand-picked member; converting it
-	// hands membership to the rule, so that member does not survive the call.
 	converted, err := f.handlers.UpdateDeviceGroupQuery(ctx, connect.NewRequest(&cadestrov1.UpdateDeviceGroupQueryRequest{
 		Id: &cadestrov1.DeviceGroupId{Value: id}, IsDynamic: true, DynamicQuery: `"env" in device.labels && device.labels["env"] == "prod"`,
 	}))
@@ -118,7 +115,7 @@ func TestDeviceGroupHandlers_CRUDMembershipAndAudit(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, convertedGroup.Msg.Devices)
 	assert.Empty(t, convertedGroup.Msg.DeviceIds)
-	// An invalid query is still refused, and refusing it changes nothing.
+
 	_, err = f.handlers.UpdateDeviceGroupQuery(ctx, connect.NewRequest(&cadestrov1.UpdateDeviceGroupQueryRequest{
 		Id: &cadestrov1.DeviceGroupId{Value: id}, IsDynamic: true, DynamicQuery: "(",
 	}))

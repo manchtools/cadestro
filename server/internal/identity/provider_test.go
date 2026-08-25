@@ -34,7 +34,6 @@ func TestCreateIdentityProvider_SealsTheSecretAndNeverReturnsIt(t *testing.T) {
 	assert.Equal(t, "corp", created.Slug)
 	assert.False(t, created.TrustEmailAssertions, "the account-takeover guard is off unless asked for")
 
-	// The stored value is ciphertext bound to this provider's own row.
 	var stored string
 	require.NoError(t, f.raw.QueryRow(f.ctx(),
 		`SELECT client_secret_encrypted FROM identity_providers WHERE id = $1`, created.GetId().GetValue()).Scan(&stored))
@@ -43,8 +42,6 @@ func TestCreateIdentityProvider_SealsTheSecretAndNeverReturnsIt(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, secret, opened)
 
-	// Relocating the ciphertext to another provider's row does not open
-	// it: the AAD binds it here.
 	_, err = f.kek.DecryptWithContext(stored, crypto.RowAAD(newULID(), crypto.PurposeIdPClientSecret))
 	assert.Error(t, err, "a secret sealed for one row must not open in another")
 
@@ -63,16 +60,6 @@ func TestCreateIdentityProvider_SealsTheSecretAndNeverReturnsIt(t *testing.T) {
 	assert.Zero(t, hits, "the client secret never reaches the audit log in the clear")
 }
 
-// A provider is an OIDC browser client and nothing else: the CLI login that
-// once justified a second, secretless client mode is gone, so a request
-// without a client_id configures a provider nobody could ever log in through.
-//
-// This replaces the pair that guarded the two-mode rule — the acceptance test
-// for a secretless CLI-only provider, which is now an unconfigurable shape,
-// and the "usable client mode" rejection. The rejection is kept and made
-// stronger: it asserts the refused request wrote no row, not only that it
-// recorded no audit operation, so a handler that created the provider and
-// then failed would be caught.
 func TestCreateIdentityProvider_RequiresAClientID(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -139,9 +126,6 @@ func TestCreateIdentityProvider_RejectsAMalformedIssuer(t *testing.T) {
 	assert.Zero(t, f.countAuditOperations())
 }
 
-// An empty client_secret on update means "keep the current one": the
-// field is write-only, so a client cannot echo back what it never
-// received.
 func TestUpdateIdentityProvider_EmptySecretKeepsTheStoredOne(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -175,14 +159,6 @@ func TestUpdateIdentityProvider_EmptySecretKeepsTheStoredOne(t *testing.T) {
 		"the record must not claim a field changed when it did not")
 }
 
-// Dropping the browser client used to be a supported edit: it converted a
-// provider to CLI-only and cleared the secret that no longer had an owner.
-// With the CLI login gone that edit would leave a provider nobody can use, so
-// it is refused — and the refusal must be total. The two tests this replaces
-// covered the CLI-only conversion and the retention of a stored CLI client;
-// neither shape exists, and both of their observable properties (the stored
-// credential is untouched, the audit log records nothing) are asserted here
-// against the stronger rejection.
 func TestUpdateIdentityProvider_RefusesToDropTheClientID(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -280,13 +256,11 @@ func TestEnableSCIM_ShowsTheTokenOnceAndStoresOnlyItsDigest(t *testing.T) {
 	assert.Equal(t, sha256Hex(enabled.Msg.Token), storedHash)
 	assert.NotEqual(t, enabled.Msg.Token, storedHash, "the token itself is never stored")
 
-	// Reading the provider back never re-serves the token.
 	got, err := f.client.GetIdentityProvider(f.ctx(), authed(&cadestrov1.GetIdentityProviderRequest{Id: &cadestrov1.IdentityProviderId{Value: providerID}}, admin.Token))
 	require.NoError(t, err)
 	assert.True(t, got.Msg.Provider.ScimEnabled)
 	assert.NotContains(t, got.Msg.Provider.String(), enabled.Msg.Token)
 
-	// Rotation replaces the digest, so the previous token is dead.
 	rotated, err := f.client.RotateSCIMToken(f.ctx(), authed(&cadestrov1.RotateSCIMTokenRequest{Id: &cadestrov1.IdentityProviderId{Value: providerID}}, admin.Token))
 	require.NoError(t, err)
 	assert.NotEqual(t, enabled.Msg.Token, rotated.Msg.Token)
@@ -294,8 +268,6 @@ func TestEnableSCIM_ShowsTheTokenOnceAndStoresOnlyItsDigest(t *testing.T) {
 		`SELECT scim_token_hash FROM identity_providers WHERE id = $1`, providerID).Scan(&storedHash))
 	assert.Equal(t, sha256Hex(rotated.Msg.Token), storedHash)
 
-	// Disabling clears the digest, so a token issued earlier cannot be
-	// replayed if SCIM is turned back on.
 	_, err = f.client.DisableSCIM(f.ctx(), authed(&cadestrov1.DisableSCIMRequest{Id: &cadestrov1.IdentityProviderId{Value: providerID}}, admin.Token))
 	require.NoError(t, err)
 	require.NoError(t, f.raw.QueryRow(f.ctx(),

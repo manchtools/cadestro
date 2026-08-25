@@ -55,7 +55,6 @@ func TestTokenStore_TokenIsHashedNotPlaintext(t *testing.T) {
 		t.Fatalf("mint: %v", err)
 	}
 
-	// The persisted payload must NOT contain the plaintext token.
 	raw, err := backend.Get(ctx, res.SessionID)
 	if err != nil {
 		t.Fatalf("backend get: %v", err)
@@ -117,13 +116,6 @@ func TestTokenStore_Validate_UnknownSession(t *testing.T) {
 	}
 }
 
-// TestTokenStore_Validate_IsSingleUse covers the rc10 hardening: a
-// bearer token can only be successfully validated once. A second
-// Validate call with the same (session_id, bearer) must return
-// ErrTokenNotFound even within the TTL. This blocks the replay
-// surface where a token leaks (e.g. via a reverse-proxy access log
-// that captures query params) and an attacker mints additional
-// WebSocket connections during the 60 s window.
 func TestTokenStore_Validate_IsSingleUse(t *testing.T) {
 	store := NewTokenStore(NewMemoryBackend(nil))
 	ctx := context.Background()
@@ -147,11 +139,6 @@ func TestTokenStore_Validate_IsSingleUse(t *testing.T) {
 	}
 }
 
-// TestTokenStore_Validate_MismatchPreservesSession covers the
-// companion invariant: a forgery attempt consumes-and-restores the
-// entry so the legitimate client can still validate once later.
-// Without this behavior, any attacker guess of a session_id would
-// lock out the real web client for the remaining TTL.
 func TestTokenStore_Validate_MismatchPreservesSession(t *testing.T) {
 	store := NewTokenStore(NewMemoryBackend(nil))
 	ctx := context.Background()
@@ -169,12 +156,10 @@ func TestTokenStore_Validate_MismatchPreservesSession(t *testing.T) {
 		t.Fatalf("forgery should return ErrTokenMismatch, got %v", err)
 	}
 
-	// Legitimate client still gets through on the next attempt.
 	if _, err := store.Validate(ctx, res.SessionID, res.Token); err != nil {
 		t.Errorf("legitimate validate after forgery should succeed, got %v", err)
 	}
 
-	// ... and the token is consumed after that one success.
 	if _, err := store.Validate(ctx, res.SessionID, res.Token); !errors.Is(err, ErrTokenNotFound) {
 		t.Errorf("re-validation after legitimate use should be ErrTokenNotFound, got %v", err)
 	}
@@ -196,18 +181,18 @@ func TestTokenStore_Revoke_IsIdempotent(t *testing.T) {
 	if err := store.Revoke(ctx, res.SessionID); err != nil {
 		t.Fatalf("first revoke: %v", err)
 	}
-	// Second revoke must succeed too.
+
 	if err := store.Revoke(ctx, res.SessionID); err != nil {
 		t.Errorf("second revoke (idempotent) returned %v", err)
 	}
-	// And subsequent lookup must report not found.
+
 	if _, err := store.Lookup(ctx, res.SessionID); !errors.Is(err, ErrTokenNotFound) {
 		t.Errorf("after revoke, expected ErrTokenNotFound, got %v", err)
 	}
 }
 
 func TestTokenStore_TTLExpiry(t *testing.T) {
-	// Frozen clock so we can advance it deterministically.
+
 	now := time.Unix(0, 0)
 	clock := func() time.Time { return now }
 	backend := NewMemoryBackend(clock)
@@ -223,13 +208,11 @@ func TestTokenStore_TTLExpiry(t *testing.T) {
 		t.Fatalf("mint: %v", err)
 	}
 
-	// Still valid at t+5s.
 	now = now.Add(5 * time.Second)
 	if _, err := store.Lookup(ctx, res.SessionID); err != nil {
 		t.Errorf("lookup at t+5s: %v", err)
 	}
 
-	// Expired at t+11s.
 	now = now.Add(6 * time.Second)
 	if _, err := store.Lookup(ctx, res.SessionID); !errors.Is(err, ErrTokenNotFound) {
 		t.Errorf("lookup at t+11s: expected ErrTokenNotFound, got %v", err)
@@ -240,9 +223,9 @@ func TestTokenStore_Mint_RequiresFields(t *testing.T) {
 	store := NewTokenStore(NewMemoryBackend(nil))
 	ctx := context.Background()
 	cases := []MintParams{
-		{DeviceID: "d", TtyUser: "u"}, // no UserID
-		{UserID: "u", TtyUser: "u"},   // no DeviceID
-		{UserID: "u", DeviceID: "d"},  // no TtyUser
+		{DeviceID: "d", TtyUser: "u"},
+		{UserID: "u", TtyUser: "u"},
+		{UserID: "u", DeviceID: "d"},
 	}
 	for i, p := range cases {
 		if _, err := store.Mint(ctx, p); err == nil {

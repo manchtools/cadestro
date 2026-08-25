@@ -31,21 +31,17 @@ func TestBootstrapToken_AdmitsTheReservedPrincipalExactlyOnce(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, issued.Token, fragment.Get("bootstrap_token"))
 
-	// Only the digest is stored; the printed value is not recoverable.
 	var storedHash string
 	require.NoError(t, f.raw.QueryRow(f.ctx(),
 		`SELECT value_hash FROM tokens WHERE name = 'bootstrap-admin'`).Scan(&storedHash))
 	assert.Equal(t, sha256Hex(issued.Token), storedHash)
 	assert.NotEqual(t, issued.Token, storedHash)
 
-	// First presentation works.
 	_, err = f.client.CreateRole(f.ctx(), bootstrapAuthed(&cadestrov1.CreateRoleRequest{
 		Name: "Bootstrap Admins", Permissions: []string{"ListUsers"},
 	}, issued.Token))
 	require.NoError(t, err, "the reserved principal may define a role on a fresh deployment")
 
-	// Second presentation of the SAME value is refused: the spend is a
-	// conditional write, not a read-then-write.
 	_, err = f.client.CreateRole(f.ctx(), bootstrapAuthed(&cadestrov1.CreateRoleRequest{
 		Name: "Second Try", Permissions: []string{"ListUsers"},
 	}, issued.Token))
@@ -92,7 +88,6 @@ func TestBootstrapToken_AttributesItsWritesToTheReservedPrincipal(t *testing.T) 
 	assert.Empty(t, op.ActorID,
 		"the bootstrap principal is not a subject, so it occupies no subject-id column")
 
-	// The mint and the spend are their own audited operations.
 	mint := f.onlyOperationFor("control.bootstrap-admin/Issue")
 	assert.Equal(t, "BACKGROUND_WRITER", mint.Class)
 	assert.Equal(t, "host_command", mint.Origin, "the authorization is possession of the host")
@@ -132,8 +127,6 @@ func TestBootstrapToken_ExpiresAndIsThenUnusable(t *testing.T) {
 	assert.False(t, deleted, "an expired token is not spent, it is simply refused")
 }
 
-// Minting a second token retires the first, so at most one is ever
-// presentable.
 func TestBootstrapToken_IssuingAgainRetiresTheOutstandingToken(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -159,9 +152,6 @@ func TestBootstrapToken_IssuingAgainRetiresTheOutstandingToken(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// The reserved principal owns nothing, so no `:self` grant can admit
-// it. Two independent barriers are asserted: the principal kind, and an
-// id that is not a ULID and therefore cannot equal any subject's.
 func TestBootstrapPrincipal_CanNeverSatisfySelf(t *testing.T) {
 	t.Parallel()
 
@@ -173,7 +163,6 @@ func TestBootstrapPrincipal_CanNeverSatisfySelf(t *testing.T) {
 	assert.False(t, principal.CanOwnResources(),
 		"a principal that is no subject can own no resource")
 
-	// Even asked about ITS OWN id, the self tier does not admit it.
 	assert.False(t, auth.Authorize(auth.AuthzInput{
 		Permissions:  principal.Permissions,
 		SubjectID:    principal.ID,
@@ -182,16 +171,11 @@ func TestBootstrapPrincipal_CanNeverSatisfySelf(t *testing.T) {
 		ResourceID:   principal.ID,
 	}), "the self tier must never admit the reserved principal")
 
-	// The second barrier, independent of the first: were the kind ever
-	// mislabelled, the id still cannot be a subject's.
 	misLabelled := &auth.UserContext{ID: auth.BootstrapPrincipalID, Kind: auth.PrincipalUser}
 	assert.False(t, misLabelled.CanOwnResources(),
 		"the reserved id is not a ULID, so it can never equal a subject id")
 }
 
-// The reserved principal's authority is the fixed setup set and nothing
-// more: it cannot reach into the parts of the API a real administrator
-// owns.
 func TestBootstrapPrincipal_HoldsOnlyTheSetupAuthority(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -209,8 +193,6 @@ func TestBootstrapPrincipal_HoldsOnlyTheSetupAuthority(t *testing.T) {
 			"the reserved principal owns nothing, so a self-scoped key would be unsatisfiable")
 	}
 
-	// A procedure outside the setup set is refused even with a valid
-	// bootstrap token.
 	issued, err := f.boot.Issue(f.ctx())
 	require.NoError(t, err)
 	subject := f.seedSubject()
@@ -221,9 +203,6 @@ func TestBootstrapPrincipal_HoldsOnlyTheSetupAuthority(t *testing.T) {
 		"changing subject access is not part of bringing a deployment up")
 }
 
-// A bootstrap token must not be accepted where a session token belongs:
-// the schemes are distinct so the two credential kinds cannot be
-// interchanged by a caller.
 func TestBootstrapToken_IsNotAcceptedAsABearerToken(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -236,7 +215,6 @@ func TestBootstrapToken_IsNotAcceptedAsABearerToken(t *testing.T) {
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err),
 		"a bootstrap token presented as a session bearer token is not a session")
 
-	// And it was not spent by the refused attempt.
 	var deleted bool
 	require.NoError(t, f.raw.QueryRow(f.ctx(),
 		`SELECT is_deleted FROM tokens WHERE name = 'bootstrap-admin'`).Scan(&deleted))

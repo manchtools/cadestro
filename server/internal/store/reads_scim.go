@@ -7,34 +7,17 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
-// Directory-provisioning reads. Same rule as reads.go: one exported
-// method per question.
-//
-// Every subject and group read here is keyed on a provider id. A SCIM
-// directory addresses only what it is itself bound to, and the
-// confinement lives in the statement rather than in a filter the
-// caller has to remember to apply.
-
 type (
-	// UserGroupRow is one stored user group.
 	UserGroupRow = generated.UserGroup
-	// SCIMGroupMappingRow binds one directory group to one local user
-	// group.
+
 	SCIMGroupMappingRow = generated.ScimGroupMapping
 )
 
-// SCIMUserRow is a subject as one directory sees it: the user row plus
-// the external identifier that directory's link carries for them.
-//
-// The three lookups below return the same shape, so the SCIM handlers
-// have one type to translate rather than one per query.
 type SCIMUserRow struct {
 	User       UserRow
 	ExternalID string
 }
 
-// ListSCIMUsers pages the subjects bound to one provider, ordered by
-// subject id.
 func (s *Store) ListSCIMUsers(ctx context.Context, providerID string, limit, offset int32) ([]SCIMUserRow, error) {
 	rows, err := s.queries.ListSCIMUsers(ctx, generated.ListSCIMUsersParams{
 		ProviderID: providerID,
@@ -51,7 +34,6 @@ func (s *Store) ListSCIMUsers(ctx context.Context, providerID string, limit, off
 	return out, nil
 }
 
-// CountSCIMUsers reports how many subjects are bound to one provider.
 func (s *Store) CountSCIMUsers(ctx context.Context, providerID string) (int64, error) {
 	n, err := s.queries.CountSCIMUsers(ctx, providerID)
 	if err != nil {
@@ -60,7 +42,6 @@ func (s *Store) CountSCIMUsers(ctx context.Context, providerID string) (int64, e
 	return n, nil
 }
 
-// FindSCIMUserByEmail resolves one of a provider's subjects by address.
 func (s *Store) FindSCIMUserByEmail(ctx context.Context, providerID, email string) (SCIMUserRow, error) {
 	row, err := s.queries.FindSCIMUserByEmail(ctx, generated.FindSCIMUserByEmailParams{
 		ProviderID: providerID,
@@ -72,8 +53,6 @@ func (s *Store) FindSCIMUserByEmail(ctx context.Context, providerID, email strin
 	return SCIMUserRow{User: row.User, ExternalID: row.ExternalID}, nil
 }
 
-// FindSCIMUserByExternalID resolves one of a provider's subjects by the
-// identifier the directory assigned them.
 func (s *Store) FindSCIMUserByExternalID(ctx context.Context, providerID, externalID string) (SCIMUserRow, error) {
 	row, err := s.queries.FindSCIMUserByExternalID(ctx, generated.FindSCIMUserByExternalIDParams{
 		ProviderID: providerID,
@@ -85,9 +64,6 @@ func (s *Store) FindSCIMUserByExternalID(ctx context.Context, providerID, extern
 	return SCIMUserRow{User: row.User, ExternalID: row.ExternalID}, nil
 }
 
-// GetIdentityLinkByProviderAndUser answers the ownership question a
-// directory-scoped handler asks before it touches a subject.
-// ErrNotFound means the subject is not bound to that provider.
 func (s *Store) GetIdentityLinkByProviderAndUser(ctx context.Context, providerID, userID string) (IdentityLinkRow, error) {
 	row, err := s.queries.GetIdentityLinkByProviderAndUser(ctx, generated.GetIdentityLinkByProviderAndUserParams{
 		ProviderID: providerID,
@@ -99,9 +75,6 @@ func (s *Store) GetIdentityLinkByProviderAndUser(ctx context.Context, providerID
 	return row, nil
 }
 
-// CountIdentityLinksForUser reports how many external identities a
-// subject still has. Removing the last one is what turns an unlink into
-// an erasure.
 func (s *Store) CountIdentityLinksForUser(ctx context.Context, userID string) (int64, error) {
 	n, err := s.queries.CountIdentityLinksForUser(ctx, userID)
 	if err != nil {
@@ -110,8 +83,6 @@ func (s *Store) CountIdentityLinksForUser(ctx context.Context, userID string) (i
 	return n, nil
 }
 
-// GetUserGroup returns one live group. ErrNotFound when unknown or
-// retired.
 func (s *Store) GetUserGroup(ctx context.Context, id string) (UserGroupRow, error) {
 	row, err := s.queries.GetUserGroup(ctx, id)
 	if err != nil {
@@ -120,7 +91,6 @@ func (s *Store) GetUserGroup(ctx context.Context, id string) (UserGroupRow, erro
 	return row, nil
 }
 
-// ListUserGroupMemberIDs returns the ids of a group's members.
 func (s *Store) ListUserGroupMemberIDs(ctx context.Context, groupID string) ([]string, error) {
 	rows, err := s.queries.ListUserGroupMemberIDs(ctx, groupID)
 	if err != nil {
@@ -129,7 +99,6 @@ func (s *Store) ListUserGroupMemberIDs(ctx context.Context, groupID string) ([]s
 	return rows, nil
 }
 
-// GetSCIMGroupMapping resolves a directory group to its local binding.
 func (s *Store) GetSCIMGroupMapping(ctx context.Context, providerID, scimGroupID string) (SCIMGroupMappingRow, error) {
 	row, err := s.queries.GetSCIMGroupMapping(ctx, generated.GetSCIMGroupMappingParams{
 		ProviderID:  providerID,
@@ -141,8 +110,6 @@ func (s *Store) GetSCIMGroupMapping(ctx context.Context, providerID, scimGroupID
 	return row, nil
 }
 
-// GetSCIMGroupMappingByUserGroup resolves a local group to the
-// directory binding one provider holds on it.
 func (s *Store) GetSCIMGroupMappingByUserGroup(ctx context.Context, providerID, userGroupID string) (SCIMGroupMappingRow, error) {
 	row, err := s.queries.GetSCIMGroupMappingByUserGroup(ctx, generated.GetSCIMGroupMappingByUserGroupParams{
 		ProviderID:  providerID,
@@ -154,7 +121,6 @@ func (s *Store) GetSCIMGroupMappingByUserGroup(ctx context.Context, providerID, 
 	return row, nil
 }
 
-// ListSCIMGroupMappings returns every binding one provider holds.
 func (s *Store) ListSCIMGroupMappings(ctx context.Context, providerID string) ([]SCIMGroupMappingRow, error) {
 	rows, err := s.queries.ListSCIMGroupMappings(ctx, providerID)
 	if err != nil {

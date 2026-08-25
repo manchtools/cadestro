@@ -506,7 +506,6 @@ func (q *Queries) ListDeviceComplianceResults(ctx context.Context, deviceID stri
 }
 
 const refreshDeviceComplianceStatus = `-- name: RefreshDeviceComplianceStatus :execrows
-
 UPDATE devices
 SET compliance_total = (
         SELECT COUNT(*)
@@ -567,12 +566,6 @@ type RefreshDeviceComplianceStatusParams struct {
 	CheckedAt *time.Time `json:"checked_at"`
 }
 
-// Rolls the device summary up from the rows just written. severity orders the
-// statuses by how bad they are (non-compliant worst, then grace, then unknown,
-// then compliant) because the stored enum is not in that order. A check that
-// belongs to no live policy rule has no grace period, so it contributes
-// directly. No rows at all leaves the device UNKNOWN, which is what
-// distinguishes "never checked" from "checked and failed".
 func (q *Queries) RefreshDeviceComplianceStatus(ctx context.Context, arg RefreshDeviceComplianceStatusParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, refreshDeviceComplianceStatus, arg.DeviceID, arg.CheckedAt)
 	if err != nil {
@@ -619,7 +612,6 @@ func (q *Queries) UpsertCompliancePolicyEvaluation(ctx context.Context, arg Upse
 }
 
 const upsertDeviceComplianceResult = `-- name: UpsertDeviceComplianceResult :execrows
-
 INSERT INTO compliance_results (
     device_id, action_id, action_name, compliant, detection_output, checked_at
 )
@@ -642,9 +634,6 @@ type UpsertDeviceComplianceResultParams struct {
 	ActionID        string          `json:"action_id"`
 }
 
-// Compliance ingestion is this statement and the three below it. All four run
-// inside the execution-result transaction, so the compliance surface cannot
-// disagree with the execution evidence it is derived from.
 func (q *Queries) UpsertDeviceComplianceResult(ctx context.Context, arg UpsertDeviceComplianceResultParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, upsertDeviceComplianceResult,
 		arg.DeviceID,

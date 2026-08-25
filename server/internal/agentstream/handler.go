@@ -1,6 +1,3 @@
-// Package agentstream terminates the authenticated device connection directly
-// in control. Frames are applied to SQLite-backed services without a relay,
-// broker, or application-signature layer.
 package agentstream
 
 import (
@@ -40,7 +37,6 @@ const frameRateWindow = time.Minute
 
 var errCertificateNotActive = errors.New("certificate is not active for device")
 
-// DeviceResults is the direct sink for device-owned result frames.
 type DeviceResults interface {
 	CompleteOSQueryResult(context.Context, string, *cadestrov1.OSQueryResult) error
 	CompleteLogQueryResult(context.Context, string, *cadestrov1.LogQueryResult) error
@@ -48,17 +44,14 @@ type DeviceResults interface {
 	CompleteLuksKeyRevocation(context.Context, string, *cadestrov1.RevokeLuksDeviceKeyResult) error
 }
 
-// PolicyResults records assignment manifest results.
 type PolicyResults interface {
 	RecordPolicyManifestResult(context.Context, string, string, string, string, string) error
 }
 
-// ExecutionResults commits per-occurrence results and streamed output.
 type ExecutionResults interface {
 	ApplyActionResult(context.Context, string, *cadestrov1.ActionResult) error
 }
 
-// Secrets owns the narrow feature sinks for LUKS and LPS fields.
 type Secrets interface {
 	ValidateLuksToken(context.Context, string, *cadestrov1.ValidateLuksTokenRequest) (*cadestrov1.ValidateLuksTokenResponse, error)
 	GetLuksKey(context.Context, string, *cadestrov1.GetLuksKeyRequest) (*cadestrov1.GetLuksKeyResponse, error)
@@ -66,8 +59,6 @@ type Secrets interface {
 	StoreLpsPasswords(context.Context, string, *cadestrov1.StoreLpsPasswordsRequest) (*cadestrov1.StoreLpsPasswordsResponse, error)
 }
 
-// SyncSource returns the current assignment policy and scheduling state
-// for the authenticated device.
 type SyncSource interface {
 	Sync(context.Context, string) (*cadestrov1.SyncState, error)
 }
@@ -77,7 +68,6 @@ type LiveOperationResults interface {
 	CompleteRebootDevice(context.Context, string, string, *cadestrov1.RebootDeviceResult) error
 }
 
-// Config supplies the direct services used by AgentService.
 type Config struct {
 	Store             *store.Store
 	Manager           *connection.Manager
@@ -95,7 +85,6 @@ type Config struct {
 	Now               func() time.Time
 }
 
-// Handler implements the target AgentService without legacy transport paths.
 type Handler struct {
 	cadestrov1connect.UnimplementedAgentServiceHandler
 
@@ -118,7 +107,6 @@ type Handler struct {
 	frameDropAudits   *auth.RateLimiter
 }
 
-// New constructs the direct AgentService handler.
 func New(cfg Config) *Handler {
 	if cfg.Store == nil || cfg.Manager == nil || cfg.PolicyResults == nil || cfg.Executions == nil ||
 		cfg.DeviceResults == nil || cfg.Secrets == nil || cfg.Sync == nil || cfg.LiveOperations == nil || cfg.TerminalSessions == nil {
@@ -137,8 +125,7 @@ func New(cfg Config) *Handler {
 		serverVersion: cfg.ServerVersion, deviceLoginURL: cfg.DeviceLoginURL,
 		heartbeatInterval: cfg.HeartbeatInterval, now: cfg.Now,
 		validator: protovalidate.GlobalValidator,
-		// These are deliberately generous ingestion ceilings, not ordinary
-		// operating rates. A healthy agent stays far below every budget.
+
 		frameLimiters: map[frameClass]*auth.RateLimiter{
 			frameState:     auth.NewRateLimiter(600, frameRateWindow),
 			frameHello:     auth.NewRateLimiter(10, frameRateWindow),
@@ -150,7 +137,6 @@ func New(cfg Config) *Handler {
 	}
 }
 
-// Close stops the process-local frame-budget cleanup loops.
 func (h *Handler) Close() {
 	if h == nil {
 		return
@@ -163,7 +149,6 @@ func (h *Handler) Close() {
 	}
 }
 
-// Stream owns one authenticated device connection.
 func (h *Handler) Stream(ctx context.Context, stream *connect.BidiStream[cadestrov1.AgentMessage, cadestrov1.ServerMessage]) error {
 	deviceID, ok := DeviceIDFromContext(ctx)
 	if !ok || !validID(deviceID) {
@@ -279,10 +264,7 @@ func (h *Handler) recordFrameDrop(ctx context.Context, deviceID string, message 
 	op.AuthorizationOutcome = store.AuthorizationDenied
 	op.AuthorizationDetail = "device_frame_budget"
 	op.Result = store.ResultRejected
-	// The dropped frame's class rides the result code. It is not a row
-	// reference, so it must not go in an effect's after_ref: that column
-	// only accepts a ULID and the rejected INSERT rolls the operation row
-	// back with it, leaving an abusive device no durable trace at all.
+
 	op.ResultCode = "RATE_LIMITED." + string(class)
 	_, err := h.store.RecordOperation(ctx, op, store.AuditEffect{
 		ResourceType: "device", ResourceID: deviceID, Action: "FRAME_RATE_LIMIT",
@@ -430,24 +412,8 @@ func (h *Handler) sendResponse(agent *connection.Agent, messageID string, respon
 	return agent.Send(message)
 }
 
-// errForeignTerminalSession is the terminal path's cross-device claim. It is
-// a sentinel rather than an inline error so frameNotAuthorized can recognise
-// it without matching on message text.
 var errForeignTerminalSession = errors.New("terminal session belongs to another device")
 
-// frameNotAuthorized reports whether a per-frame application error is the
-// device claiming a resource that is not its own. Only those end the
-// connection.
-//
-// Everything else — malformed input, a stale transition, an already-applied
-// replay — is dropped and the stream continues. The agent's outbox is
-// durable: a frame control refuses is re-sent on every reconnect, so ending
-// the connection turns one bad frame into a permanent reconnect loop and
-// discards every other frame the device was about to report. Defaulting to
-// "keep the stream" is what makes a new sink's rejection safe by
-// construction; a new cross-actor sentinel must be added here, and
-// TestFrameAuthorizationClassificationCoversEveryCrossActorSentinel fails
-// until it is.
 func frameNotAuthorized(err error) bool {
 	switch {
 	case errors.Is(err, errForeignTerminalSession):
@@ -523,9 +489,6 @@ func (h *Handler) recordHello(ctx context.Context, deviceID string, hello *cades
 	return err
 }
 
-// peerCertificateActive enforces the active serial before every privileged
-// frame. Pending certificates are handled only by recordHello's promotion
-// transaction and never authorize a later frame by themselves.
 func (h *Handler) peerCertificateActive(ctx context.Context, deviceID string) bool {
 	_, ok := mtls.PeerCertificateFromContext(ctx)
 	serial, serialOK := mtls.PeerSerialFromContext(ctx)
@@ -547,10 +510,7 @@ func (h *Handler) recordSecurityAlert(ctx context.Context, deviceID string, aler
 		return errors.New("invalid security alert")
 	}
 	op := agentOperation(deviceID, "SecurityAlert")
-	// The alert type is the record's whole content. It rides the result
-	// code because that column takes 64 characters of the shape an enum
-	// name has; the effect's action column stops at 32 and the longest
-	// alert name is 47, and a reference column takes a ULID or nothing.
+
 	op.ResultCode = alert.Type.String()
 	_, err := h.store.RecordOperation(ctx, op, store.AuditEffect{
 		ResourceType: "device", ResourceID: deviceID, Action: "SECURITY_ALERT",

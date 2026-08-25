@@ -24,9 +24,6 @@ var auditCSVHeader = []string{
 	"stream_type", "stream_id", "event_type", "data",
 }
 
-// auditEventData is the exhaustive allowlist exposed in AuditEvent.data.
-// Neither audit table's sealed_detail, linkage hashes nor raw domain values
-// are selectable through this shape.
 type auditEventData struct {
 	OperationID          string   `json:"operation_id"`
 	OperationClass       string   `json:"operation_class"`
@@ -61,8 +58,6 @@ type auditExportRow struct {
 	Data       string `json:"data"`
 }
 
-// ListAuditEvents reads the dedicated append-only operation/effect log. It
-// never consults the abolished domain event store.
 func (h *Handlers) ListAuditEvents(ctx context.Context, req *connect.Request[cadestrov1.ListAuditEventsRequest]) (*connect.Response[cadestrov1.ListAuditEventsResponse], error) {
 	if err := validateAuditFilters(ctx, req.Msg.GetActorId().GetValue(), []string{req.Msg.StreamType}, req.Msg.EventType); err != nil {
 		return nil, err
@@ -116,8 +111,6 @@ func (h *Handlers) ListAuditEvents(ctx context.Context, req *connect.Request[cad
 	}), nil
 }
 
-// ExportAuditEvents returns one bounded CSV or JSON fragment and records the
-// protected read before any bytes are returned to the caller.
 func (h *Handlers) ExportAuditEvents(ctx context.Context, req *connect.Request[cadestrov1.ExportAuditEventsRequest]) (*connect.Response[cadestrov1.ExportAuditEventsResponse], error) {
 	if err := validateAuditFilters(ctx, req.Msg.GetActorId().GetValue(), req.Msg.StreamTypes, req.Msg.EventType); err != nil {
 		return nil, err

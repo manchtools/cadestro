@@ -20,7 +20,6 @@ var (
 	ErrMemberNotFound = errors.New("action set member not found")
 )
 
-// CreateActionSetParams is the complete stored shape of a new ActionSet.
 type CreateActionSetParams struct {
 	Name        string
 	Description string
@@ -29,8 +28,6 @@ type CreateActionSetParams struct {
 	OnFailure   cadestrov1.OnFailure
 }
 
-// CreateActionSet inserts one set with an independent schedule and failure
-// policy.
 func (s *Service) CreateActionSet(ctx context.Context, op store.AuditOperation, p CreateActionSetParams) (store.ActionSetRow, error) {
 	if ctx == nil || !validID(p.CreatedBy) || (op.ActorID != "" && op.ActorID != p.CreatedBy) ||
 		p.Name == "" || utf8.RuneCountInString(p.Name) > 255 || utf8.RuneCountInString(p.Description) > 1024 {
@@ -61,7 +58,6 @@ func (s *Service) CreateActionSet(ctx context.Context, op store.AuditOperation, 
 	return out, nil
 }
 
-// RenameActionSet replaces a set name.
 func (s *Service) RenameActionSet(ctx context.Context, op store.AuditOperation, id, name string) (store.ActionSetRow, error) {
 	if ctx == nil || !validID(id) || name == "" || utf8.RuneCountInString(name) > 255 {
 		return store.ActionSetRow{}, ErrInvalidInput
@@ -80,7 +76,6 @@ func (s *Service) RenameActionSet(ctx context.Context, op store.AuditOperation, 
 	return out, translateNotFound(err)
 }
 
-// UpdateActionSetDescription replaces a set description.
 func (s *Service) UpdateActionSetDescription(ctx context.Context, op store.AuditOperation, id, description string) (store.ActionSetRow, error) {
 	if ctx == nil || !validID(id) || utf8.RuneCountInString(description) > 1024 {
 		return store.ActionSetRow{}, ErrInvalidInput
@@ -101,7 +96,6 @@ func (s *Service) UpdateActionSetDescription(ctx context.Context, op store.Audit
 	return out, translateNotFound(err)
 }
 
-// UpdateActionSetPolicy replaces the schedule and failure policy together.
 func (s *Service) UpdateActionSetPolicy(ctx context.Context, op store.AuditOperation, id string, schedule *cadestrov1.ActionSchedule, policy cadestrov1.OnFailure) (store.ActionSetRow, error) {
 	if ctx == nil || !validID(id) || !validFailurePolicy(policy) {
 		return store.ActionSetRow{}, ErrInvalidInput
@@ -126,8 +120,6 @@ func (s *Service) UpdateActionSetPolicy(ctx context.Context, op store.AuditOpera
 	return out, translateNotFound(err)
 }
 
-// AddActionToSet inserts one authored occurrence edge. System-managed actions
-// never become reachable through an operator-controlled set.
 func (s *Service) AddActionToSet(ctx context.Context, op store.AuditOperation, setID, actionID string, sortOrder int32) error {
 	if ctx == nil || !validID(setID) || !validID(actionID) || sortOrder < 0 {
 		return ErrInvalidInput
@@ -167,7 +159,6 @@ func (s *Service) AddActionToSet(ctx context.Context, op store.AuditOperation, s
 	return err
 }
 
-// RemoveActionFromSet removes one authored occurrence edge.
 func (s *Service) RemoveActionFromSet(ctx context.Context, op store.AuditOperation, setID, actionID string) error {
 	if ctx == nil || !validID(setID) || !validID(actionID) {
 		return ErrInvalidInput
@@ -190,7 +181,6 @@ func (s *Service) RemoveActionFromSet(ctx context.Context, op store.AuditOperati
 	return err
 }
 
-// ReorderActionInSet changes one edge's authored sort position.
 func (s *Service) ReorderActionInSet(ctx context.Context, op store.AuditOperation, setID, actionID string, sortOrder int32) error {
 	if ctx == nil || !validID(setID) || !validID(actionID) || sortOrder < 0 {
 		return ErrInvalidInput
@@ -210,8 +200,6 @@ func (s *Service) ReorderActionInSet(ctx context.Context, op store.AuditOperatio
 	return err
 }
 
-// DeleteActionSet soft-deletes the set and removes all composition edges in
-// the same transaction.
 func (s *Service) DeleteActionSet(ctx context.Context, op store.AuditOperation, id string) error {
 	if ctx == nil || !validID(id) {
 		return ErrInvalidInput

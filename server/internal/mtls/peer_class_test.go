@@ -21,8 +21,6 @@ func mustURL(t *testing.T, s string) *url.URL {
 	return u
 }
 
-// TestPeerClassFromCert_Roundtrip asserts that every well-known
-// class encodes to a SPIFFE URI and decodes back to the same class.
 func TestPeerClassFromCert_Roundtrip(t *testing.T) {
 	for _, class := range []PeerClass{PeerClassAgent, PeerClassControl} {
 		t.Run(string(class), func(t *testing.T) {
@@ -42,9 +40,6 @@ func TestPeerClassFromCert_Roundtrip(t *testing.T) {
 	}
 }
 
-// TestPeerClassFromCert_Errors covers the rejection surface:
-// missing URI, non-spiffe scheme, wrong host, unknown class, and
-// ambiguous multi-class certs.
 func TestPeerClassFromCert_Errors(t *testing.T) {
 	cases := map[string]*x509.Certificate{
 		"nil cert":      nil,
@@ -67,23 +62,14 @@ func TestPeerClassFromCert_Errors(t *testing.T) {
 	}
 }
 
-// TestRequirePeerClass_AllowsAllowedRejectsOthers spins up a mTLS
-// test server with the middleware installed and asserts it
-// accepts an allowed class and rejects every other.
 func TestRequirePeerClass_AllowsAllowedRejectsOthers(t *testing.T) {
 	discardLogger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-	// The agent listener is the real instance of this: it admits the agent
-	// class and nothing else. With PeerClassGateway gone, control is the other
-	// class — and it must be refused here exactly as a gateway cert was.
+
 	handler := RequirePeerClass(discardLogger, PeerClassAgent)(next)
 
-	// Simulate a TLS connection state carrying a peer cert with a
-	// given class. httptest.Server with a real TLS handshake would
-	// be overkill for unit coverage; the middleware only reads
-	// r.TLS.PeerCertificates, so we inject that directly.
 	call := func(class PeerClass) int {
 		req := httptest.NewRequest(http.MethodPost, "/x", strings.NewReader(""))
 		u, _ := PeerClassURI(class)
@@ -103,23 +89,18 @@ func TestRequirePeerClass_AllowsAllowedRejectsOthers(t *testing.T) {
 	}
 }
 
-// TestRequirePeerClass_HealthBypass asserts /health and /ready skip
-// the peer-class check so external load-balancer probes work
-// without a client cert.
 func TestRequirePeerClass_HealthBypass(t *testing.T) {
 	discardLogger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-	// The agent listener is the real instance of this: it admits the agent
-	// class and nothing else. With PeerClassGateway gone, control is the other
-	// class — and it must be refused here exactly as a gateway cert was.
+
 	handler := RequirePeerClass(discardLogger, PeerClassAgent)(next)
 
 	for _, path := range []string{"/health", "/ready"} {
 		t.Run(path, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, path, nil)
-			// No TLS state at all — still should pass.
+
 			rr := httptest.NewRecorder()
 			handler.ServeHTTP(rr, req)
 			if rr.Code != http.StatusOK {
@@ -129,8 +110,6 @@ func TestRequirePeerClass_HealthBypass(t *testing.T) {
 	}
 }
 
-// TestRequirePeerClass_RejectsMissingTLS asserts a request without
-// any TLS state is rejected before a nil dereference can happen.
 func TestRequirePeerClass_RejectsMissingTLS(t *testing.T) {
 	discardLogger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	handler := RequirePeerClass(discardLogger, PeerClassControl)(http.NotFoundHandler())

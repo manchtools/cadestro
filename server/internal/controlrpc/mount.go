@@ -1,4 +1,3 @@
-// Package controlrpc assembles the explicit ControlService handlers.
 package controlrpc
 
 import (
@@ -18,9 +17,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/searchrpc"
 )
 
-// Handlers is the complete direct implementation of ControlService. Keeping
-// the domains explicit makes an omitted or duplicated procedure visible at
-// assembly time instead of silently falling through an embedded mega-handler.
 type Handlers struct {
 	Identity           *identity.Handlers
 	Enrollment         *enrollment.Handlers
@@ -34,7 +30,6 @@ type Handlers struct {
 	Search             *searchrpc.Handlers
 }
 
-// Mount registers the complete retained ControlService surface.
 func (h Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
 	if mux == nil || h.Identity == nil || h.Enrollment == nil || h.Authoring == nil ||
 		h.Assignments == nil || h.DeviceGroups == nil || h.Devices == nil ||

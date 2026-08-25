@@ -1,4 +1,3 @@
-// Package backupstatus reads the small marker written after a verified backup.
 package backupstatus
 
 import (
@@ -13,7 +12,6 @@ import (
 )
 
 const (
-	// StatusFilename is atomically replaced only after SQLite validates a snapshot.
 	StatusFilename = "backup-status.json"
 	maxStatusBytes = 4 << 10
 	maxClockSkew   = 5 * time.Minute
@@ -27,7 +25,6 @@ type marker struct {
 	SHA256      string    `json:"sha256"`
 }
 
-// Status is the operator-facing backup posture. A missing marker is stale.
 type Status struct {
 	Version              int        `json:"version"`
 	LastSuccessfulBackup *time.Time `json:"last_successful_backup"`
@@ -39,7 +36,6 @@ type Status struct {
 	SHA256               string     `json:"sha256,omitempty"`
 }
 
-// Read validates the latest verified-backup marker and calculates its age.
 func Read(directory string, now time.Time, maxLag time.Duration) (Status, error) {
 	base := Status{Version: 1, MaxLagSeconds: int64(maxLag / time.Second), Stale: true}
 	if directory == "" || now.IsZero() || maxLag <= 0 {

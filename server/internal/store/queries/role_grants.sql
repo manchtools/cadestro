@@ -1,9 +1,9 @@
--- Role grants: which subject holds which role, and at which scope.
---
--- A grant is identified by its own ULID because one subject may hold
--- the same role globally AND at several distinct scopes at once.
--- scope_kind/scope_id are paired-or-neither; both NULL is a global
--- grant. Revocation names one grant, never "the role".
+
+
+
+
+
+
 
 -- name: InsertUserRoleGrant :one
 INSERT INTO user_roles (grant_id, user_id, role_id, assigned_at, assigned_by, scope_kind, scope_id)
@@ -11,9 +11,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: DeleteUnscopedUserRoleGrant :one
--- Conditional on the grant being the UNSCOPED one: a caller asking to
--- revoke the global grant must not silently take a scoped grant
--- instead. No row means the caller's description did not match.
+
+
+
 DELETE FROM user_roles
 WHERE user_id = ? AND role_id = ? AND scope_id IS NULL
 RETURNING *;
@@ -64,9 +64,9 @@ WHERE gr.group_id = ? AND r.is_deleted = FALSE
 ORDER BY gr.grant_id;
 
 -- name: ListInheritedRolesForUser :many
--- Roles the subject holds because of a group they belong to. Reported
--- separately from direct grants so a UI can show where authority came
--- from without inventing a second grant surface.
+
+
+
 SELECT
     r.id   AS role_id,
     r.name AS role_name,
@@ -80,8 +80,8 @@ WHERE m.user_id = sqlc.arg(user_id)
 ORDER BY r.id, g.id;
 
 -- name: ListUserPermissions :many
--- The flat permission set the session token carries: the union of every
--- permission in every role the subject holds, directly or by group.
+
+
 SELECT DISTINCT s.permission AS permission
 FROM (
     SELECT CAST(permission.value AS TEXT) AS permission
@@ -101,9 +101,9 @@ FROM (
 ORDER BY permission;
 
 -- name: ListUserScopedGrants :many
--- The same permissions, one row per (permission, scope) tuple. A NULL
--- scope is the global grant of that permission; the evaluator treats
--- it as fleet-wide and a group scope as confinement.
+
+
+
 SELECT DISTINCT s.permission AS permission, s.scope_kind, s.scope_id
 FROM (
     SELECT CAST(permission.value AS TEXT) AS permission, ur.scope_kind, ur.scope_id

@@ -9,12 +9,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-// A directory group is a MAPPING onto a local user group, not a group
-// of its own. The local group is what carries role grants, so the two
-// are kept as separate rows: unmapping a directory group must not
-// destroy the authority an operator attached to it.
-
-// listGroups handles GET /Groups.
 func (h *Handler) listGroups(w http.ResponseWriter, r *http.Request, s *session) {
 	ctx := r.Context()
 	baseURL := baseURLFromRequest(r, s.provider.Slug)
@@ -40,9 +34,7 @@ func (h *Handler) listGroups(w http.ResponseWriter, r *http.Request, s *session)
 		resource, err := h.groupResource(ctx, m, baseURL)
 		if err != nil {
 			if store.IsNotFound(err) {
-				// The local group was retired outside this surface. The
-				// mapping is stale and is reported as absent; the
-				// directory's next create re-establishes the pair.
+
 				continue
 			}
 			h.logger.Error("scim: failed to build group resource", "error", err)
@@ -64,8 +56,6 @@ func (h *Handler) listGroups(w http.ResponseWriter, r *http.Request, s *session)
 	})
 }
 
-// filterGroupMappings applies the equality filters a directory uses to
-// find a group it may already have mapped.
 func filterGroupMappings(mappings []store.SCIMGroupMappingRow, expr string) ([]store.SCIMGroupMappingRow, error) {
 	f, err := parseFilter(expr)
 	if err != nil {
@@ -89,7 +79,6 @@ func filterGroupMappings(mappings []store.SCIMGroupMappingRow, expr string) ([]s
 	return out, nil
 }
 
-// getGroup handles GET /Groups/{id}.
 func (h *Handler) getGroup(w http.ResponseWriter, r *http.Request, s *session) {
 	ctx := r.Context()
 	mapping, ok := h.resolveGroup(ctx, w, s, r.PathValue("id"))
@@ -123,12 +112,6 @@ func (h *Handler) getGroup(w http.ResponseWriter, r *http.Request, s *session) {
 	writeJSON(w, http.StatusOK, resource)
 }
 
-// resolveGroup resolves the mapping this directory holds on a local
-// group.
-//
-// A group mapped by a DIFFERENT directory and a group that does not
-// exist get the same not-found answer, so the id space cannot be probed
-// for another directory's groups.
 func (h *Handler) resolveGroup(ctx context.Context, w http.ResponseWriter, s *session, groupID string) (store.SCIMGroupMappingRow, bool) {
 	if groupID == "" {
 		writeError(w, http.StatusBadRequest, "missing group id")
@@ -147,8 +130,6 @@ func (h *Handler) resolveGroup(ctx context.Context, w http.ResponseWriter, s *se
 	return mapping, true
 }
 
-// groupResource shapes a mapping and its local group as a SCIM group.
-// ErrNotFound when the local group has been retired.
 func (h *Handler) groupResource(ctx context.Context, mapping store.SCIMGroupMappingRow, baseURL string) (SCIMGroup, error) {
 	group, err := h.store.GetUserGroup(ctx, mapping.UserGroupID)
 	if err != nil {

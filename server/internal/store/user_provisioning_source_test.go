@@ -11,9 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Creation provenance is write-once. The audited store exposes generated
-// queries as its only mutation surface, so proving that no query can update the
-// column makes the invariant structural rather than a handler convention.
 func TestUserProvisioningSource_HasNoUpdateQuery(t *testing.T) {
 	entries, err := os.ReadDir("queries")
 	require.NoError(t, err)

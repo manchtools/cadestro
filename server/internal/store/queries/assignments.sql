@@ -83,9 +83,9 @@ WHERE a.is_deleted = FALSE
   AND COALESCE(td.id, tdg.id, tu.id, tug.id) IS NOT NULL;
 
 -- name: ListAssignmentViewsForUser :many
--- User-targeted assignments resolve through the current materialized group
--- memberships. Dynamic group evaluation updates the same membership table, so
--- this read needs no second query language or compatibility path.
+
+
+
 SELECT a.*,
        COALESCE(sa.name, ss.name, sd.name, sp.name, '') AS resolved_source_name,
        COALESCE(tu.display_name, tug.name, '') AS resolved_target_name

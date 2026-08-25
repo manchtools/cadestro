@@ -42,9 +42,6 @@ func TestAssignedPermissionAlternativesAreExactAndBackedByRPCs(t *testing.T) {
 	}
 }
 
-// controlRPCNames is the set of method names on the generated control
-// handler. Permission keys and public procedures are checked against
-// it, so the registry cannot drift away from the contract.
 func controlRPCNames(t *testing.T) map[string]bool {
 	t.Helper()
 	iface := reflect.TypeOf((*cadestrov1connect.ControlServiceHandler)(nil)).Elem()
@@ -63,17 +60,6 @@ func baseKey(key string) string {
 	return key
 }
 
-// nonRPCBackedPermissions are deliberately not gated by an RPC of the
-// same name:
-//
-//   - TerminalAdmin* gate server-side reconciliation of the sudoers
-//     policy a terminal session runs under; no handler consults them.
-//   - AssignRoleScope is a precondition consulted by ANOTHER
-//     permission's handler — it gates the scope arguments on the
-//     role-assignment RPCs.
-//
-// Listing them documents the intent so the parity check stays a real
-// drift-catcher for "I added a permission but no handler reads it".
 var nonRPCBackedPermissions = map[string]bool{
 	"TerminalAdminLimited": true,
 	"TerminalAdminFull":    true,
@@ -175,8 +161,6 @@ func TestProcedureAlternatives_AreExactAndReal(t *testing.T) {
 	}
 }
 
-// The snapshot must be a copy: a caller who mutates it must not be able
-// to widen the live authorization policy.
 func TestProcedureAlternativesSnapshot_IsACopy(t *testing.T) {
 	t.Parallel()
 	first := auth.ProcedureAlternativesSnapshot()
@@ -220,8 +204,6 @@ func TestAdminPermissions_AreTheWholeRegistry(t *testing.T) {
 	}
 }
 
-// The expensive tier is an exact reviewed set. A rename or a broad naming
-// heuristic must not silently add/remove rate limiting from an RPC.
 func TestExpensiveProcedureSetIsExactAndReal(t *testing.T) {
 	t.Parallel()
 	rpcs := controlRPCNames(t)

@@ -148,15 +148,12 @@ func TestAgentSync_PullsAssignedDefinitionAsOneOrderedPolicy(t *testing.T) {
 	require.Equal(t, cadestrov1.OnFailure_ON_FAILURE_CONTINUE, state.DesiredPolicy.Manifests[0].Occurrences[1].OnFailure)
 	firstRevision := state.DesiredPolicy.Revision
 	firstManifestID := state.DesiredPolicy.Manifests[0].GetManifestId().GetValue()
-	// Repeated compilation must keep the authored revision and manifest
-	// identity stable even when the device-facing payload is rebuilt.
+
 	repeated, err := syncer.Sync(context.Background(), f.deviceID)
 	require.NoError(t, err)
 	assert.Equal(t, firstRevision, repeated.DesiredPolicy.Revision)
 	assert.Equal(t, firstManifestID, repeated.DesiredPolicy.Manifests[0].GetManifestId().GetValue())
 
-	// Semantic authoring changes feed the stable identity seed rather than
-	// being hidden by outbound secret materialization.
 	_, err = f.raw.Exec(context.Background(), `UPDATE actions SET params = $1, params_canonical = $1 WHERE id = $2`,
 		`{"interpreter":"/bin/sh","script":"printf changed"}`, f.actionID)
 	require.NoError(t, err)
@@ -165,8 +162,6 @@ func TestAgentSync_PullsAssignedDefinitionAsOneOrderedPolicy(t *testing.T) {
 	assert.NotEqual(t, firstRevision, changed.DesiredPolicy.Revision)
 	assert.NotEqual(t, firstManifestID, changed.DesiredPolicy.Manifests[0].GetManifestId().GetValue())
 
-	// Authored container order is semantic even when the contained action is
-	// currently the same, so moving the sets changes the policy identity.
 	_, err = f.raw.Exec(context.Background(), `UPDATE definition_members
 		SET sort_order = CASE WHEN sort_order = 0 THEN 1 ELSE 0 END
 		WHERE definition_id = $1`, f.definition)
@@ -176,8 +171,6 @@ func TestAgentSync_PullsAssignedDefinitionAsOneOrderedPolicy(t *testing.T) {
 	assert.NotEqual(t, changed.DesiredPolicy.Revision, reordered.DesiredPolicy.Revision)
 	assert.NotEqual(t, changed.DesiredPolicy.Manifests[0].GetManifestId().GetValue(), reordered.DesiredPolicy.Manifests[0].GetManifestId().GetValue())
 
-	// Assignment mode is also semantic: force-absent must not reuse the
-	// required-mode identity when the source is toggled.
 	_, err = f.raw.Exec(context.Background(), `DELETE FROM assignments WHERE source_id = $1`, f.definition)
 	require.NoError(t, err)
 	f.assign("definition", f.definition, "device", f.deviceID, cadestrov1.AssignmentMode_ASSIGNMENT_MODE_UNINSTALL)

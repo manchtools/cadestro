@@ -16,17 +16,8 @@ import (
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
-// scimTokenBytes is the entropy of a SCIM bearer token. 32 bytes is
-// well past any brute-force reach and keeps the printed value short
-// enough to paste into an IdP console.
 const scimTokenBytes = 32
 
-// CreateIdentityProvider registers an OIDC provider.
-//
-// The client secret is sealed at rest with AAD bound to this provider's
-// own row, so a database-level attacker cannot relocate it to another
-// provider and have it decrypt. It has no field on the wire in either
-// direction after this call: it is write-only by contract.
 func (h *Handlers) CreateIdentityProvider(ctx context.Context, req *connect.Request[cadestrov1.CreateIdentityProviderRequest]) (*connect.Response[cadestrov1.CreateIdentityProviderResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
@@ -54,9 +45,7 @@ func (h *Handlers) CreateIdentityProvider(ctx context.Context, req *connect.Requ
 	if err != nil {
 		return nil, err
 	}
-	// The column is NOT NULL with an empty-array default; a nil slice
-	// would be sent as NULL and rejected, so an omitted scope list
-	// becomes the empty list rather than a constraint violation.
+
 	scopes := nonNilStrings(req.Msg.Scopes)
 
 	providerID := ulid.Make().String()
@@ -105,12 +94,8 @@ func (h *Handlers) CreateIdentityProvider(ctx context.Context, req *connect.Requ
 					"name", "slug", "client_id", "issuer_url",
 					"auto_create_users", "auto_link_by_email", "trust_email_assertions",
 				},
-				// The email-assertion switch is the account-takeover
-				// control on this row, so its value is recorded
-				// explicitly rather than left implicit in "created".
+
 				AfterFlag: &trust,
-				// The secret never appears, but proving WHICH secret was
-				// configured is legitimate evidence, so its digest is.
 			}
 			if req.Msg.ClientSecret != "" {
 				effect.ChangedFields = append(effect.ChangedFields, "client_secret_encrypted")
@@ -130,7 +115,6 @@ func (h *Handlers) CreateIdentityProvider(ctx context.Context, req *connect.Requ
 	return connect.NewResponse(&cadestrov1.CreateIdentityProviderResponse{Provider: h.providerToProto(created)}), nil
 }
 
-// GetIdentityProvider returns one provider's configuration.
 func (h *Handlers) GetIdentityProvider(ctx context.Context, req *connect.Request[cadestrov1.GetIdentityProviderRequest]) (*connect.Response[cadestrov1.GetIdentityProviderResponse], error) {
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
@@ -148,7 +132,6 @@ func (h *Handlers) GetIdentityProvider(ctx context.Context, req *connect.Request
 	return connect.NewResponse(&cadestrov1.GetIdentityProviderResponse{Provider: h.providerToProto(row)}), nil
 }
 
-// ListIdentityProviders pages the configured providers.
 func (h *Handlers) ListIdentityProviders(ctx context.Context, req *connect.Request[cadestrov1.ListIdentityProvidersRequest]) (*connect.Response[cadestrov1.ListIdentityProvidersResponse], error) {
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
@@ -175,12 +158,6 @@ func (h *Handlers) ListIdentityProviders(ctx context.Context, req *connect.Reque
 	return connect.NewResponse(resp), nil
 }
 
-// UpdateIdentityProvider rewrites a provider's configuration.
-//
-// An empty client_secret means "keep the current one": the field is
-// write-only, so a client that never received it cannot echo it back,
-// and treating empty as "clear it" would silently break every login
-// through that provider.
 func (h *Handlers) UpdateIdentityProvider(ctx context.Context, req *connect.Request[cadestrov1.UpdateIdentityProviderRequest]) (*connect.Response[cadestrov1.UpdateIdentityProviderResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
@@ -275,11 +252,6 @@ func (h *Handlers) UpdateIdentityProvider(ctx context.Context, req *connect.Requ
 	return connect.NewResponse(&cadestrov1.UpdateIdentityProviderResponse{Provider: h.providerToProto(updated)}), nil
 }
 
-// validateProviderClientID is the whole client rule that survives the removal
-// of the operator CLI: a provider is an OIDC browser client, so it needs a
-// client_id. There is no second client mode left for a provider to be usable
-// without one, and a client_secret with no client_id is refused by the same
-// check — the secret would belong to nothing.
 func validateProviderClientID(ctx context.Context, clientID string) error {
 	if clientID == "" {
 		return rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument,
@@ -288,10 +260,6 @@ func validateProviderClientID(ctx context.Context, clientID string) error {
 	return nil
 }
 
-// DeleteIdentityProvider retires a provider.
-//
-// The row is retired rather than erased: identity links point at it and
-// must stay resolvable as evidence of who was once bound where.
 func (h *Handlers) DeleteIdentityProvider(ctx context.Context, req *connect.Request[cadestrov1.DeleteIdentityProviderRequest]) (*connect.Response[cadestrov1.DeleteIdentityProviderResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
@@ -338,8 +306,6 @@ func (h *Handlers) DeleteIdentityProvider(ctx context.Context, req *connect.Requ
 	return connect.NewResponse(&cadestrov1.DeleteIdentityProviderResponse{}), nil
 }
 
-// EnableSCIM turns on directory provisioning and mints the bearer token
-// the directory will present.
 func (h *Handlers) EnableSCIM(ctx context.Context, req *connect.Request[cadestrov1.EnableSCIMRequest]) (*connect.Response[cadestrov1.EnableSCIMResponse], error) {
 	token, provider, err := h.setSCIM(ctx, req, req.Msg.GetId().GetValue(), PermEnableSCIM, true, "ENABLE_SCIM")
 	if err != nil {
@@ -351,8 +317,6 @@ func (h *Handlers) EnableSCIM(ctx context.Context, req *connect.Request[cadestro
 	}), nil
 }
 
-// RotateSCIMToken replaces the directory's bearer token. The previous
-// token stops working the moment this commits.
 func (h *Handlers) RotateSCIMToken(ctx context.Context, req *connect.Request[cadestrov1.RotateSCIMTokenRequest]) (*connect.Response[cadestrov1.RotateSCIMTokenResponse], error) {
 	provider, err := h.store.GetIdentityProvider(ctx, req.Msg.GetId().GetValue())
 	if err == nil && !provider.ScimEnabled {
@@ -365,9 +329,6 @@ func (h *Handlers) RotateSCIMToken(ctx context.Context, req *connect.Request[cad
 	return connect.NewResponse(&cadestrov1.RotateSCIMTokenResponse{Token: token}), nil
 }
 
-// DisableSCIM turns directory provisioning off and clears the stored
-// token digest, so a token issued earlier cannot be replayed if SCIM is
-// later re-enabled.
 func (h *Handlers) DisableSCIM(ctx context.Context, req *connect.Request[cadestrov1.DisableSCIMRequest]) (*connect.Response[cadestrov1.DisableSCIMResponse], error) {
 	if _, _, err := h.setSCIM(ctx, req, req.Msg.GetId().GetValue(), PermDisableSCIM, false, "DISABLE_SCIM"); err != nil {
 		return nil, err
@@ -375,9 +336,6 @@ func (h *Handlers) DisableSCIM(ctx context.Context, req *connect.Request[cadestr
 	return connect.NewResponse(&cadestrov1.DisableSCIMResponse{}), nil
 }
 
-// setSCIM is the shared body of enable, rotate and disable. Only the
-// digest of a minted token is stored; the plaintext is returned to the
-// caller exactly once and never recoverable afterwards.
 func (h *Handlers) setSCIM(
 	ctx context.Context,
 	req connect.AnyRequest,
@@ -433,9 +391,7 @@ func (h *Handlers) setSCIM(
 				AfterFlag:     &enable,
 			}
 			if tokenHash != "" {
-				// The digest IS the stored form, so recording it proves
-				// which token was issued without the audit log holding
-				// anything the directory could authenticate with.
+
 				effect.EvidenceKind = "scim_token_sha256"
 				effect.EvidenceFingerprint = tokenHash
 			}
@@ -451,8 +407,6 @@ func (h *Handlers) setSCIM(
 	return token, updated, nil
 }
 
-// newSCIMToken mints a bearer token from the cryptographic random
-// source.
 func newSCIMToken() (string, error) {
 	raw := make([]byte, scimTokenBytes)
 	if _, err := io.ReadFull(rand.Reader, raw); err != nil {
@@ -461,9 +415,6 @@ func newSCIMToken() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(raw), nil
 }
 
-// nonNilStrings turns a nil slice into an empty one. Every text[]
-// column in this schema is NOT NULL, and a nil slice encodes as SQL
-// NULL rather than as an empty array.
 func nonNilStrings(v []string) []string {
 	if v == nil {
 		return []string{}
@@ -471,9 +422,6 @@ func nonNilStrings(v []string) []string {
 	return v
 }
 
-// encodeGroupMapping serialises the external-group map for storage. A
-// nil map stores an empty object rather than SQL NULL, so every read
-// path sees the same shape.
 func encodeGroupMapping(ctx context.Context, mapping map[string]string) ([]byte, error) {
 	if mapping == nil {
 		mapping = map[string]string{}

@@ -1,4 +1,3 @@
-// Package mtls extracts and validates agent identities from mutual TLS.
 package mtls
 
 import (
@@ -7,8 +6,6 @@ import (
 	"net/http"
 )
 
-// DeviceIDFromRequest extracts the device ID from the client certificate CN.
-// The certificate CN should be set to the device ID during registration.
 func DeviceIDFromRequest(r *http.Request) (string, error) {
 	if r.TLS == nil {
 		return "", errors.New("no TLS connection")
@@ -28,7 +25,6 @@ func DeviceIDFromRequest(r *http.Request) (string, error) {
 	return deviceID, nil
 }
 
-// DeviceIDFromTLS extracts the device ID from a TLS connection state.
 func DeviceIDFromTLS(state *tls.ConnectionState) (string, error) {
 	if state == nil {
 		return "", errors.New("no TLS connection state")

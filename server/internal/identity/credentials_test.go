@@ -1,15 +1,5 @@
 package identity_test
 
-// The credential and authorization matrix.
-//
-// Every state-changing identity procedure is driven through the REAL
-// interceptor chain with each kind of bad credential, and with a
-// well-formed credential belonging to an actor who holds nothing. The
-// procedure set is discovered from the package rather than typed out
-// here, and a procedure with no case below fails the exhaustiveness
-// check — so a new mutation cannot be added without its rejection paths
-// being written.
-
 import (
 	"testing"
 
@@ -22,19 +12,8 @@ import (
 	"github.com/manchtools/cadestro/server/internal/identity"
 )
 
-// call issues one procedure with the supplied bearer token and returns
-// the error. Every message is otherwise VALID: these cases probe
-// credentials and authority, so a validation failure would mask the
-// answer.
 type call func(f *fixture, token string) error
 
-// authenticatedMutations maps each state-changing procedure that
-// requires a session to a valid request for it.
-//
-// The public session procedures (RefreshToken, Logout) and the public
-// SSO procedures are deliberately absent: they carry no session token
-// by design, and their rejection paths are tested where their own
-// credential lives.
 var authenticatedMutations = map[string]call{
 	cadestrov1connect.ControlServiceCreateIdentityProviderProcedure: func(f *fixture, token string) error {
 		_, err := f.client.CreateIdentityProvider(f.ctx(), authed(&cadestrov1.CreateIdentityProviderRequest{
@@ -216,17 +195,6 @@ var authenticatedMutations = map[string]call{
 	},
 }
 
-// publicMutations are the state-changing procedures that deliberately
-// carry no session token: the SSO handshake and the session lifecycle a
-// client must be able to drive when its access token is gone.
-//
-// This is an EXEMPTION list — a name here is skipped by the mutation matrix —
-// so it must never outlive its procedure. The stale sweep in
-// TestMutationMatrix_CoversEveryMutationProcedure fails on an entry that is no
-// longer a mounted mutation, which is why the CLI login pair had to leave this
-// map when their RPCs were deleted rather than being left behind as inert
-// entries. Shrinking it narrows nothing: every remaining mutation is still
-// either matched here or carries a credential/authorization case.
 var publicMutations = map[string]bool{
 	cadestrov1connect.ControlServiceRefreshTokenProcedure:   true,
 	cadestrov1connect.ControlServiceLogoutProcedure:         true,
@@ -234,14 +202,8 @@ var publicMutations = map[string]bool{
 	cadestrov1connect.ControlServiceSSOCallbackProcedure:    true,
 }
 
-// testSSHKey is a real, parsable ed25519 authorized-key line. The
-// handler parses what it is given, so a placeholder string would test
-// the rejection path by accident.
 const testSSHKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB7vTk4h/lPJHZ0k5R0VpZ5cV5hFB0j2m3wKuHbLQ9pR test@example"
 
-// Every mutation procedure is either public by design or covered by the
-// matrix. A new one is uncovered until someone classifies it, which is
-// what stops the matrix from quietly shrinking.
 func TestMutationMatrix_CoversEveryMutationProcedure(t *testing.T) {
 	t.Parallel()
 	procedures := identity.MutationProcedures()
@@ -277,11 +239,6 @@ func TestMutationMatrix_CoversEveryMutationProcedure(t *testing.T) {
 	}
 	assert.Empty(t, stale, "the matrix names procedures that are not mutations: %v", stale)
 
-	// The CLI login pair was deleted from the contract. Neither may reappear
-	// as an exemption: publicMutations excuses a procedure from needing a
-	// credential case at all, so an entry naming a procedure nobody mounts is
-	// the shape that would let a resurrected unauthenticated mutation ship
-	// pre-excused.
 	for _, retired := range []string{
 		"/cadestro.v1.ControlService/BeginCLILogin",
 		"/cadestro.v1.ControlService/ExchangeCLISession",
@@ -293,10 +250,6 @@ func TestMutationMatrix_CoversEveryMutationProcedure(t *testing.T) {
 	}
 }
 
-// Every mounted procedure is classified as a mutation, ordinary read or
-// sensitive read, and
-// every classified procedure is mounted. Without this the audit
-// coverage tests could silently skip a procedure.
 func TestProcedureClassification_MatchesTheMountedSurface(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -331,8 +284,6 @@ func TestProcedureClassification_MatchesTheMountedSurface(t *testing.T) {
 	}
 }
 
-// A request with no credential at all is refused before the handler
-// runs.
 func TestMutations_RejectMissingCredential(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -344,7 +295,6 @@ func TestMutations_RejectMissingCredential(t *testing.T) {
 	}
 }
 
-// A token this server signed, for a real subject, but expired.
 func TestMutations_RejectExpiredCredential(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -359,9 +309,6 @@ func TestMutations_RejectExpiredCredential(t *testing.T) {
 	}
 }
 
-// A token whose CLAIMS grant everything but whose signature was made
-// with another key. This is the forgery case that a naive "parse the
-// claims" implementation would admit.
 func TestMutations_RejectForgedSignature(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -377,9 +324,6 @@ func TestMutations_RejectForgedSignature(t *testing.T) {
 	}
 }
 
-// A refresh token presented where an access token belongs. The
-// signature verifies, so only the token-type check stands between the
-// caller and a session they were not given.
 func TestMutations_RejectRefreshTokenUsedAsAccessToken(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -394,19 +338,10 @@ func TestMutations_RejectRefreshTokenUsedAsAccessToken(t *testing.T) {
 	}
 }
 
-// A real, current token for a real subject who holds nothing relevant.
-//
-// The answer is PermissionDenied everywhere: this caller holds no tier
-// of the permission at all, so the request never reaches the handler
-// that would resolve a target. The narrower rule — a caller who HOLDS
-// the permission but is confined away from the target sees not-found —
-// is a different question and is tested against a confined caller in
-// TestScopedCaller_SeesNotFoundForSubjectOutsideScope.
 func TestMutations_RejectUnauthorizedActor(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	// A subject with a role that carries exactly one unrelated
-	// permission, so they authenticate and pass nothing else.
+
 	powerless := f.seedActor(grant{Permissions: []string{"GetCurrentUser"}})
 
 	for procedure, do := range authenticatedMutations {
@@ -417,10 +352,6 @@ func TestMutations_RejectUnauthorizedActor(t *testing.T) {
 	}
 }
 
-// The interceptor refuses the request before the handler can run, so no
-// mutation is committed on any rejection path. Counting audit
-// operations is the strongest available proxy: an admitted mutation
-// cannot commit without one.
 func TestMutations_RejectedRequestsCommitNoMutation(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -431,8 +362,6 @@ func TestMutations_RejectedRequestsCommitNoMutation(t *testing.T) {
 		require.Error(t, do(f, forged))
 	}
 
-	// Every recorded operation must be a rejected authentication: no
-	// mutation, no background write, nothing else.
 	rows, err := f.raw.Query(f.ctx(), `SELECT DISTINCT operation_class FROM audit_operations`)
 	require.NoError(t, err)
 	defer rows.Close()

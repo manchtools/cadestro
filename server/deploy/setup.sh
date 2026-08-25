@@ -16,17 +16,17 @@ require_command() {
     command -v "$1" >/dev/null 2>&1 || fail "$1 is required"
 }
 
-# .env is the Compose environment file, which Compose reads as KEY=VALUE lines
-# and never executes. Neither does this: the file is parsed, not sourced, so a
-# value is data even when it is shaped like a command. Sourcing it would hand
-# every line to bash with whatever privileges setup.sh was started with, and a
-# value carrying a command substitution would run before anything here could
-# judge it.
+
+
+
+
+
+
 load_environment() {
     local file="$SCRIPT_DIR/.env" line trimmed name value number=0
     [[ -f "$file" ]] || fail "copy .env.example to .env and set the two domains and ACME email"
-    # `|| [[ -n "$line" ]]` so a final line without a trailing newline is read
-    # rather than silently dropped.
+
+
     while IFS= read -r line || [[ -n "$line" ]]; do
         number=$((number + 1))
         trimmed="${line#"${line%%[![:space:]]*}"}"
@@ -35,16 +35,16 @@ load_environment() {
         [[ "$line" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]] \
             || fail "$file line $number is not a KEY=VALUE assignment: $line"
         name="${line%%=*}"
-        # Everything after the first `=`, taken literally: no expansion, no
-        # substitution, no unescaping.
+
+
         value="${line#*=}"
-        # Compose strips a surrounding quote pair and bash applies its own
-        # quoting rules, so a quoted value would mean two different things
-        # inside one deployment. Refused rather than guessed at.
+
+
+
         [[ "$value" != [\"\']* ]] \
             || fail "$file line $number quotes its value; write $name=value without quotes"
-        # Exported, so the rest of this script and every child process see the
-        # same pairs `set -a` used to produce.
+
+
         export "$name=$value"
     done < "$file"
 }
@@ -85,15 +85,15 @@ validate_key_pair() {
 }
 
 # docref: begin generated-material
-# Which ACME challenge Traefik runs is a per-deployment choice, so traefik.yml
-# names none and this renders the chosen one into config/traefik-acme.env as an
-# environment overlay. config/traefik-dns.env holds the provider credentials,
-# which Traefik reads for itself: nothing here ever reads a value out of it,
-# only whether it exists, is non-empty, and is unreadable to other accounts.
-#
-# It runs before any key material is generated, so an operator who mistyped the
-# provider or left the credentials world-readable gets the message and nothing
-# else.
+
+
+
+
+
+
+
+
+
 ensure_traefik_acme_config() {
     local credentials="$CONFIG_DIR/traefik-dns.env"
     if [[ "$ACME_CHALLENGE" == dns01 ]]; then
@@ -107,27 +107,27 @@ ensure_traefik_acme_config() {
             "with a Cloud Console API token (HETZNER_API_KEY selects the legacy API shut down in May 2026).")"
         [[ -s "$credentials" ]] \
             || fail "$credentials is empty; write the ACME_DNS_PROVIDER credentials into it, one KEY=VALUE per line"
-        # Refused, not repaired: a provider credential every local account could
-        # read is one to rotate, and a silent chmod would hide that.
+
+
         [[ "$(stat -c '%a' "$credentials")" =~ ^[0-6]00$ ]] \
             || fail "$credentials must not be group/world accessible; chmod 600 it and rotate the credentials it holds"
-        # The resolvers are pinned to public DNS on purpose. A homelab's own
-        # resolver answers the propagation check from the internal view of the
-        # zone, where the challenge record does not exist, and the order then
-        # never completes. The delay covers the gap the pinned resolvers cannot
-        # see: the ACME CA validates from several vantage points, and a record
-        # one resolver already serves can still be missing at the DNS
-        # operator's other anycast nodes, which fails secondary validation
-        # with NXDOMAIN and negative-caches the miss.
+
+
+
+
+
+
+
+
         cat > "$CONFIG_DIR/traefik-acme.env" <<EOF
 TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_DNSCHALLENGE_PROVIDER=${ACME_DNS_PROVIDER}
 TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_DNSCHALLENGE_RESOLVERS=1.1.1.1:53,9.9.9.9:53
 TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_DNSCHALLENGE_PROPAGATION_DELAYBEFORECHECKS=60s
 EOF
     else
-        # compose.yml references the credentials file unconditionally and
-        # Compose refuses a configuration whose env_file is missing, so an
-        # http01 deployment gets an empty one rather than no file at all.
+
+
+
         [[ -f "$credentials" ]] || : > "$credentials"
         chmod 600 "$credentials"
         cat > "$CONFIG_DIR/traefik-acme.env" <<'EOF'
@@ -174,12 +174,12 @@ ensure_certificate() {
     openssl verify -CAfile "$CERTS_DIR/ca.crt" "$certificate" >/dev/null
 }
 
-# `openssl x509 -checkhost` cannot be judged by its exit status: OpenSSL 3.0
-# (Ubuntu 24.04, Debian 12) exits 0 even when the name does NOT match and
-# reports the verdict only on stdout, while 3.2+ exits non-zero. Reading the
-# exit code therefore makes this check silently inert on the most common LTS
-# distributions — a pass that means "not checked". The message text is stable
-# across versions, so match it instead.
+
+
+
+
+
+
 certificate_covers_host() {
     local certificate="$1" host="$2"
     [[ "$(openssl x509 -in "$certificate" -checkhost "$host" -noout 2>/dev/null)" \
@@ -238,15 +238,15 @@ CADESTRO_PUBLIC_TLS_KEY_FILE=/run/certs/control.key
 CADESTRO_ENCRYPTION_KEY_FILE=/run/secrets/encryption.key
 CADESTRO_SESSION_SIGNING_KEY_FILE=/run/secrets/session-signing.pem
 EOF
-    # The browser gets a working UI without configuring anything, because the
-    # UI is served on the same origin as the API it calls: Traefik hands
-    # CONTROL_DOMAIN to the web container and keeps control's own paths for
-    # control. The origin is still written down rather than inferred in the
-    # browser, so an operator who fronts the UI with a different hostname
-    # changes one line here instead of re-teaching every browser through
-    # /setup. It is the origin control already publishes its single-use setup
-    # URL on: bootstrap-admin prints <CADESTRO_PUBLIC_BASE_URL>/setup#…, and
-    # /setup is a page only the UI serves.
+
+
+
+
+
+
+
+
+
     cat > "$CONFIG_DIR/web.env" <<EOF
 PUBLIC_CONTROL_URL=https://${CONTROL_DOMAIN}
 EOF
@@ -254,9 +254,9 @@ EOF
 
 validate_permissions() {
     local private
-    # Every rendered environment file, not a named one: control.env, the ACME
-    # overlay, and the operator's provider credentials all carry material no
-    # other account may read.
+
+
+
     for private in "$CERTS_DIR/ca.key" "$CERTS_DIR/control.key" "$SECRETS_DIR"/* "$CONFIG_DIR"/*.env; do
         [[ "$(stat -c '%a' "$private")" =~ ^[0-6]00$ ]] \
             || fail "$private must not be group/world accessible"
@@ -280,7 +280,7 @@ main() {
     touch "$DATA_DIR/traefik/acme.json"
     chmod 600 "$DATA_DIR/traefik/acme.json"
 
-    # Validate ACME configuration before generating key material.
+
     ensure_traefik_acme_config
 
     ensure_ca

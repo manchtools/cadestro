@@ -1,6 +1,3 @@
-// Package jobs owns durable SQLite job scheduling state. Claim leases and
-// worker ownership are database conditions; process-local workers are only a
-// bounded execution mechanism and may disappear at any point.
 package jobs
 
 import (
@@ -41,7 +38,6 @@ var (
 	resultCodePattern = regexp.MustCompile(`^[A-Za-z0-9_.-]{1,64}$`)
 )
 
-// InsertParams is one complete scheduled job.
 type InsertParams struct {
 	OperationID string
 	Kind        string
@@ -51,8 +47,6 @@ type InsertParams struct {
 	DedupeKey   string
 }
 
-// InsertInTx commits a job through the operation that scheduled it. The
-// process-local runner may be notified only after that transaction commits.
 func InsertInTx(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder, p InsertParams) (string, error) {
 	if ctx == nil || tx == nil || rec == nil || !validID(p.OperationID) || !kindPattern.MatchString(p.Kind) ||
 		p.DueAt.IsZero() || p.MaxAttempts < 1 || p.MaxAttempts > maxAttempts || !validPayload(p.Payload) {
@@ -95,7 +89,6 @@ func validID(id string) bool {
 	return err == nil
 }
 
-// Config supplies the job state clock and lease policy.
 type Config struct {
 	Store         *store.Store
 	Now           func() time.Time
@@ -103,7 +96,6 @@ type Config struct {
 	RetryDelay    time.Duration
 }
 
-// Service advances job leases in audited transactions.
 type Service struct {
 	store         *store.Store
 	now           func() time.Time
@@ -111,7 +103,6 @@ type Service struct {
 	retryDelay    time.Duration
 }
 
-// New constructs a job state service.
 func New(cfg Config) *Service {
 	if cfg.Store == nil {
 		panic("jobs: store is required")
@@ -128,8 +119,6 @@ func New(cfg Config) *Service {
 	}
 }
 
-// Claim leases one due job to workerID. A live lease is a successful no-op;
-// an expired lease can be reclaimed by a new worker.
 func (s *Service) Claim(ctx context.Context, jobID, workerID string) (store.JobRow, bool, error) {
 	if ctx == nil || !validID(jobID) || !validID(workerID) {
 		return store.JobRow{}, false, ErrInvalidInput
@@ -190,8 +179,6 @@ func claimable(row store.JobRow, now time.Time) bool {
 	}
 }
 
-// Release hands the current worker's claim back after the configured retry
-// delay. A stale worker cannot release a claim another worker reclaimed.
 func (s *Service) Release(ctx context.Context, jobID, workerID, resultCode string) (bool, error) {
 	if ctx == nil || !validID(jobID) || !validID(workerID) || !resultCodePattern.MatchString(resultCode) {
 		return false, ErrInvalidInput
@@ -247,8 +234,6 @@ func (s *Service) resolveReleaseConflict(ctx context.Context, jobID, workerID, r
 	return false, ErrInvalidTransition
 }
 
-// Finish records the current worker's terminal result. Exact replays are
-// absorbed; a stale worker cannot finish another worker's reclaimed lease.
 func (s *Service) Finish(ctx context.Context, jobID, workerID, state, resultCode string) (bool, error) {
 	if ctx == nil || !validID(jobID) || !validID(workerID) || !terminal(state) || !resultCodePattern.MatchString(resultCode) {
 		return false, ErrInvalidInput
@@ -292,8 +277,6 @@ func (s *Service) Finish(ctx context.Context, jobID, workerID, state, resultCode
 	return s.resolveFinishConflict(ctx, jobID, workerID, state, resultCode)
 }
 
-// Reschedule returns a successfully completed recurring job to PENDING with a
-// fresh retry budget. A stale worker cannot move a claim it no longer owns.
 func (s *Service) Reschedule(ctx context.Context, jobID, workerID string, dueAt time.Time) (bool, error) {
 	if ctx == nil || !validID(jobID) || !validID(workerID) || dueAt.IsZero() {
 		return false, ErrInvalidInput

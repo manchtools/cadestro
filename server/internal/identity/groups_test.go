@@ -272,15 +272,6 @@ func TestEvaluateDynamicUserGroup_AllowsRemovingFinalAdminMembership(t *testing.
 	assert.Len(t, f.operationsFor(cadestrov1connect.ControlServiceEvaluateDynamicUserGroupProcedure), 1)
 }
 
-// Converting a curated user group into a rule-driven one is supported in both
-// directions (target design §5.1), with one asymmetry that is deliberate:
-// converting TO a rule clears the hand-picked membership, because the rule
-// becomes the single source of it, while materializing back to static keeps
-// what the rule last produced.
-//
-// A SCIM-managed group is not the operator's to convert: its membership belongs
-// to the directory, and the refusal that used to fall out of "static groups
-// cannot be converted" has to be stated on its own now that conversion works.
 func TestUpdateUserGroupQuery_ConvertsCuratedGroupAndRefusesSCIMManaged(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -305,8 +296,6 @@ func TestUpdateUserGroupQuery_ConvertsCuratedGroupAndRefusesSCIMManaged(t *testi
 	require.NoError(t, f.raw.QueryRow(f.ctx(),
 		`SELECT session_version FROM users WHERE id = $1`, member.ID).Scan(&versionBeforeConversion))
 
-	// An invalid query is refused before anything is written, so a rejected
-	// conversion leaves a curated group exactly as it was.
 	_, err = f.client.UpdateUserGroupQuery(f.ctx(), authed(&cadestrov1.UpdateUserGroupQueryRequest{
 		Id: &cadestrov1.UserGroupId{Value: groupID}, IsDynamic: true, DynamicQuery: "(",
 	}, operator.Token))
@@ -340,8 +329,6 @@ func TestUpdateUserGroupQuery_ConvertsCuratedGroupAndRefusesSCIMManaged(t *testi
 	require.NotNil(t, invalidation.AfterCount)
 	assert.Equal(t, int64(1), *invalidation.AfterCount)
 
-	// A SCIM-managed group stays the directory's. The web hides its Rule tab, but
-	// this RPC is reachable on its own and must fail closed.
 	managed, err := f.client.CreateUserGroup(f.ctx(), authed(&cadestrov1.CreateUserGroupRequest{
 		Name: "Directory owned",
 	}, operator.Token))

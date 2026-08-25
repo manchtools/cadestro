@@ -1,6 +1,6 @@
--- The binding between one external subject at one provider and one
--- local user. Both directions are uniquely indexed, so a second link
--- cannot be used to take over an existing account.
+
+
+
 
 -- name: InsertIdentityLink :one
 INSERT INTO identity_links (id, user_id, provider_id, external_id, external_email, external_name, linked_at, last_login_at)
@@ -14,9 +14,9 @@ SELECT * FROM identity_links WHERE id = ?;
 SELECT * FROM identity_links WHERE provider_id = ? AND external_id = ?;
 
 -- name: GetIdentityLinkByProviderAndUser :one
--- The ownership question: is this subject bound to this provider? No
--- row is the answer a provider gets for every subject it did not
--- provision, which is what keeps one directory out of another's users.
+
+
+
 SELECT * FROM identity_links WHERE provider_id = ? AND user_id = ?;
 
 -- name: UpdateIdentityLinkExternalIdentity :one

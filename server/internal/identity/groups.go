@@ -26,7 +26,6 @@ var (
 	errUserGroupMemberAbsent = errors.New("user group member not found")
 )
 
-// CreateUserGroup creates one static or dynamic group in direct state.
 func (h *Handlers) CreateUserGroup(ctx context.Context, req *connect.Request[cadestrov1.CreateUserGroupRequest]) (*connect.Response[cadestrov1.CreateUserGroupResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
@@ -72,7 +71,6 @@ func (h *Handlers) CreateUserGroup(ctx context.Context, req *connect.Request[cad
 	return connect.NewResponse(&cadestrov1.CreateUserGroupResponse{Group: group}), nil
 }
 
-// GetUserGroup returns one visible group and its live members.
 func (h *Handlers) GetUserGroup(ctx context.Context, req *connect.Request[cadestrov1.GetUserGroupRequest]) (*connect.Response[cadestrov1.GetUserGroupResponse], error) {
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
@@ -97,7 +95,6 @@ func (h *Handlers) GetUserGroup(ctx context.Context, req *connect.Request[cadest
 	return connect.NewResponse(&cadestrov1.GetUserGroupResponse{Group: group, Members: members}), nil
 }
 
-// ListUserGroups returns one scoped keyset page.
 func (h *Handlers) ListUserGroups(ctx context.Context, req *connect.Request[cadestrov1.ListUserGroupsRequest]) (*connect.Response[cadestrov1.ListUserGroupsResponse], error) {
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
@@ -143,7 +140,6 @@ func (h *Handlers) ListUserGroups(ctx context.Context, req *connect.Request[cade
 	return connect.NewResponse(resp), nil
 }
 
-// UpdateUserGroup replaces the editable group metadata.
 func (h *Handlers) UpdateUserGroup(ctx context.Context, req *connect.Request[cadestrov1.UpdateUserGroupRequest]) (*connect.Response[cadestrov1.UpdateUserGroupResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
@@ -179,7 +175,6 @@ func (h *Handlers) UpdateUserGroup(ctx context.Context, req *connect.Request[cad
 	return connect.NewResponse(&cadestrov1.UpdateUserGroupResponse{Group: group}), nil
 }
 
-// SetUserGroupMaintenanceWindow replaces one validated dispatch window.
 func (h *Handlers) SetUserGroupMaintenanceWindow(ctx context.Context, req *connect.Request[cadestrov1.SetUserGroupMaintenanceWindowRequest]) (*connect.Response[cadestrov1.UpdateUserGroupResponse], error) {
 	if err := maintenance.Validate(req.Msg.MaintenanceWindow); err != nil {
 		return nil, rpcError(ctx, ErrValidationFailed, connect.CodeInvalidArgument, "invalid maintenance window")
@@ -222,7 +217,6 @@ func (h *Handlers) SetUserGroupMaintenanceWindow(ctx context.Context, req *conne
 	return connect.NewResponse(&cadestrov1.UpdateUserGroupResponse{Group: group}), nil
 }
 
-// DeleteUserGroup retires a group and removes its ordinary dependent state.
 func (h *Handlers) DeleteUserGroup(ctx context.Context, req *connect.Request[cadestrov1.DeleteUserGroupRequest]) (*connect.Response[cadestrov1.DeleteUserGroupResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
@@ -296,7 +290,6 @@ func (h *Handlers) DeleteUserGroup(ctx context.Context, req *connect.Request[cad
 	return connect.NewResponse(&cadestrov1.DeleteUserGroupResponse{}), nil
 }
 
-// AddUserToGroup adds each requested user once to a static group.
 func (h *Handlers) AddUserToGroup(ctx context.Context, req *connect.Request[cadestrov1.AddUserToGroupRequest]) (*connect.Response[cadestrov1.AddUserToGroupResponse], error) {
 	userIDs := make([]string, 0, len(req.Msg.GetUserIds()))
 	for _, id := range req.Msg.GetUserIds() {
@@ -433,7 +426,6 @@ func (h *Handlers) AddUserToGroup(ctx context.Context, req *connect.Request[cade
 	return connect.NewResponse(&cadestrov1.AddUserToGroupResponse{}), nil
 }
 
-// RemoveUserFromGroup removes one static membership.
 func (h *Handlers) RemoveUserFromGroup(ctx context.Context, req *connect.Request[cadestrov1.RemoveUserFromGroupRequest]) (*connect.Response[cadestrov1.RemoveUserFromGroupResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
@@ -500,7 +492,6 @@ func (h *Handlers) RemoveUserFromGroup(ctx context.Context, req *connect.Request
 	return connect.NewResponse(&cadestrov1.RemoveUserFromGroupResponse{}), nil
 }
 
-// ListUserGroupsForUser returns visible groups containing one subject.
 func (h *Handlers) ListUserGroupsForUser(ctx context.Context, req *connect.Request[cadestrov1.ListUserGroupsForUserRequest]) (*connect.Response[cadestrov1.ListUserGroupsForUserResponse], error) {
 	if _, err := h.resolveUserTarget(ctx, PermListUserGroupsForUser, req.Msg.GetUserId().GetValue()); err != nil {
 		return nil, err
@@ -523,10 +514,6 @@ func (h *Handlers) ListUserGroupsForUser(ctx context.Context, req *connect.Reque
 	return connect.NewResponse(resp), nil
 }
 
-// UpdateUserGroupQuery sets the membership mode and its query in either
-// direction: a curated group becomes rule-driven (which clears the curated
-// members), and a rule-driven group is materialized as static (which keeps the
-// membership the rule produced). SCIM-managed groups are refused.
 func (h *Handlers) UpdateUserGroupQuery(ctx context.Context, req *connect.Request[cadestrov1.UpdateUserGroupQueryRequest]) (*connect.Response[cadestrov1.UpdateUserGroupQueryResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {
@@ -583,11 +570,7 @@ func (h *Handlers) UpdateUserGroupQuery(ctx context.Context, req *connect.Reques
 						rec.RefreshSearch("user", userID)
 					}
 				}
-				// Converting hands membership to the rule, so the hand-picked rows go
-				// in the SAME transaction that sets the mode — otherwise the group
-				// reports members its own rule does not select until someone
-				// evaluates it. Materializing back to static keeps its rows on
-				// purpose: it freezes the membership the rule produced.
+
 				if _, err := tx.DeleteUserGroupMembers(ctx, req.Msg.GetId().GetValue()); err != nil {
 					return err
 				}
@@ -621,7 +604,6 @@ func (h *Handlers) UpdateUserGroupQuery(ctx context.Context, req *connect.Reques
 	return connect.NewResponse(&cadestrov1.UpdateUserGroupQueryResponse{Group: group}), nil
 }
 
-// ValidateUserGroupQuery validates a query and previews its current match count.
 func (h *Handlers) ValidateUserGroupQuery(ctx context.Context, req *connect.Request[cadestrov1.ValidateUserGroupQueryRequest]) (*connect.Response[cadestrov1.ValidateUserGroupQueryResponse], error) {
 	if _, err := h.requireActor(ctx); err != nil {
 		return nil, err
@@ -641,7 +623,6 @@ func (h *Handlers) ValidateUserGroupQuery(ctx context.Context, req *connect.Requ
 	}), nil
 }
 
-// EvaluateDynamicUserGroup reconciles one dynamic group's membership.
 func (h *Handlers) EvaluateDynamicUserGroup(ctx context.Context, req *connect.Request[cadestrov1.EvaluateDynamicUserGroupRequest]) (*connect.Response[cadestrov1.EvaluateDynamicUserGroupResponse], error) {
 	actor, err := h.requireActor(ctx)
 	if err != nil {

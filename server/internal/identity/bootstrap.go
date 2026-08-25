@@ -18,50 +18,22 @@ import (
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
-// The host-authorized bootstrap-admin path.
-//
-// Human identity is OIDC only. That leaves one problem: a fresh
-// deployment has no identity provider configured and therefore no way
-// for anyone to sign in and configure one. The bootstrap token is the
-// single exception, and it is deliberately the narrowest one that can
-// work:
-//
-//   - it is minted by a command run ON THE HOST, so possession of the
-//     host is the authorization;
-//   - it is single-use, enforced by a conditional write rather than by
-//     a read-then-write the second caller could interleave with;
-//   - it is short-lived;
-//   - minting a new one retires every outstanding one, so at most one
-//     is ever presentable; and
-//   - it authenticates a PERMANENTLY RESERVED principal that is not a
-//     user, owns nothing, and can therefore never satisfy `:self`.
-
 const (
-	// BootstrapTokenBytes is the entropy of the printed token.
 	BootstrapTokenBytes = 32
-	// DefaultBootstrapTokenTTL bounds how long an unspent token stays
-	// presentable. Long enough for an operator to paste it into a
-	// browser, short enough that a token left in a terminal scrollback
-	// is not a standing credential.
+
 	DefaultBootstrapTokenTTL = 15 * time.Minute
 )
 
-// BootstrapToken is what the host command prints. The plaintext value
-// exists only in this struct and in the operator's terminal; the
-// database holds its digest.
 type BootstrapToken struct {
 	Token     string
 	URL       string
 	ExpiresAt time.Time
 }
 
-// BootstrapStore is the database surface the bootstrap path needs.
-// Satisfied by *store.Store.
 type BootstrapStore interface {
 	WithAudit(ctx context.Context, op store.AuditOperation, mutate func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error) (store.AuditRecord, error)
 }
 
-// Bootstrapper mints and consumes host-authorized setup tokens.
 type Bootstrapper struct {
 	store   BootstrapStore
 	baseURL string
@@ -69,7 +41,6 @@ type Bootstrapper struct {
 	now     func() time.Time
 }
 
-// NewBootstrapper builds the bootstrap-admin mechanism.
 func NewBootstrapper(st BootstrapStore, baseURL string, ttl time.Duration, now func() time.Time) *Bootstrapper {
 	if ttl <= 0 {
 		ttl = DefaultBootstrapTokenTTL
@@ -80,19 +51,8 @@ func NewBootstrapper(st BootstrapStore, baseURL string, ttl time.Duration, now f
 	return &Bootstrapper{store: st, baseURL: baseURL, ttl: ttl, now: now}
 }
 
-// ErrBootstrapTokenRejected is what a token that cannot be spent
-// produces. It is one error for every reason — unknown, expired,
-// already spent, retired — because the presenter is unauthenticated and
-// the distinction is not theirs to learn.
 var ErrBootstrapTokenRejected = errors.New("identity: bootstrap token rejected")
 
-// Issue mints a token, retiring any outstanding one in the same
-// transaction.
-//
-// The write is audited as a background writer with no actor id: the
-// authorization is possession of the host, and there is no subject to
-// attribute it to. The token's digest is the evidence; the token itself
-// appears nowhere but the return value.
 func (b *Bootstrapper) Issue(ctx context.Context) (BootstrapToken, error) {
 	raw := make([]byte, BootstrapTokenBytes)
 	if _, err := io.ReadFull(rand.Reader, raw); err != nil {
@@ -158,11 +118,6 @@ func (b *Bootstrapper) Issue(ctx context.Context) (BootstrapToken, error) {
 	}, nil
 }
 
-// AuthenticateBootstrapToken spends a token and returns the reserved
-// principal it admits.
-//
-// The spend is a conditional UPDATE that checks liveness and expiry in one
-// statement, retiring the row so two presentations cannot both succeed.
 func (b *Bootstrapper) AuthenticateBootstrapToken(ctx context.Context, token string) (*auth.UserContext, error) {
 	token = strings.TrimSpace(token)
 	if token == "" {
@@ -170,9 +125,6 @@ func (b *Bootstrapper) AuthenticateBootstrapToken(ctx context.Context, token str
 	}
 	digest := fingerprint(token)
 
-	// The freshness bound is compared against the SAME clock that
-	// issued the token, not the database's. Mixing the two would make a
-	// token's lifetime depend on the skew between them.
 	now := b.now().UTC()
 
 	var spent bool
@@ -211,10 +163,7 @@ func (b *Bootstrapper) AuthenticateBootstrapToken(ctx context.Context, token str
 	case errors.Is(err, ErrBootstrapTokenRejected):
 		return nil, ErrBootstrapTokenRejected
 	case err != nil:
-		// A real failure — the database is unreachable, the audit write
-		// was refused — is reported as itself. Folding it into the
-		// rejection would hide an outage behind "wrong token" and leave
-		// the branch that reports it dead.
+
 		return nil, fmt.Errorf("consume bootstrap token: %w", err)
 	case !spent:
 		return nil, ErrBootstrapTokenRejected
@@ -223,22 +172,11 @@ func (b *Bootstrapper) AuthenticateBootstrapToken(ctx context.Context, token str
 	return &auth.UserContext{
 		ID:   auth.BootstrapPrincipalID,
 		Kind: auth.PrincipalBootstrapAdmin,
-		// The bootstrap principal holds exactly the authority a fresh
-		// deployment needs to become usable: define roles and register an
-		// identity provider that provisions the first subject. It is NOT
-		// given the full administrative set, and it holds no `:self`
-		// variant of anything — it is not a subject and owns nothing.
+
 		Permissions: BootstrapPermissions(),
 	}, nil
 }
 
-// BootstrapPermissions is the fixed authority of the reserved setup
-// principal.
-//
-// Every entry is a base permission with no scope suffix. There is
-// deliberately no `:self` key here and no way to add one: the principal
-// cannot own resources, so a self-scoped grant would be unsatisfiable
-// anyway, and listing one would suggest otherwise.
 func BootstrapPermissions() []string {
 	return []string{
 		PermCreateIdentityProvider,

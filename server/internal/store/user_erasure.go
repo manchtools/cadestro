@@ -12,9 +12,6 @@ const (
 	UserProvisioningSourceOIDCJIT = "oidc_jit"
 )
 
-// EraseUser removes one subject's ordinary state and data-encryption key in
-// the caller's audited transaction. Destroying the key makes class-three
-// audit detail permanently unreadable while non-personal attribution remains.
 func EraseUser(ctx context.Context, tx *Tx, rec *AuditRecorder, before UserRow) error {
 	if ctx == nil || tx == nil || rec == nil {
 		return fmt.Errorf("erase user: context, transaction, and audit recorder are required")

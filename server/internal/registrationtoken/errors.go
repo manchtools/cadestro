@@ -1,5 +1,3 @@
-// Package registrationtoken implements direct audited CRUD for device
-// registration tokens.
 package registrationtoken
 
 import (

@@ -8,31 +8,8 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// paramsOneofName is the name of the params oneof shared — identically — by
-// every message that carries action parameters: Action, ManagedAction,
-// CreateActionRequest, UpdateActionParamsRequest. The field names are the same
-// across all four; the credential-bearing Encryption/WiFi message types differ
-// deliberately between write input, safe read view, and agent wire.
-// That shared oneof shape is what lets one
-// reflection helper replace the per-message switch tables.
 const paramsOneofName protoreflect.Name = "params"
 
-// paramsFieldByActionType is THE single source of truth mapping each
-// params-carrying ActionType to the name of the field it occupies in the
-// `params` oneof. Param-less types (REBOOT / SYNC / UNSPECIFIED) are absent —
-// see isNoParamsActionType.
-//
-// This replaces the half-dozen hand-maintained ActionType→params-message
-// switch tables that previously had to stay in lockstep across two files and
-// message types (PopulateAction / PopulateManagedAction,
-// the extract* helpers, and actionParamsMatchType). A new ACTION_TYPE_* needs
-// exactly one entry here (or classification as param-less in isNoParamsActionType);
-// TestEveryActionTypeHandledInEveryParamsSwitch fails until it does.
-//
-// The field names are validated against the live proto descriptors of all
-// target messages by registryFieldsAreValid (exercised in the charter
-// test), so a proto rename or a typo here is caught structurally rather than
-// silently mis-routing params.
 var paramsFieldByActionType = map[cadestrov1.ActionType]protoreflect.Name{
 	cadestrov1.ActionType_ACTION_TYPE_PACKAGE:      "package",
 	cadestrov1.ActionType_ACTION_TYPE_APP_IMAGE:    "app",
@@ -57,16 +34,6 @@ var paramsFieldByActionType = map[cadestrov1.ActionType]protoreflect.Name{
 	cadestrov1.ActionType_ACTION_TYPE_AGENT_UPDATE: "agent_update",
 }
 
-// populateParamsOneof unmarshals paramsJSON into the params-oneof field of msg
-// that corresponds to actionType, using the shared registry. msg must be a
-// message that carries the standard `params` oneof (Action, ManagedAction, …).
-// It is the single implementation behind PopulateAction and
-// PopulateManagedAction.
-//
-// Fail-closed identically to the switches it replaced: a protojson parse
-// failure OR an unhandled action type returns an error so callers never
-// dispatch an action with empty/nil params (#368). Param-less instant
-// types and the zero value leave the oneof unset and return nil.
 func populateParamsOneof(msg proto.Message, actionType cadestrov1.ActionType, paramsJSON []byte) error {
 	if isNoParamsActionType(actionType) {
 		return nil
@@ -81,8 +48,7 @@ func populateParamsOneof(msg proto.Message, actionType cadestrov1.ActionType, pa
 		return fmt.Errorf("actionparams: %s has no params message field %q for action type %s",
 			m.Descriptor().FullName(), fieldName, actionType)
 	}
-	// NewField allocates a fresh, mutable sub-message of the field's concrete
-	// generated type; unmarshal into it then set it on the oneof.
+
 	sub := m.NewField(fd)
 	if err := unmarshalOpts.Unmarshal(paramsJSON, sub.Message().Interface()); err != nil {
 		return fmt.Errorf("actionparams: unmarshal %s params: %w", actionType, err)
@@ -91,11 +57,6 @@ func populateParamsOneof(msg proto.Message, actionType cadestrov1.ActionType, pa
 	return nil
 }
 
-// ExtractParamsMsg returns the concrete params sub-message populated in the
-// `params` oneof of msg (e.g. *cadestrov1.ShellParams), or nil if the oneof is unset or
-// msg carries no such oneof. Replaces the per-message extract* switch tables
-// (Action / CreateActionRequest / UpdateActionParamsRequest) with one reflective
-// WhichOneof walk — the inverse of populateParamsOneof.
 func ExtractParamsMsg(msg proto.Message) proto.Message {
 	if msg == nil {
 		return nil
@@ -112,18 +73,6 @@ func ExtractParamsMsg(msg proto.Message) proto.Message {
 	return m.Get(fd).Message().Interface()
 }
 
-// ParamsMatchType reports whether the params oneof populated on msg matches the
-// declared actionType. It replaces the hand-written actionParamsMatchType
-// switch: the dispatch path trusts action.Type and action.Params independently,
-// and without this guard a caller could route a Type=USER action through the
-// Ssh oneof and have the agent receive a USER action whose params bytes are an
-// Ssh proto.
-//
-// Truth table preserved from the original switch:
-//   - a params-carrying type matches iff the set oneof field is its registered field;
-//   - ACTION_TYPE_UPDATE additionally matches when the oneof is unset (an update
-//     with no params kicks off whatever the agent considers an update);
-//   - param-less / unknown types never match here (they don't carry a params oneof).
 func ParamsMatchType(msg proto.Message, actionType cadestrov1.ActionType) bool {
 	want, ok := paramsFieldByActionType[actionType]
 	if !ok {
@@ -144,11 +93,6 @@ func ParamsMatchType(msg proto.Message, actionType cadestrov1.ActionType) bool {
 	return set != nil && set.Name() == want
 }
 
-// registryFieldsAreValid reports whether every field name in
-// paramsFieldByActionType exists as a message field in the params oneof of each
-// of the given messages — i.e. the registry is consistent with the live proto
-// descriptors. Used by the charter test to catch a proto rename or a typo in
-// the registry structurally. Returns the first inconsistency for diagnosis.
 func registryFieldsAreValid(msgs ...proto.Message) (ok bool, detail string) {
 	for _, msg := range msgs {
 		m := msg.ProtoReflect()

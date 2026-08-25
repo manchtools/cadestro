@@ -18,7 +18,6 @@ var (
 	ErrDefinitionMemberMissing = errors.New("definition member not found")
 )
 
-// CreateDefinitionParams is the complete stored shape of a new Definition.
 type CreateDefinitionParams struct {
 	Name        string
 	Description string
@@ -26,7 +25,6 @@ type CreateDefinitionParams struct {
 	Schedule    *cadestrov1.ActionSchedule
 }
 
-// CreateDefinition inserts one independently scheduled authored definition.
 func (s *Service) CreateDefinition(ctx context.Context, op store.AuditOperation, p CreateDefinitionParams) (store.DefinitionRow, error) {
 	if ctx == nil || !validID(p.CreatedBy) || (op.ActorID != "" && op.ActorID != p.CreatedBy) ||
 		p.Name == "" || utf8.RuneCountInString(p.Name) > 255 || utf8.RuneCountInString(p.Description) > 1024 {
@@ -57,7 +55,6 @@ func (s *Service) CreateDefinition(ctx context.Context, op store.AuditOperation,
 	return out, nil
 }
 
-// RenameDefinition replaces a definition name.
 func (s *Service) RenameDefinition(ctx context.Context, op store.AuditOperation, id, name string) (store.DefinitionRow, error) {
 	if ctx == nil || !validID(id) || name == "" || utf8.RuneCountInString(name) > 255 {
 		return store.DefinitionRow{}, ErrInvalidInput
@@ -76,7 +73,6 @@ func (s *Service) RenameDefinition(ctx context.Context, op store.AuditOperation,
 	return out, translateNotFound(err)
 }
 
-// UpdateDefinitionDescription replaces a definition description.
 func (s *Service) UpdateDefinitionDescription(ctx context.Context, op store.AuditOperation, id, description string) (store.DefinitionRow, error) {
 	if ctx == nil || !validID(id) || utf8.RuneCountInString(description) > 1024 {
 		return store.DefinitionRow{}, ErrInvalidInput
@@ -97,8 +93,6 @@ func (s *Service) UpdateDefinitionDescription(ctx context.Context, op store.Audi
 	return out, translateNotFound(err)
 }
 
-// UpdateDefinitionSchedule replaces only the schedule used during Definition
-// manifest compilation. It does not mutate any member ActionSet.
 func (s *Service) UpdateDefinitionSchedule(ctx context.Context, op store.AuditOperation, id string, schedule *cadestrov1.ActionSchedule) (store.DefinitionRow, error) {
 	if ctx == nil || !validID(id) {
 		return store.DefinitionRow{}, ErrInvalidInput
@@ -123,7 +117,6 @@ func (s *Service) UpdateDefinitionSchedule(ctx context.Context, op store.AuditOp
 	return out, translateNotFound(err)
 }
 
-// AddActionSetToDefinition inserts one authored ActionSet edge.
 func (s *Service) AddActionSetToDefinition(ctx context.Context, op store.AuditOperation, definitionID, actionSetID string, sortOrder int32) error {
 	if ctx == nil || !validID(definitionID) || !validID(actionSetID) || sortOrder < 0 {
 		return ErrInvalidInput
@@ -159,7 +152,6 @@ func (s *Service) AddActionSetToDefinition(ctx context.Context, op store.AuditOp
 	return err
 }
 
-// RemoveActionSetFromDefinition removes one authored ActionSet edge.
 func (s *Service) RemoveActionSetFromDefinition(ctx context.Context, op store.AuditOperation, definitionID, actionSetID string) error {
 	if ctx == nil || !validID(definitionID) || !validID(actionSetID) {
 		return ErrInvalidInput
@@ -182,7 +174,6 @@ func (s *Service) RemoveActionSetFromDefinition(ctx context.Context, op store.Au
 	return err
 }
 
-// ReorderActionSetInDefinition changes one edge's authored sort position.
 func (s *Service) ReorderActionSetInDefinition(ctx context.Context, op store.AuditOperation, definitionID, actionSetID string, sortOrder int32) error {
 	if ctx == nil || !validID(definitionID) || !validID(actionSetID) || sortOrder < 0 {
 		return ErrInvalidInput
@@ -202,8 +193,6 @@ func (s *Service) ReorderActionSetInDefinition(ctx context.Context, op store.Aud
 	return err
 }
 
-// DeleteDefinition soft-deletes a definition and removes its composition
-// edges in the same audited transaction.
 func (s *Service) DeleteDefinition(ctx context.Context, op store.AuditOperation, id string) error {
 	if ctx == nil || !validID(id) {
 		return ErrInvalidInput

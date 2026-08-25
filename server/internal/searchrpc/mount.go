@@ -8,7 +8,6 @@ import (
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 )
 
-// Mount registers exactly the SQLite FTS5 search procedures.
 func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
 	if mux == nil {
 		panic("search: mux is required")
@@ -25,12 +24,10 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 	return mounted
 }
 
-// ReadProcedures is the exact non-mutating search surface.
 func ReadProcedures() []string {
 	return []string{cadestrov1connect.ControlServiceSearchProcedure}
 }
 
-// MutationProcedures is the exact audited search-maintenance surface.
 func MutationProcedures() []string {
 	return []string{cadestrov1connect.ControlServiceRebuildSearchIndexProcedure}
 }

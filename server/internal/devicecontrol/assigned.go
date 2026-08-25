@@ -15,9 +15,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// CompileAssigned is the single assignment/compiler path used by both the
-// admin RPC and authenticated agent Sync. A nil visibility callback is
-// reserved for the mTLS device path; user RPCs provide their scope check.
 func CompileAssigned(ctx context.Context, st *store.Store, compiler *manifest.Compiler, deviceID string, visible func(context.Context, string, string) error) ([]*cadestrov1.Manifest, error) {
 	paths, err := st.ListResolvedSources(ctx, deviceID)
 	if err != nil {
@@ -186,8 +183,6 @@ func CompileAssigned(ctx context.Context, st *store.Store, compiler *manifest.Co
 	return manifests, nil
 }
 
-// AssignedPolicy returns the authenticated device snapshot without applying
-// a user caller's authoring visibility filter.
 func (h *Handlers) AssignedPolicy(ctx context.Context, deviceID string) ([]*cadestrov1.Manifest, error) {
 	return CompileAssigned(ctx, h.store, h.compiler, deviceID, nil)
 }
@@ -219,9 +214,6 @@ func stablePolicyIdentityForSource(ctx context.Context, st *store.Store, manifes
 	return nil
 }
 
-// stablePolicyIdentity remains a small pure helper for callers that already
-// hold a fully authored manifest. Assignment pull uses the source canonical
-// content above so outbound secret materialization cannot enter the identity.
 func stablePolicyIdentity(manifest *cadestrov1.Manifest) {
 	clone := proto.Clone(manifest).(*cadestrov1.Manifest)
 	clone.ManifestId = nil

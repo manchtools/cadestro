@@ -6,9 +6,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-// refreshActionDependents records the fixed cross-row documents that embed an
-// action's current name or description. Call it before deleting composition
-// edges so the former parents are not lost.
 func refreshActionDependents(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder, actionID string) error {
 	setIDs, err := tx.ListContainingActionSetIDs(ctx, actionID)
 	if err != nil {

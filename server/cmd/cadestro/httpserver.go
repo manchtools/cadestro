@@ -53,10 +53,6 @@ func buildAgentServer(cfg *Config, certificateAuthority *ca.CA, handler http.Han
 	return server, nil
 }
 
-// serveAgent accepts only PROXY-v2-prefixed connections from the configured
-// isolated Traefik network, then performs device mTLS on the remaining stream.
-// The PROXY header is outside TLS, so the proxy listener wraps the raw socket
-// and the TLS listener wraps it in turn.
 func serveAgent(server *http.Server, sources []string) error {
 	listener, err := net.Listen("tcp", server.Addr)
 	if err != nil {

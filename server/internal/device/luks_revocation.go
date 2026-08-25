@@ -16,10 +16,6 @@ import (
 
 var errRevocationStateChanged = errors.New("LUKS revocation state changed")
 
-// RevokeLuksDeviceKey commits the operator's intent and then sends the instant
-// action over the device's authenticated mTLS stream. No queue or application
-// signature is involved: the stream already supplies peer authentication,
-// confidentiality, integrity, ordering, and replay protection.
 func (h *Handlers) RevokeLuksDeviceKey(ctx context.Context, req *connect.Request[cadestrov1.RevokeLuksDeviceKeyRequest]) (*connect.Response[cadestrov1.RevokeLuksDeviceKeyResponse], error) {
 	actionID := req.Msg.GetActionId().GetValue()
 	deviceID := req.Msg.GetDeviceId().GetValue()
@@ -97,8 +93,6 @@ func (h *Handlers) RevokeLuksDeviceKey(ctx context.Context, req *connect.Request
 	return nil, rpcError(ctx, errDeviceUnavailable, connect.CodeUnavailable, "device is unavailable")
 }
 
-// CompleteLuksKeyRevocation applies an agent result directly. A replay or stale
-// result updates no row but is still recorded as rejected audit evidence.
 func (h *Handlers) CompleteLuksKeyRevocation(ctx context.Context, deviceID string, result *cadestrov1.RevokeLuksDeviceKeyResult) error {
 	if _, err := ulid.ParseStrict(deviceID); err != nil {
 		return fmt.Errorf("invalid device id: %w", err)

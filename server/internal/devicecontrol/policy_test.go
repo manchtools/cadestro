@@ -16,8 +16,6 @@ func TestLiveOperationCorrelationIgnoresLateResultsButRejectsWrongDevice(t *test
 	deviceID, otherDeviceID, operationID := ulid.Make().String(), ulid.Make().String(), ulid.Make().String()
 	result := &cadestrov1.SyncDeviceResult{Success: true}
 
-	// A response may race an admin timeout. It is stale, not a reason to tear
-	// down the otherwise healthy authenticated agent stream.
 	require.NoError(t, h.CompleteSyncDevice(context.Background(), deviceID, operationID, result))
 
 	h.live[operationID] = pendingLiveOperation{

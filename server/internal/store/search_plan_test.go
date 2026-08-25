@@ -12,13 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// The outermost FROM is the only one that begins a line; every correlated
-// subquery in these statements is written inline.
 var searchDocumentSourceExpression = regexp.MustCompile(`(?m)^FROM\s+(\w+)\s+(\w+)`)
 
-// SQLite renders a seek as "SEARCH <alias> USING [COVERING ]INDEX <name>
-// (<column>=?)". A trailing qualifier such as " LEFT-JOIN" may follow, so the
-// expression is deliberately unanchored at the end.
 var indexSeekExpression = regexp.MustCompile(`^SEARCH (\w+) USING [^(]*\((\w+)=\?`)
 
 type queryPlanRow struct {
@@ -104,9 +99,6 @@ func TestSearchDocumentStatementsSeekTheSingleEntityByPrimaryKey(t *testing.T) {
 	}
 }
 
-// searchDocumentSource reports the table and alias the statement's outermost
-// FROM names. Requiring exactly one match keeps a reformatted statement from
-// silently retargeting the assertion at a subquery.
 func searchDocumentSource(t *testing.T, statement string) (table, alias string) {
 	t.Helper()
 	matches := searchDocumentSourceExpression.FindAllStringSubmatch(statement, -1)
@@ -115,8 +107,6 @@ func searchDocumentSource(t *testing.T, statement string) (table, alias string) 
 	return matches[0][1], matches[0][2]
 }
 
-// primaryKeyColumn reads the target table's single-column primary key from the
-// live catalog, so the assertion follows the schema instead of a copied list.
 func primaryKeyColumn(t *testing.T, db *sql.DB, table string) string {
 	t.Helper()
 	rows, err := db.QueryContext(t.Context(),
@@ -138,9 +128,7 @@ func primaryKeyColumn(t *testing.T, db *sql.DB, table string) string {
 
 func explainQueryPlan(t *testing.T, db *sql.DB, statement string) []queryPlanRow {
 	t.Helper()
-	// Binding is arity-driven so the assertion holds for whatever parameter
-	// shape the statement uses. SQLite plans at prepare time, so the bound
-	// values do not influence the result.
+
 	arguments := make([]any, strings.Count(statement, "?"))
 	for i := range arguments {
 		arguments[i] = ""

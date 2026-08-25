@@ -21,10 +21,8 @@ const (
 	defaultBatchSize    = int32(256)
 )
 
-// ErrAlreadyRunning means Run was called twice on one runner.
 var ErrAlreadyRunning = errors.New("job runner already running")
 
-// Job is the bounded input handed to a registered handler.
 type Job struct {
 	ID           string
 	Kind         string
@@ -34,11 +32,8 @@ type Job struct {
 	ScheduledFor time.Time
 }
 
-// Handler executes one claimed job. It must be idempotent: a process can die
-// after the effect commits but before the job reaches its terminal state.
 type Handler func(context.Context, Job) error
 
-// RunnerConfig supplies handlers and process-local concurrency bounds.
 type RunnerConfig struct {
 	Store        *store.Store
 	State        *Service
@@ -52,8 +47,6 @@ type RunnerConfig struct {
 	BatchSize    int32
 }
 
-// Runner is a bounded in-process executor. SQLite leases are the durable
-// queue and crash-recovery mechanism.
 type Runner struct {
 	store        *store.Store
 	state        *Service
@@ -68,7 +61,6 @@ type Runner struct {
 	running      atomic.Bool
 }
 
-// NewRunner constructs a job runner and freezes its handler registry.
 func NewRunner(cfg RunnerConfig) *Runner {
 	if cfg.Store == nil || cfg.State == nil {
 		panic("job runner: store and state are required")
@@ -115,9 +107,6 @@ func NewRunner(cfg RunnerConfig) *Runner {
 	}
 }
 
-// Wake queues one committed job without blocking the transaction's caller.
-// False means the id was invalid or the bounded queue was full; polling remains
-// the correctness path.
 func (r *Runner) Wake(jobID string) bool {
 	if !validID(jobID) {
 		return false
@@ -130,7 +119,6 @@ func (r *Runner) Wake(jobID string) bool {
 	}
 }
 
-// Run starts the bounded workers and SQLite poller.
 func (r *Runner) Run(ctx context.Context) error {
 	if ctx == nil {
 		return ErrInvalidInput
@@ -158,8 +146,7 @@ func (r *Runner) Run(ctx context.Context) error {
 			return nil
 		case <-ticker.C:
 			if err := r.queueDue(ctx); err != nil && !errors.Is(err, context.Canceled) {
-				// Query errors can contain driver detail. Keep logs structural so a
-				// future handler payload can never be reflected by accident.
+
 				r.logger.Error("job poll failed", "code", "STORE_ERROR")
 			}
 		}
@@ -173,8 +160,7 @@ func (r *Runner) worker(ctx context.Context) {
 			return
 		case jobID := <-r.queue:
 			if err := r.Dispatch(ctx, jobID); err != nil && !errors.Is(err, context.Canceled) {
-				// Handler errors may quote secrets from their payload. Never log the
-				// error value here; durable state carries a fixed result code.
+
 				r.logger.Error("job dispatch failed", "job_id", jobID, "code", "RUNNER_ERROR")
 			}
 		}
@@ -194,8 +180,6 @@ func (r *Runner) queueDue(ctx context.Context) error {
 	return nil
 }
 
-// Dispatch claims and executes one job. A fresh claim id is minted for every
-// attempt, so a slow attempt cannot finish a lease that a later worker reclaimed.
 func (r *Runner) Dispatch(ctx context.Context, jobID string) error {
 	if ctx == nil || !validID(jobID) {
 		return ErrInvalidInput
@@ -219,8 +203,7 @@ func (r *Runner) Dispatch(ctx context.Context, jobID string) error {
 	}
 	handlerErr, panicked := invokeHandler(ctx, handler, job)
 	if err := ctx.Err(); err != nil {
-		// Leave the claim alone. Its lease is the durable recovery path, and
-		// trying to mutate with a cancelled context would only hide shutdown.
+
 		return err
 	}
 	if panicked {

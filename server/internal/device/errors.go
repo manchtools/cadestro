@@ -1,4 +1,3 @@
-// Package device implements the device CRUD portion of the control service.
 package device
 
 import (

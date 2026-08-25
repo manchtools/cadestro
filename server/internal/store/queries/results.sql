@@ -81,9 +81,9 @@ LEFT JOIN compliance_results cr ON cr.device_id = e.device_id AND cr.action_id =
 WHERE e.device_id = ?
 ORDER BY e.policy_id, e.action_id;
 
--- Compliance ingestion is this statement and the three below it. All four run
--- inside the execution-result transaction, so the compliance surface cannot
--- disagree with the execution evidence it is derived from.
+
+
+
 
 -- name: UpsertDeviceComplianceResult :execrows
 INSERT INTO compliance_results (
@@ -122,12 +122,12 @@ SET compliant = excluded.compliant,
     status = excluded.status,
     checked_at = excluded.checked_at;
 
--- Rolls the device summary up from the rows just written. severity orders the
--- statuses by how bad they are (non-compliant worst, then grace, then unknown,
--- then compliant) because the stored enum is not in that order. A check that
--- belongs to no live policy rule has no grace period, so it contributes
--- directly. No rows at all leaves the device UNKNOWN, which is what
--- distinguishes "never checked" from "checked and failed".
+
+
+
+
+
+
 
 -- name: RefreshDeviceComplianceStatus :execrows
 UPDATE devices

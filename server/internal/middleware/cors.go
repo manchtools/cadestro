@@ -5,24 +5,16 @@ import (
 	"net/http"
 )
 
-// CORS header constants for Connect-RPC compatibility.
 const (
-	// corsAllowMethods lists HTTP methods allowed in cross-origin requests.
 	corsAllowMethods = "GET, POST, PUT, DELETE, OPTIONS"
-	// corsAllowHeaders lists request headers the client may send. Cookie is
-	// intentionally NOT advertised (WS13 #15): authentication is Bearer-only
-	// (Authorization header), so advertising Cookie would invite a cookie-based
-	// cross-origin flow the server doesn't use.
+
 	corsAllowHeaders = "Accept, Authorization, Content-Type, Connect-Protocol-Version, Connect-Timeout-Ms"
-	// corsExposeHeaders lists response headers the browser may access.
+
 	corsExposeHeaders = "Connect-Content-Encoding, Connect-Protocol-Version"
-	// corsMaxAge is the preflight cache duration in seconds (24 hours).
+
 	corsMaxAge = "86400"
 )
 
-// CORS returns a middleware that adds CORS headers for cross-origin requests.
-// If allowedOrigins is empty and allowAll is false, CORS requests are denied (fail-closed).
-// Set allowAll to true only for local development.
 func CORS(allowedOrigins []string, allowAll bool, logger *slog.Logger) func(http.Handler) http.Handler {
 	originSet := make(map[string]bool, len(allowedOrigins))
 	for _, o := range allowedOrigins {
@@ -44,21 +36,14 @@ func CORS(allowedOrigins []string, allowAll bool, logger *slog.Logger) func(http
 			if origin != "" {
 				switch {
 				case originSet[origin]:
-					// Explicitly allow-listed origin: safe to reflect WITH
-					// credentials (the operator named this exact origin).
+
 					w.Header().Set("Access-Control-Allow-Origin", origin)
 					w.Header().Set("Access-Control-Allow-Credentials", "true")
 				case allowAll:
-					// WS5 #7 — dev allow-all reflects the Origin but MUST NOT
-					// also send Access-Control-Allow-Credentials: the
-					// reflect-any-origin + allow-credentials combination lets
-					// ANY site make credentialed cross-origin requests (CSRF /
-					// token theft). Reflecting the origin without credentials
-					// keeps allow-all usable for local dev tooling that doesn't
-					// rely on cookies, while closing the credentialed hole.
+
 					w.Header().Set("Access-Control-Allow-Origin", origin)
 				default:
-					// Origin not allowed - do not set CORS headers
+
 					if r.Method == http.MethodOptions {
 						w.WriteHeader(http.StatusForbidden)
 						return
@@ -68,7 +53,6 @@ func CORS(allowedOrigins []string, allowAll bool, logger *slog.Logger) func(http
 				}
 			}
 
-			// Handle preflight requests
 			if r.Method == http.MethodOptions {
 				w.Header().Add("Vary", "Origin")
 				w.Header().Set("Access-Control-Allow-Methods", corsAllowMethods)
@@ -81,10 +65,8 @@ func CORS(allowedOrigins []string, allowAll bool, logger *slog.Logger) func(http
 				return
 			}
 
-			// Always set Vary: Origin so caches key by origin presence
 			w.Header().Add("Vary", "Origin")
 
-			// Set headers for actual requests
 			w.Header().Set("Access-Control-Expose-Headers", corsExposeHeaders)
 
 			next.ServeHTTP(w, r)

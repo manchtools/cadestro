@@ -11,6 +11,9 @@ import (
 )
 
 const bumpUserSessionVersion = `-- name: BumpUserSessionVersion :one
+
+
+
 UPDATE users SET session_version = session_version + 1, updated_at = ?
 WHERE id = ? AND is_deleted = FALSE
 RETURNING session_version
@@ -21,9 +24,6 @@ type BumpUserSessionVersionParams struct {
 	ID        string     `json:"id"`
 }
 
-// Any change to what a subject may do invalidates the sessions minted
-// under the old authority. The new value is returned so the caller can
-// record the transition as audit evidence.
 func (q *Queries) BumpUserSessionVersion(ctx context.Context, arg BumpUserSessionVersionParams) (int32, error) {
 	row := q.db.QueryRowContext(ctx, bumpUserSessionVersion, arg.UpdatedAt, arg.ID)
 	var session_version int32
@@ -43,11 +43,11 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 }
 
 const deleteUser = `-- name: DeleteUser :execrows
+
+
 DELETE FROM users WHERE id = ?
 `
 
-// Erasure of ordinary personal state. The subject's DEK is destroyed
-// separately, which is what makes the sealed audit detail unreadable.
 func (q *Queries) DeleteUser(ctx context.Context, id string) (int64, error) {
 	result, err := q.db.ExecContext(ctx, deleteUser, id)
 	if err != nil {
@@ -159,6 +159,8 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserSessionState = `-- name: GetUserSessionState :one
+
+
 SELECT id, disabled, is_deleted, session_version FROM users WHERE id = ?
 `
 
@@ -169,8 +171,6 @@ type GetUserSessionStateRow struct {
 	SessionVersion int32  `json:"session_version"`
 }
 
-// Deliberately unfiltered by is_deleted: the refresh path must be able
-// to tell a retired subject from an unknown one and refuse both.
 func (q *Queries) GetUserSessionState(ctx context.Context, id string) (GetUserSessionStateRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserSessionState, id)
 	var i GetUserSessionStateRow
@@ -184,6 +184,8 @@ func (q *Queries) GetUserSessionState(ctx context.Context, id string) (GetUserSe
 }
 
 const insertUser = `-- name: InsertUser :one
+
+
 INSERT INTO users (
     id, email, display_name, given_name, family_name, preferred_username,
     linux_username, linux_uid, provisioning_source, created_at, updated_at
@@ -206,8 +208,6 @@ type InsertUserParams struct {
 	UpdatedAt          *time.Time `json:"updated_at"`
 }
 
-// A user carries no authorization of its own: what the subject may do
-// comes from user_roles and user_group_roles.
 func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, insertUser,
 		arg.ID,
@@ -253,6 +253,9 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (User, e
 }
 
 const listUsers = `-- name: ListUsers :many
+
+
+
 SELECT id, email, provisioning_source, created_at, updated_at, last_login_at, disabled, is_deleted, session_version, display_name, given_name, family_name, preferred_username, picture, locale, linux_username, linux_uid, ssh_access_enabled, ssh_allow_pubkey, ssh_allow_password, system_user_action_id, system_ssh_action_id, system_tty_action_id, user_provisioning_enabled FROM users
 WHERE is_deleted = FALSE AND id > ?
 ORDER BY id
@@ -264,9 +267,6 @@ type ListUsersParams struct {
 	Limit int64  `json:"limit"`
 }
 
-// Keyset pagination on the ULID primary key: ULIDs sort by mint time,
-// so ordering by id is a stable cursor a concurrent insert cannot
-// shift rows across.
 func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error) {
 	rows, err := q.db.QueryContext(ctx, listUsers, arg.ID, arg.Limit)
 	if err != nil {
@@ -316,6 +316,8 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 }
 
 const setUserDisabled = `-- name: SetUserDisabled :execrows
+
+
 UPDATE users
 SET disabled = ?1, session_version = session_version + 1, updated_at = ?2
 WHERE id = ?3 AND is_deleted = FALSE AND disabled <> ?1
@@ -327,8 +329,6 @@ type SetUserDisabledParams struct {
 	ID        string     `json:"id"`
 }
 
-// Disabling bumps session_version in the same statement, so every
-// session already issued to the subject stops validating at once.
 func (q *Queries) SetUserDisabled(ctx context.Context, arg SetUserDisabledParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, setUserDisabled, arg.Disabled, arg.UpdatedAt, arg.ID)
 	if err != nil {

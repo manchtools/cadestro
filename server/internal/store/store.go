@@ -1,12 +1,3 @@
-// Package store provides database access for the control server.
-//
-// The package boundary is the enforcement mechanism for the audit
-// contract. The connection pool and generated query handle are unexported.
-// Ordinary state changes reach the database through WithAudit, which writes
-// their operation and effects in the same transaction. The one named exception
-// is bounded, coalesced heartbeat telemetry: liveness samples are not security
-// evidence and do not enter the serialized audit chain. No generic query handle
-// escapes this package.
 package store
 
 import (
@@ -34,34 +25,23 @@ var migrationsFS embed.FS
 
 const migrationsDir = "migrations"
 
-// Tx is the transaction-bound query handle handed to a WithAudit callback.
-// Generated domain queries stay exported through the embedded handle; raw SQL
-// remains package-private so other packages cannot bypass the audited store
-// surface.
 type Tx struct {
 	*generated.Queries
 	raw *sql.Tx
 }
 
-// Store owns the connection pool and the primitives every domain
-// shares: the audited transaction spine, advisory locks, and chain
-// verification.
 type Store struct {
-	now     func() time.Time // clock seam; time.Now in production
+	now     func() time.Time
 	db      *sql.DB
 	queries *generated.Queries
 
-	// A single control process owns the SQLite file. This mutex serializes the
-	// audited writer before it enters SQLite's own single-writer path.
 	writeMu sync.Mutex
 
-	// wireMu guards the fields wired once at boot and read afterwards.
 	wireMu sync.RWMutex
 
 	logger *slog.Logger
 }
 
-// SetLogger plumbs a logger for the store's own diagnostics. Optional.
 func (s *Store) SetLogger(logger *slog.Logger) {
 	s.wireMu.Lock()
 	s.logger = logger
@@ -70,9 +50,6 @@ func (s *Store) SetLogger(logger *slog.Logger) {
 
 const sqliteOpenConnections = 10
 
-// New opens the authoritative SQLite file and creates the clean baseline when
-// the file is empty. The project is pre-alpha and accepts only the current
-// schema.
 func New(ctx context.Context, path string) (*Store, error) {
 	db, err := openSQLite(ctx, path, true)
 	if err != nil {
@@ -85,8 +62,6 @@ func New(ctx context.Context, path string) (*Store, error) {
 	return newStore(db), nil
 }
 
-// NewWithoutMigrations opens an already-initialized SQLite file. It is used by
-// one-shot commands that must not create a database accidentally.
 func NewWithoutMigrations(ctx context.Context, path string) (*Store, error) {
 	db, err := openSQLite(ctx, path, false)
 	if err != nil {
@@ -219,24 +194,14 @@ func newStore(db *sql.DB) *Store {
 	}
 }
 
-// Close releases the pool.
 func (s *Store) Close() {
 	_ = s.db.Close()
 }
 
-// Ping verifies that the authoritative database is reachable.
 func (s *Store) Ping(ctx context.Context) error {
 	return s.db.PingContext(ctx)
 }
 
-// withTx runs fn inside a transaction and hands it both the raw
-// transaction (for session-scoped settings) and the transaction-bound
-// query handle.
-//
-// Package-private on purpose: an exported generic transaction would be
-// a second, unaudited door into the mutation path, and the audit
-// contract is that there is only one. The audited primitives and the named
-// heartbeat telemetry exception are its only callers.
 func (s *Store) withTx(ctx context.Context, fn func(*sql.Tx, *generated.Queries) error) error {
 	s.writeMu.Lock()
 	defer s.writeMu.Unlock()

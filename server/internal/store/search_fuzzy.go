@@ -16,9 +16,6 @@ type fuzzySearchResult struct {
 	rank fuzzyRank
 }
 
-// matchFuzzyDocument owns the engine-independent fuzzy contract. Primary is
-// the entity ID and display name, description is the explicit description,
-// and related is the remaining facet document assembled by SQLite.
 func matchFuzzyDocument(query, primary, description, related string) (fuzzyRank, bool, bool) {
 	queryTokens := dedupeQueryTokens(tokenizeSearchText(query))
 	if len(queryTokens) == 0 {
@@ -65,12 +62,6 @@ func matchFuzzyDocument(query, primary, description, related string) (fuzzyRank,
 	return rank, fuzzyOnly, true
 }
 
-// dedupeQueryTokens collapses repeated query tokens, preserving first-seen
-// order. Every query token must match some document token, so a repeat is
-// redundant: it changes neither the match decision nor the relative rank, only
-// the work the bounded matcher does. Collapsing them once bounds a hostile
-// query of one token repeated thousands of times to a single pass per
-// candidate instead of one pass per repeat.
 func dedupeQueryTokens(tokens []string) []string {
 	if len(tokens) < 2 {
 		return tokens
@@ -119,9 +110,6 @@ func fuzzyEditLimit(token string) int {
 	}
 }
 
-// boundedDamerauLevenshtein computes optimal-string-alignment distance in a
-// narrow band. Adjacent transposition costs one; values outside max are
-// rejected without allocating an unbounded matrix.
 func boundedDamerauLevenshtein(a, b string, maxDistance int) (int, bool) {
 	ar, br := []rune(a), []rune(b)
 	if abs(len(ar)-len(br)) > maxDistance {

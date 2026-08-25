@@ -105,9 +105,6 @@ func effectiveActionScopeGroups(ctx context.Context, st *store.Store, actionID s
 	return groups, nil
 }
 
-// ActionVisibleToCaller reports whether an Action belongs to a restricted
-// caller's effective transitive object scope. Global callers are visible by
-// definition; existence is checked separately by the handler.
 func ActionVisibleToCaller(ctx context.Context, st *store.Store, actionID string) (bool, error) {
 	if ctx == nil || st == nil {
 		return false, fmt.Errorf("authoring: scope context and store are required")
@@ -156,8 +153,6 @@ func effectiveActionSetScopeGroups(ctx context.Context, st *store.Store, setID s
 	return groups, nil
 }
 
-// ActionSetVisibleToCaller reports whether an ActionSet belongs to a
-// restricted caller's effective transitive object scope.
 func ActionSetVisibleToCaller(ctx context.Context, st *store.Store, setID string) (bool, error) {
 	if ctx == nil || st == nil {
 		return false, fmt.Errorf("authoring: scope context and store are required")
@@ -173,8 +168,6 @@ func ActionSetVisibleToCaller(ctx context.Context, st *store.Store, setID string
 	return groupsOverlap(callerGroups, objectGroups), nil
 }
 
-// DefinitionVisibleToCaller reports whether a Definition belongs to a
-// restricted caller's direct object scope.
 func DefinitionVisibleToCaller(ctx context.Context, st *store.Store, definitionID string) (bool, error) {
 	if ctx == nil || st == nil {
 		return false, fmt.Errorf("authoring: scope context and store are required")

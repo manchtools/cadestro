@@ -556,10 +556,7 @@ func TestDeviceHandlers_SecretListsAreMetadataAndRevealsAreIndividuallyAudited(t
 		lpsActionID, int32(cadestrov1.ActionType_ACTION_TYPE_LPS), f.actorID,
 		luksActionID, int32(cadestrov1.ActionType_ACTION_TYPE_ENCRYPTION))
 	require.NoError(t, err)
-	// The reveal handlers compute the at-rest AAD from the row's immutable id
-	// (secret.ID), not from the username/device_path shared by every rotation
-	// row. Generate the row ids first, then seal the CURRENT row's ciphertext
-	// under its own id: only the revealed (current) row need open.
+
 	lpsIDs := make([]string, 5)
 	luksIDs := make([]string, 5)
 	for i := range lpsIDs {
@@ -678,24 +675,12 @@ func TestDeviceHandlers_CreateLuksTokenIsOwnerOnlyHashedAndAudited(t *testing.T)
 	_, err = ulid.ParseStrict(issued.Msg.Token)
 	require.NoError(t, err)
 	assert.Contains(t, issued.Msg.Uri, issued.Msg.Token)
-	// The agent's URI handler rewrites the scheme by STRICT prefix and exits
-	// non-zero on anything else (agent cmd/cadestrod/cmd_luks.go runLuksURI),
-	// and the operator pastes CliCommand into a shell. Both values therefore
-	// name device-side artifacts that live in the agent module, so a rename on
-	// only one side of that boundary produces a link the agent refuses and a
-	// command the host cannot find — with no compile error anywhere. These two
-	// assertions are the only thing that fails when that happens.
+
 	assert.True(t, strings.HasPrefix(issued.Msg.Uri, "cadestro://"),
 		"the issued URI must use the scheme the agent's handler accepts; got %q", issued.Msg.Uri)
 	assert.True(t, strings.HasPrefix(issued.Msg.CliCommand, "cadestrod "),
 		"CliCommand must invoke the installed agent daemon by its real name; got %q", issued.Msg.CliCommand)
-	// F2: the advertised command must NOT carry the token on argv —
-	// /proc/<pid>/cmdline is world-readable and the client reads the passphrase
-	// before it dials, so an argv token is exposed for the whole typing window
-	// while being the sole authorization for a root daemon that writes LUKS
-	// keyslots. It must not advertise sudo either: the sudoers rule was removed
-	// precisely so this client is unprivileged, and an operator copying the
-	// string back would reinstate the escalation.
+
 	assert.NotContains(t, issued.Msg.CliCommand, issued.Msg.Token,
 		"CliCommand must not put the one-time LUKS token on argv")
 	assert.NotContains(t, issued.Msg.CliCommand, "sudo",
@@ -816,8 +801,6 @@ func TestDeviceHandlers_RevokeLuksDeviceKeyUsesDirectMTLSStream(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, succeeded)
 
-	// A replay is absorbed by the conditional update and preserved as rejected
-	// evidence instead of changing the terminal state again.
 	require.NoError(t, f.handlers.CompleteLuksKeyRevocation(context.Background(), f.directID,
 		&cadestrov1.RevokeLuksDeviceKeyResult{ActionId: &cadestrov1.ActionId{Value: actionID}, Success: false, Error: "stale"}))
 	resultOperation, err := latestOperationFor(t, f.store, f.raw,
@@ -1021,7 +1004,6 @@ func TestDeviceHandlers_AgentQueryResultsAndInventoryCommitDirectly(t *testing.T
 	}))
 	require.NoError(t, err)
 
-	// A result from another authenticated device cannot claim this query.
 	require.NoError(t, f.handlers.CompleteOSQueryResult(context.Background(), f.outsideID,
 		&cadestrov1.OSQueryResult{QueryId: osquery.Msg.GetQueryId(), Success: true}))
 	var completed bool

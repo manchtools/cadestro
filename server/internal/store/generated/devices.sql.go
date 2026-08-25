@@ -170,7 +170,6 @@ type FindEnrollmentDeviceParams struct {
 	IdentityPublicKey []byte    `json:"identity_public_key"`
 }
 
-// Existing enrollment retries are keyed by the Ed25519 public key in the CSR.
 func (q *Queries) FindEnrollmentDevice(ctx context.Context, arg FindEnrollmentDeviceParams) (Device, error) {
 	row := q.db.QueryRowContext(ctx, findEnrollmentDevice,
 		arg.ValueHash,
@@ -315,9 +314,6 @@ type InsertEnrolledDeviceParams struct {
 	ReservedName      string     `json:"reserved_name"`
 }
 
-// The INSERT is the global-use reservation. SQLite serializes this write, and
-// the count is derived from immutable device provenance rather than a token
-// counter, so the max boundary cannot be crossed by concurrent enrollments.
 func (q *Queries) InsertEnrolledDevice(ctx context.Context, arg InsertEnrolledDeviceParams) (Device, error) {
 	row := q.db.QueryRowContext(ctx, insertEnrolledDevice,
 		arg.ID,

@@ -13,10 +13,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-// Store is the database surface the identity handlers use. It is the
-// audited mutation door plus the individual reads — deliberately not a
-// generic handle, so this package cannot write outside WithAudit.
-// Satisfied by *store.Store.
 type Store interface {
 	WithAudit(ctx context.Context, op store.AuditOperation, mutate func(ctx context.Context, tx *store.Tx, rec *store.AuditRecorder) error) (store.AuditRecord, error)
 	RecordOperation(ctx context.Context, op store.AuditOperation, effects ...store.AuditEffect) (store.AuditRecord, error)
@@ -60,30 +56,23 @@ type Store interface {
 	IsTokenRevoked(ctx context.Context, jti string) (bool, error)
 }
 
-// ProviderFactory builds an OIDC client for a configured provider. It
-// is an injection point so a test drives the real handler against a
-// local OIDC double instead of reaching the internet.
 type ProviderFactory func(ctx context.Context, cfg idp.ProviderConfig) (*idp.OIDCProvider, error)
 
-// Config wires the identity handlers.
 type Config struct {
 	Store  Store
 	Logger *slog.Logger
-	// JWT mints and validates session tokens.
+
 	JWT *auth.JWTManager
-	// KEK wraps per-subject data-encryption keys and seals the
-	// provider client secrets at rest.
+
 	KEK *crypto.Encryptor
-	// PublicBaseURL is the externally reachable base of this
-	// deployment. It forms the OIDC redirect and the SCIM endpoint.
+
 	PublicBaseURL string
-	// NewProvider builds the OIDC client. Defaults to real discovery.
+
 	NewProvider ProviderFactory
-	// Now is the clock seam.
+
 	Now func() time.Time
 }
 
-// Handlers implements the identity portion of the control service.
 type Handlers struct {
 	store   Store
 	logger  *slog.Logger
@@ -95,7 +84,6 @@ type Handlers struct {
 	now     func() time.Time
 }
 
-// New builds the identity handlers.
 func New(cfg Config) *Handlers {
 	now := cfg.Now
 	if now == nil {
@@ -121,9 +109,6 @@ func New(cfg Config) *Handlers {
 	}
 }
 
-// requireActor returns the authenticated principal, or the
-// unauthenticated error. Handlers call it AFTER validating and BEFORE
-// authorizing.
 func (h *Handlers) requireActor(ctx context.Context) (*auth.UserContext, error) {
 	actor, ok := auth.UserFromContext(ctx)
 	if !ok {
@@ -132,10 +117,6 @@ func (h *Handlers) requireActor(ctx context.Context) (*auth.UserContext, error) 
 	return actor, nil
 }
 
-// authorize is the handler-level permission gate. The interceptor's
-// pass is coarse — it only proves the actor holds SOMETHING that could
-// authorize the procedure — so each handler re-asks with the resource
-// it actually resolved.
 func (h *Handlers) authorize(ctx context.Context, permission, resourceID string) error {
 	if !auth.AuthorizeContext(ctx, permission, resourceID) {
 		return rpcError(ctx, ErrPermissionDenied, connect.CodePermissionDenied, "permission denied")
@@ -143,14 +124,6 @@ func (h *Handlers) authorize(ctx context.Context, permission, resourceID string)
 	return nil
 }
 
-// mutationOp builds the audit operation for a state-changing request.
-//
-// Origin and actor are derived from the request and the authenticated
-// principal, never from request input. A principal whose id is not a
-// subject ULID — the reserved bootstrap principal — is attributed by
-// actor TYPE with an empty actor id, because the audit log's actor id
-// column means "the subject who did this" and the bootstrap principal
-// is no subject.
 func (h *Handlers) mutationOp(req connect.AnyRequest, actor *auth.UserContext, permission string) store.AuditOperation {
 	return h.operation(req, actor, store.ClassMutation, permission, store.AuthorizationAllowed, store.ResultSuccess, "")
 }
@@ -186,13 +159,6 @@ func (h *Handlers) operation(
 	return op
 }
 
-// sealForSubject seals a value under a subject's data-encryption key,
-// producing class-three audit detail: evidence that is only meaningful
-// as its value, readable only while the subject's key exists.
-//
-// Callers pass the wrapped key they read inside the same transaction
-// that writes the audit row, so a subject erased concurrently cannot
-// leave detail sealed under a key that is already gone.
 func (h *Handlers) sealForSubject(subjectID, wrappedDEK, field, value string) ([]byte, error) {
 	dek, err := crypto.UnwrapDEK(h.kek, subjectID, wrappedDEK)
 	if err != nil {
@@ -205,7 +171,6 @@ func (h *Handlers) sealForSubject(subjectID, wrappedDEK, field, value string) ([
 	return []byte(sealed), nil
 }
 
-// pageLimit clamps a requested page size to the contract's bounds.
 const (
 	defaultPageSize = 50
 	maxPageSize     = 200

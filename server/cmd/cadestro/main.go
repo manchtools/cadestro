@@ -1,4 +1,3 @@
-// Command cadestro runs the single Cadestro control process.
 package main
 
 import (
@@ -24,7 +23,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/webhook"
 )
 
-// version is set at build time.
 var version = "dev"
 
 func main() {
@@ -56,8 +54,6 @@ func main() {
 	}
 }
 
-// parseCommand selects the subcommand to run. Configuration comes entirely
-// from the environment, so control accepts no flags and no other arguments.
 func parseCommand(args []string) (string, error) {
 	if len(args) > 0 {
 		switch args[0] {

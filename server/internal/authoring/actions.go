@@ -12,7 +12,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-// CreateAction validates and writes one ordinary Action with its audit effect.
 func (h *Handlers) CreateAction(ctx context.Context, req *connect.Request[cadestrov1.CreateActionRequest]) (*connect.Response[cadestrov1.CreateActionResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
@@ -43,8 +42,6 @@ func (h *Handlers) CreateAction(ctx context.Context, req *connect.Request[cadest
 	return connect.NewResponse(&cadestrov1.CreateActionResponse{Action: action}), nil
 }
 
-// GetAction returns one operator-visible Action without revealing system or
-// out-of-scope rows.
 func (h *Handlers) GetAction(ctx context.Context, req *connect.Request[cadestrov1.GetActionRequest]) (*connect.Response[cadestrov1.GetActionResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
@@ -66,8 +63,6 @@ func (h *Handlers) GetAction(ctx context.Context, req *connect.Request[cadestrov
 	return connect.NewResponse(&cadestrov1.GetActionResponse{Action: action}), nil
 }
 
-// ListActions returns a deterministic SQLite keyset page. Scope,
-// assignment and type filters are all applied before pagination.
 func (h *Handlers) ListActions(ctx context.Context, req *connect.Request[cadestrov1.ListActionsRequest]) (*connect.Response[cadestrov1.ListActionsResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
@@ -122,7 +117,6 @@ func (h *Handlers) ListActions(ctx context.Context, req *connect.Request[cadestr
 	}), nil
 }
 
-// RenameAction replaces an Action name with audited last-write-wins CRUD.
 func (h *Handlers) RenameAction(ctx context.Context, req *connect.Request[cadestrov1.RenameActionRequest]) (*connect.Response[cadestrov1.UpdateActionResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "RenameAction")
 	if err != nil {
@@ -133,7 +127,6 @@ func (h *Handlers) RenameAction(ctx context.Context, req *connect.Request[cadest
 	return h.updatedAction(ctx, "rename action", row, err)
 }
 
-// UpdateActionDescription replaces an Action description.
 func (h *Handlers) UpdateActionDescription(ctx context.Context, req *connect.Request[cadestrov1.UpdateActionDescriptionRequest]) (*connect.Response[cadestrov1.UpdateActionResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "UpdateActionDescription")
 	if err != nil {
@@ -145,8 +138,6 @@ func (h *Handlers) UpdateActionDescription(ctx context.Context, req *connect.Req
 	return h.updatedAction(ctx, "update action description", row, err)
 }
 
-// UpdateActionParams replaces the mutable execution fields while keeping the
-// Action type immutable.
 func (h *Handlers) UpdateActionParams(ctx context.Context, req *connect.Request[cadestrov1.UpdateActionParamsRequest]) (*connect.Response[cadestrov1.UpdateActionResponse], error) {
 	actor, row, err := h.mutationAction(ctx, req.Msg.GetId().GetValue(), "UpdateActionParams")
 	if err != nil {
@@ -164,7 +155,6 @@ func (h *Handlers) UpdateActionParams(ctx context.Context, req *connect.Request[
 	return h.updatedAction(ctx, "update action params", updated, err)
 }
 
-// DeleteAction soft-deletes an Action and its composition edges atomically.
 func (h *Handlers) DeleteAction(ctx context.Context, req *connect.Request[cadestrov1.DeleteActionRequest]) (*connect.Response[cadestrov1.DeleteActionResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "DeleteAction")
 	if err != nil {

@@ -1,4 +1,3 @@
-// Package webhook sends bounded, generic operator notifications over HTTPS.
 package webhook
 
 import (
@@ -14,16 +13,12 @@ import (
 )
 
 const (
-	// EventZeroEnabledAdministrators reports that bootstrap-admin is the only
-	// remaining path back into the control plane.
 	EventZeroEnabledAdministrators = "security.zero_enabled_administrators"
-	// EventBackupLag reports a missing, invalid, or overdue verified backup.
+
 	EventBackupLag = "storage.backup_lag"
 	requestTimeout = 10 * time.Second
 )
 
-// Event is deliberately metadata-only: notification call sites cannot attach
-// user, device, or secret values to an outbound message.
 type Event struct {
 	Name       string
 	OccurredAt time.Time
@@ -35,13 +30,11 @@ type eventEnvelope struct {
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-// Client sends generic events to one operator-configured endpoint.
 type Client struct {
 	endpoint string
 	http     *http.Client
 }
 
-// New returns nil when notifications are not configured.
 func New(rawURL string) (*Client, error) {
 	rawURL = strings.TrimSpace(rawURL)
 	if rawURL == "" {
@@ -60,8 +53,6 @@ func New(rawURL string) (*Client, error) {
 	}, nil
 }
 
-// Send posts one bounded event envelope. Redirects are never followed, so an
-// operator-provided credential in the webhook URL cannot be forwarded.
 func (c *Client) Send(ctx context.Context, event Event) error {
 	if c == nil {
 		return nil

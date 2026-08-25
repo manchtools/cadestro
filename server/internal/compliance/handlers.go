@@ -37,21 +37,18 @@ const (
 	errPolicyRuleNotFound  = cadestrov1.ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_RULE_NOT_FOUND
 )
 
-// HandlersConfig supplies the direct store and process-local seams.
 type HandlersConfig struct {
 	Store  *store.Store
 	Logger *slog.Logger
 	Now    func() time.Time
 }
 
-// Handlers implements the explicit compliance-policy CRUD procedures.
 type Handlers struct {
 	store  *store.Store
 	state  *State
 	logger *slog.Logger
 }
 
-// NewHandlers constructs direct compliance-policy handlers.
 func NewHandlers(cfg HandlersConfig) *Handlers {
 	if cfg.Store == nil {
 		panic("compliance: handler store is required")
@@ -100,7 +97,6 @@ func (h *Handlers) operation(req connect.AnyRequest, actor *auth.UserContext, pr
 	return op
 }
 
-// CreateCompliancePolicy creates one empty policy.
 func (h *Handlers) CreateCompliancePolicy(ctx context.Context, req *connect.Request[cadestrov1.CreateCompliancePolicyRequest]) (*connect.Response[cadestrov1.CreateCompliancePolicyResponse], error) {
 	actor, err := h.actor(ctx)
 	if err != nil {
@@ -119,7 +115,6 @@ func (h *Handlers) CreateCompliancePolicy(ctx context.Context, req *connect.Requ
 	return connect.NewResponse(&cadestrov1.CreateCompliancePolicyResponse{Policy: policyToProto(row, 0, nil)}), nil
 }
 
-// GetCompliancePolicy returns one visible policy with its live rules.
 func (h *Handlers) GetCompliancePolicy(ctx context.Context, req *connect.Request[cadestrov1.GetCompliancePolicyRequest]) (*connect.Response[cadestrov1.GetCompliancePolicyResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
@@ -143,7 +138,6 @@ func (h *Handlers) GetCompliancePolicy(ctx context.Context, req *connect.Request
 	}), nil
 }
 
-// ListCompliancePolicies returns a deterministic SQLite keyset page.
 func (h *Handlers) ListCompliancePolicies(ctx context.Context, req *connect.Request[cadestrov1.ListCompliancePoliciesRequest]) (*connect.Response[cadestrov1.ListCompliancePoliciesResponse], error) {
 	if _, err := h.actor(ctx); err != nil {
 		return nil, err
@@ -188,7 +182,6 @@ func (h *Handlers) ListCompliancePolicies(ctx context.Context, req *connect.Requ
 	}), nil
 }
 
-// RenameCompliancePolicy replaces a policy name.
 func (h *Handlers) RenameCompliancePolicy(ctx context.Context, req *connect.Request[cadestrov1.RenameCompliancePolicyRequest]) (*connect.Response[cadestrov1.UpdateCompliancePolicyResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "RenameCompliancePolicy")
 	if err != nil {
@@ -199,7 +192,6 @@ func (h *Handlers) RenameCompliancePolicy(ctx context.Context, req *connect.Requ
 	return h.updatedPolicy(ctx, "rename policy", row, err)
 }
 
-// UpdateCompliancePolicyDescription replaces a policy description.
 func (h *Handlers) UpdateCompliancePolicyDescription(ctx context.Context, req *connect.Request[cadestrov1.UpdateCompliancePolicyDescriptionRequest]) (*connect.Response[cadestrov1.UpdateCompliancePolicyResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "UpdateCompliancePolicyDescription")
 	if err != nil {
@@ -211,7 +203,6 @@ func (h *Handlers) UpdateCompliancePolicyDescription(ctx context.Context, req *c
 	return h.updatedPolicy(ctx, "update policy description", row, err)
 }
 
-// DeleteCompliancePolicy deletes one policy and its ordinary dependent state.
 func (h *Handlers) DeleteCompliancePolicy(ctx context.Context, req *connect.Request[cadestrov1.DeleteCompliancePolicyRequest]) (*connect.Response[cadestrov1.DeleteCompliancePolicyResponse], error) {
 	actor, err := h.mutationActor(ctx, req.Msg.GetId().GetValue(), "DeleteCompliancePolicy")
 	if err != nil {
@@ -224,7 +215,6 @@ func (h *Handlers) DeleteCompliancePolicy(ctx context.Context, req *connect.Requ
 	return connect.NewResponse(&cadestrov1.DeleteCompliancePolicyResponse{}), nil
 }
 
-// AddCompliancePolicyRule adds one visible compliance Action.
 func (h *Handlers) AddCompliancePolicyRule(ctx context.Context, req *connect.Request[cadestrov1.AddCompliancePolicyRuleRequest]) (*connect.Response[cadestrov1.AddCompliancePolicyRuleResponse], error) {
 	actionID := req.Msg.GetActionId().GetValue()
 	actor, err := h.mutationActor(ctx, req.Msg.GetPolicyId().GetValue(), "AddCompliancePolicyRule")
@@ -254,7 +244,6 @@ func (h *Handlers) AddCompliancePolicyRule(ctx context.Context, req *connect.Req
 	return connect.NewResponse(&cadestrov1.AddCompliancePolicyRuleResponse{Policy: policy}), nil
 }
 
-// RemoveCompliancePolicyRule removes one Action edge.
 func (h *Handlers) RemoveCompliancePolicyRule(ctx context.Context, req *connect.Request[cadestrov1.RemoveCompliancePolicyRuleRequest]) (*connect.Response[cadestrov1.RemoveCompliancePolicyRuleResponse], error) {
 	actionID := req.Msg.GetActionId().GetValue()
 	actor, err := h.mutationActor(ctx, req.Msg.GetPolicyId().GetValue(), "RemoveCompliancePolicyRule")
@@ -273,7 +262,6 @@ func (h *Handlers) RemoveCompliancePolicyRule(ctx context.Context, req *connect.
 	return connect.NewResponse(&cadestrov1.RemoveCompliancePolicyRuleResponse{Policy: policy}), nil
 }
 
-// UpdateCompliancePolicyRule replaces one rule grace period.
 func (h *Handlers) UpdateCompliancePolicyRule(ctx context.Context, req *connect.Request[cadestrov1.UpdateCompliancePolicyRuleRequest]) (*connect.Response[cadestrov1.UpdateCompliancePolicyRuleResponse], error) {
 	actionID := req.Msg.GetActionId().GetValue()
 	actor, err := h.mutationActor(ctx, req.Msg.GetPolicyId().GetValue(), "UpdateCompliancePolicyRule")
@@ -526,7 +514,6 @@ func notFound(ctx context.Context, code cadestrov1.ErrorCode, message string) *c
 	return rpcError(ctx, code, connect.CodeNotFound, message)
 }
 
-// MountPolicies registers exactly the explicit compliance-policy CRUD surface.
 func (h *Handlers) MountPolicies(mux *http.ServeMux, opts ...connect.HandlerOption) []string {
 	if mux == nil {
 		panic("compliance: mux is required")
@@ -557,7 +544,6 @@ func (h *Handlers) MountPolicies(mux *http.ServeMux, opts ...connect.HandlerOpti
 	return mounted
 }
 
-// MutationProcedures is the exact audited compliance-policy mutation surface.
 func MutationProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceCreateCompliancePolicyProcedure,
@@ -570,7 +556,6 @@ func MutationProcedures() []string {
 	}
 }
 
-// ReadProcedures is the exact non-mutating compliance-policy CRUD surface.
 func ReadProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceGetCompliancePolicyProcedure,

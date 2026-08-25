@@ -1,12 +1,5 @@
 package identity_test
 
-// The single-sign-on flow, driven against a LOCAL identity provider.
-//
-// The provider is a real OIDC endpoint: real discovery, a real JWKS, a
-// real signed id_token. Nothing about the exchange is stubbed, so the
-// nonce check, the PKCE verifier and the state consumption are all
-// exercised as written.
-
 import (
 	"context"
 	"crypto/rand"
@@ -52,13 +45,7 @@ func TestListAuthMethods_ReturnsEnabledProvidersAndNothingAboutTheEmail(t *testi
 	require.Len(t, forKnown.Msg.Providers, 1)
 	assert.Equal(t, "corp", forKnown.Msg.Providers[0].Slug, "a disabled provider is not offered")
 	assert.True(t, forKnown.Msg.Providers[0].BrowserLogin)
-	// This response is what a login page offers, so it must never name a
-	// method that cannot be completed. cli_login used to be advertised here
-	// and was asserted false for a provider without a CLI client; the field
-	// is now absent from the contract, which is the stronger property — there
-	// is no value of it left to be wrong. Read off the SHIPPED descriptor of
-	// the message this handler actually returned, so a re-added field fails
-	// here and not only in the contract module.
+
 	fields := forKnown.Msg.Providers[0].ProtoReflect().Descriptor().Fields()
 	require.NotZero(t, fields.Len(), "the response descriptor has no fields; this guard would pass vacuously")
 	assert.Nil(t, fields.ByName("cli_login"),
@@ -171,7 +158,6 @@ func TestSSOCallback_AutoCreatesASubjectAndIssuesASession(t *testing.T) {
 	f.effectWithAction(effects, "LINK")
 	f.effectWithAction(effects, "ISSUE")
 
-	// The state was consumed, so the same code cannot be replayed.
 	var remaining int
 	require.NoError(t, f.raw.QueryRow(f.ctx(),
 		`SELECT count(*) FROM auth_states WHERE state = $1`, state).Scan(&remaining))
@@ -201,14 +187,9 @@ func TestSSOCallback_RefusesAReplayedState(t *testing.T) {
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err),
 		"a login state is consumed exactly once")
 
-	// The replay is recorded as a rejected authentication, distinct
-	// from the successful attempt's own records.
 	f.operationOfClass(cadestrov1connect.ControlServiceSSOCallbackProcedure, "REJECTED_AUTHENTICATION")
 }
 
-// The account-takeover guard: a provider may not bind an address that
-// already belongs to a subject bound to some OTHER provider, unless the
-// operator has explicitly delegated email identity to it.
 func TestSSOCallback_RefusesToAutoLinkAnAlreadyBoundAccount(t *testing.T) {
 	t.Parallel()
 	oidc := newOIDCDouble(t)
@@ -237,8 +218,6 @@ func TestSSOCallback_RefusesToAutoLinkAnAlreadyBoundAccount(t *testing.T) {
 	assert.Len(t, links, 1, "the victim's account gained no second binding")
 }
 
-// With the operator's explicit opt-in the same flow links, because the
-// operator has delegated email identity to that provider.
 func TestSSOCallback_LinksAnAlreadyBoundAccountWhenEmailAssertionsAreTrusted(t *testing.T) {
 	t.Parallel()
 	oidc := newOIDCDouble(t)
@@ -268,8 +247,6 @@ func TestSSOCallback_LinksAnAlreadyBoundAccountWhenEmailAssertionsAreTrusted(t *
 	assert.Len(t, links, 2)
 }
 
-// An account with no binding yet is the ordinary invite flow and links
-// without the operator opt-in.
 func TestSSOCallback_LinksAnUnboundAccountByEmail(t *testing.T) {
 	t.Parallel()
 	oidc := newOIDCDouble(t)
@@ -290,8 +267,6 @@ func TestSSOCallback_LinksAnUnboundAccountByEmail(t *testing.T) {
 	assert.Equal(t, invited.ID, resp.Msg.User.GetId().GetValue())
 }
 
-// An unverified email claim is not usable for linking or creating: the
-// provider asserting it is the party the guard defends against.
 func TestSSOCallback_IgnoresAnUnverifiedEmailClaim(t *testing.T) {
 	t.Parallel()
 	oidc := newOIDCDouble(t)
@@ -337,7 +312,6 @@ func TestSSOCallback_RefusesADisabledSubject(t *testing.T) {
 		"a verified external identity does not resurrect a retired subject")
 }
 
-// A state minted for one provider cannot be redeemed at another.
 func TestSSOCallback_RefusesAStateFromAnotherProvider(t *testing.T) {
 	t.Parallel()
 	oidc := newOIDCDouble(t)
@@ -352,25 +326,11 @@ func TestSSOCallback_RefusesAStateFromAnotherProvider(t *testing.T) {
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
 }
 
-// The auth_state row records which login flow minted it, and SSOCallback
-// consumes only a browser-flow state. Browser is currently the only flow
-// control drives, so nothing else can produce a foreign row — the state is
-// seeded directly here instead.
-//
-// This replaces the cross-consumption test that drove the removed CLI login
-// pair. The discriminator survived that removal, and an unexercised
-// discriminator is an unexercised rejection: were the flow-kind comparison
-// dropped, every check left in this file would still pass.
 func TestSSOCallback_RefusesAStateMintedForAnotherFlow(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t, withProviderFactory(discardProviderFactory))
 	providerID := f.insertProvider("corp", nil)
 
-	// The provider factory refuses to build a client, so a state that PASSES
-	// the flow check fails afterwards with Internal. That is the positive
-	// control: the two rows differ only in flow_kind, and they exit on
-	// different paths, so Unauthenticated below is attributable to the flow
-	// check rather than to the seeding or to a provider that never loads.
 	for _, tc := range []struct {
 		name     string
 		flowKind string
@@ -392,8 +352,6 @@ func TestSSOCallback_RefusesAStateMintedForAnotherFlow(t *testing.T) {
 			}))
 			assert.Equal(t, tc.wantCode, connectCodeOf(t, err))
 
-			// Either way the state is spent: consumption precedes the flow
-			// check, so a refused attempt must not leave a replayable row.
 			var remaining int
 			require.NoError(t, f.raw.QueryRow(f.ctx(),
 				`SELECT COUNT(*) FROM auth_states WHERE state = $1`, state).Scan(&remaining))
@@ -414,10 +372,6 @@ func TestSSOCallback_RejectsAMissingCode(t *testing.T) {
 	assert.Zero(t, f.countAuditOperations())
 }
 
-// A repeat login for an already-linked subject writes last_login_at on the
-// user row and nothing else about the subject. The users LIST renders that
-// stamp from the search document, so the login transaction must refresh the
-// subject's document even though no other user field changed.
 func TestSSOCallback_RefreshesTheSubjectDocumentLastLogin(t *testing.T) {
 	t.Parallel()
 	oidc := newOIDCDouble(t)
@@ -445,11 +399,6 @@ func TestSSOCallback_RefreshesTheSubjectDocumentLastLogin(t *testing.T) {
 		"the login transaction must refresh the stamp the users list renders")
 }
 
-// ---------------------------------------------------------------------------
-// The local identity provider
-// ---------------------------------------------------------------------------
-
-// startLogin drives GetSSOLoginURL and returns the minted state.
 func (f *fixture) startLogin(slug string) string {
 	f.t.Helper()
 	resp, err := f.client.GetSSOLoginURL(f.ctx(), connect.NewRequest(&cadestrov1.GetSSOLoginURLRequest{
@@ -463,8 +412,6 @@ func (f *fixture) startLogin(slug string) string {
 	return state
 }
 
-// nonceFor reads the nonce the server pinned for a login attempt, so
-// the double can mint an id_token that actually satisfies the check.
 func (f *fixture) nonceFor(state string) string {
 	f.t.Helper()
 	var nonce string
@@ -473,8 +420,6 @@ func (f *fixture) nonceFor(state string) string {
 	return nonce
 }
 
-// oidcDouble is a minimal but REAL OpenID provider: discovery, a JWKS
-// and a token endpoint that returns a properly signed id_token.
 type oidcDouble struct {
 	URL           string
 	key           *rsa.PrivateKey
@@ -562,16 +507,6 @@ func writeJSON(w http.ResponseWriter, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-// loopbackProviderFactory builds the SAME idp.OIDCProvider production
-// uses — its AuthCodeURL, ExchangeCode and VerifyAndExtractClaims are
-// the code under test — but performs discovery over an ordinary HTTP
-// client.
-//
-// Production wraps discovery in a client whose dial control refuses
-// internal addresses, which correctly blocks the loopback double. That
-// guard is a property of the outbound client, not of the exchange
-// logic, and it is unit-tested where it lives: internal/idp exercises
-// ssrfSafeDialControl directly.
 func loopbackProviderFactory(ctx context.Context, cfg idp.ProviderConfig) (*idp.OIDCProvider, error) {
 	provider, err := coreoidc.NewProvider(ctx, cfg.IssuerURL)
 	if err != nil {

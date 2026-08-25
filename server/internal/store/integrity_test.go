@@ -1,8 +1,5 @@
 package store_test
 
-// Schema integrity: what the grant tables must be able to represent,
-// and which references the database enforces.
-
 import (
 	"context"
 	"strings"
@@ -76,9 +73,6 @@ func TestEnrollmentProvenanceIsImmutable(t *testing.T) {
 	assert.Equal(t, tokenID, storedToken, "failed provenance updates cannot refund or move a token use")
 }
 
-// A user carries no authorization of its own: what a subject may do
-// comes from user_roles and user_group_roles. A scalar column beside
-// them would be a second, conflicting answer to the same question.
 func TestSchema_UsersCarryNoScalarRole(t *testing.T) {
 	_, pool := setupSQLite(t)
 
@@ -88,10 +82,6 @@ func TestSchema_UsersCarryNoScalarRole(t *testing.T) {
 	assert.NotContains(t, cols, "role")
 }
 
-// A subject may hold one role globally AND at several distinct scopes
-// at once, which a natural key of (subject, role) makes unrepresentable.
-// Uniqueness is instead exactly one unscoped grant per subject and role,
-// and one per subject, role and distinct scope.
 func TestUserRoles_GrantsCoexistPerScopeAndRejectDuplicates(t *testing.T) {
 	_, pool := setupSQLite(t)
 
@@ -146,8 +136,6 @@ func TestUserGroupRoles_GrantsCoexistPerScopeAndRejectDuplicates(t *testing.T) {
 	assert.Contains(t, err.Error(), "UNIQUE constraint failed")
 }
 
-// declaredForeignKeys returns "table.column -> parent" for every
-// single-column foreign key in the schema.
 func declaredForeignKeys(t *testing.T, pool *testdb.DB) []string {
 	t.Helper()
 	fks := scanStrings(t, pool, `
@@ -158,11 +146,6 @@ func declaredForeignKeys(t *testing.T, pool *testdb.DB) []string {
 	return fks
 }
 
-// Naming the parent is the point. A link pointing at a plausible but
-// wrong table still refuses orphans and still looks constrained; only
-// the parent name catches that it enforces the wrong relationship.
-// device_assigned_groups.group_id is a USER group — assigning a device
-// hands it to people — while device_group_members is device membership.
 var requiredForeignKeys = []string{
 	"device_group_members.group_id -> device_groups",
 	"device_group_members.device_id -> devices",
@@ -225,8 +208,6 @@ func TestForeignKeys_EveryDomainLinkIsDeclared(t *testing.T) {
 	}
 }
 
-// References that stay unconstrained on purpose, each for a reason a
-// well-meaning future change would undo.
 var unconstrainedReferences = map[string]string{
 
 	"assignments.source_id":     "polymorphic: the parent table is chosen by a sibling column",
@@ -248,7 +229,6 @@ func TestForeignKeys_ExcludedReferencesStayUnconstrained(t *testing.T) {
 
 	require.NotEmpty(t, unconstrainedReferences, "matches-zero guard: the excluded-reference list is empty")
 
-	// "table.column -> parent"; the link identity is the left side.
 	constrained := map[string]bool{}
 	for _, fk := range declaredForeignKeys(t, pool) {
 		ref, _, found := strings.Cut(fk, " -> ")
@@ -261,11 +241,6 @@ func TestForeignKeys_ExcludedReferencesStayUnconstrained(t *testing.T) {
 	}
 }
 
-// Representative orphans, one per relationship shape: durable work for
-// an unknown device, membership in an unknown group, stored key
-// material for an unknown device, and a grant naming an unknown subject
-// or role. Each insert supplies real values for every parent except the
-// one under test, so the constraint that fires is unambiguous.
 func TestForeignKeys_RejectOrphanRows(t *testing.T) {
 	_, pool := setupSQLite(t)
 

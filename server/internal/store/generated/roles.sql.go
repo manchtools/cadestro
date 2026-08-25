@@ -13,6 +13,10 @@ import (
 )
 
 const bumpSessionVersionForRoleHolders = `-- name: BumpSessionVersionForRoleHolders :execrows
+
+
+
+
 UPDATE users SET session_version = session_version + 1, updated_at = ?
 WHERE is_deleted = FALSE AND id IN (
     SELECT ur.user_id FROM user_roles ur WHERE ur.role_id = ?2
@@ -29,10 +33,6 @@ type BumpSessionVersionForRoleHoldersParams struct {
 	RoleID    string     `json:"role_id"`
 }
 
-// Changing what a role may do changes what everyone holding it may do,
-// so every session minted under the previous permission set is
-// invalidated in the same statement: directly-granted holders and
-// group-inherited holders alike.
 func (q *Queries) BumpSessionVersionForRoleHolders(ctx context.Context, arg BumpSessionVersionForRoleHoldersParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, bumpSessionVersionForRoleHolders, arg.UpdatedAt, arg.RoleID)
 	if err != nil {
@@ -42,6 +42,7 @@ func (q *Queries) BumpSessionVersionForRoleHolders(ctx context.Context, arg Bump
 }
 
 const countRoleHolders = `-- name: CountRoleHolders :one
+
 SELECT COUNT(*) FROM (
     SELECT ur.user_id FROM user_roles ur WHERE ur.role_id = ?1
     UNION
@@ -52,7 +53,6 @@ SELECT COUNT(*) FROM (
 ) holders
 `
 
-// How many distinct subjects hold the role, directly or through a group.
 func (q *Queries) CountRoleHolders(ctx context.Context, roleID string) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countRoleHolders, roleID)
 	var count int64
@@ -114,7 +114,6 @@ func (q *Queries) GetRoleByName(ctx context.Context, name string) (Role, error) 
 }
 
 const insertRole = `-- name: InsertRole :one
-
 INSERT INTO roles (id, name, description, permissions, is_system, created_at, created_by, updated_at)
 VALUES (?, ?, ?, ?, FALSE, ?, ?, ?)
 RETURNING id, name, description, permissions, is_system, created_at, created_by, updated_at, is_deleted
@@ -130,10 +129,6 @@ type InsertRoleParams struct {
 	UpdatedAt   *time.Time            `json:"updated_at"`
 }
 
-// Roles are the authorization catalogue: a named, ordered set of
-// permission keys. What a subject may do is the union of the roles
-// granted to them directly and through their groups; the role row
-// itself names nobody.
 func (q *Queries) InsertRole(ctx context.Context, arg InsertRoleParams) (Role, error) {
 	row := q.db.QueryRowContext(ctx, insertRole,
 		arg.ID,
@@ -160,6 +155,9 @@ func (q *Queries) InsertRole(ctx context.Context, arg InsertRoleParams) (Role, e
 }
 
 const listRoles = `-- name: ListRoles :many
+
+
+
 SELECT id, name, description, permissions, is_system, created_at, created_by, updated_at, is_deleted FROM roles
 WHERE is_deleted = FALSE AND id > ?
 ORDER BY id
@@ -171,9 +169,6 @@ type ListRolesParams struct {
 	Limit int64  `json:"limit"`
 }
 
-// Keyset pagination on the ULID primary key: ULIDs sort by mint time,
-// so ordering by id is a stable, gap-free cursor that a concurrent
-// insert cannot shift rows across.
 func (q *Queries) ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error) {
 	rows, err := q.db.QueryContext(ctx, listRoles, arg.ID, arg.Limit)
 	if err != nil {
@@ -226,6 +221,9 @@ func (q *Queries) SoftDeleteRole(ctx context.Context, arg SoftDeleteRoleParams) 
 }
 
 const updateRole = `-- name: UpdateRole :one
+
+
+
 UPDATE roles
 SET name = ?, description = ?, permissions = ?, updated_at = ?
 WHERE id = ? AND is_deleted = FALSE AND is_system = FALSE
@@ -240,9 +238,6 @@ type UpdateRoleParams struct {
 	ID          string                `json:"id"`
 }
 
-// System roles are reconciled from the code registry on boot; letting a
-// handler rewrite one would be silently undone at the next start, so the
-// statement refuses them outright.
 func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error) {
 	row := q.db.QueryRowContext(ctx, updateRole,
 		arg.Name,
@@ -267,6 +262,8 @@ func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, e
 }
 
 const updateSystemRolePermissions = `-- name: UpdateSystemRolePermissions :execrows
+
+
 UPDATE roles SET permissions = ?, updated_at = ?
 WHERE id = ? AND is_system = TRUE AND is_deleted = FALSE
 `
@@ -277,8 +274,6 @@ type UpdateSystemRolePermissionsParams struct {
 	ID          string                `json:"id"`
 }
 
-// The boot-time reconciler's only write: it refreshes a system role's
-// permission array from the code registry.
 func (q *Queries) UpdateSystemRolePermissions(ctx context.Context, arg UpdateSystemRolePermissionsParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, updateSystemRolePermissions, arg.Permissions, arg.UpdatedAt, arg.ID)
 	if err != nil {

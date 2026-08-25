@@ -10,8 +10,6 @@ import (
 
 const maintenanceResourceID = "00000000000000000000000003"
 
-// CleanupExpiredAuthStates deletes expired one-time OIDC state in the same
-// transaction as its bounded maintenance audit effect.
 func (s *Store) CleanupExpiredAuthStates(ctx context.Context) (int64, error) {
 	if ctx == nil || s == nil {
 		return 0, errors.New("auth-state cleanup requires a store and context")

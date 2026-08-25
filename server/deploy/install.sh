@@ -13,14 +13,14 @@ for command_name in curl tar docker openssl; do
 done
 docker compose version >/dev/null 2>&1 || fail "the Docker Compose plugin is required"
 
-# A human at a terminal is asked for exactly the values a scripted run passes
-# in the environment. Set variables always win, and without a terminal the
-# refusals below stay the interface, so unattended runs never hang on a
-# prompt. Nothing here asks for a secret: the dns01 DNS credential is pasted
-# by the operator into its 0600 credentials file after the tree is unpacked,
-# never typed into a prompt that would echo it into terminal scrollback.
-# The checks mirror setup.sh, which stays the enforcing authority; here they
-# only decide whether an answer is re-asked.
+
+
+
+
+
+
+
+
 hostname_pattern='^([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$'
 check_control_domain() { [[ "$1" =~ $hostname_pattern && "$1" != manage.example.com ]]; }
 check_agent_domain() { [[ "$1" =~ $hostname_pattern && "$1" != agents.example.com && "$1" != "$CONTROL_DOMAIN" ]]; }
@@ -73,17 +73,17 @@ fi
 [[ -n "${AGENT_DOMAIN:-}" ]] || fail "set AGENT_DOMAIN"
 [[ -n "${ACME_EMAIL:-}" ]] || fail "set ACME_EMAIL"
 
-# There is deliberately no default. A branch name installs whatever that branch
-# pointed at on the day it ran, which is not an installation anyone can
-# reproduce, attest, or roll back to, so the release has to be named. The
-# branch fallback further down is kept for an operator who names one on
-# purpose; only the silent default is gone.
+
+
+
+
+
 [[ -n "$RELEASE_TAG" ]] \
     || fail "set RELEASE_TAG to the release to install, e.g. RELEASE_TAG=v2026.08.09-rc2"
 
-# The same rules setup.sh applies, applied before anything is downloaded. dns01
-# additionally needs config/traefik-dns.env, which only exists once the tree is
-# unpacked, so setup.sh below is where that one is enforced.
+
+
+
 ACME_CHALLENGE="${ACME_CHALLENGE:-http01}"
 [[ "$ACME_CHALLENGE" == http01 || "$ACME_CHALLENGE" == dns01 ]] \
     || fail "ACME_CHALLENGE must be http01 or dns01"
@@ -111,10 +111,10 @@ source_root="$(find "$temporary_directory/source" -mindepth 1 -maxdepth 1 -type 
 [[ -f "$source_root/deploy/compose.yml" ]] || fail "release does not contain the deployment tree"
 cp -R "$source_root/deploy/." "$INSTALL_DIR/"
 
-# This script evolves with main while RELEASE_TAG pins the tree it installs.
-# When the two diverge, values this script asked for may be silently ignored
-# by that tree's setup.sh. Named, not fatal: installing a pinned older
-# release with a newer entry script is a legitimate, deliberate choice.
+
+
+
+
 if ! cmp -s "${BASH_SOURCE[0]}" "$source_root/deploy/install.sh" 2>/dev/null; then
     printf 'WARNING: this install.sh differs from the one inside release %s.\n' "$RELEASE_TAG" >&2
     printf 'Options it offered may not be understood by that release; prefer a release\n' >&2
@@ -143,10 +143,10 @@ chmod 600 "$INSTALL_DIR/.env"
 
 cd "$INSTALL_DIR"
 
-# The DNS credential is never prompted for and never defaulted: it belongs
-# only in this 0600 file, pasted there by the operator. Stop before setup.sh
-# with the file prepared and marked, so pasting the value and running the two
-# remaining commands is the whole finish.
+
+
+
+
 if [[ "$ACME_CHALLENGE" == dns01 && ! -s config/traefik-dns.env ]]; then
     mkdir -p config
     [[ -f config/traefik-dns.env ]] || install -m 600 /dev/null config/traefik-dns.env
@@ -154,9 +154,9 @@ if [[ "$ACME_CHALLENGE" == dns01 && ! -s config/traefik-dns.env ]]; then
     printf '    %s/config/traefik-dns.env\n' "$INSTALL_DIR" >&2
     printf 'as one KEY=VALUE line for the %s lego provider' "$ACME_DNS_PROVIDER" >&2
     if [[ "$ACME_DNS_PROVIDER" == hetzner ]]; then
-        # HETZNER_API_TOKEN selects the current Hetzner Cloud DNS API; the
-        # HETZNER_API_KEY variable selects the legacy API that Hetzner shut
-        # down in May 2026.
+
+
+
         printf ' (HETZNER_API_TOKEN=<Cloud Console API token>)' >&2
     fi
     printf ', then finish with:\n' >&2

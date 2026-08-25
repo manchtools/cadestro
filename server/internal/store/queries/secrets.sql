@@ -1,6 +1,6 @@
--- Current and bounded historical device-secret metadata. List queries never
--- select ciphertext; one-entry reveal queries are the only administrative
--- read path for stored secret values.
+
+
+
 
 -- name: GetDeviceSecret :one
 SELECT id, device_id, kind, subject, version, ciphertext

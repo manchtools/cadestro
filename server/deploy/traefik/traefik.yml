@@ -1,10 +1,10 @@
 api:
   dashboard: false
 
-# Answers /ping on Traefik's internal entrypoint, which nothing publishes. It
-# is what `traefik healthcheck --ping` asks, and that is the container
-# healthcheck `docker compose up --wait` waits on: without it the only route
-# into the deployment is reported ready the moment its process starts.
+
+
+
+
 ping: {}
 
 log:
@@ -15,9 +15,9 @@ accessLog:
   format: json
   fields:
     names:
-      # Traefik 3.7.1 cannot remove only the query component, so omit both
-      # fields that contain the request URI. Method, host, status, timing,
-      # router, service, and client metadata remain available.
+
+
+
       RequestPath: drop
       RequestLine: drop
     headers:
@@ -43,8 +43,8 @@ providers:
 certificatesResolvers:
   letsencrypt:
     acme:
-      # The challenge type is per deployment, not per image: setup.sh renders it
-      # into config/traefik-acme.env from ACME_CHALLENGE. A challenge pinned
-      # here would win for every deployment, including the dns01 ones that
-      # cannot answer on port 80 in the first place.
+
+
+
+
       storage: /letsencrypt/acme.json

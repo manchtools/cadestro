@@ -9,13 +9,6 @@ import (
 	"testing"
 )
 
-// Compliance reporting once had a read path, RPCs and permissions but no
-// writer: its projector was deleted with the event-sourced architecture and
-// nothing replaced it. The tests passed because they inserted the rows
-// themselves, so a device that ran a check and failed it reported UNKNOWN
-// forever. This guard keeps both halves of that failure impossible: compliance
-// state may only be created by the generated query layer, and the ingestion
-// path must still call it.
 func TestComplianceStateHasOneWriter(t *testing.T) {
 	_, file, _, ok := runtime.Caller(0)
 	if !ok {
@@ -24,15 +17,12 @@ func TestComplianceStateHasOneWriter(t *testing.T) {
 	root := filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
 	generated := filepath.Join(root, "internal", "store", "generated")
 
-	// Creating compliance state anywhere else means a fixture manufacturing a
-	// row production never produces. Corrupting an existing row is a different
-	// thing and stays available to rejection-path tests.
 	forbidden := []string{
 		"INSERT INTO compliance_results",
 		"INSERT INTO compliance_policy_evaluation",
 		"compliance_status =",
 	}
-	// The writers themselves, and the call that has to reach them.
+
 	writers := []string{
 		"UpsertDeviceComplianceResult",
 		"UpsertCompliancePolicyEvaluation",

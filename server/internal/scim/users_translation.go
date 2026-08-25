@@ -6,15 +6,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-// userResource shapes a stored subject as a SCIM user resource.
-//
-// The external identifier is a property of the BINDING, not of the
-// subject, so it is passed in: the same subject presents a different
-// one to each directory it is bound to.
-//
-// The name block is omitted entirely when the subject has no name
-// fields. An empty `"name": {}` is not the same claim, and directories
-// differ in how they read it.
 func userResource(row store.UserRow, externalID, baseURL string) SCIMUser {
 	out := SCIMUser{
 		Schemas:    []string{UserSchema},

@@ -16,7 +16,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store/sqlitetype"
 )
 
-// A fresh database receives the complete current schema.
 func TestNew_RunsMigrations(t *testing.T) {
 	st, pool := setupSQLite(t)
 	ctx := context.Background()
@@ -25,7 +24,6 @@ func TestNew_RunsMigrations(t *testing.T) {
 	require.NoError(t, err)
 	assert.Zero(t, n)
 
-	// The seeds the server assumes exist on first boot.
 	var settings int64
 	require.NoError(t, pool.QueryRow(ctx, `SELECT count(*) FROM server_settings WHERE id = '00000000000000000000000003'`).Scan(&settings))
 	assert.Equal(t, int64(1), settings)
@@ -61,9 +59,6 @@ func TestSQLiteFile_IsPrivateAndReadOnlyOpenDoesNotCreate(t *testing.T) {
 	assert.ErrorIs(t, statErr, os.ErrNotExist)
 }
 
-// The boot-time role snapshot must not carry permissions for authentication
-// subsystems that do not exist. Fresh seeds are intentionally empty until this
-// audited reconciliation runs before the server starts accepting requests.
 func TestSystemRoles_GrantNoLocalAuthenticationPermissions(t *testing.T) {
 	st, pool := setupSQLite(t)
 	ctx := context.Background()
@@ -95,8 +90,6 @@ func TestSystemRoles_GrantNoLocalAuthenticationPermissions(t *testing.T) {
 	require.Equal(t, 2, seen, "matches-zero guard: no system roles were inspected")
 }
 
-// Every SQLite connection waits briefly for the serialized writer and enforces
-// referential integrity. WAL is persistent on the database file.
 func TestNew_ConfiguresSQLiteSafetyPragmas(t *testing.T) {
 	_, pool := setupSQLite(t)
 	ctx := context.Background()
@@ -111,8 +104,6 @@ func TestNew_ConfiguresSQLiteSafetyPragmas(t *testing.T) {
 	assert.Equal(t, "wal", journalMode)
 }
 
-// The not-found recognizer is what callers use; reaching for the
-// driver's sentinel directly is what this exists to prevent.
 func TestIsNotFound_RecognisesAMissingRow(t *testing.T) {
 	st, _ := setupSQLite(t)
 

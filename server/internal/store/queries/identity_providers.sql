@@ -1,6 +1,6 @@
--- OIDC identity providers. client_secret_encrypted holds AES-256-GCM
--- ciphertext bound to this provider row; scim_token_hash holds a
--- non-reversible digest. Neither plaintext is representable here.
+
+
+
 
 -- name: InsertIdentityProvider :one
 INSERT INTO identity_providers (
@@ -63,15 +63,15 @@ WHERE id = ? AND is_deleted = FALSE
 RETURNING *;
 
 -- name: SoftDeleteIdentityProvider :execrows
--- Soft delete, not erasure: identity_links point at this row and must
--- stay resolvable as evidence of who was once linked where.
+
+
 UPDATE identity_providers SET is_deleted = TRUE, updated_at = ?
 WHERE id = ? AND is_deleted = FALSE;
 
 -- name: SetIdentityProviderSCIM :one
--- Enable, disable and rotate all land here: enabling writes a fresh
--- token hash, disabling writes FALSE and an empty hash, so a disabled
--- provider cannot be reached with a token issued before.
+
+
+
 UPDATE identity_providers
 SET scim_enabled = ?, scim_token_hash = ?, updated_at = ?
 WHERE id = ? AND is_deleted = FALSE

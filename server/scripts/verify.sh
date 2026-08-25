@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# The control server's canonical verification gate.
-#
-# GOWORK=off verifies the module as it builds on its own: the relative replace
-# directives in go.mod resolve the contract and the SDK from their sibling
-# directories, without the root go.work stitching anything together. A module
-# that only builds inside the workspace is broken for every other consumer.
+
+
+
+
+
+
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 export GOWORK=off
 
 echo "== gofmt"
-# No `|| true`: swallowing a gofmt FAILURE reports an empty violation list, so
-# the check would pass precisely when it could not run.
+
+
 unfmt=$(gofmt -l .)
 if [ -n "$unfmt" ]; then
   echo "gofmt violations:" >&2
@@ -26,8 +26,8 @@ go build ./...
 echo "== go vet"
 go vet ./...
 
-# Fail closed on a MISSING tool. Skipping it and reporting green is the exact
-# shape this gate exists to prevent: a pass that means "not checked".
+
+
 if ! command -v staticcheck >/dev/null 2>&1; then
   echo "staticcheck is not installed — the gate cannot certify this tree" >&2
   exit 1

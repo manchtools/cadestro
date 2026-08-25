@@ -7,9 +7,6 @@ import (
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-// TerminalSession represents a live WebSocket terminal bridge session
-// registered by control. The bridge goroutine reads from OutputCh;
-// the agent bidi stream handler writes to it via RouteAgentMessage.
 type TerminalSession struct {
 	SessionID string
 	DeviceID  string
@@ -19,20 +16,13 @@ type TerminalSession struct {
 	Rows      uint32
 	StartedAt time.Time
 
-	// OutputCh carries TerminalOutput and TerminalStateChange messages
-	// from the agent to the WebSocket bridge goroutine. Buffered so a
-	// briefly-slow WebSocket client doesn't block the bidi stream
-	// receive loop. If the channel is full, RouteAgentMessage drops
-	// the message (the user sees a brief stutter, which is acceptable
-	// for a terminal UI).
 	OutputCh chan *cadestrov1.AgentMessage
 
 	mu             sync.Mutex
 	lastActivityAt time.Time
-	now            func() time.Time // clock seam; defaults to time.Now, overridden in tests
+	now            func() time.Time
 }
 
-// NewTerminalSession constructs a session with a buffered output channel.
 func NewTerminalSession(sessionID, deviceID, userID, ttyUser string, cols, rows uint32) *TerminalSession {
 	clock := time.Now
 	startedAt := clock()
@@ -50,40 +40,29 @@ func NewTerminalSession(sessionID, deviceID, userID, ttyUser string, cols, rows 
 	}
 }
 
-// Touch updates the last activity timestamp.
 func (s *TerminalSession) Touch() {
 	s.mu.Lock()
 	s.lastActivityAt = s.now()
 	s.mu.Unlock()
 }
 
-// LastActivity returns the most recent activity timestamp.
 func (s *TerminalSession) LastActivity() time.Time {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.lastActivityAt
 }
 
-// TerminalSessionRegistry is a concurrent-safe map of active terminal
-// sessions in control, keyed by session_id. The WebSocket bridge
-// handler registers/unregisters sessions; the agent bidi stream
-// handler routes TerminalOutput/TerminalStateChange messages through
-// it.
 type TerminalSessionRegistry struct {
 	mu       sync.RWMutex
 	sessions map[string]*TerminalSession
 }
 
-// NewTerminalSessionRegistry creates an empty registry.
 func NewTerminalSessionRegistry() *TerminalSessionRegistry {
 	return &TerminalSessionRegistry{
 		sessions: make(map[string]*TerminalSession),
 	}
 }
 
-// Register adds a session to the registry. Replaces any existing
-// session with the same ID (shouldn't happen with ULIDs, but
-// defensive).
 func (r *TerminalSessionRegistry) Register(s *TerminalSession) {
 	r.mu.Lock()
 	if old, exists := r.sessions[s.SessionID]; exists {
@@ -93,8 +72,6 @@ func (r *TerminalSessionRegistry) Register(s *TerminalSession) {
 	r.mu.Unlock()
 }
 
-// Unregister removes a session and closes its OutputCh so any
-// blocked reader unblocks. Idempotent.
 func (r *TerminalSessionRegistry) Unregister(sessionID string) {
 	r.mu.Lock()
 	if s, ok := r.sessions[sessionID]; ok {
@@ -104,27 +81,14 @@ func (r *TerminalSessionRegistry) Unregister(sessionID string) {
 	r.mu.Unlock()
 }
 
-// Get returns the session for the given ID, or nil.
 func (r *TerminalSessionRegistry) Get(sessionID string) *TerminalSession {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.sessions[sessionID]
 }
 
-// RouteAgentMessage sends the message to the session's OutputCh.
-// Returns true if the session exists and the message was delivered
-// (or dropped because the channel is full). Returns false if no
-// session with that ID is registered.
-//
-// This is the hot path: called from the bidi stream receive loop on
-// every TerminalOutput/TerminalStateChange frame. It must never
-// block the receive loop, so a full channel drops the message
-// rather than blocking.
 func (r *TerminalSessionRegistry) RouteAgentMessage(sessionID string, msg *cadestrov1.AgentMessage) bool {
-	// Hold RLock through the entire send so Unregister (which takes
-	// the write lock before closing OutputCh) cannot race with us.
-	// Without this, Unregister can close OutputCh between our lookup
-	// and the select, causing a send-on-closed-channel panic.
+
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	s, ok := r.sessions[sessionID]
@@ -134,20 +98,17 @@ func (r *TerminalSessionRegistry) RouteAgentMessage(sessionID string, msg *cades
 	select {
 	case s.OutputCh <- msg:
 	default:
-		// Channel full — drop the frame. The user sees a brief
-		// stutter in the terminal output, which is acceptable.
+
 	}
 	return true
 }
 
-// Count returns the number of active sessions.
 func (r *TerminalSessionRegistry) Count() int {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return len(r.sessions)
 }
 
-// List returns a snapshot of all active terminal sessions.
 func (r *TerminalSessionRegistry) List() []*TerminalSession {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

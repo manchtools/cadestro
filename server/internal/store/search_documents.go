@@ -7,9 +7,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
-// Search documents are derived application state. The audit primitive calls
-// this after the domain callback and before commit, so an owning-row mutation
-// and its searchable form cannot diverge.
 type searchTouch struct {
 	resourceType string
 	resourceID   string
