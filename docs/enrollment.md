@@ -30,7 +30,7 @@ record on the device's token relation; retries by the same Ed25519 identity do
 not consume another use.
 <!-- docref: end -->
 
-<!-- docref: begin src=server/internal/auth/permissions.go#DefaultUserPermissions:909ee98a -->
+<!-- docref: begin src=server/internal/auth/permissions.go#DefaultUserPermissions:7a8b9033 -->
 Only a holder of the full `CreateToken` permission may mint enrollment tokens.
 There is no token owner and enrollment never assigns a human owner; operators
 use the existing device-user and device-group assignment controls afterwards.

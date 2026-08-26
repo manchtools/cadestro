@@ -176,7 +176,7 @@ by a list of exceptions someone has to maintain.
 
 ### Authorization
 
-<!-- docref: begin src=server/internal/auth/permissions.go#registryPermissions:c15dadf8 -->
+<!-- docref: begin src=server/internal/auth/permissions.go#registryPermissions:0abec0e4 -->
 Permissions live in one registry — roughly 165 entries, each declaring its key,
 its UI grouping, its description, and the kind of target it acts on. That target
 kind is what decides whether a permission can be scoped to a group, and the zero
