@@ -147,8 +147,12 @@ describe('settings — every capability keeps a home', () => {
 		expect(expiresAt).toBeInstanceOf(Date);
 		expect(expiresAt.getTime()).toBeGreaterThan(Date.now());
 		await expect.element(browser.getByLabelText(m.settings_api_tokens_value())).toHaveValue('bearer-secret');
+		const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+		await browser.getByRole('button', { name: m.settings_api_tokens_copy() }).click();
+		await vi.waitFor(() => expect(writeText).toHaveBeenCalledWith('bearer-secret'), { timeout: 3000 });
+		writeText.mockRestore();
 
-		await browser.getByRole('button', { name: m.common_cancel(), exact: true }).click();
+		await browser.getByRole('button', { name: m.common_done(), exact: true }).click();
 		await browser.getByRole('button', { name: m.settings_api_tokens_create(), exact: true }).click();
 		expect(browser.getByLabelText(m.settings_api_tokens_value()).elements()).toHaveLength(0);
 	});
@@ -222,6 +226,28 @@ describe('settings — every capability keeps a home', () => {
 });
 
 describe('settings — server-wide capabilities stay permission-gated', () => {
+	it('lists tokens with list permission without create or revoke controls', async () => {
+		auth.granted = new Set(['ListApiTokens']);
+		await mount();
+
+		await expect.element(browser.getByRole('heading', { name: m.settings_api_tokens() })).toBeVisible();
+		await vi.waitFor(() => expect(api.listApiTokens).toHaveBeenCalled(), { timeout: 3000 });
+		expect(browser.getByRole('button', { name: m.settings_api_tokens_create() }).elements()).toHaveLength(0);
+		expect(browser.getByRole('button', { name: m.settings_api_tokens_revoke() }).elements()).toHaveLength(0);
+		expect(api.createApiToken).not.toHaveBeenCalled();
+		expect(api.revokeApiToken).not.toHaveBeenCalled();
+	});
+
+	it('shows token creation with create permission without listing', async () => {
+		auth.granted = new Set(['CreateApiToken']);
+		await mount();
+
+		await expect.element(browser.getByRole('heading', { name: m.settings_api_tokens() })).toBeVisible();
+		await expect.element(browser.getByRole('button', { name: m.settings_api_tokens_create() })).toBeVisible();
+		expect(browser.getByText(m.settings_api_tokens_no_tokens()).elements()).toHaveLength(0);
+		expect(api.listApiTokens).not.toHaveBeenCalled();
+	});
+
 	it('omits the blocks whose RPC the session may not call', async () => {
 		auth.granted = new Set();
 		await mount();

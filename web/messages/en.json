@@ -1729,6 +1729,7 @@
   "settings_api_tokens_created_success": "API token created",
   "settings_api_tokens_revoked_success": "API token revoked",
   "settings_api_tokens_value": "Token value",
+  "settings_api_tokens_copy": "Copy API token",
   "settings_api_tokens_value_warning": "Copy this token now. It will not be shown again.",
   "settings_api_tokens_copied": "API token copied to clipboard",
   "scim_title": "SCIM Provisioning",

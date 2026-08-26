@@ -89,11 +89,10 @@
 	const canManageSshKeys = $derived(authStore.hasPermission('AddUserSshKey:self'));
 	const canRebuildIndex = $derived(authStore.hasPermission('RebuildSearchIndex'));
 	const canProvision = $derived(settingsLoaded && authStore.hasPermission('UpdateServerSettings'));
-	const canManageApiTokens = $derived(
-		authStore.hasPermission('CreateApiToken') &&
-		authStore.hasPermission('ListApiTokens') &&
-		authStore.hasPermission('RevokeApiToken')
-	);
+	const canCreateApiToken = $derived(authStore.hasPermission('CreateApiToken'));
+	const canListApiTokens = $derived(authStore.hasPermission('ListApiTokens'));
+	const canRevokeApiToken = $derived(authStore.hasPermission('RevokeApiToken'));
+	const canShowApiTokens = $derived(canListApiTokens || canCreateApiToken);
 
 	onMount(async () => {
 		pinnedVersion = getVersionCookie();
@@ -122,8 +121,14 @@
 		return m.settings_api_tokens_status_active();
 	}
 
+	function localDateTimeMin() {
+		const now = new Date();
+		now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+		return now.toISOString().slice(0, 16);
+	}
+
 	async function loadApiTokens() {
-		if (!canManageApiTokens) return;
+		if (!canListApiTokens) return;
 		apiTokensLoading = true;
 		try {
 			apiTokens = await fetchAllPages<ApiToken>(async (pageSize, pageToken) => {
@@ -188,7 +193,7 @@
 
 	async function revokeApiToken() {
 		const id = apiTokenToRevoke?.id?.value ?? '';
-		if (!id) return;
+		if (!canRevokeApiToken || !id) return;
 		apiTokenRevoking = true;
 		try {
 			await apiClient.revokeApiToken(id);
@@ -404,47 +409,53 @@
 		{/snippet}
 		{@render block(m.settings_account(), accountRows)}
 
-		{#if canManageApiTokens}
+		{#if canShowApiTokens}
 			{#snippet apiTokenRows()}
-				{#snippet createApiTokenControl()}
-					<Button variant="outline" size="sm" onclick={openApiTokenDialog}>
-						<Plus class="mr-2 h-4 w-4" />
-						{m.settings_api_tokens_create()}
-					</Button>
-				{/snippet}
-				{@render row(m.settings_api_tokens(), m.settings_api_tokens_description(), createApiTokenControl)}
-				<div class="px-4 py-3">
-					{#if apiTokensLoading}
-						<p class="text-sm text-muted-foreground">{m.common_loading()}</p>
-					{:else if apiTokens.length === 0}
-						<p class="text-sm text-muted-foreground">{m.settings_api_tokens_no_tokens()}</p>
-					{:else}
-						<ul class="divide-y divide-hair rounded-lg border bg-sunken">
-							{#each apiTokens as token}
-								<li class="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center">
-									<div class="min-w-0 flex-1">
-										<p class="truncate font-mono text-sm font-medium">{token.name}</p>
-										<p class="text-xs text-muted-foreground">
-											{m.settings_api_tokens_created()}: {formatTimestampDateTime(token.createdAt)}
-											· {m.settings_api_tokens_expires()}: {formatTimestampDateTime(token.expiresAt)}
-										</p>
-									</div>
-									<span class="text-xs font-medium text-muted-foreground">{apiTokenStatusLabel(token)}</span>
-									{#if apiTokenStatus(token) !== 'revoked'}
-										<Button
-											variant="ghost"
-											size="sm"
-											aria-label={m.settings_api_tokens_revoke()}
-											onclick={() => confirmRevokeApiToken(token)}
-										>
-											{m.settings_api_tokens_revoke()}
-										</Button>
-									{/if}
-								</li>
-							{/each}
-						</ul>
-					{/if}
-				</div>
+				{#if canCreateApiToken}
+					{#snippet createApiTokenControl()}
+						<Button variant="outline" size="sm" onclick={openApiTokenDialog}>
+							<Plus class="mr-2 h-4 w-4" />
+							{m.settings_api_tokens_create()}
+						</Button>
+					{/snippet}
+					{@render row(m.settings_api_tokens(), m.settings_api_tokens_description(), createApiTokenControl)}
+				{:else}
+					{@render row(m.settings_api_tokens(), m.settings_api_tokens_description())}
+				{/if}
+				{#if canListApiTokens}
+					<div class="px-4 py-3">
+						{#if apiTokensLoading}
+							<p class="text-sm text-muted-foreground">{m.common_loading()}</p>
+						{:else if apiTokens.length === 0}
+							<p class="text-sm text-muted-foreground">{m.settings_api_tokens_no_tokens()}</p>
+						{:else}
+							<ul class="divide-y divide-hair rounded-lg border bg-sunken">
+								{#each apiTokens as token}
+									<li class="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center">
+										<div class="min-w-0 flex-1">
+											<p class="truncate font-mono text-sm font-medium">{token.name}</p>
+											<p class="text-xs text-muted-foreground">
+												{m.settings_api_tokens_created()}: {formatTimestampDateTime(token.createdAt)}
+												· {m.settings_api_tokens_expires()}: {formatTimestampDateTime(token.expiresAt)}
+											</p>
+										</div>
+										<span class="text-xs font-medium text-muted-foreground">{apiTokenStatusLabel(token)}</span>
+										{#if canRevokeApiToken && apiTokenStatus(token) !== 'revoked'}
+											<Button
+												variant="ghost"
+												size="sm"
+												aria-label={m.settings_api_tokens_revoke()}
+												onclick={() => confirmRevokeApiToken(token)}
+											>
+												{m.settings_api_tokens_revoke()}
+											</Button>
+										{/if}
+									</li>
+								{/each}
+							</ul>
+						{/if}
+					</div>
+				{/if}
 			{/snippet}
 			{@render block(m.settings_api_tokens(), apiTokenRows)}
 		{/if}
@@ -750,14 +761,14 @@
 					<Label for="apiTokenValue">{m.settings_api_tokens_value()}</Label>
 					<div class="flex items-center gap-2">
 						<Input id="apiTokenValue" value={apiTokenValue} readonly class="font-mono text-sm" />
-						<Button type="button" variant="outline" size="icon" aria-label={m.settings_api_tokens_copied()} onclick={copyApiToken}>
+						<Button type="button" variant="outline" size="icon" aria-label={m.settings_api_tokens_copy()} onclick={copyApiToken}>
 							<Copy class="h-4 w-4" />
 						</Button>
 					</div>
 					<p class="text-sm text-muted-foreground">{m.settings_api_tokens_value_warning()}</p>
 				</div>
 				<Dialog.Footer>
-					<Button type="button" onclick={() => (apiTokenDialogOpen = false)}>{m.common_cancel()}</Button>
+					<Button type="button" onclick={() => (apiTokenDialogOpen = false)}>{m.common_done()}</Button>
 				</Dialog.Footer>
 			</div>
 		{:else}
@@ -772,7 +783,7 @@
 						id="apiTokenExpiresAt"
 						type="datetime-local"
 						bind:value={apiTokenExpiresAt}
-						min={new Date().toISOString().slice(0, 16)}
+						min={localDateTimeMin()}
 						required
 					/>
 				</div>
