@@ -15,6 +15,13 @@ Every reported zero in an audit must be corroborated by a second independent
 method, and the report must name both methods. A silent zero from one parser is
 not evidence that a class is absent.
 
+Before proposing a new authentication credential, trace the existing flow from
+issuance through claim construction, request authentication, refresh,
+revocation, and authority invalidation. Reuse the existing authorization path.
+Any different permission-freshness or invalidation semantics require an
+explicit operator ruling rather than being introduced as an implementation
+detail.
+
 ## Agent and process isolation
 
 Give every concurrent agent its own scratch namespace and require it to verify

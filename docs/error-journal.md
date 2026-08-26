@@ -189,3 +189,15 @@
 **Harness fix**: Promoted the repeated `Assumed intent` category into root `AGENTS.md`: API tokens authenticate an existing OIDC user, dedicated automation identities are created in OIDC, and no service-account principal or parallel token-owned authorization model is introduced.
 
 **Prevention**: Automation-auth designs must reuse the OIDC user principal and existing user permission path unless the operator explicitly reverses this ruling; a proposed credential may change how identity is presented, not create a second identity system.
+
+## 2026-08-26 Shallow analysis: proposed different permission freshness for API tokens
+
+**What happened**: I recommended resolving an API token owner's live permissions from the database on every request without first comparing that design with Cadestro's existing access-token issuance and session-version invalidation model.
+
+**What the user said**: "Does the access token have the permissions built in? Are you suggesting to handle permission checks between User login and API token differently?"
+
+**Root cause**: I reused the user principal but not the complete existing credential path; the recommendation was made before tracing permission loading, JWT claims, request authentication, refresh, and every session-version invalidation trigger together.
+
+**Harness fix**: Promoted the repeated `Shallow analysis` category into root `AGENTS.md`: every new authentication credential must be compared end to end with current issuance, claims, validation, refresh, revocation, and authority invalidation, and any permission-freshness difference needs an explicit operator ruling.
+
+**Prevention**: Authentication design work must start with the type-checked issuance call graph and the full authority-invalidation class before choosing baked claims or live lookup; the recommendation must state exactly when changed permissions and disabled users stop being authorized.
