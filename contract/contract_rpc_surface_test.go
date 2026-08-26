@@ -516,3 +516,44 @@ func TestContract_SecretShapedFieldsAreClassifiedOrJustified(t *testing.T) {
 		t.Fatal("matches-zero: no secret-shaped fields found; inverse classification guard proved nothing")
 	}
 }
+
+func TestContract_ApiTokenMetadataHasNoBearerValue(t *testing.T) {
+	metadata, err := protoregistry.GlobalFiles.FindDescriptorByName("cadestro.v1.ApiToken")
+	if err != nil {
+		t.Fatal(err)
+	}
+	metadataFields := metadata.(protoreflect.MessageDescriptor).Fields()
+	want := []protoreflect.Name{"id", "name", "expires_at", "created_at", "revoked_at"}
+	if metadataFields.Len() != len(want) {
+		t.Fatalf("ApiToken fields = %d, want %d", metadataFields.Len(), len(want))
+	}
+	for _, name := range want {
+		if metadataFields.ByName(name) == nil {
+			t.Errorf("ApiToken.%s is absent", name)
+		}
+	}
+	for _, messageName := range []protoreflect.FullName{"cadestro.v1.ListApiTokensResponse", "cadestro.v1.CreateApiTokenResponse"} {
+		descriptor, err := protoregistry.GlobalFiles.FindDescriptorByName(messageName)
+		if err != nil {
+			t.Fatal(err)
+		}
+		fields := descriptor.(protoreflect.MessageDescriptor).Fields()
+		if fields.ByName("token") != nil && messageName == "cadestro.v1.ListApiTokensResponse" {
+			t.Errorf("%s exposes a bearer token field", messageName)
+		}
+		if fields.ByName("value") == nil && messageName == "cadestro.v1.CreateApiTokenResponse" {
+			t.Errorf("%s must expose its one-time bearer value", messageName)
+		}
+	}
+	for name, message := range contractMessages(t) {
+		if !strings.Contains(string(name), "ApiToken") {
+			continue
+		}
+		for i := 0; i < message.Fields().Len(); i++ {
+			field := message.Fields().Get(i)
+			if field.Name() == "value" && name != "CreateApiTokenResponse" && name != "ApiTokenId" {
+				t.Errorf("%s.%s is an unexpected API-token plaintext field", name, field.Name())
+			}
+		}
+	}
+}

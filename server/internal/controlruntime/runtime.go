@@ -127,7 +127,7 @@ func New(cfg Config) *Runtime {
 		PublicBaseURL: cfg.PublicBaseURL, Now: cfg.Now,
 	})
 	authentication := auth.NewAuthInterceptor(cfg.Logger, cfg.JWT, limiters,
-		auth.NewRejectionRecorder(cfg.Store)).WithBootstrapAuthenticator(bootstrap).WithAPITokenAuthenticator(identityHandlers)
+		auth.NewRejectionRecorder(cfg.Store)).WithBootstrapAuthenticator(bootstrap).WithAPITokenStore(cfg.Store)
 	controlOptions := []connect.HandlerOption{
 		connect.WithInterceptors(
 			connectvalidate.NewInterceptor(),

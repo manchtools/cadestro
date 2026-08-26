@@ -94,7 +94,7 @@ func newFixture(t *testing.T, opts ...fixtureOption) *fixture {
 	chain := connect.WithInterceptors(
 		connectvalidate.NewInterceptor(),
 		auth.NewAuthInterceptor(logger, jwt, auth.RateLimiters{}, auth.NewRejectionRecorder(st)).
-			WithBootstrapAuthenticator(boot).WithAPITokenAuthenticator(handlers),
+			WithBootstrapAuthenticator(boot).WithAPITokenStore(st),
 		auth.NewAuthzInterceptor(),
 	)
 

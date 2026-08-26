@@ -64,6 +64,23 @@ func TestSessionTokens_AreSignedWithEdDSA(t *testing.T) {
 	assert.Empty(t, refresh.ScopedGrants)
 }
 
+func TestValidateBearerTokenAcceptsAccessAndAPIRejectsRefresh(t *testing.T) {
+	t.Parallel()
+	now := time.Date(2026, 8, 1, 9, 0, 0, 0, time.UTC)
+	m, _ := newManager(t, now)
+	pair, err := m.GenerateTokens("01J0000000000000000000000A", "person@test.example", nil, nil, 0)
+	require.NoError(t, err)
+	_, err = m.ValidateBearerToken(pair.AccessToken)
+	require.NoError(t, err)
+	_, err = m.ValidateBearerToken(pair.RefreshToken)
+	assert.Error(t, err)
+
+	_, apiToken, err := m.GenerateAPIToken("01J0000000000000000000000A", "person@test.example", nil, nil, 0, now.Add(time.Hour))
+	require.NoError(t, err)
+	_, err = m.ValidateBearerToken(apiToken)
+	assert.NoError(t, err)
+}
+
 func TestValidateToken_RefusesAnotherKeysSignature(t *testing.T) {
 	t.Parallel()
 	now := time.Date(2026, 8, 1, 9, 0, 0, 0, time.UTC)

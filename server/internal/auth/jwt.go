@@ -180,6 +180,34 @@ func (m *JWTManager) GenerateTokens(userID, email string, permissions []string, 
 }
 
 func (m *JWTManager) ValidateToken(tokenString string, expectedType TokenType) (*Claims, error) {
+	claims, err := m.parseToken(tokenString)
+	if err != nil {
+		return nil, err
+	}
+	if claims.TokenType != expectedType {
+		return nil, fmt.Errorf("unexpected token type: expected %s, got %s", expectedType, claims.TokenType)
+	}
+	if expectedType == TokenTypeAPIToken && claims.ID == "" {
+		return nil, errors.New("API token carries no id")
+	}
+	return claims, nil
+}
+
+func (m *JWTManager) ValidateBearerToken(tokenString string) (*Claims, error) {
+	claims, err := m.parseToken(tokenString)
+	if err != nil {
+		return nil, err
+	}
+	if claims.TokenType != TokenTypeAccess && claims.TokenType != TokenTypeAPIToken {
+		return nil, fmt.Errorf("unexpected bearer token type %s", claims.TokenType)
+	}
+	if claims.TokenType == TokenTypeAPIToken && claims.ID == "" {
+		return nil, errors.New("API token carries no id")
+	}
+	return claims, nil
+}
+
+func (m *JWTManager) parseToken(tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(
 		tokenString,
 		&Claims{},
@@ -202,14 +230,8 @@ func (m *JWTManager) ValidateToken(tokenString string, expectedType TokenType) (
 	if !ok || !token.Valid {
 		return nil, errors.New("invalid token")
 	}
-	if claims.TokenType != expectedType {
-		return nil, fmt.Errorf("unexpected token type: expected %s, got %s", expectedType, claims.TokenType)
-	}
 	if claims.UserID == "" {
 		return nil, errors.New("token carries no subject")
-	}
-	if expectedType == TokenTypeAPIToken && claims.ID == "" {
-		return nil, errors.New("API token carries no id")
 	}
 	return claims, nil
 }

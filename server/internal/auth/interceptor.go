@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/middleware"
+	"github.com/manchtools/cadestro/server/internal/store"
 )
 
 const (
@@ -246,15 +248,11 @@ type AuthInterceptor struct {
 	rejections RejectionRecorder
 
 	bootstrap BootstrapAuthenticator
-	apiTokens APITokenAuthenticator
+	apiTokens *store.Store
 }
 
 type BootstrapAuthenticator interface {
 	AuthenticateBootstrapToken(ctx context.Context, token string) (*UserContext, error)
-}
-
-type APITokenAuthenticator interface {
-	AuthenticateAPIToken(ctx context.Context, claims *Claims) (*UserContext, error)
 }
 
 func NewAuthInterceptor(logger *slog.Logger, jwtManager *JWTManager, limiters RateLimiters, rejections RejectionRecorder) *AuthInterceptor {
@@ -266,8 +264,8 @@ func (i *AuthInterceptor) WithBootstrapAuthenticator(b BootstrapAuthenticator) *
 	return i
 }
 
-func (i *AuthInterceptor) WithAPITokenAuthenticator(a APITokenAuthenticator) *AuthInterceptor {
-	i.apiTokens = a
+func (i *AuthInterceptor) WithAPITokenStore(st *store.Store) *AuthInterceptor {
+	i.apiTokens = st
 	return i
 }
 
@@ -299,54 +297,64 @@ func (i *AuthInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 				connect.CodeUnauthenticated, "invalid authorization header format")
 		}
 
-		claims, err := i.jwtManager.ValidateToken(credential, TokenTypeAccess)
+		claims, err := i.jwtManager.ValidateBearerToken(credential)
 		if err != nil {
-			apiClaims, apiErr := i.jwtManager.ValidateToken(credential, TokenTypeAPIToken)
-			if apiErr == nil && i.apiTokens != nil {
-				principal, authErr := i.apiTokens.AuthenticateAPIToken(ctx, apiClaims)
-				if authErr == nil {
-					if i.limiters.Authenticated != nil && !i.limiters.Authenticated.Allow("uid:"+principal.ID) {
-						return nil, authErrorCtx(ctx, errRateLimited, connect.CodeResourceExhausted, "too many requests, try again later")
-					}
-					if i.limiters.Expensive != nil && isExpensiveProcedure(ProcedureAction(procedure)) && !i.limiters.Expensive.Allow("uid:"+principal.ID) {
-						return nil, authErrorCtx(ctx, errRateLimited, connect.CodeResourceExhausted, "too many expensive requests, try again later")
-					}
-					return next(WithUser(ctx, principal), req)
-				}
-				return nil, i.rejectAuthentication(ctx, req, procedure, errNotAuthenticated, credential, connect.CodeUnauthenticated, "invalid token")
-			}
-			if apiErr != nil && errors.Is(apiErr, jwt.ErrTokenExpired) {
-				err = apiErr
-			}
-
 			code, msg := errNotAuthenticated, "invalid token"
 			if errors.Is(err, jwt.ErrTokenExpired) {
 				code, msg = errTokenExpired, "token expired"
 			}
 			return nil, i.rejectAuthentication(ctx, req, procedure, code, credential, connect.CodeUnauthenticated, msg)
 		}
-
-		if i.limiters.Authenticated != nil && !i.limiters.Authenticated.Allow("uid:"+claims.UserID) {
-			i.logger.Warn("rate limit exceeded", "limiter", "authenticated", "procedure", procedure)
-			return nil, authErrorCtx(ctx, errRateLimited, connect.CodeResourceExhausted, "too many requests, try again later")
+		principal, err := i.authenticateBearer(ctx, claims)
+		if err != nil {
+			return nil, i.rejectAuthentication(ctx, req, procedure, errNotAuthenticated, credential, connect.CodeUnauthenticated, "invalid token")
 		}
-		if i.limiters.Expensive != nil && isExpensiveProcedure(ProcedureAction(procedure)) {
-			if !i.limiters.Expensive.Allow("uid:" + claims.UserID) {
-				i.logger.Warn("rate limit exceeded", "limiter", "expensive", "procedure", procedure)
-				return nil, authErrorCtx(ctx, errRateLimited, connect.CodeResourceExhausted, "too many expensive requests, try again later")
-			}
-		}
-
-		ctx = WithUser(ctx, &UserContext{
-			ID:             claims.UserID,
-			Kind:           PrincipalUser,
-			Email:          claims.Email,
-			Permissions:    claims.Permissions,
-			ScopedGrants:   claims.ScopedGrants,
-			SessionVersion: claims.SessionVersion,
-		})
-		return next(ctx, req)
+		return i.continueAuthenticated(ctx, next, req, procedure, principal)
 	}
+}
+
+func (i *AuthInterceptor) authenticateBearer(ctx context.Context, claims *Claims) (*UserContext, error) {
+	if claims.TokenType == TokenTypeAPIToken {
+		if i.apiTokens == nil || claims.Subject == "" || claims.Subject != claims.UserID || claims.ID == "" {
+			return nil, errors.New("invalid API token claims")
+		}
+		row, err := i.apiTokens.GetApiTokenForAuth(ctx, claims.ID, claims.UserID)
+		if err != nil {
+			return nil, fmt.Errorf("resolve API token: %w", err)
+		}
+		if !row.ExpiresAt.After(i.jwtManager.config.Now().UTC()) {
+			return nil, errors.New("API token expired")
+		}
+		state, err := i.apiTokens.GetUserSessionState(ctx, claims.UserID)
+		if err != nil {
+			return nil, fmt.Errorf("resolve API token user: %w", err)
+		}
+		if state.IsDeleted || state.Disabled || state.SessionVersion != claims.SessionVersion {
+			return nil, errors.New("API token user is not active")
+		}
+	}
+	return &UserContext{
+		ID:             claims.UserID,
+		Kind:           PrincipalUser,
+		Email:          claims.Email,
+		Permissions:    claims.Permissions,
+		ScopedGrants:   claims.ScopedGrants,
+		SessionVersion: claims.SessionVersion,
+	}, nil
+}
+
+func (i *AuthInterceptor) continueAuthenticated(ctx context.Context, next connect.UnaryFunc, req connect.AnyRequest, procedure string, principal *UserContext) (connect.AnyResponse, error) {
+	if i.limiters.Authenticated != nil && !i.limiters.Authenticated.Allow("uid:"+principal.ID) {
+		i.logger.Warn("rate limit exceeded", "limiter", "authenticated", "procedure", procedure)
+		return nil, authErrorCtx(ctx, errRateLimited, connect.CodeResourceExhausted, "too many requests, try again later")
+	}
+	if i.limiters.Expensive != nil && isExpensiveProcedure(ProcedureAction(procedure)) {
+		if !i.limiters.Expensive.Allow("uid:" + principal.ID) {
+			i.logger.Warn("rate limit exceeded", "limiter", "expensive", "procedure", procedure)
+			return nil, authErrorCtx(ctx, errRateLimited, connect.CodeResourceExhausted, "too many expensive requests, try again later")
+		}
+	}
+	return next(WithUser(ctx, principal), req)
 }
 
 func (i *AuthInterceptor) authenticateBootstrap(

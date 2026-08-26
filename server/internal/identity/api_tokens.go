@@ -2,7 +2,6 @@ package identity
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"connectrpc.com/connect"
@@ -10,36 +9,9 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
-
-func (h *Handlers) AuthenticateAPIToken(ctx context.Context, claims *auth.Claims) (*auth.UserContext, error) {
-	if claims == nil || claims.Subject == "" || claims.Subject != claims.UserID || claims.ID == "" {
-		return nil, errors.New("invalid API token claims")
-	}
-	row, err := h.store.GetApiTokenForAuth(ctx, claims.ID, claims.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("resolve API token: %w", err)
-	}
-	now := h.now().UTC()
-	if !row.ExpiresAt.After(now) {
-		return nil, errors.New("API token expired")
-	}
-	state, err := h.store.GetUserSessionState(ctx, claims.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("resolve API token user: %w", err)
-	}
-	if state.IsDeleted || state.Disabled || state.SessionVersion != claims.SessionVersion {
-		return nil, errors.New("API token user is not active")
-	}
-	return &auth.UserContext{
-		ID: claims.UserID, Kind: auth.PrincipalUser, Email: claims.Email,
-		Permissions: claims.Permissions, ScopedGrants: claims.ScopedGrants,
-		SessionVersion: claims.SessionVersion,
-	}, nil
-}
 
 func (h *Handlers) CreateApiToken(ctx context.Context, req *connect.Request[cadestrov1.CreateApiTokenRequest]) (*connect.Response[cadestrov1.CreateApiTokenResponse], error) {
 	if req.Msg.ExpiresAt == nil || req.Msg.ExpiresAt.CheckValid() != nil || !req.Msg.ExpiresAt.AsTime().After(h.now().UTC()) {
@@ -55,6 +27,9 @@ func (h *Handlers) CreateApiToken(ctx context.Context, req *connect.Request[cade
 	state, err := h.store.GetUserSessionState(ctx, actor.ID)
 	if err != nil {
 		return nil, internalError(ctx, "failed to load user session")
+	}
+	if state.IsDeleted || state.Disabled || state.SessionVersion != actor.SessionVersion {
+		return nil, rpcError(ctx, ErrNotAuthenticated, connect.CodeUnauthenticated, "session is no longer active")
 	}
 	permissions, grants, err := h.userAuthority(ctx, actor.ID)
 	if err != nil {

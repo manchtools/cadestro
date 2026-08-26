@@ -77,6 +77,52 @@ func TestApiToken_ExpiryAndDisabledUserInvalidateAuthentication(t *testing.T) {
 	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
 }
 
+func TestApiToken_OutlivesAccessTokenAndBrowserLogout(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	actor := f.seedActor(grant{Permissions: allPermissionKeys()})
+	pair := f.mintPair(actor.ID, actor.Email)
+	created, err := f.client.CreateApiToken(f.ctx(), authed(&cadestrov1.CreateApiTokenRequest{Name: "long", ExpiresAt: timestamppb.New(f.now.Add(time.Hour))}, actor.Token))
+	require.NoError(t, err)
+	f.advance(f.jwt.AccessTokenTTL() + time.Second)
+	_, err = f.client.GetCurrentUser(f.ctx(), authed(&cadestrov1.GetCurrentUserRequest{}, created.Msg.Value))
+	require.NoError(t, err)
+	_, err = f.client.Logout(f.ctx(), connect.NewRequest(&cadestrov1.LogoutRequest{RefreshToken: pair.RefreshToken}))
+	require.NoError(t, err)
+	_, err = f.client.GetCurrentUser(f.ctx(), authed(&cadestrov1.GetCurrentUserRequest{}, created.Msg.Value))
+	require.NoError(t, err)
+}
+
+func TestApiToken_AuthorityChangesInvalidateAuthentication(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	admin := f.seedActor(grant{Permissions: allPermissionKeys()})
+	actor := f.seedActor(grant{Permissions: allPermissionKeys()})
+	created, err := f.client.CreateApiToken(f.ctx(), authed(&cadestrov1.CreateApiTokenRequest{Name: "authority", ExpiresAt: timestamppb.New(f.now.Add(time.Hour))}, actor.Token))
+	require.NoError(t, err)
+	_, err = f.raw.Exec(f.ctx(), `UPDATE users SET session_version = session_version + 1 WHERE id = $1`, actor.ID)
+	require.NoError(t, err)
+	_, err = f.client.GetCurrentUser(f.ctx(), authed(&cadestrov1.GetCurrentUserRequest{}, created.Msg.Value))
+	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
+
+	created, err = f.client.CreateApiToken(f.ctx(), authed(&cadestrov1.CreateApiTokenRequest{Name: "deleted", ExpiresAt: timestamppb.New(f.now.Add(time.Hour))}, admin.Token))
+	require.NoError(t, err)
+	_, err = f.raw.Exec(f.ctx(), `UPDATE users SET is_deleted = true WHERE id = $1`, admin.ID)
+	require.NoError(t, err)
+	_, err = f.client.GetCurrentUser(f.ctx(), authed(&cadestrov1.GetCurrentUserRequest{}, created.Msg.Value))
+	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
+}
+
+func TestApiToken_StaleAccessCannotMintAfterAuthorityInvalidation(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	actor := f.seedActor(grant{Permissions: allPermissionKeys()})
+	_, err := f.raw.Exec(f.ctx(), `UPDATE users SET disabled = true, session_version = session_version + 1 WHERE id = $1`, actor.ID)
+	require.NoError(t, err)
+	_, err = f.client.CreateApiToken(f.ctx(), authed(&cadestrov1.CreateApiTokenRequest{Name: "stale", ExpiresAt: timestamppb.New(f.now.Add(time.Hour))}, actor.Token))
+	assert.Equal(t, connect.CodeUnauthenticated, connectCodeOf(t, err))
+}
+
 func TestApiToken_RejectsPastExpiry(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
