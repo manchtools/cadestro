@@ -153,3 +153,15 @@
 **Harness fix**: Strengthened root `AGENTS.md`: embedded Goose is the automatic upgrade mechanism; unreleased pre-1.0 history may be squashed, released schemas are immutable, and later changes require ordered migrations with tested upgrade and rollback behavior.
 
 **Prevention**: Every readiness report must inspect the live schema runner before describing migration capability. A single current migration means a squashed history, not a missing migrator; migration work is open only when an actual released-version transition lacks its Goose Up/Down path or test.
+
+## 2026-08-26 Assumed intent: shifted test-drive setup onto the operator
+
+**What happened**: I treated an available OIDC provider and an SSH key as inputs the operator needed to supply, instead of tracing Cadestro's first-login flow and doing the locally controlled key setup myself.
+
+**What the user said**: "Well you would create a key and i distribute the public key. The OIDC part is pretty tricky, im not aware of option where you can sign in with oidc?"
+
+**Root cause**: I drafted generic deployment prerequisites before reading the product's bootstrap setup page, login route, callback route, and OIDC just-in-time account creation path end to end.
+
+**Harness fix**: None; Stallion already requires source-backed evidence and autonomy. This is the second `Assumed intent` entry, below the three-entry promotion threshold.
+
+**Prevention**: For every test-drive dependency, first separate work I can perform from external facts only the operator controls, then verify the repository's actual bootstrap path before asking for credentials, infrastructure, or identity services.
