@@ -165,3 +165,15 @@
 **Harness fix**: None; Stallion already requires source-backed evidence and autonomy. This is the second `Assumed intent` entry, below the three-entry promotion threshold.
 
 **Prevention**: For every test-drive dependency, first separate work I can perform from external facts only the operator controls, then verify the repository's actual bootstrap path before asking for credentials, infrastructure, or identity services.
+
+## 2026-08-26 Shallow analysis: conflated interactive OIDC with automation credentials
+
+**What happened**: I explained how OIDC enables the operator's browser login but presented it as if that also gave me a usable credential for unattended API acceptance testing.
+
+**What the user said**: "okay but how does OIDC help you with testing? I would need to give you my access token..."
+
+**Root cause**: I traced authentication issuance but stopped before separating the interactive browser session, non-interactive API clients, and enrolled device identity into their distinct credential lifecycles.
+
+**Harness fix**: None; Stallion already requires tracing the real flow end to end. This is the second `Shallow analysis` entry, below the three-entry promotion threshold.
+
+**Prevention**: Every authentication recommendation will identify the principal, interactive or unattended acquisition, credential lifetime, refresh mechanism, revocation path, and intended consumer before claiming it enables a test or integration.
