@@ -4,14 +4,23 @@
 	import type { Snippet } from 'svelte';
 	import { goto } from '$lib/navigation';
 	import { toast } from 'svelte-sonner';
-	import { configStore, authStore, apiClient, type IdentityLink, type SshPublicKey } from '$lib/sdk';
+	import {
+		configStore,
+		authStore,
+		apiClient,
+		fetchAllPages,
+		formatTimestampDateTime,
+		type ApiToken,
+		type IdentityLink,
+		type SshPublicKey
+	} from '$lib/sdk';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Select from '$lib/components/ui/select';
-	import { Key, LogOut, RefreshCw, Unlink, Plus, X } from '@lucide/svelte';
+	import { Key, LogOut, RefreshCw, Unlink, Plus, X, Copy } from '@lucide/svelte';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import PageShell from '$lib/components/page-shell.svelte';
 	import { getVersionCookie, clearVersionCookie } from '$lib/version';
@@ -66,10 +75,25 @@
 	let globalUserProvisioning = $state(false);
 	let globalSshAccessForAll = $state(false);
 	let settingsLoaded = $state(false);
+	let apiTokens = $state<ApiToken[]>([]);
+	let apiTokensLoading = $state(false);
+	let apiTokenDialogOpen = $state(false);
+	let apiTokenName = $state('');
+	let apiTokenExpiresAt = $state('');
+	let apiTokenValue = $state('');
+	let apiTokenCreating = $state(false);
+	let revokeApiTokenConfirmOpen = $state(false);
+	let apiTokenToRevoke = $state<ApiToken | null>(null);
+	let apiTokenRevoking = $state(false);
 
 	const canManageSshKeys = $derived(authStore.hasPermission('AddUserSshKey:self'));
 	const canRebuildIndex = $derived(authStore.hasPermission('RebuildSearchIndex'));
 	const canProvision = $derived(settingsLoaded && authStore.hasPermission('UpdateServerSettings'));
+	const canManageApiTokens = $derived(
+		authStore.hasPermission('CreateApiToken') &&
+		authStore.hasPermission('ListApiTokens') &&
+		authStore.hasPermission('RevokeApiToken')
+	);
 
 	onMount(async () => {
 		pinnedVersion = getVersionCookie();
@@ -82,8 +106,102 @@
 			console.warn(err);
 		}
 
-		await Promise.allSettled([loadIdentityLinks(), loadSshKeys(), loadServerSettings()]);
+		await Promise.allSettled([loadIdentityLinks(), loadSshKeys(), loadServerSettings(), loadApiTokens()]);
 	});
+
+	function apiTokenStatus(token: ApiToken): 'active' | 'expired' | 'revoked' {
+		if (token.revokedAt) return 'revoked';
+		if (token.expiresAt && new Date(Number(token.expiresAt.seconds) * 1000) <= new Date()) return 'expired';
+		return 'active';
+	}
+
+	function apiTokenStatusLabel(token: ApiToken): string {
+		const status = apiTokenStatus(token);
+		if (status === 'revoked') return m.settings_api_tokens_status_revoked();
+		if (status === 'expired') return m.settings_api_tokens_status_expired();
+		return m.settings_api_tokens_status_active();
+	}
+
+	async function loadApiTokens() {
+		if (!canManageApiTokens) return;
+		apiTokensLoading = true;
+		try {
+			apiTokens = await fetchAllPages<ApiToken>(async (pageSize, pageToken) => {
+				const response = await apiClient.listApiTokens(pageSize, pageToken);
+				return { items: response.tokens, nextPageToken: response.nextPageToken };
+			});
+		} catch (error) {
+			console.warn('Failed to load API tokens', error);
+			apiTokens = [];
+		} finally {
+			apiTokensLoading = false;
+		}
+	}
+
+	function openApiTokenDialog() {
+		apiTokenName = '';
+		apiTokenExpiresAt = '';
+		apiTokenValue = '';
+		apiTokenDialogOpen = true;
+	}
+
+	function handleApiTokenDialogOpen(open: boolean) {
+		apiTokenDialogOpen = open;
+		if (!open) {
+			apiTokenName = '';
+			apiTokenExpiresAt = '';
+			apiTokenValue = '';
+		}
+	}
+
+	async function createApiToken() {
+		const name = apiTokenName.trim();
+		const expiresAt = new Date(apiTokenExpiresAt);
+		if (!name || !apiTokenExpiresAt || Number.isNaN(expiresAt.getTime()) || expiresAt <= new Date()) return;
+		apiTokenCreating = true;
+		try {
+			const response = await apiClient.createApiToken(name, expiresAt);
+			apiTokenValue = response.value;
+			toast.success(m.settings_api_tokens_created_success());
+			await loadApiTokens();
+		} catch (error) {
+			toast.error(getLocalizedError(error));
+		} finally {
+			apiTokenCreating = false;
+		}
+	}
+
+	async function copyApiToken() {
+		if (!apiTokenValue) return;
+		try {
+			await navigator.clipboard.writeText(apiTokenValue);
+			toast.success(m.settings_api_tokens_copied());
+		} catch (error) {
+			toast.error(getLocalizedError(error));
+		}
+	}
+
+	function confirmRevokeApiToken(token: ApiToken) {
+		apiTokenToRevoke = token;
+		revokeApiTokenConfirmOpen = true;
+	}
+
+	async function revokeApiToken() {
+		const id = apiTokenToRevoke?.id?.value ?? '';
+		if (!id) return;
+		apiTokenRevoking = true;
+		try {
+			await apiClient.revokeApiToken(id);
+			toast.success(m.settings_api_tokens_revoked_success());
+			revokeApiTokenConfirmOpen = false;
+			await loadApiTokens();
+		} catch (error) {
+			toast.error(getLocalizedError(error));
+		} finally {
+			apiTokenRevoking = false;
+			apiTokenToRevoke = null;
+		}
+	}
 
 	async function loadIdentityLinks() {
 		identityLinksLoading = true;
@@ -285,6 +403,51 @@
 			{@render row(m.settings_roles(), m.settings_roles_description(), roleValue)}
 		{/snippet}
 		{@render block(m.settings_account(), accountRows)}
+
+		{#if canManageApiTokens}
+			{#snippet apiTokenRows()}
+				{#snippet createApiTokenControl()}
+					<Button variant="outline" size="sm" onclick={openApiTokenDialog}>
+						<Plus class="mr-2 h-4 w-4" />
+						{m.settings_api_tokens_create()}
+					</Button>
+				{/snippet}
+				{@render row(m.settings_api_tokens(), m.settings_api_tokens_description(), createApiTokenControl)}
+				<div class="px-4 py-3">
+					{#if apiTokensLoading}
+						<p class="text-sm text-muted-foreground">{m.common_loading()}</p>
+					{:else if apiTokens.length === 0}
+						<p class="text-sm text-muted-foreground">{m.settings_api_tokens_no_tokens()}</p>
+					{:else}
+						<ul class="divide-y divide-hair rounded-lg border bg-sunken">
+							{#each apiTokens as token}
+								<li class="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center">
+									<div class="min-w-0 flex-1">
+										<p class="truncate font-mono text-sm font-medium">{token.name}</p>
+										<p class="text-xs text-muted-foreground">
+											{m.settings_api_tokens_created()}: {formatTimestampDateTime(token.createdAt)}
+											· {m.settings_api_tokens_expires()}: {formatTimestampDateTime(token.expiresAt)}
+										</p>
+									</div>
+									<span class="text-xs font-medium text-muted-foreground">{apiTokenStatusLabel(token)}</span>
+									{#if apiTokenStatus(token) !== 'revoked'}
+										<Button
+											variant="ghost"
+											size="sm"
+											aria-label={m.settings_api_tokens_revoke()}
+											onclick={() => confirmRevokeApiToken(token)}
+										>
+											{m.settings_api_tokens_revoke()}
+										</Button>
+									{/if}
+								</li>
+							{/each}
+						</ul>
+					{/if}
+				</div>
+			{/snippet}
+			{@render block(m.settings_api_tokens(), apiTokenRows)}
+		{/if}
 
 		{#snippet appearanceRows()}
 			{#snippet themeControl()}
@@ -574,6 +737,76 @@
 		</form>
 	</Dialog.Content>
 </Dialog.Root>
+
+<Dialog.Root bind:open={apiTokenDialogOpen} onOpenChange={handleApiTokenDialogOpen}>
+	<Dialog.Content>
+		<Dialog.Header>
+			<Dialog.Title>{m.settings_api_tokens_create_title()}</Dialog.Title>
+			<Dialog.Description>{m.settings_api_tokens_create_description()}</Dialog.Description>
+		</Dialog.Header>
+		{#if apiTokenValue}
+			<div class="space-y-4">
+				<div class="space-y-2">
+					<Label for="apiTokenValue">{m.settings_api_tokens_value()}</Label>
+					<div class="flex items-center gap-2">
+						<Input id="apiTokenValue" value={apiTokenValue} readonly class="font-mono text-sm" />
+						<Button type="button" variant="outline" size="icon" aria-label={m.settings_api_tokens_copied()} onclick={copyApiToken}>
+							<Copy class="h-4 w-4" />
+						</Button>
+					</div>
+					<p class="text-sm text-muted-foreground">{m.settings_api_tokens_value_warning()}</p>
+				</div>
+				<Dialog.Footer>
+					<Button type="button" onclick={() => (apiTokenDialogOpen = false)}>{m.common_cancel()}</Button>
+				</Dialog.Footer>
+			</div>
+		{:else}
+			<form onsubmit={(event) => { event.preventDefault(); createApiToken(); }} class="space-y-4">
+				<div class="space-y-2">
+					<Label for="apiTokenName">{m.settings_api_tokens_name()}</Label>
+					<Input id="apiTokenName" bind:value={apiTokenName} required />
+				</div>
+				<div class="space-y-2">
+					<Label for="apiTokenExpiresAt">{m.settings_api_tokens_expiry()}</Label>
+					<Input
+						id="apiTokenExpiresAt"
+						type="datetime-local"
+						bind:value={apiTokenExpiresAt}
+						min={new Date().toISOString().slice(0, 16)}
+						required
+					/>
+				</div>
+				<Dialog.Footer>
+					<Button type="button" variant="outline" onclick={() => (apiTokenDialogOpen = false)}>{m.common_cancel()}</Button>
+					<Button type="submit" disabled={apiTokenCreating || !apiTokenName.trim() || !apiTokenExpiresAt}>
+						{apiTokenCreating ? m.common_loading() : m.settings_api_tokens_create()}
+					</Button>
+				</Dialog.Footer>
+			</form>
+		{/if}
+	</Dialog.Content>
+</Dialog.Root>
+
+<AlertDialog.Root
+	bind:open={revokeApiTokenConfirmOpen}
+	onOpenChange={(open) => {
+		revokeApiTokenConfirmOpen = open;
+		if (!open) apiTokenToRevoke = null;
+	}}
+>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>{m.settings_api_tokens_revoke_title()}</AlertDialog.Title>
+			<AlertDialog.Description>{m.settings_api_tokens_revoke_confirm()}</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel>{m.common_cancel()}</AlertDialog.Cancel>
+			<AlertDialog.Action onclick={revokeApiToken} disabled={apiTokenRevoking}>
+				{apiTokenRevoking ? m.common_loading() : m.settings_api_tokens_revoke()}
+			</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>
 
 <AlertDialog.Root bind:open={removeSshKeyConfirmOpen}>
 	<AlertDialog.Content>

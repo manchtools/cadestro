@@ -6,6 +6,13 @@ import { page as browser, userEvent } from 'vitest/browser';
 import * as m from '$lib/paraglide/messages';
 
 const USER_ID = '01JQZZ0000000000000000000A';
+const API_TOKEN_ID = 'api-token-1';
+const apiToken = () => ({
+	id: { value: API_TOKEN_ID },
+	name: 'automation',
+	createdAt: { seconds: BigInt(Math.floor(Date.now() / 1000) - 60), nanos: 0 },
+	expiresAt: { seconds: BigInt(Math.floor(Date.now() / 1000) + 86400), nanos: 0 }
+});
 
 const api = vi.hoisted(() => ({
 	listIdentityLinks: vi.fn(),
@@ -15,7 +22,10 @@ const api = vi.hoisted(() => ({
 	removeUserSshKey: vi.fn(),
 	rebuildSearchIndex: vi.fn(),
 	getServerSettings: vi.fn(),
-	updateServerSettings: vi.fn()
+	updateServerSettings: vi.fn(),
+	createApiToken: vi.fn(),
+	listApiTokens: vi.fn(),
+	revokeApiToken: vi.fn()
 }));
 const auth = vi.hoisted(() => ({
 	granted: new Set<string>(),
@@ -33,10 +43,13 @@ const tour = vi.hoisted(() => ({ startTour: vi.fn() }));
 vi.mock('$lib/sdk', async () => {
 	const control = await import('$contract/cadestro/v1/control_pb');
 	const common = await import('$contract/cadestro/v1/common_pb');
+	const { fetchAllPages } = await import('$lib/sdk/paginate');
 	return {
 		...control,
 		...common,
 		apiClient: api,
+		fetchAllPages,
+		formatTimestampDateTime: () => '2026-08-01 09:00',
 		configStore: { serverUrl: 'https://control.test' },
 		authStore: {
 			get user() {
@@ -53,7 +66,15 @@ vi.mock('$lib/onboarding', () => ({ startTour: tour.startTour }));
 
 import SettingsPage from './+page.svelte';
 
-const ALL_PERMISSIONS = ['AddUserSshKey:self', 'RebuildSearchIndex', 'GetServerSettings', 'UpdateServerSettings'];
+const ALL_PERMISSIONS = [
+	'AddUserSshKey:self',
+	'RebuildSearchIndex',
+	'GetServerSettings',
+	'UpdateServerSettings',
+	'CreateApiToken',
+	'ListApiTokens',
+	'RevokeApiToken'
+];
 
 beforeEach(() => {
 	for (const fn of Object.values(api)) fn.mockReset();
@@ -73,6 +94,9 @@ beforeEach(() => {
 	api.removeUserSshKey.mockResolvedValue({});
 	api.rebuildSearchIndex.mockResolvedValue(undefined);
 	api.updateServerSettings.mockResolvedValue({});
+	api.listApiTokens.mockResolvedValue({ tokens: [apiToken()], nextPageToken: '' });
+	api.createApiToken.mockResolvedValue({ token: apiToken(), value: 'bearer-secret' });
+	api.revokeApiToken.mockResolvedValue(undefined);
 	vi.stubGlobal(
 		'fetch',
 		vi.fn().mockResolvedValue({ ok: true, json: async () => ({ version: '2026.8.1' }) })
@@ -92,6 +116,7 @@ describe('settings — every capability keeps a home', () => {
 			m.settings_account(),
 			m.settings_appearance(),
 			m.settings_ssh_identity(),
+			m.settings_api_tokens(),
 			m.settings_search_index(),
 			m.settings_provisioning(),
 			m.settings_server_config(),
@@ -106,6 +131,35 @@ describe('settings — every capability keeps a home', () => {
 		await expect.element(browser.getByText('operator', { exact: true })).toBeVisible();
 		await expect.element(browser.getByText('Keycloak')).toBeVisible();
 		await expect.element(browser.getByText('ssh-ed25519 AAAAC3Nz')).toBeVisible();
+		await expect.element(browser.getByText('automation', { exact: true })).toBeVisible();
+	});
+
+	it('creates an API token with trimmed name and future expiry', async () => {
+		await mount();
+		await browser.getByRole('button', { name: m.settings_api_tokens_create() }).click();
+		await browser.getByLabelText(m.settings_api_tokens_name()).fill('  deploy  ');
+		await browser.getByLabelText(m.settings_api_tokens_expiry()).fill('2099-01-01T12:30');
+		await browser.getByRole('button', { name: m.settings_api_tokens_create(), exact: true }).last().click();
+
+		await vi.waitFor(() => expect(api.createApiToken).toHaveBeenCalledTimes(1), { timeout: 3000 });
+		const [name, expiresAt] = api.createApiToken.mock.calls[0];
+		expect(name).toBe('deploy');
+		expect(expiresAt).toBeInstanceOf(Date);
+		expect(expiresAt.getTime()).toBeGreaterThan(Date.now());
+		await expect.element(browser.getByLabelText(m.settings_api_tokens_value())).toHaveValue('bearer-secret');
+
+		await browser.getByRole('button', { name: m.common_cancel(), exact: true }).click();
+		await browser.getByRole('button', { name: m.settings_api_tokens_create(), exact: true }).click();
+		expect(browser.getByLabelText(m.settings_api_tokens_value()).elements()).toHaveLength(0);
+	});
+
+	it('revokes an API token only after confirmation', async () => {
+		await mount();
+		await browser.getByRole('button', { name: m.settings_api_tokens_revoke() }).click();
+		expect(api.revokeApiToken).not.toHaveBeenCalled();
+
+		await browser.getByRole('button', { name: m.settings_api_tokens_revoke(), exact: true }).last().click();
+		await vi.waitFor(() => expect(api.revokeApiToken).toHaveBeenCalledWith(API_TOKEN_ID), { timeout: 3000 });
 	});
 
 	it('rebuilds the search index through its own RPC', async () => {
@@ -174,9 +228,13 @@ describe('settings — server-wide capabilities stay permission-gated', () => {
 
 		expect(browser.getByRole('heading', { name: m.settings_search_index() }).elements()).toHaveLength(0);
 		expect(browser.getByRole('heading', { name: m.settings_provisioning() }).elements()).toHaveLength(0);
+		expect(browser.getByRole('heading', { name: m.settings_api_tokens() }).elements()).toHaveLength(0);
 		expect(browser.getByRole('button', { name: m.settings_ssh_add_key() }).elements()).toHaveLength(0);
 		expect(api.getServerSettings).not.toHaveBeenCalled();
 		expect(api.getCurrentUser).not.toHaveBeenCalled();
+		expect(api.listApiTokens).not.toHaveBeenCalled();
+		expect(api.createApiToken).not.toHaveBeenCalled();
+		expect(api.revokeApiToken).not.toHaveBeenCalled();
 
 		await expect.element(browser.getByRole('heading', { name: m.settings_account() })).toBeVisible();
 		await expect.element(browser.getByRole('heading', { name: m.common_danger_zone() })).toBeVisible();
