@@ -54,6 +54,9 @@ type Store interface {
 	CountIdentityProviders(ctx context.Context) (int64, error)
 
 	IsTokenRevoked(ctx context.Context, jti string) (bool, error)
+	ListApiTokensForUser(ctx context.Context, userID, afterID string, limit int32) ([]store.ApiTokenRow, error)
+	CountApiTokensForUser(ctx context.Context, userID string) (int64, error)
+	GetApiTokenForAuth(ctx context.Context, id, userID string) (store.ApiTokenRow, error)
 }
 
 type ProviderFactory func(ctx context.Context, cfg idp.ProviderConfig) (*idp.OIDCProvider, error)

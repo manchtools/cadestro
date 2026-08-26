@@ -36,6 +36,9 @@ import {
 	RenameTokenRequestSchema,
 	SetTokenDisabledRequestSchema,
 	DeleteTokenRequestSchema,
+	CreateApiTokenRequestSchema,
+	ListApiTokensRequestSchema,
+	RevokeApiTokenRequestSchema,
 
 	CreateActionRequestSchema,
 	GetActionRequestSchema,
@@ -573,6 +576,24 @@ export class ApiClient {
 	async deleteToken(id: string) {
 		const client = this.getClient();
 		await client.deleteToken(create(DeleteTokenRequestSchema, { id: { value: id } }));
+	}
+
+	async createApiToken(name: string, expiresAt: Date) {
+		const client = this.getClient();
+		return client.createApiToken(create(CreateApiTokenRequestSchema, {
+			name,
+			expiresAt: { seconds: BigInt(Math.floor(expiresAt.getTime() / 1000)), nanos: 0 }
+		}));
+	}
+
+	async listApiTokens(pageSize: number = 50, pageToken: string = '') {
+		const client = this.getClient();
+		return client.listApiTokens(create(ListApiTokensRequestSchema, { pageSize, pageToken }));
+	}
+
+	async revokeApiToken(id: string) {
+		const client = this.getClient();
+		await client.revokeApiToken(create(RevokeApiTokenRequestSchema, { id: { value: id } }));
 	}
 
 	async createAction(data: Omit<CreateActionRequest, '$typeName'>) {

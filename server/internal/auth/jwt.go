@@ -14,8 +14,9 @@ import (
 type TokenType string
 
 const (
-	TokenTypeAccess  TokenType = "access"
-	TokenTypeRefresh TokenType = "refresh"
+	TokenTypeAccess   TokenType = "access"
+	TokenTypeRefresh  TokenType = "refresh"
+	TokenTypeAPIToken TokenType = "api_token"
 )
 
 var SigningAlgorithm = jwt.SigningMethodEdDSA
@@ -95,6 +96,30 @@ type TokenPair struct {
 }
 
 func (m *JWTManager) AccessTokenTTL() time.Duration { return m.config.AccessTokenExpiry }
+
+func (m *JWTManager) GenerateAPIToken(userID, email string, permissions []string, scopedGrants []ScopedGrant, sessionVersion int32, expiresAt time.Time) (string, string, error) {
+	now := m.config.Now().UTC()
+	if !expiresAt.After(now) {
+		return "", "", errors.New("API token expiry must be in the future")
+	}
+	jti, err := ulid.New(ulid.Timestamp(now), rand.Reader)
+	if err != nil {
+		return "", "", fmt.Errorf("mint API token id: %w", err)
+	}
+	claims := &Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID: jti.String(), Issuer: m.config.Issuer, Subject: userID,
+			ExpiresAt: jwt.NewNumericDate(expiresAt.UTC()), IssuedAt: jwt.NewNumericDate(now),
+		},
+		UserID: userID, Email: email, Permissions: permissions, ScopedGrants: scopedGrants,
+		TokenType: TokenTypeAPIToken, SessionVersion: sessionVersion,
+	}
+	token, err := jwt.NewWithClaims(SigningAlgorithm, claims).SignedString(m.config.PrivateKey)
+	if err != nil {
+		return "", "", fmt.Errorf("sign API token: %w", err)
+	}
+	return jti.String(), token, nil
+}
 
 func (m *JWTManager) GenerateTokens(userID, email string, permissions []string, scopedGrants []ScopedGrant, sessionVersion int32) (*TokenPair, error) {
 	now := m.config.Now()
@@ -182,6 +207,9 @@ func (m *JWTManager) ValidateToken(tokenString string, expectedType TokenType) (
 	}
 	if claims.UserID == "" {
 		return nil, errors.New("token carries no subject")
+	}
+	if expectedType == TokenTypeAPIToken && claims.ID == "" {
+		return nil, errors.New("API token carries no id")
 	}
 	return claims, nil
 }

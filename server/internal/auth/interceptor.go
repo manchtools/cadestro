@@ -246,10 +246,15 @@ type AuthInterceptor struct {
 	rejections RejectionRecorder
 
 	bootstrap BootstrapAuthenticator
+	apiTokens APITokenAuthenticator
 }
 
 type BootstrapAuthenticator interface {
 	AuthenticateBootstrapToken(ctx context.Context, token string) (*UserContext, error)
+}
+
+type APITokenAuthenticator interface {
+	AuthenticateAPIToken(ctx context.Context, claims *Claims) (*UserContext, error)
 }
 
 func NewAuthInterceptor(logger *slog.Logger, jwtManager *JWTManager, limiters RateLimiters, rejections RejectionRecorder) *AuthInterceptor {
@@ -258,6 +263,11 @@ func NewAuthInterceptor(logger *slog.Logger, jwtManager *JWTManager, limiters Ra
 
 func (i *AuthInterceptor) WithBootstrapAuthenticator(b BootstrapAuthenticator) *AuthInterceptor {
 	i.bootstrap = b
+	return i
+}
+
+func (i *AuthInterceptor) WithAPITokenAuthenticator(a APITokenAuthenticator) *AuthInterceptor {
+	i.apiTokens = a
 	return i
 }
 
@@ -291,6 +301,23 @@ func (i *AuthInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 
 		claims, err := i.jwtManager.ValidateToken(credential, TokenTypeAccess)
 		if err != nil {
+			apiClaims, apiErr := i.jwtManager.ValidateToken(credential, TokenTypeAPIToken)
+			if apiErr == nil && i.apiTokens != nil {
+				principal, authErr := i.apiTokens.AuthenticateAPIToken(ctx, apiClaims)
+				if authErr == nil {
+					if i.limiters.Authenticated != nil && !i.limiters.Authenticated.Allow("uid:"+principal.ID) {
+						return nil, authErrorCtx(ctx, errRateLimited, connect.CodeResourceExhausted, "too many requests, try again later")
+					}
+					if i.limiters.Expensive != nil && isExpensiveProcedure(ProcedureAction(procedure)) && !i.limiters.Expensive.Allow("uid:"+principal.ID) {
+						return nil, authErrorCtx(ctx, errRateLimited, connect.CodeResourceExhausted, "too many expensive requests, try again later")
+					}
+					return next(WithUser(ctx, principal), req)
+				}
+				return nil, i.rejectAuthentication(ctx, req, procedure, errNotAuthenticated, credential, connect.CodeUnauthenticated, "invalid token")
+			}
+			if apiErr != nil && errors.Is(apiErr, jwt.ErrTokenExpired) {
+				err = apiErr
+			}
 
 			code, msg := errNotAuthenticated, "invalid token"
 			if errors.Is(err, jwt.ErrTokenExpired) {

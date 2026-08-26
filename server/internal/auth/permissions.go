@@ -72,6 +72,9 @@ func registryPermissions() []permEntry {
 	return []permEntry{
 
 		{"GetCurrentUser", "Users", "View own profile", TargetUnspecified},
+		{"CreateApiToken", "Tokens", "Create API tokens for yourself", TargetUnspecified},
+		{"ListApiTokens", "Tokens", "List your API tokens", TargetUnspecified},
+		{"RevokeApiToken", "Tokens", "Revoke your API tokens", TargetUnspecified},
 		{"GetUser", "Users", "View any user", TargetUser},
 		{"GetUser:self", "Users", "View own profile only", TargetUnspecified},
 		{"ListUsers", "Users", "List all users", TargetUser},
@@ -270,7 +273,7 @@ func AdminPermissions() []string {
 
 func DefaultUserPermissions() []string {
 	return []string{
-		"GetCurrentUser",
+		"GetCurrentUser", "CreateApiToken", "ListApiTokens", "RevokeApiToken",
 		"GetUser:self",
 		"UpdateUserEmail:self",
 		"UpdateUserProfile:self",

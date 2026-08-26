@@ -46,6 +46,15 @@ type ActionSetMember struct {
 	AddedAt   *time.Time `json:"added_at"`
 }
 
+type ApiToken struct {
+	ID        string     `json:"id"`
+	UserID    string     `json:"user_id"`
+	Name      string     `json:"name"`
+	ExpiresAt time.Time  `json:"expires_at"`
+	CreatedAt time.Time  `json:"created_at"`
+	RevokedAt *time.Time `json:"revoked_at"`
+}
+
 type Assignment struct {
 	ID         string     `json:"id"`
 	SourceType string     `json:"source_type"`

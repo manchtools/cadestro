@@ -465,6 +465,7 @@ func TestContract_SecretShapedFieldsAreClassifiedOrJustified(t *testing.T) {
 		"cadestro.v1.RotateSCIMTokenResponse.token":               "one-time SCIM bearer reveal",
 		"cadestro.v1.ValidateLuksTokenRequest.token":              "one-time device-bound LUKS input",
 		"cadestro.v1.CreateTokenResponse.token":                   "one-time registration-token reveal",
+		"cadestro.v1.CreateApiTokenResponse.value":                "one-time API bearer reveal",
 		"cadestro.v1.CreateLuksTokenResponse.token":               "one-time LUKS-token reveal",
 		"cadestro.v1.Hello.auth_token":                            "short-lived direct-stream bootstrap bearer",
 		"cadestro.v1.RefreshTokenRequest.refresh_token":           "public HTTPS authentication input",

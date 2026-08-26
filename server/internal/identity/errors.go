@@ -25,6 +25,7 @@ const (
 	ErrIdentityLinkNotFound    = cadestrov1.ErrorCode_ERROR_CODE_IDENTITY_LINK_NOT_FOUND
 	ErrGrantNotFound           = cadestrov1.ErrorCode_ERROR_CODE_GRANT_NOT_FOUND
 	ErrUserGroupNotFound       = cadestrov1.ErrorCode_ERROR_CODE_USER_GROUP_NOT_FOUND
+	ErrTokenNotFound           = cadestrov1.ErrorCode_ERROR_CODE_TOKEN_NOT_FOUND
 	ErrUserGroupMemberNotFound = cadestrov1.ErrorCode_ERROR_CODE_USER_GROUP_MEMBER_NOT_FOUND
 
 	ErrEmailAlreadyExists  = cadestrov1.ErrorCode_ERROR_CODE_EMAIL_ALREADY_EXISTS

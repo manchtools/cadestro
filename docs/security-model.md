@@ -247,6 +247,19 @@ worth knowing: an operator can set an allow-all CORS variable, which reflects an
 origin — deliberately without credentials — and logs a warning.
 <!-- docref: end -->
 
+### API tokens
+
+Users may create, list, and revoke bearer API tokens for themselves through the
+ControlService. Creation returns the signed value once; the database stores
+only its ULID, owner, name, timestamps, and revocation state. An API token
+inherits the issuing user's permissions and scoped grants and carries the
+current session version. Each request verifies the Ed25519 signature, issuer,
+expiry, token type, JTI ownership, revocation state, and current user state.
+Disabling or deleting the user, changing authority, expiry, or explicit
+revocation invalidates the token. Browser refresh rotation and logout do not.
+
+Send it as `Authorization: Bearer <token>`; never put it in a query parameter.
+
 ---
 
 ## 3. Device PKI

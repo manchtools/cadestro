@@ -2,10 +2,12 @@ package identity_test
 
 import (
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
@@ -15,6 +17,18 @@ import (
 type call func(f *fixture, token string) error
 
 var authenticatedMutations = map[string]call{
+	cadestrov1connect.ControlServiceCreateApiTokenProcedure: func(f *fixture, token string) error {
+		_, err := f.client.CreateApiToken(f.ctx(), authed(&cadestrov1.CreateApiTokenRequest{
+			Name: "test", ExpiresAt: timestamppb.New(f.now.Add(time.Hour)),
+		}, token))
+		return err
+	},
+	cadestrov1connect.ControlServiceRevokeApiTokenProcedure: func(f *fixture, token string) error {
+		_, err := f.client.RevokeApiToken(f.ctx(), authed(&cadestrov1.RevokeApiTokenRequest{
+			Id: &cadestrov1.ApiTokenId{Value: newULID()},
+		}, token))
+		return err
+	},
 	cadestrov1connect.ControlServiceCreateIdentityProviderProcedure: func(f *fixture, token string) error {
 		_, err := f.client.CreateIdentityProvider(f.ctx(), authed(&cadestrov1.CreateIdentityProviderRequest{
 			Name:         "Corp",

@@ -210,6 +210,16 @@ CREATE TABLE revoked_tokens (
 );
 CREATE INDEX idx_revoked_tokens_expires ON revoked_tokens(expires_at);
 
+CREATE TABLE api_tokens (
+    id         text PRIMARY KEY,
+    user_id    text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name       text NOT NULL,
+    expires_at timestamp NOT NULL,
+    created_at timestamp NOT NULL,
+    revoked_at timestamp
+);
+CREATE INDEX idx_api_tokens_user ON api_tokens(user_id, id);
+
 CREATE TABLE tokens (
     id           text PRIMARY KEY,
     value_hash   text NOT NULL UNIQUE,

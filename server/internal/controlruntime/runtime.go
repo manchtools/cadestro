@@ -122,8 +122,12 @@ func New(cfg Config) *Runtime {
 
 	limiters, ownedLimiters := defaultRateLimiters()
 	bootstrap := identity.NewBootstrapper(cfg.Store, cfg.PublicBaseURL, identity.DefaultBootstrapTokenTTL, cfg.Now)
+	identityHandlers := identity.New(identity.Config{
+		Store: cfg.Store, Logger: cfg.Logger, JWT: cfg.JWT, KEK: cfg.AtRest,
+		PublicBaseURL: cfg.PublicBaseURL, Now: cfg.Now,
+	})
 	authentication := auth.NewAuthInterceptor(cfg.Logger, cfg.JWT, limiters,
-		auth.NewRejectionRecorder(cfg.Store)).WithBootstrapAuthenticator(bootstrap)
+		auth.NewRejectionRecorder(cfg.Store)).WithBootstrapAuthenticator(bootstrap).WithAPITokenAuthenticator(identityHandlers)
 	controlOptions := []connect.HandlerOption{
 		connect.WithInterceptors(
 			connectvalidate.NewInterceptor(),
@@ -141,10 +145,7 @@ func New(cfg Config) *Runtime {
 
 	publicMux := http.NewServeMux()
 	controlrpc.Handlers{
-		Identity: identity.New(identity.Config{
-			Store: cfg.Store, Logger: cfg.Logger, JWT: cfg.JWT, KEK: cfg.AtRest,
-			PublicBaseURL: cfg.PublicBaseURL, Now: cfg.Now,
-		}),
+		Identity:     identityHandlers,
 		Enrollment:   enrollmentHandler,
 		Authoring:    authoring.NewHandlers(authoring.HandlersConfig{Store: cfg.Store, AtRest: cfg.AtRest, Logger: cfg.Logger, Now: cfg.Now}),
 		Assignments:  assignment.New(assignment.Config{Store: cfg.Store, Logger: cfg.Logger, Now: cfg.Now}),

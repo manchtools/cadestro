@@ -101,6 +101,9 @@ var nonMutatingExports = map[string]string{
 	"GetUser":                          "read",
 	"CountUsers":                       "read",
 	"GetUserEncryptionKey":             "read",
+	"ListApiTokensForUser":              "read",
+	"CountApiTokensForUser":             "read",
+	"GetApiTokenForAuth":                "read",
 
 	"GetUserByEmail":                         "read",
 	"GetUserSessionState":                    "read",

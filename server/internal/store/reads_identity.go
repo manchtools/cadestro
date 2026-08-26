@@ -37,6 +37,7 @@ type (
 	ServerSettingsRow = generated.ServerSetting
 
 	UserSessionStateRow = generated.GetUserSessionStateRow
+	ApiTokenRow         = generated.ApiToken
 )
 
 type UserGroupListFilter struct {
@@ -44,6 +45,30 @@ type UserGroupListFilter struct {
 	Limit           int32
 	ScopeRestricted bool
 	ScopeGroupIDs   []string
+}
+
+func (s *Store) ListApiTokensForUser(ctx context.Context, userID, afterID string, limit int32) ([]ApiTokenRow, error) {
+	rows, err := s.queries.ListApiTokensForUser(ctx, generated.ListApiTokensForUserParams{UserID: userID, AfterID: afterID, RowLimit: int64(limit)})
+	if err != nil {
+		return nil, fmt.Errorf("api token: list: %w", err)
+	}
+	return rows, nil
+}
+
+func (s *Store) CountApiTokensForUser(ctx context.Context, userID string) (int64, error) {
+	count, err := s.queries.CountApiTokensForUser(ctx, userID)
+	if err != nil {
+		return 0, fmt.Errorf("api token: count: %w", err)
+	}
+	return count, nil
+}
+
+func (s *Store) GetApiTokenForAuth(ctx context.Context, id, userID string) (ApiTokenRow, error) {
+	row, err := s.queries.GetApiTokenForAuth(ctx, generated.GetApiTokenForAuthParams{ID: id, UserID: userID})
+	if err != nil {
+		return ApiTokenRow{}, fmt.Errorf("api token: authenticate: %w", translateNotFound(err))
+	}
+	return row, nil
 }
 
 func (s *Store) GetUserByEmail(ctx context.Context, email string) (UserRow, error) {

@@ -13,13 +13,21 @@ import (
 )
 
 func (h *Handlers) mintSession(ctx context.Context, userID, email string, sessionVersion int32) (*auth.TokenPair, error) {
-	permissions, err := h.store.ListUserPermissions(ctx, userID)
+	permissions, grants, err := h.userAuthority(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
+	return h.jwt.GenerateTokens(userID, email, permissions, grants, sessionVersion)
+}
+
+func (h *Handlers) userAuthority(ctx context.Context, userID string) ([]string, []auth.ScopedGrant, error) {
+	permissions, err := h.store.ListUserPermissions(ctx, userID)
+	if err != nil {
+		return nil, nil, err
+	}
 	grantRows, err := h.store.ListUserScopedGrants(ctx, userID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	grants := make([]auth.ScopedGrant, 0, len(grantRows))
 	for _, g := range grantRows {
@@ -32,7 +40,7 @@ func (h *Handlers) mintSession(ctx context.Context, userID, email string, sessio
 		}
 		grants = append(grants, sg)
 	}
-	return h.jwt.GenerateTokens(userID, email, permissions, grants, sessionVersion)
+	return permissions, grants, nil
 }
 
 func (h *Handlers) RefreshToken(ctx context.Context, req *connect.Request[cadestrov1.RefreshTokenRequest]) (*connect.Response[cadestrov1.RefreshTokenResponse], error) {

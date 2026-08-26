@@ -74,6 +74,10 @@ message RegistrationTokenId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }
 
+message ApiTokenId {
+  string value = 1 [(buf.validate.field).string.ulid = true];
+}
+
 message DeviceGroupId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }

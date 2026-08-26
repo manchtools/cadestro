@@ -21,6 +21,12 @@ func (h *Handlers) Mount(mux *http.ServeMux, opts ...connect.HandlerOption) []st
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceLogoutProcedure, h.Logout, opts...))
 	register(cadestrov1connect.ControlServiceGetCurrentUserProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceGetCurrentUserProcedure, h.GetCurrentUser, opts...))
+	register(cadestrov1connect.ControlServiceCreateApiTokenProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceCreateApiTokenProcedure, h.CreateApiToken, opts...))
+	register(cadestrov1connect.ControlServiceListApiTokensProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceListApiTokensProcedure, h.ListApiTokens, opts...))
+	register(cadestrov1connect.ControlServiceRevokeApiTokenProcedure,
+		connect.NewUnaryHandler(cadestrov1connect.ControlServiceRevokeApiTokenProcedure, h.RevokeApiToken, opts...))
 
 	register(cadestrov1connect.ControlServiceListAuthMethodsProcedure,
 		connect.NewUnaryHandler(cadestrov1connect.ControlServiceListAuthMethodsProcedure, h.ListAuthMethods, opts...))
@@ -171,12 +177,15 @@ func MutationProcedures() []string {
 		cadestrov1connect.ControlServiceAssignRoleToUserGroupProcedure,
 		cadestrov1connect.ControlServiceRevokeRoleFromUserGroupProcedure,
 		cadestrov1connect.ControlServiceUpdateServerSettingsProcedure,
+		cadestrov1connect.ControlServiceCreateApiTokenProcedure,
+		cadestrov1connect.ControlServiceRevokeApiTokenProcedure,
 	}
 }
 
 func ReadProcedures() []string {
 	return []string{
 		cadestrov1connect.ControlServiceGetCurrentUserProcedure,
+		cadestrov1connect.ControlServiceListApiTokensProcedure,
 		cadestrov1connect.ControlServiceListAuthMethodsProcedure,
 		cadestrov1connect.ControlServiceGetIdentityProviderProcedure,
 		cadestrov1connect.ControlServiceListIdentityProvidersProcedure,

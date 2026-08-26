@@ -159,6 +159,15 @@ const (
 	// ControlServiceDeleteTokenProcedure is the fully-qualified name of the ControlService's
 	// DeleteToken RPC.
 	ControlServiceDeleteTokenProcedure = "/cadestro.v1.ControlService/DeleteToken"
+	// ControlServiceCreateApiTokenProcedure is the fully-qualified name of the ControlService's
+	// CreateApiToken RPC.
+	ControlServiceCreateApiTokenProcedure = "/cadestro.v1.ControlService/CreateApiToken"
+	// ControlServiceListApiTokensProcedure is the fully-qualified name of the ControlService's
+	// ListApiTokens RPC.
+	ControlServiceListApiTokensProcedure = "/cadestro.v1.ControlService/ListApiTokens"
+	// ControlServiceRevokeApiTokenProcedure is the fully-qualified name of the ControlService's
+	// RevokeApiToken RPC.
+	ControlServiceRevokeApiTokenProcedure = "/cadestro.v1.ControlService/RevokeApiToken"
 	// ControlServiceCreateActionProcedure is the fully-qualified name of the ControlService's
 	// CreateAction RPC.
 	ControlServiceCreateActionProcedure = "/cadestro.v1.ControlService/CreateAction"
@@ -525,6 +534,9 @@ type ControlServiceClient interface {
 	RenameToken(context.Context, *connect.Request[v1.RenameTokenRequest]) (*connect.Response[v1.UpdateTokenResponse], error)
 	SetTokenDisabled(context.Context, *connect.Request[v1.SetTokenDisabledRequest]) (*connect.Response[v1.UpdateTokenResponse], error)
 	DeleteToken(context.Context, *connect.Request[v1.DeleteTokenRequest]) (*connect.Response[v1.DeleteTokenResponse], error)
+	CreateApiToken(context.Context, *connect.Request[v1.CreateApiTokenRequest]) (*connect.Response[v1.CreateApiTokenResponse], error)
+	ListApiTokens(context.Context, *connect.Request[v1.ListApiTokensRequest]) (*connect.Response[v1.ListApiTokensResponse], error)
+	RevokeApiToken(context.Context, *connect.Request[v1.RevokeApiTokenRequest]) (*connect.Response[v1.RevokeApiTokenResponse], error)
 	CreateAction(context.Context, *connect.Request[v1.CreateActionRequest]) (*connect.Response[v1.CreateActionResponse], error)
 	GetAction(context.Context, *connect.Request[v1.GetActionRequest]) (*connect.Response[v1.GetActionResponse], error)
 	ListActions(context.Context, *connect.Request[v1.ListActionsRequest]) (*connect.Response[v1.ListActionsResponse], error)
@@ -901,6 +913,24 @@ func NewControlServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			httpClient,
 			baseURL+ControlServiceDeleteTokenProcedure,
 			connect.WithSchema(controlServiceMethods.ByName("DeleteToken")),
+			connect.WithClientOptions(opts...),
+		),
+		createApiToken: connect.NewClient[v1.CreateApiTokenRequest, v1.CreateApiTokenResponse](
+			httpClient,
+			baseURL+ControlServiceCreateApiTokenProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("CreateApiToken")),
+			connect.WithClientOptions(opts...),
+		),
+		listApiTokens: connect.NewClient[v1.ListApiTokensRequest, v1.ListApiTokensResponse](
+			httpClient,
+			baseURL+ControlServiceListApiTokensProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("ListApiTokens")),
+			connect.WithClientOptions(opts...),
+		),
+		revokeApiToken: connect.NewClient[v1.RevokeApiTokenRequest, v1.RevokeApiTokenResponse](
+			httpClient,
+			baseURL+ControlServiceRevokeApiTokenProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("RevokeApiToken")),
 			connect.WithClientOptions(opts...),
 		),
 		createAction: connect.NewClient[v1.CreateActionRequest, v1.CreateActionResponse](
@@ -1593,6 +1623,9 @@ type controlServiceClient struct {
 	renameToken                       *connect.Client[v1.RenameTokenRequest, v1.UpdateTokenResponse]
 	setTokenDisabled                  *connect.Client[v1.SetTokenDisabledRequest, v1.UpdateTokenResponse]
 	deleteToken                       *connect.Client[v1.DeleteTokenRequest, v1.DeleteTokenResponse]
+	createApiToken                    *connect.Client[v1.CreateApiTokenRequest, v1.CreateApiTokenResponse]
+	listApiTokens                     *connect.Client[v1.ListApiTokensRequest, v1.ListApiTokensResponse]
+	revokeApiToken                    *connect.Client[v1.RevokeApiTokenRequest, v1.RevokeApiTokenResponse]
 	createAction                      *connect.Client[v1.CreateActionRequest, v1.CreateActionResponse]
 	getAction                         *connect.Client[v1.GetActionRequest, v1.GetActionResponse]
 	listActions                       *connect.Client[v1.ListActionsRequest, v1.ListActionsResponse]
@@ -1915,6 +1948,21 @@ func (c *controlServiceClient) SetTokenDisabled(ctx context.Context, req *connec
 // DeleteToken calls cadestro.v1.ControlService.DeleteToken.
 func (c *controlServiceClient) DeleteToken(ctx context.Context, req *connect.Request[v1.DeleteTokenRequest]) (*connect.Response[v1.DeleteTokenResponse], error) {
 	return c.deleteToken.CallUnary(ctx, req)
+}
+
+// CreateApiToken calls cadestro.v1.ControlService.CreateApiToken.
+func (c *controlServiceClient) CreateApiToken(ctx context.Context, req *connect.Request[v1.CreateApiTokenRequest]) (*connect.Response[v1.CreateApiTokenResponse], error) {
+	return c.createApiToken.CallUnary(ctx, req)
+}
+
+// ListApiTokens calls cadestro.v1.ControlService.ListApiTokens.
+func (c *controlServiceClient) ListApiTokens(ctx context.Context, req *connect.Request[v1.ListApiTokensRequest]) (*connect.Response[v1.ListApiTokensResponse], error) {
+	return c.listApiTokens.CallUnary(ctx, req)
+}
+
+// RevokeApiToken calls cadestro.v1.ControlService.RevokeApiToken.
+func (c *controlServiceClient) RevokeApiToken(ctx context.Context, req *connect.Request[v1.RevokeApiTokenRequest]) (*connect.Response[v1.RevokeApiTokenResponse], error) {
+	return c.revokeApiToken.CallUnary(ctx, req)
 }
 
 // CreateAction calls cadestro.v1.ControlService.CreateAction.
@@ -2498,6 +2546,9 @@ type ControlServiceHandler interface {
 	RenameToken(context.Context, *connect.Request[v1.RenameTokenRequest]) (*connect.Response[v1.UpdateTokenResponse], error)
 	SetTokenDisabled(context.Context, *connect.Request[v1.SetTokenDisabledRequest]) (*connect.Response[v1.UpdateTokenResponse], error)
 	DeleteToken(context.Context, *connect.Request[v1.DeleteTokenRequest]) (*connect.Response[v1.DeleteTokenResponse], error)
+	CreateApiToken(context.Context, *connect.Request[v1.CreateApiTokenRequest]) (*connect.Response[v1.CreateApiTokenResponse], error)
+	ListApiTokens(context.Context, *connect.Request[v1.ListApiTokensRequest]) (*connect.Response[v1.ListApiTokensResponse], error)
+	RevokeApiToken(context.Context, *connect.Request[v1.RevokeApiTokenRequest]) (*connect.Response[v1.RevokeApiTokenResponse], error)
 	CreateAction(context.Context, *connect.Request[v1.CreateActionRequest]) (*connect.Response[v1.CreateActionResponse], error)
 	GetAction(context.Context, *connect.Request[v1.GetActionRequest]) (*connect.Response[v1.GetActionResponse], error)
 	ListActions(context.Context, *connect.Request[v1.ListActionsRequest]) (*connect.Response[v1.ListActionsResponse], error)
@@ -2870,6 +2921,24 @@ func NewControlServiceHandler(svc ControlServiceHandler, opts ...connect.Handler
 		ControlServiceDeleteTokenProcedure,
 		svc.DeleteToken,
 		connect.WithSchema(controlServiceMethods.ByName("DeleteToken")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceCreateApiTokenHandler := connect.NewUnaryHandler(
+		ControlServiceCreateApiTokenProcedure,
+		svc.CreateApiToken,
+		connect.WithSchema(controlServiceMethods.ByName("CreateApiToken")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceListApiTokensHandler := connect.NewUnaryHandler(
+		ControlServiceListApiTokensProcedure,
+		svc.ListApiTokens,
+		connect.WithSchema(controlServiceMethods.ByName("ListApiTokens")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceRevokeApiTokenHandler := connect.NewUnaryHandler(
+		ControlServiceRevokeApiTokenProcedure,
+		svc.RevokeApiToken,
+		connect.WithSchema(controlServiceMethods.ByName("RevokeApiToken")),
 		connect.WithHandlerOptions(opts...),
 	)
 	controlServiceCreateActionHandler := connect.NewUnaryHandler(
@@ -3602,6 +3671,12 @@ func NewControlServiceHandler(svc ControlServiceHandler, opts ...connect.Handler
 			controlServiceSetTokenDisabledHandler.ServeHTTP(w, r)
 		case ControlServiceDeleteTokenProcedure:
 			controlServiceDeleteTokenHandler.ServeHTTP(w, r)
+		case ControlServiceCreateApiTokenProcedure:
+			controlServiceCreateApiTokenHandler.ServeHTTP(w, r)
+		case ControlServiceListApiTokensProcedure:
+			controlServiceListApiTokensHandler.ServeHTTP(w, r)
+		case ControlServiceRevokeApiTokenProcedure:
+			controlServiceRevokeApiTokenHandler.ServeHTTP(w, r)
 		case ControlServiceCreateActionProcedure:
 			controlServiceCreateActionHandler.ServeHTTP(w, r)
 		case ControlServiceGetActionProcedure:
@@ -3995,6 +4070,18 @@ func (UnimplementedControlServiceHandler) SetTokenDisabled(context.Context, *con
 
 func (UnimplementedControlServiceHandler) DeleteToken(context.Context, *connect.Request[v1.DeleteTokenRequest]) (*connect.Response[v1.DeleteTokenResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.DeleteToken is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) CreateApiToken(context.Context, *connect.Request[v1.CreateApiTokenRequest]) (*connect.Response[v1.CreateApiTokenResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.CreateApiToken is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) ListApiTokens(context.Context, *connect.Request[v1.ListApiTokensRequest]) (*connect.Response[v1.ListApiTokensResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.ListApiTokens is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) RevokeApiToken(context.Context, *connect.Request[v1.RevokeApiTokenRequest]) (*connect.Response[v1.RevokeApiTokenResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.RevokeApiToken is not implemented"))
 }
 
 func (UnimplementedControlServiceHandler) CreateAction(context.Context, *connect.Request[v1.CreateActionRequest]) (*connect.Response[v1.CreateActionResponse], error) {

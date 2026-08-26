@@ -2,6 +2,9 @@ package identity
 
 const (
 	PermGetCurrentUser = "GetCurrentUser"
+	PermCreateApiToken = "CreateApiToken"
+	PermListApiTokens  = "ListApiTokens"
+	PermRevokeApiToken = "RevokeApiToken"
 
 	PermGetUser                    = "GetUser"
 	PermListUsers                  = "ListUsers"
@@ -58,7 +61,7 @@ const (
 )
 
 var gatedPermissions = []string{
-	PermGetCurrentUser,
+	PermGetCurrentUser, PermCreateApiToken, PermListApiTokens, PermRevokeApiToken,
 	PermGetUser, PermListUsers, PermEraseJITUser, PermUpdateUserEmail,
 	PermSetUserDisabled, PermUpdateUserProfile, PermUpdateUserLinuxUsername,
 	PermUpdateUserSshSettings, PermAddUserSshKey, PermRemoveUserSshKey,
