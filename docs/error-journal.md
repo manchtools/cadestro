@@ -177,3 +177,15 @@
 **Harness fix**: None; Stallion already requires tracing the real flow end to end. This is the second `Shallow analysis` entry, below the three-entry promotion threshold.
 
 **Prevention**: Every authentication recommendation will identify the principal, interactive or unattended acquisition, credential lifetime, refresh mechanism, revocation path, and intended consumer before claiming it enables a test or integration.
+
+## 2026-08-26 Assumed intent: invented a future service-account principal
+
+**What happened**: I correctly identified user-owned API tokens for automation agents, then proposed a separate service-account principal as the eventual upgrade path even though the intended model is a dedicated OIDC user issuing the same user-identity token.
+
+**What the user said**: "If someone needs a 'automation user' they need to create them in their OIDC, sigin in, create a token and use that token then. The token should always carry the users permission."
+
+**Root cause**: I imported a conventional machine-identity hierarchy instead of applying the project's deletion-first rule to the existing OIDC user and RBAC model.
+
+**Harness fix**: Promoted the repeated `Assumed intent` category into root `AGENTS.md`: API tokens authenticate an existing OIDC user, dedicated automation identities are created in OIDC, and no service-account principal or parallel token-owned authorization model is introduced.
+
+**Prevention**: Automation-auth designs must reuse the OIDC user principal and existing user permission path unless the operator explicitly reverses this ruling; a proposed credential may change how identity is presented, not create a second identity system.

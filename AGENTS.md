@@ -37,3 +37,10 @@ machinery. Before 1.0, unreleased transient history may be squashed into a reset
 point, but an already released schema is immutable: every later schema change is
 a new ordered migration with tested upgrade and rollback behavior. Do not
 replace product migrations with a runtime baseline schema file.
+
+API tokens authenticate automation agents as an existing OIDC user's identity.
+Do not introduce a separate service-account principal, token-owned permissions,
+or a parallel automation identity model. An operator who needs a dedicated
+automation identity creates that user in OIDC, signs in once, and issues its API
+token. Device-agent enrollment remains registration-token bootstrap followed by
+mTLS and is not part of this API-token model.
