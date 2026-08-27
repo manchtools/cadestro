@@ -201,3 +201,15 @@
 **Harness fix**: Promoted the repeated `Shallow analysis` category into root `AGENTS.md`: every new authentication credential must be compared end to end with current issuance, claims, validation, refresh, revocation, and authority invalidation, and any permission-freshness difference needs an explicit operator ruling.
 
 **Prevention**: Authentication design work must start with the type-checked issuance call graph and the full authority-invalidation class before choosing baked claims or live lookup; the recommendation must state exactly when changed permissions and disabled users stop being authorized.
+
+## 2026-08-27 User correction: code-tour progress did not survive a reboot
+
+**What happened**: Progress controls were added to the code tour without persistence across document recreation.
+
+**What the user said**: "Well it should at least save the progress so a reboot can take me back to where i was without having to do the whole thing again"
+
+**Root cause**: Persistence was treated as optional after introducing progress controls and no restart lifecycle test existed.
+
+**Harness fix**: None, because this correction is now locked by the regression test and this is only the second `User correction` entry, below promotion threshold.
+
+**Prevention**: Every future progress-tracking UI must be tested through teardown and recreation of its storage/document lifecycle.

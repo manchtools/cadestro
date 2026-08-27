@@ -13,6 +13,7 @@
 <p class="unit-label">Cadestro / repository guide</p>
 <h1>From desired state to a Linux machine</h1>
 <p class="lede">Fifteen short stops for an owner who knows Linux and networking basics, Go, and Svelte, but wants the repository’s boundaries, wire contract, agent loop, and Linux networking decisions made explicit. Open this file directly from disk; every source link is relative.</p>
+<p id="progress-status" aria-live="polite">0 of 15 units complete · saved automatically in this browser</p>
 <nav class="toc" aria-label="Tour stops"><a href="#unit-1">1 mental model</a><a href="#unit-2">2 boundaries</a><a href="#unit-3">3 contract</a><a href="#unit-4">4 boot</a><a href="#unit-5">5 identity</a><a href="#unit-6">6 authoring</a><a href="#unit-7">7 enrollment</a><a href="#unit-8">8 offline</a><a href="#unit-9">9 execution</a><a href="#unit-10">10 network</a><a href="#unit-11">11 persistence</a><a href="#unit-12">12 web</a><a href="#unit-13">13 live ops</a><a href="#unit-14">14 secrets</a><a href="#unit-15">15 ship</a></nav>
 <p><a href="README.md">Back to documentation index</a> · Read <a href="policy-model.md">the policy model</a> alongside this tour.</p>
 </header>
@@ -52,6 +53,58 @@
 
 <article id="unit-15" class="learning-unit"><span class="unit-label">Stop 15</span><h2>Development, generation, gates, release, and takeover</h2><div class="grid"><section class="box"><h3>Outcome</h3><p>Make a first change without breaking generated seams, module gates, migrations, deployment, or documentation.</p></section><section class="box"><h3>Read in order</h3><ul class="links"><li><a href="../scripts/verify.sh">scripts/verify.sh</a>, <a href="../scripts/verify-all.sh">scripts/verify-all.sh</a></li><li><a href="../contract/scripts/verify.sh">contract/scripts/verify.sh</a></li><li><a href="../agent/scripts/verify.sh">agent/scripts/verify.sh</a></li><li><a href="../server/scripts/verify.sh">server/scripts/verify.sh</a></li><li><a href="../contract/Makefile">contract/Makefile</a>, <a href="../server/Makefile">server/Makefile</a>, <a href="../agent/Makefile">agent/Makefile</a>, <a href="../web/Makefile">web/Makefile</a></li><li><a href="../CONTRIBUTING.md">CONTRIBUTING.md</a></li><li><a href="../server/deploy/QUICKSTART.md">deploy/QUICKSTART.md</a></li><li><a href="../.github/workflows/release.yml">.github/workflows/release.yml — CI/release</a>, <a href="../PROVENANCE.md">PROVENANCE.md</a></li></ul></section></div><p class="flow">read rules → trace caller/contract → edit source → regenerate → focused test → module gate → diff → migration/release docs</p><p class="exercise"><strong>First-change takeover:</strong> choose one small RPC or UI route, trace it end to end, change only its source seam, run the relevant sequential gate with GOWORK=off, inspect generated drift; generation lives in the contract, server, agent, and web Makefiles, then update the nearest docref-backed page.</p><details class="check"><summary>Knowledge check</summary><p><strong>What must never be hand-edited?</strong> Generated protobuf/Connect/sqlc output. Change the source and run the pinned generation path, then use the repository’s gate.</p></details><label class="tick"><input type="checkbox"> I have a bounded first change and a gate to run.</label></article>
 </main>
+<script>
+const progressKey = 'cadestro.code-tour.v1';
+const units = [...document.querySelectorAll('.learning-unit')];
+const boxes = units.flatMap(unit => [...unit.querySelectorAll("input[type='checkbox']")]);
+let storageAvailable = true;
+const emptyProgress = () => ({ checked: {}, currentUnit: '' });
+const readProgress = () => {
+  let raw;
+  try { raw = localStorage.getItem(progressKey) || '{}'; } catch { storageAvailable = false; return emptyProgress(); }
+  try {
+    const value = JSON.parse(raw);
+    if (!value || typeof value !== 'object' || Array.isArray(value) || !value.checked || typeof value.checked !== 'object' || Array.isArray(value.checked)) return emptyProgress();
+    return { checked: value.checked, currentUnit: typeof value.currentUnit === 'string' ? value.currentUnit : '' };
+  } catch { return emptyProgress(); }
+};
+let progress = readProgress();
+const saveProgress = () => {
+  if (!storageAvailable) return false;
+  try { localStorage.setItem(progressKey, JSON.stringify(progress)); return true; } catch { storageAvailable = false; return false; }
+};
+const updateProgress = saved => {
+  const complete = boxes.filter(box => box.checked).length;
+  document.querySelector('#progress-status').textContent = storageAvailable && saved !== false ? `${complete} of ${boxes.length} units complete · saved automatically in this browser` : `${complete} of ${boxes.length} units complete · not saved because browser storage is unavailable`;
+};
+for (const box of boxes) {
+  box.checked = progress.checked[box.closest('.learning-unit').id] === true;
+  box.addEventListener('change', () => {
+    progress.checked[box.closest('.learning-unit').id] = box.checked;
+    updateProgress(saveProgress());
+  });
+}
+updateProgress(true);
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+const restoreAndObserve = () => {
+  requestAnimationFrame(() => {
+    if (!location.hash && progress.currentUnit) document.getElementById(progress.currentUnit)?.scrollIntoView({ block: 'center', behavior: 'instant' });
+    requestAnimationFrame(() => {
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver(entries => {
+          for (const entry of entries) if (entry.isIntersecting) {
+            progress.currentUnit = entry.target.id;
+            updateProgress(saveProgress());
+          }
+        }, { rootMargin: '-45% 0px -45% 0px' });
+        for (const unit of units) observer.observe(unit);
+      }
+    });
+  });
+};
+if (document.readyState === 'complete') restoreAndObserve();
+else window.addEventListener('load', restoreAndObserve, { once: true });
+</script>
 <footer><p>Tour scope includes source modules, generated contract, server deployment, agent tests, SDK backends, web layers, docs, CI scripts, root scripts, and per-module licences. Keep claims anchored to the linked files as the repository evolves.</p><p><a href="#top">Back to top</a></p></footer>
 </body>
 </html>

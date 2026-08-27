@@ -1,0 +1,81 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import { execFileSync } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
+
+const require = createRequire(new URL('../web/package.json', import.meta.url));
+const { JSDOM } = require('jsdom');
+const source = process.env.CODE_TOUR_BASELINE_COMMIT ? execFileSync('git', ['show', `${process.env.CODE_TOUR_BASELINE_COMMIT}:docs/code-tour.html`], { encoding: 'utf8' }) : await readFile(new URL('./code-tour.html', import.meta.url), 'utf8');
+
+test('progress survives recreation and safe failure modes', async () => {
+  const values = new Map();
+  const make = (hash = '', storage = values) => {
+    const dom = new JSDOM(source, { url: `file:///tour/code-tour.html${hash}`, runScripts: 'dangerously', beforeParse(window) {
+      Object.defineProperty(window, 'localStorage', { configurable: true, value: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) } });
+      Object.defineProperty(window.history, 'scrollRestoration', { configurable: true, writable: true, value: 'auto' });
+      const frames = [];
+      window.requestAnimationFrame = callback => frames.push(callback);
+      window.drainFrame = () => frames.shift()?.();
+      window.IntersectionObserver = class { constructor(callback, options) { window.observerOptions = options; window.emitVisible = node => callback([{ isIntersecting: true, target: node }]); } observe() { window.observed = true; } disconnect() {} };
+      window.HTMLElement.prototype.scrollIntoView = function (options) { window.scrolled = [this.id, options]; };
+    }});
+    return dom;
+  };
+  const first = make();
+  assert.equal(first.window.history.scrollRestoration, 'manual');
+  const box = first.window.document.querySelector('#unit-7 input[type=checkbox]');
+  box.checked = true;
+  box.dispatchEvent(new first.window.Event('change', { bubbles: true }));
+  first.window.dispatchEvent(new first.window.Event('load'));
+  first.window.drainFrame();
+  first.window.drainFrame();
+  first.window.emitVisible?.(first.window.document.querySelector('#unit-7'));
+  const status = first.window.document.querySelector('#progress-status');
+  assert.ok(status, 'progress element is absent');
+  assert.match(status.textContent, /^1 of 15/);
+  const second = make();
+  second.window.dispatchEvent(new second.window.Event('load'));
+  assert.equal(second.window.scrolled, undefined);
+  assert.equal(second.window.observed, undefined);
+  second.window.drainFrame();
+  assert.equal(second.window.scrolled[0], 'unit-7');
+  assert.equal(second.window.scrolled[1].block, 'center');
+  assert.equal(second.window.scrolled[1].behavior, 'instant');
+  assert.equal(second.window.observed, undefined);
+  second.window.drainFrame();
+  assert.equal(second.window.observed, true);
+  assert.equal(second.window.observerOptions.rootMargin, '-45% 0px -45% 0px');
+  assert.equal(second.window.document.querySelector('#unit-7 input').checked, true);
+  const withHash = make('#unit-3');
+  withHash.window.dispatchEvent(new withHash.window.Event('load'));
+  assert.equal(withHash.window.scrolled, undefined);
+  withHash.window.drainFrame();
+  withHash.window.drainFrame();
+  for (const stored of ['{broken', '{"checked":null}', '{"checked":[]}']) {
+    const malformed = make('', new Map([['cadestro.code-tour.v1', stored]]));
+    malformed.window.dispatchEvent(new malformed.window.Event('load'));
+    malformed.window.drainFrame();
+    malformed.window.drainFrame();
+    const malformedStatus = malformed.window.document.querySelector('#progress-status').textContent;
+    assert.match(malformedStatus, /^0 of 15/);
+    assert.match(malformedStatus, /saved automatically in this browser/);
+    assert.doesNotMatch(malformedStatus, /storage is unavailable/);
+    malformed.window.close();
+  }
+  const unavailableGet = make('', { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } });
+  unavailableGet.window.dispatchEvent(new unavailableGet.window.Event('load'));
+  unavailableGet.window.drainFrame();
+  unavailableGet.window.drainFrame();
+  assert.match(unavailableGet.window.document.querySelector('#progress-status').textContent, /not saved because browser storage is unavailable/);
+  unavailableGet.window.close();
+  const unavailableSet = make('', { getItem() { return null; }, setItem() { throw new Error('blocked'); } });
+  unavailableSet.window.dispatchEvent(new unavailableSet.window.Event('load'));
+  unavailableSet.window.drainFrame();
+  unavailableSet.window.drainFrame();
+  const unavailableBox = unavailableSet.window.document.querySelector('#unit-1 input');
+  unavailableBox.checked = true;
+  unavailableBox.dispatchEvent(new unavailableSet.window.Event('change', { bubbles: true }));
+  assert.match(unavailableSet.window.document.querySelector('#progress-status').textContent, /not saved because browser storage is unavailable/);
+  for (const dom of [first, second, withHash, unavailableSet]) dom.window.close();
+});
