@@ -213,3 +213,15 @@
 **Harness fix**: None, because this correction is now locked by the regression test and this is only the second `User correction` entry, below promotion threshold.
 
 **Prevention**: Every future progress-tracking UI must be tested through teardown and recreation of its storage/document lifecycle.
+
+## 2026-08-27 User correction: code-tour completion relied on self-certification
+
+**What happened**: The code tour used checkboxes to mark completion even though each unit already had a knowledge-check question.
+
+**What the user said**: "why didnt you actually include questions i have to answer instead of a checkbox saying \"im good\"?"
+
+**Root cause**: Lightweight progress state was mistaken for a comprehension check even though every unit already had a question.
+
+**Harness fix**: Promoted a standing learning-artifact rule to root `AGENTS.md`: completion in interactive learning material must be derived from a durable learner-produced answer or exercise result, never a self-certification checkbox.
+
+**Prevention**: Parser-backed one-question/one-answer-field coverage per learning unit plus a restart-lifecycle test.

@@ -1,5 +1,7 @@
 # Project audit rules
 
+Interactive learning material must derive completion from a durable learner-produced answer or exercise result, never a self-certification checkbox.
+
 ## Class-wide coverage
 
 For every repository-wide, module-wide, or polymorphic API audit, enumerate all
