@@ -10,6 +10,10 @@ that proves it, so a change to the code fails the page that describes it.
 manifests, recurring delivery, maintenance windows, offline autonomy, and why
 compliance never remediates. Everything else is an application of it.
 
+**[Repository code tour](code-tour.html)** — a source-linked, fifteen-stop tour
+of the contract, server, agent, SDK, web app, persistence, networking, and
+delivery workflow.
+
 ## Running it
 
 | | |
