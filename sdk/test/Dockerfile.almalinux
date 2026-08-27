@@ -1,0 +1,45 @@
+
+
+
+
+
+
+
+
+
+
+
+
+FROM golang:1.26-bookworm AS go
+
+FROM almalinux:9 AS base
+COPY --from=go /usr/local/go /usr/local/go
+ENV PATH="/usr/local/go/bin:${PATH}"
+ENV GOTOOLCHAIN=local
+
+
+
+RUN dnf -y install epel-release \
+    && dnf -y install --setopt=install_weak_deps=False \
+    psmisc cryptsetup nftables iproute util-linux shadow-utils \
+    gnupg2 smartmontools openssl ca-certificates p11-kit flatpak git \
+    && dnf clean all
+
+WORKDIR /workspace
+COPY sdk/ ./sdk/
+RUN cd sdk && go mod download
+
+
+
+FROM base AS with-clamav
+RUN dnf -y install clamav \
+    && dnf clean all \
+    && rm -f /var/lib/clamav/*.cvd /var/lib/clamav/*.cld /var/lib/clamav/*.cud \
+    && mkdir -p /var/lib/clamav \
+    && printf '44d88612fea8a8f36de82e1278abb02f:68:Cadestro.Eicar.Test\n' \
+       > /var/lib/clamav/cadestro-seed.hdb \
+    && printf 'Cadestro.Marker.Test:0:*:434144455354524f2d434c414d41562d544553542d4d41524b4552\n' \
+       > /var/lib/clamav/cadestro-seed.ndb \
+    && rm -f /etc/freshclam.conf \
+    && clamscan --version \
+       || (echo "PRECONDITION FAILED: clamscan not installed/runnable" && exit 1)

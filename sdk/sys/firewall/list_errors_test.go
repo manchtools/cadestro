@@ -1,0 +1,43 @@
+package firewall
+
+import (
+	"context"
+	"errors"
+	"os"
+	"testing"
+
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
+)
+
+func TestNftablesList_NoTableEmptyButRealErrorPropagates(t *testing.T) {
+	t.Run("missing table → wrapped os.ErrNotExist", func(t *testing.T) {
+		r := exectest.New(sysexec.Direct)
+		r.Push(sysexec.Result{ExitCode: 1, Stderr: "Error: No such file or directory"}, nil)
+		n := &nftables{base: base{ns: "app", cmd: cmd{r: r}}}
+		rules, err := n.List(context.Background())
+		if !errors.Is(err, os.ErrNotExist) {
+			t.Fatalf("List(missing table) err = %v, want wrapped os.ErrNotExist", err)
+		}
+		if rules != nil {
+			t.Fatalf("List(missing table) rules = %v, want nil", rules)
+		}
+	})
+	t.Run("a real nft failure propagates", func(t *testing.T) {
+		r := exectest.New(sysexec.Direct)
+		r.Push(sysexec.Result{ExitCode: 1, Stderr: "Error: Operation not permitted"}, nil)
+		n := &nftables{base: base{ns: "app", cmd: cmd{r: r}}}
+		if _, err := n.List(context.Background()); err == nil {
+			t.Fatal("a real nft failure must propagate, not read as 'no managed rules'")
+		}
+	})
+}
+
+func TestUfwList_EscalationFailurePropagates(t *testing.T) {
+	r := exectest.New(sysexec.Direct)
+	r.Push(sysexec.Result{}, sysexec.ErrEscalationDenied)
+	u := &ufw{base: base{ns: "app", cmd: cmd{r: r}}}
+	if _, err := u.List(context.Background()); !errors.Is(err, sysexec.ErrEscalationDenied) {
+		t.Fatalf("ufw List err = %v, want ErrEscalationDenied propagated (not silent 'no rules')", err)
+	}
+}

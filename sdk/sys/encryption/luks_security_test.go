@@ -1,0 +1,134 @@
+package encryption
+
+import (
+	"context"
+	"errors"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"syscall"
+	"testing"
+	"time"
+
+	"github.com/manchtools/cadestro/sdk/sys/exec"
+)
+
+func TestCleanupKeyFile_DoesNotHangOnFIFO(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "key-fifo")
+	if err := syscall.Mkfifo(p, 0o600); err != nil {
+		t.Skipf("mkfifo unsupported on this platform: %v", err)
+	}
+
+	done := make(chan struct{})
+	go func() { defer close(done); cleanupKeyFile(p) }()
+
+	select {
+	case <-done:
+	case <-time.After(3 * time.Second):
+		t.Fatal("cleanupKeyFile blocked on a FIFO key-file path — openKeyFile must set O_NONBLOCK so a TOCTOU FIFO swap cannot wedge the scrub")
+	}
+	if _, err := os.Stat(p); !os.IsNotExist(err) {
+		t.Errorf("cleanupKeyFile must still unlink the FIFO; stat err = %v", err)
+	}
+}
+
+type pipeScrub struct{ wrote bool }
+
+func (p *pipeScrub) Stat() (os.FileInfo, error)             { return pipeInfo{}, nil }
+func (p *pipeScrub) WriteAt(b []byte, _ int64) (int, error) { p.wrote = true; return len(b), nil }
+func (p *pipeScrub) Close() error                           { return nil }
+
+type pipeInfo struct{}
+
+func (pipeInfo) Name() string       { return "fifo" }
+func (pipeInfo) Size() int64        { return 16 }
+func (pipeInfo) Mode() fs.FileMode  { return fs.ModeNamedPipe | 0o600 }
+func (pipeInfo) ModTime() time.Time { return time.Time{} }
+func (pipeInfo) IsDir() bool        { return false }
+func (pipeInfo) Sys() any           { return nil }
+
+func TestCleanupKeyFile_RefusesToScrubNonRegular(t *testing.T) {
+	defer swapKeyFileSeams(t)()
+	f := &pipeScrub{}
+	openKeyFile = func(string) (scrubFile, error) { return f, nil }
+	removed := false
+	removeFile = func(string) error { removed = true; return nil }
+
+	cleanupKeyFile("/dev/shm/cadestro-luks/key-x")
+
+	if f.wrote {
+		t.Error("cleanupKeyFile wrote zeros to a non-regular (FIFO/device) file; it must refuse non-regular scrub targets")
+	}
+	if !removed {
+		t.Error("cleanupKeyFile must still unlink a non-regular path")
+	}
+}
+
+func emptySecret(t *testing.T) exec.Secret {
+	t.Helper()
+	s, err := exec.NewSecret("")
+	if err != nil {
+		t.Fatalf("NewSecret(\"\"): %v", err)
+	}
+	if !s.IsZero() {
+		t.Fatal("expected NewSecret(\"\") to be zero/empty")
+	}
+	return s
+}
+
+func TestAddKey_RejectsEmptyNewKey(t *testing.T) {
+	r := &recordingRunner{}
+	m := mgr(t, r)
+	err := m.AddKey(context.Background(), "/dev/sda1", mustSecret(t, "current"), emptySecret(t), AddKeyOptions{})
+	if !errors.Is(err, ErrEmptyKeyMaterial) {
+		t.Fatalf("AddKey(emptyNewKey) err = %v; want ErrEmptyKeyMaterial (would create an empty-passphrase slot)", err)
+	}
+	if n := len(r.calls); n != 0 {
+		t.Fatalf("AddKey(emptyNewKey) ran cryptsetup %d time(s); it must reject BEFORE exec", n)
+	}
+}
+
+func TestMutatingOps_RejectEmptyAuth(t *testing.T) {
+	ctx := context.Background()
+	dev := "/dev/sda1"
+
+	ops := map[string]func(t *testing.T, m Manager) error{
+		"AddKey/existing": func(t *testing.T, m Manager) error {
+			return m.AddKey(ctx, dev, emptySecret(t), mustSecret(t, "new"), AddKeyOptions{})
+		},
+		"RemoveKey": func(t *testing.T, m Manager) error {
+			return m.RemoveKey(ctx, dev, emptySecret(t))
+		},
+		"KillSlot": func(t *testing.T, m Manager) error {
+			return m.KillSlot(ctx, dev, 1, emptySecret(t))
+		},
+		"TPM.Enroll": func(t *testing.T, m Manager) error {
+			tpm, ok := m.TPM()
+			if !ok {
+				t.Skip("LUKS backend reports no TPM support")
+			}
+			return tpm.Enroll(ctx, dev, emptySecret(t))
+		},
+		"TPM.Wipe": func(t *testing.T, m Manager) error {
+			tpm, ok := m.TPM()
+			if !ok {
+				t.Skip("LUKS backend reports no TPM support")
+			}
+			return tpm.Wipe(ctx, dev, emptySecret(t))
+		},
+	}
+
+	for name, op := range ops {
+		t.Run(name, func(t *testing.T) {
+			r := &recordingRunner{}
+			m := mgr(t, r)
+			if err := op(t, m); !errors.Is(err, ErrEmptyKeyMaterial) {
+				t.Fatalf("%s(emptyAuth) err = %v; want ErrEmptyKeyMaterial", name, err)
+			}
+			if n := len(r.calls); n != 0 {
+				t.Fatalf("%s(emptyAuth) ran the tool %d time(s); it must reject BEFORE exec", name, n)
+			}
+		})
+	}
+}

@@ -1,0 +1,275 @@
+// Package fs provides privileged filesystem operations for Linux system
+// management, driven by an injected exec.Runner rather than a process-global
+// privilege backend.
+//
+// A Manager is built over a Runner; the backend the Runner reports selects the
+// privilege strategy per operation, with no global state and full unit-test
+// coverage via exectest.FakeRunner:
+//
+//	r, _ := exec.NewRunner(exec.Direct) // the agent runs as root; elsewhere Sudo/Doas
+//	m, err := fs.New(r)
+//	if err != nil { ... }
+//	if err := m.WriteFile(ctx, "/etc/app.conf", data, fs.WriteOptions{Mode: 0o644, Owner: "root", Group: "root"}); err != nil { ... }
+//
+// When the Runner reports the Direct backend — the deployed root agent — writes
+// and recursive deletes take the TOCTOU-safe, fd-anchored path (O_NOFOLLOW
+// opens, RENAME_NOREPLACE, openat/unlinkat walks). Under Sudo/Doas (a non-root
+// caller, e.g. CI or a dev tool) the same operations shell through the privilege
+// backend (tee/mv/rm/chmod/chown); that path is not symlink-safe, but the
+// security-relevant consumer — the root agent — never takes it.
+//
+// The fd-anchored primitives (OpenRealDir, FchownNoFollow,
+// SetDirPermissionsNoFollow, ResolveOwnership) and the path predicates
+// (ValidatePath, ResolveAndValidatePath, IsProtectedPath,
+// IsUnderProtectedPrefix) remain exported free functions: they take no privilege
+// and callers (notably the agent's directory action) use them directly.
+package fs
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"os"
+	"strings"
+
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
+)
+
+// ErrInvalidPath is returned by ValidatePath when the supplied path would be
+// unsafe to pass as a positional argument to a privileged command (empty,
+// contains a NUL byte, or starts with `-` and would be interpreted as a flag).
+var ErrInvalidPath = errors.New("invalid filesystem path")
+
+// ErrUnsafeParentDir is returned by the escalated (sudo/doas) WriteFile when the
+// target's parent directory is writable by a non-root user — a directory where
+// an attacker could plant a symlink and redirect a root write. The escalated
+// path fails closed rather than write into such a directory. (The Direct/root
+// path is fd-anchored and does not need this; it is only the shell-based
+// escalated path, used by non-root callers, that cannot openat the target.)
+var ErrUnsafeParentDir = errors.New("parent directory is writable by non-root")
+
+// ErrUnsafeMode is returned when a privileged file operation is asked to set a
+// setuid or setgid bit. A managed config write must never create a privileged
+// executable: a setuid-root binary the agent drops is a direct local-root
+// privilege-escalation primitive, so the operation fails closed before any
+// command runs. The sticky bit and ordinary permission bits are unaffected.
+var ErrUnsafeMode = errors.New("setuid/setgid mode is not permitted")
+
+// ErrProtectedTarget is returned when a recursive ownership change (chown -R)
+// targets a whole top-level system directory (`/`, `/etc`, `/usr`, `/home`,
+// `/root`, …). Recursively re-owning such a tree is a destructive
+// privilege-escalation vector (e.g. handing an attacker ownership of every file
+// under `/`), so it fails closed before chown runs. A managed subdirectory
+// (e.g. /home/alice) and single-file SetOwnership are unaffected.
+var ErrProtectedTarget = errors.New("recursive ownership change of a protected system tree is not permitted")
+
+// ErrExists is returned by WriteFileExclusive when the destination already
+// exists. It is a distinct sentinel, not a generic failure, because the whole
+// point of an exclusive create is to let the caller BRANCH on it: "someone else
+// owns this file" is a normal, expected outcome that usually means "fall back to
+// an ordinary overwrite", while every other error means the write failed.
+var ErrExists = errors.New("destination exists")
+
+// WriteOptions configures a Manager.WriteFile (or Copy) call.
+type WriteOptions struct {
+	// Mode is the file mode applied before the file is reachable by name. Zero
+	// means 0644 (the conventional mode for a managed config file), so the
+	// resulting inode always carries a deterministic mode rather than depending
+	// on the process umask.
+	Mode os.FileMode
+	// Owner and Group set the file's ownership. Either may be empty; both empty
+	// leaves ownership at the OS default.
+	Owner, Group string
+	// Backup, when non-empty, copies the existing file at the destination to
+	// this path before the new content replaces it (no-op if the destination
+	// does not yet exist). The copy is taken crash-safely — the destination is
+	// never left absent — which the agent's self-update relies on.
+	Backup string
+}
+
+// MkdirOptions configures a Manager.Mkdir call.
+type MkdirOptions struct {
+	// Mode is applied to the created directory. Zero leaves the OS default
+	// (mkdir's mode minus umask) in place.
+	Mode os.FileMode
+	// Owner and Group set the directory's ownership. Either may be empty.
+	Owner, Group string
+	// Recursive creates parent directories as needed (mkdir -p).
+	Recursive bool
+}
+
+// Manager is the privileged filesystem surface. Every method takes a context so
+// the caller controls timeout/cancellation. A non-zero exit from a shelled
+// command becomes an *exec.CommandError carrying the exit code and stderr.
+type Manager interface {
+	// ReadFile returns the contents of path. A path that does not exist yields a
+	// wrapped fs.ErrNotExist (not a silent empty result), so a caller can tell
+	// "absent" from "present but empty"; opt into absent-as-empty with
+	// errors.Is(err, fs.ErrNotExist). A present empty file returns (nil, nil).
+	ReadFile(ctx context.Context, path string) ([]byte, error)
+	// ReadDir lists the immediate entries of a directory (no recursion). A
+	// missing directory yields a wrapped fs.ErrNotExist (the same explicit-
+	// absence contract as ReadFile); a non-directory target is an error too,
+	// never a silent empty listing.
+	ReadDir(ctx context.Context, path string) ([]DirEntry, error)
+	// WriteFile writes data to path atomically. When the Runner's backend is
+	// Direct the write is also symlink-safe (fd-anchored); see the package doc.
+	WriteFile(ctx context.Context, path string, data []byte, opts WriteOptions) error
+	// WriteFileExclusive writes data to path only if path does not already
+	// exist, returning ErrExists (matchable with errors.Is) when it does. The
+	// existence test and the create are the SAME atomic operation — on Linux a
+	// RENAME_NOREPLACE rename, on the escalated backend an ln(1) — so unlike
+	// Exists-then-WriteFile there is no window in which another writer can slip a
+	// file in between. Callers that need to know whether THEY created a file, in
+	// order to decide whether they may later delete it, must use this rather than
+	// probing first: a probe would let them adopt, and then destroy, someone
+	// else's file.
+	WriteFileExclusive(ctx context.Context, path string, data []byte, opts WriteOptions) error
+	// Exists reports whether path exists. The probe runs through the privilege
+	// backend so it can see paths in directories the caller cannot traverse
+	// (e.g. /etc/sudoers.d, mode 0750). A runner/ctx failure is returned as an
+	// error (fail-closed) rather than reported as "absent".
+	Exists(ctx context.Context, path string) (bool, error)
+	// Mkdir creates a directory per opts.
+	Mkdir(ctx context.Context, path string, opts MkdirOptions) error
+	// Remove deletes a single file and returns any error.
+	Remove(ctx context.Context, path string) error
+	// RemoveDir removes a directory and its contents. It refuses any target at
+	// or under a security-relevant system prefix (deny-by-default) and, on the
+	// Direct backend, never follows a symlink (fd-anchored recursive delete).
+	RemoveDir(ctx context.Context, path string) error
+	// Copy copies src to dst and applies opts (mode/ownership) to dst.
+	Copy(ctx context.Context, src, dst string, opts WriteOptions) error
+	// CopyTree recursively copies the tree at src to dst (cp -a), merging into
+	// dst rather than nesting under it. A non-zero opts.Mode chmods the dst root;
+	// opts.Owner/Group, if set, are applied recursively.
+	CopyTree(ctx context.Context, src, dst string, opts WriteOptions) error
+	// SetMode sets the file mode (chmod).
+	SetMode(ctx context.Context, path string, mode os.FileMode) error
+	// SetOwnership sets the file owner and group (chown). Either may be empty;
+	// both empty is a no-op.
+	SetOwnership(ctx context.Context, path, owner, group string) error
+	// SetOwnershipRecursive changes ownership of a path and all its contents
+	// (chown -R). Both owner and group empty is a no-op.
+	SetOwnershipRecursive(ctx context.Context, path, owner, group string) error
+	// IsReadOnly reports whether the filesystem mounted at path is read-only.
+	IsReadOnly(ctx context.Context, path string) (bool, error)
+	// RemountRW remounts the filesystem at path read-write.
+	RemountRW(ctx context.Context, path string) error
+	// ListMounts enumerates every mounted filesystem (source/target/fstype/ro).
+	// The enumeration counterpart to IsReadOnly/RemountRW — for acting on every
+	// matching mount (e.g. remounting all read-only on-disk mounts).
+	ListMounts(ctx context.Context) ([]MountInfo, error)
+}
+
+type manager struct {
+	r sysexec.Runner
+}
+
+// New builds a filesystem Manager driven by runner. A nil runner is rejected
+// (fail-closed). New is pure — it does not probe the host.
+func New(runner sysexec.Runner) (Manager, error) {
+	if runner == nil {
+		return nil, fmt.Errorf("fs: %w", sysexec.ErrRunnerRequired)
+	}
+	return &manager{r: runner}, nil
+}
+
+func (m *manager) direct() bool { return m.r.Backend() == sysexec.Direct }
+
+func (m *manager) runPriv(ctx context.Context, name string, args ...string) (sysexec.Result, error) {
+	return m.r.Run(ctx, sysexec.Command{Name: name, Args: args, Escalate: true})
+}
+
+func (m *manager) runPrivStdin(ctx context.Context, stdin string, name string, args ...string) (sysexec.Result, error) {
+	var in *strings.Reader
+	if stdin != "" {
+		in = strings.NewReader(stdin)
+	}
+	cmd := sysexec.Command{Name: name, Args: args, Escalate: true}
+	if in != nil {
+		cmd.Stdin = in
+	}
+	return m.r.Run(ctx, cmd)
+}
+
+func (m *manager) runQuery(ctx context.Context, name string, args ...string) (sysexec.Result, error) {
+	return m.r.Run(ctx, sysexec.Command{Name: name, Args: args})
+}
+
+func cmdError(name string, res sysexec.Result) error {
+	if res.ExitCode == 0 {
+		return nil
+	}
+	return &sysexec.CommandError{Name: name, ExitCode: res.ExitCode, Stderr: res.Stderr}
+}
+
+func isENOENTStderr(stderr string) bool {
+	return strings.HasSuffix(strings.TrimSpace(stderr), "No such file or directory")
+}
+
+func validateMode(m os.FileMode) error {
+	if m&(os.ModeSetuid|os.ModeSetgid) != 0 {
+		return fmt.Errorf("%w: mode %s requests setuid/setgid", ErrUnsafeMode, modeArg(m))
+	}
+	return nil
+}
+
+func modeArg(m os.FileMode) string {
+	o := uint32(m.Perm())
+	if m&os.ModeSetuid != 0 {
+		o |= 0o4000
+	}
+	if m&os.ModeSetgid != 0 {
+		o |= 0o2000
+	}
+	if m&os.ModeSticky != 0 {
+		o |= 0o1000
+	}
+	return fmt.Sprintf("%04o", o)
+}
+
+// ValidatePath rejects paths that would be unsafe to pass through a privileged
+// command as positional arguments. The checks are intentionally minimal — no
+// symlink resolution, no allowlisting of roots — so callers that need stricter
+// semantics can layer them on top.
+//
+//   - empty → ErrInvalidPath (an empty argv entry collapses verb + path and
+//     accidentally runs the command against the cwd)
+//   - NUL byte → ErrInvalidPath (the system call interprets NUL as string
+//     termination; a NUL inside the path lets an attacker smuggle a different
+//     path past higher-level filters)
+//   - leading `-` → ErrInvalidPath (would be parsed as a flag by rm, chmod,
+//     chown, mkdir, etc. — even with a `--` end-of-options separator some tools
+//     still treat it as an option in edge versions)
+//
+// This is the central chokepoint every privileged file op calls before exec.
+func ValidatePath(path string) error {
+	if path == "" {
+		return fmt.Errorf("%w: path is empty", ErrInvalidPath)
+	}
+	if strings.ContainsRune(path, 0) {
+		return fmt.Errorf("%w: path contains NUL byte", ErrInvalidPath)
+	}
+	if strings.HasPrefix(path, "-") {
+		return fmt.Errorf("%w: path %q begins with '-' (would be interpreted as an option flag)", ErrInvalidPath, path)
+	}
+	return nil
+}
+
+// Ownership constructs an "owner:group" string for chown commands. If only
+// owner is provided, returns "owner". If only group is provided, returns
+// ":group". If both are provided, returns "owner:group". Returns empty string
+// if both are empty.
+func Ownership(owner, group string) string {
+	if owner == "" && group == "" {
+		return ""
+	}
+	if group == "" {
+		return owner
+	}
+	if owner == "" {
+		return ":" + group
+	}
+	return owner + ":" + group
+}

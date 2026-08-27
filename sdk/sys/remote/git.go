@@ -1,0 +1,120 @@
+package remote
+
+import (
+	"context"
+	"fmt"
+	"net/url"
+	"regexp"
+	"strings"
+	"sync"
+)
+
+type gitSource struct {
+	cfg     GitConfig
+	backend VersionControlBackend
+
+	mu       sync.Mutex
+	revision string
+}
+
+// NewGit validates cfg, resolves the version-control backend named by
+// cfg.Driver (default "go-git"), and returns a Source. Validation
+// failures surface as ErrInvalidConfig; an unknown driver surfaces as
+// ErrBackendNotFound — both at construction, never deferred to Fetch
+// where the caller has already committed to a network round trip.
+func NewGit(cfg GitConfig) (Source, error) {
+	if err := validateGitConfig(&cfg); err != nil {
+		return nil, err
+	}
+	backend, err := versionControlBackend(cfg.Driver)
+	if err != nil {
+		return nil, err
+	}
+	return &gitSource{cfg: cfg, backend: backend}, nil
+}
+
+// Fetch validates the destination, skips unchanged revisions, synchronizes the
+// checkout through the selected backend, and applies requested ownership.
+func (g *gitSource) Fetch(ctx context.Context, dest string) (Result, error) {
+	if err := validateDestination(dest); err != nil {
+		return Result{}, err
+	}
+
+	g.mu.Lock()
+	cachedRevision := g.revision
+	g.mu.Unlock()
+
+	if cachedRevision != "" {
+		upstream, err := g.backend.Resolve(ctx, g.cfg)
+		if err == nil && upstream == cachedRevision {
+			return Result{Changed: false, Revision: cachedRevision}, nil
+		}
+	}
+
+	res, err := g.backend.CloneOrSync(ctx, g.cfg, dest)
+	if err != nil {
+		return Result{}, err
+	}
+
+	if err := applyMode(dest, "", g.cfg.Owner, g.cfg.Group); err != nil {
+		return Result{}, err
+	}
+
+	g.mu.Lock()
+	if res.Revision != "" {
+		g.revision = res.Revision
+	}
+	g.mu.Unlock()
+
+	RecordDest(dest)
+	return res, nil
+}
+
+// Wipe forwards to the shared implementation. Git checkouts live under
+// the same managed-root / RecordDest authorisation as every other
+// Source.
+func (g *gitSource) Wipe(ctx context.Context, dest string) error {
+	return wipeDest(ctx, dest)
+}
+
+// String — short URL+ref handle for log lines.
+func (g *gitSource) String() string {
+	return fmt.Sprintf("git %s @ %s [%s]", g.cfg.URL, g.cfg.Ref, g.cfg.Driver)
+}
+
+var gitRefAllowedRE = regexp.MustCompile(`^[A-Za-z0-9._/-]{1,250}$`)
+
+func validateGitConfig(cfg *GitConfig) error {
+	if err := validateGitURL(cfg.URL); err != nil {
+		return err
+	}
+	if cfg.Ref == "" {
+		cfg.Ref = "main"
+	} else if !gitRefAllowedRE.MatchString(cfg.Ref) {
+		return fmt.Errorf("%w: ref must match %s", ErrInvalidConfig, gitRefAllowedRE.String())
+	}
+	if cfg.Driver == "" {
+		cfg.Driver = "go-git"
+	}
+	return nil
+}
+
+func validateGitURL(raw string) error {
+	if strings.TrimSpace(raw) == "" {
+		return fmt.Errorf("%w: url is empty", ErrInvalidConfig)
+	}
+	u, err := url.Parse(raw)
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidConfig, err)
+	}
+	if u.Scheme != "https" {
+		return fmt.Errorf("%w: scheme %q not supported (https only for v1)", ErrInvalidConfig, u.Scheme)
+	}
+	if u.User != nil {
+		return fmt.Errorf("%w: url must not include userinfo", ErrInvalidConfig)
+	}
+	if u.Host == "" {
+		return fmt.Errorf("%w: url has no host", ErrInvalidConfig)
+	}
+	return nil
+}

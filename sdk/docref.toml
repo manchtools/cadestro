@@ -1,0 +1,7 @@
+
+
+
+
+
+[scan]
+include = ["docs/**/*.md"]

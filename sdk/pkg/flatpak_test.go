@@ -1,0 +1,791 @@
+package pkg
+
+import (
+	"context"
+	"errors"
+	"strings"
+	"testing"
+
+	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
+	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
+)
+
+func flatpakM(t *testing.T, user ...bool) (*FlatpakManager, *exectest.FakeRunner) {
+	t.Helper()
+	f := newFake()
+	var err error
+	var m *FlatpakManager
+	if len(user) > 0 && user[0] {
+		m, err = NewUserFlatpak(f)
+	} else {
+		m, err = NewFlatpak(f)
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	return m, f
+}
+
+func TestFlatpak_Version(t *testing.T) {
+	t.Run("parses version", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "Flatpak 1.14.4\n")
+		v, err := m.Version(context.Background())
+		if err != nil || v != "1.14.4" {
+			t.Fatalf("v=%q err=%v", v, err)
+		}
+		if c := f.Calls()[0]; argv(c) != "flatpak --version" || c.Escalate {
+			t.Errorf("argv=%q escalate=%v", argv(c), c.Escalate)
+		}
+	})
+	t.Run("short output empty", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "Flatpak\n")
+		if v, err := m.Version(context.Background()); err != nil || v != "" {
+			t.Fatalf("v=%q err=%v", v, err)
+		}
+	})
+	t.Run("exec error", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{}, errors.New("boom"))
+		if _, err := m.Version(context.Background()); err == nil {
+			t.Fatal("want error")
+		}
+	})
+}
+
+func TestFlatpak_InstallFromRemote(t *testing.T) {
+	ctx := context.Background()
+	t.Run("explicit remote operand precedes the appid", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "")
+		if _, err := m.Install(ctx, "flathub", "org.vim.Vim"); err != nil {
+			t.Fatal(err)
+		}
+		if a := argv(f.Calls()[0]); a != "flatpak install -y --noninteractive --system flathub org.vim.Vim" {
+			t.Errorf("argv=%q, want the remote operand before the appid", a)
+		}
+	})
+	t.Run("flag-shaped remote is rejected before running", func(t *testing.T) {
+		m, f := flatpakM(t)
+		if _, err := m.Install(ctx, "-evil", "org.vim.Vim"); err == nil {
+			t.Fatal("want a validation error for a flag-shaped remote")
+		}
+		if len(f.Calls()) != 0 {
+			t.Error("a rejected remote must run nothing")
+		}
+	})
+	t.Run("remote is always explicit", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "")
+		if _, err := m.Install(ctx, "flathub", "org.vim.Vim"); err != nil {
+			t.Fatal(err)
+		}
+		if a := argv(f.Calls()[0]); a != "flatpak install -y --noninteractive --system flathub org.vim.Vim" {
+			t.Errorf("argv=%q", a)
+		}
+	})
+}
+
+func TestFlatpak_Install(t *testing.T) {
+	ctx := context.Background()
+	t.Run("system scope, escalated", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "")
+		if _, err := m.Install(ctx, "flathub", "org.vim.Vim"); err != nil {
+			t.Fatal(err)
+		}
+		c := f.Calls()[0]
+		if argv(c) != "flatpak install -y --noninteractive --system flathub org.vim.Vim" || !c.Escalate {
+			t.Errorf("argv=%q escalate=%v", argv(c), c.Escalate)
+		}
+	})
+	t.Run("multiple refs", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "")
+		if _, err := m.Install(ctx, "flathub", "org.vim.Vim", "org.gnu.emacs"); err != nil {
+			t.Fatal(err)
+		}
+		if got := argv(f.Calls()[0]); got != "flatpak install -y --noninteractive --system flathub org.vim.Vim org.gnu.emacs" {
+			t.Errorf("argv=%q", got)
+		}
+	})
+	t.Run("user scope is unprivileged", func(t *testing.T) {
+		m, f := flatpakM(t, true)
+		ok(f, "")
+		if _, err := m.Install(ctx, "flathub", "org.vim.Vim"); err != nil {
+			t.Fatal(err)
+		}
+		c := f.Calls()[0]
+		if !strings.Contains(argv(c), "--user") || c.Escalate {
+			t.Errorf("argv=%q escalate=%v, want --user unescalated", argv(c), c.Escalate)
+		}
+	})
+	t.Run("empty no-op", func(t *testing.T) {
+		m, f := flatpakM(t)
+		if _, err := m.Install(ctx, "flathub"); err != nil || len(f.Calls()) != 0 {
+			t.Fatalf("err=%v calls=%d", err, len(f.Calls()))
+		}
+	})
+	t.Run("bad name", func(t *testing.T) {
+		m, f := flatpakM(t)
+		if _, err := m.Install(ctx, "flathub", "org.vim.Vim;rm"); err == nil || len(f.Calls()) != 0 {
+			t.Fatal("want rejection")
+		}
+	})
+}
+
+func TestFlatpak_Remove(t *testing.T) {
+	ctx := context.Background()
+	t.Run("remove", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "")
+		if _, err := m.Remove(ctx, RemoveOptions{}, "org.vim.Vim"); err != nil {
+			t.Fatal(err)
+		}
+		if argv(f.Calls()[0]) != "flatpak uninstall -y --noninteractive --system org.vim.Vim" {
+			t.Errorf("argv=%q", argv(f.Calls()[0]))
+		}
+	})
+	t.Run("purge adds --delete-data", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "")
+		if _, err := m.Remove(ctx, RemoveOptions{Purge: true}, "org.vim.Vim"); err != nil {
+			t.Fatal(err)
+		}
+		if a := argv(f.Calls()[0]); !strings.Contains(a, "--delete-data") {
+			t.Errorf("argv=%q want --delete-data", a)
+		}
+	})
+	t.Run("empty no-op", func(t *testing.T) {
+		m, f := flatpakM(t)
+		if _, err := m.Remove(ctx, RemoveOptions{}); err != nil || len(f.Calls()) != 0 {
+			t.Fatalf("err=%v calls=%d", err, len(f.Calls()))
+		}
+	})
+	t.Run("bad name", func(t *testing.T) {
+		m, f := flatpakM(t)
+		if _, err := m.Remove(ctx, RemoveOptions{}, "--x"); err == nil || len(f.Calls()) != 0 {
+			t.Fatal("want rejection")
+		}
+	})
+}
+
+func TestFlatpak_UpdateUpgrade(t *testing.T) {
+	ctx := context.Background()
+	t.Run("update --appstream", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "")
+		if _, err := m.Update(ctx); err != nil {
+			t.Fatal(err)
+		}
+		if argv(f.Calls()[0]) != "flatpak update --appstream -y --noninteractive --system" {
+			t.Errorf("argv=%q", argv(f.Calls()[0]))
+		}
+	})
+	t.Run("UpgradeAll", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "")
+		if _, err := m.UpgradeAll(ctx); err != nil {
+			t.Fatal(err)
+		}
+		if argv(f.Calls()[0]) != "flatpak update -y --noninteractive --system" {
+			t.Errorf("argv=%q", argv(f.Calls()[0]))
+		}
+	})
+	t.Run("empty Upgrade is a no-op", func(t *testing.T) {
+		m, f := flatpakM(t)
+		if _, err := m.Upgrade(ctx); err != nil {
+			t.Fatal(err)
+		}
+		if len(f.Calls()) != 0 {
+			t.Errorf("empty Upgrade ran %d commands, want 0", len(f.Calls()))
+		}
+	})
+	t.Run("upgrade specific", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "")
+		if _, err := m.Upgrade(ctx, "org.vim.Vim"); err != nil {
+			t.Fatal(err)
+		}
+		if !strings.HasSuffix(argv(f.Calls()[0]), "--system org.vim.Vim") {
+			t.Errorf("argv=%q", argv(f.Calls()[0]))
+		}
+	})
+	t.Run("upgrade bad name", func(t *testing.T) {
+		m, f := flatpakM(t)
+		if _, err := m.Upgrade(ctx, "a;b"); err == nil || len(f.Calls()) != 0 {
+			t.Fatal("want rejection")
+		}
+	})
+	t.Run("write exec error surfaced", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{}, sysexec.ErrEscalationDenied)
+		if _, err := m.Update(ctx); !errors.Is(err, sysexec.ErrEscalationDenied) {
+			t.Fatalf("err=%v", err)
+		}
+	})
+}
+
+func TestFlatpak_Autoremove(t *testing.T) {
+	m, f := flatpakM(t)
+	ok(f, "")
+	if _, err := m.Autoremove(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if a := argv(f.Calls()[0]); a != "flatpak uninstall --unused -y --noninteractive --system" {
+		t.Errorf("argv=%q", a)
+	}
+}
+
+func TestFlatpak_Search(t *testing.T) {
+	ctx := context.Background()
+	t.Run("parses tab-separated rows", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "GNU Emacs\tEditor\torg.gnu.emacs\t28\tstable\tflathub\nVim\tVi IMproved\torg.vim.Vim\t9\tstable\tflathub\n")
+		res, err := m.Search(ctx, "edit")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(res) != 2 || res[0].Name != "org.gnu.emacs" || res[0].Description != "Editor" {
+			t.Fatalf("res=%+v", res)
+		}
+	})
+	t.Run("first line without a tab is treated as a header and skipped", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "No matches header line\nVim\tVi IMproved\torg.vim.Vim\t9\tstable\tflathub\n")
+		res, err := m.Search(ctx, "vim")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(res) != 1 || res[0].Name != "org.vim.Vim" {
+			t.Fatalf("res=%+v", res)
+		}
+	})
+	t.Run("exit 1 means no matches", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
+		if res, err := m.Search(ctx, "ghost"); err != nil || res != nil {
+			t.Fatalf("res=%v err=%v", res, err)
+		}
+	})
+	t.Run("other non-zero is an error", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{ExitCode: 2, Stderr: "x"}, nil)
+		if _, err := m.Search(ctx, "vim"); err == nil {
+			t.Fatal("want error")
+		}
+	})
+	t.Run("exec error", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{}, errors.New("boom"))
+		if _, err := m.Search(ctx, "vim"); err == nil {
+			t.Fatal("want error")
+		}
+	})
+}
+
+func TestFlatpak_List(t *testing.T) {
+	t.Run("parses columns with pin", func(t *testing.T) {
+		m, f := flatpakM(t)
+
+		ok(f, "org.vim.Vim\t9.0\tx86_64\t3.0 MB\tVi IMproved\tflathub\nshort\tfields\tonly\n")
+		pkgs, err := m.List(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(pkgs) != 1 {
+			t.Fatalf("the 3-column row must be skipped, got %+v", pkgs)
+		}
+		vim := pkgs[0]
+		if vim.Name != "org.vim.Vim" || vim.Size != 3*1000*1000 || vim.Repository != "flathub" || vim.Description != "Vi IMproved" {
+			t.Fatalf("vim=%+v", vim)
+		}
+	})
+	t.Run("exec error", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{}, errors.New("boom"))
+		if _, err := m.List(context.Background()); err == nil {
+			t.Fatal("want error")
+		}
+	})
+}
+
+func TestFlatpak_ListUpgradable(t *testing.T) {
+	ctx := context.Background()
+	t.Run("parses updates", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "org.vim.Vim\t9.1\tflathub\nshort\n")
+		ok(f, "9.0\n")
+		ups, err := m.ListUpgradable(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(ups) != 1 || ups[0].Name != "org.vim.Vim" || ups[0].NewVersion != "9.1" || ups[0].CurrentVersion != "9.0" || ups[0].Repository != "flathub" {
+			t.Fatalf("ups=%+v", ups)
+		}
+	})
+	t.Run("exec error", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{}, errors.New("boom"))
+		if _, err := m.ListUpgradable(ctx); err == nil {
+			t.Fatal("want error")
+		}
+	})
+}
+
+func TestFlatpak_Show(t *testing.T) {
+	ctx := context.Background()
+	installed := "Version: 9.0\nArch: x86_64\nDescription: Vi IMproved\nInstalled: 3.0 MB\nOrigin: flathub\n"
+	t.Run("installed", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{ExitCode: 0, Stdout: installed}, nil)
+		p, err := m.Show(ctx, "org.vim.Vim")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if p.Status != "installed" || p.Version != "9.0" || p.Architecture != "x86_64" || p.Size != 3*1000*1000 || p.Repository != "flathub" {
+			t.Fatalf("p=%+v", p)
+		}
+	})
+
+	t.Run("unparseable size line does not erase an already-parsed size", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{ExitCode: 0, Stdout: "Version: 9.0\nArch: x86_64\nInstalled: 3.0 MB\nSize: unknown\nOrigin: flathub\n"}, nil)
+		p, err := m.Show(ctx, "org.vim.Vim")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if p.Size != 3*1000*1000 {
+			t.Errorf("Size = %d, want %d: an unparseable size must leave the good value alone, not fabricate 0", p.Size, 3*1000*1000)
+		}
+	})
+	t.Run("not installed falls back to remote-info", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
+		ok(f, "Version: 9.2\nArch: x86_64\nDescription: from remote\nDownload: 5.0 MB\n")
+		p, err := m.Show(ctx, "org.vim.Vim")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if p.Status != "available" || p.Repository != "flathub" || p.Version != "9.2" || p.Size != 5*1000*1000 {
+			t.Fatalf("p=%+v", p)
+		}
+	})
+	t.Run("not installed and not on remote -> package not found", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
+		if _, err := m.Show(ctx, "org.ghost.App"); err == nil || !strings.Contains(err.Error(), "package not found") {
+			t.Fatalf("err=%v, want 'package not found'", err)
+		}
+	})
+	t.Run("remote-info runner error propagates", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
+		f.Push(sysexec.Result{}, errors.New("transport"))
+		if _, err := m.Show(ctx, "org.ghost.App"); err == nil {
+			t.Fatal("a remote-info runner failure must propagate, not become 'package not found'")
+		}
+	})
+	t.Run("info exec error", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{}, errors.New("boom"))
+		if _, err := m.Show(ctx, "org.vim.Vim"); err == nil {
+			t.Fatal("want error")
+		}
+	})
+	t.Run("bad name", func(t *testing.T) {
+		m, f := flatpakM(t)
+		if _, err := m.Show(ctx, "a;b"); err == nil || len(f.Calls()) != 0 {
+			t.Fatal("want rejection")
+		}
+	})
+}
+
+func TestFlatpak_ListVersions(t *testing.T) {
+	ctx := context.Background()
+	t.Run("reads remote-info version", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "9.0\n")
+		ok(f, "Version: 9.2\nArch: x86_64\n")
+		info, err := m.ListVersions(ctx, "org.vim.Vim")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Installed != "9.0" || len(info.Versions) != 1 || info.Versions[0].Version != "9.2" || info.Versions[0].Repository != "flathub" {
+			t.Fatalf("info=%+v", info)
+		}
+	})
+	t.Run("installed-version runner failure propagates", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{}, errors.New("flatpak info err"))
+		if _, err := m.ListVersions(ctx, "org.vim.Vim"); err == nil {
+			t.Fatal("a runner failure in the installed-version lookup must propagate")
+		}
+	})
+	t.Run("not on remote returns info without versions", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "9.0\n")
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
+		info, err := m.ListVersions(ctx, "org.vim.Vim")
+		if err != nil || len(info.Versions) != 0 {
+			t.Fatalf("info=%+v err=%v", info, err)
+		}
+	})
+	t.Run("remote-info runner failure propagates", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "9.0\n")
+		f.Push(sysexec.Result{}, errors.New("transport"))
+		if _, err := m.ListVersions(ctx, "org.vim.Vim"); err == nil {
+			t.Fatal("a remote-info runner failure must propagate")
+		}
+	})
+	t.Run("bad name", func(t *testing.T) {
+		m, f := flatpakM(t)
+		if _, err := m.ListVersions(ctx, "a;b"); err == nil || len(f.Calls()) != 0 {
+			t.Fatal("want rejection")
+		}
+	})
+}
+
+func TestFlatpak_IsInstalledVersionCount(t *testing.T) {
+	ctx := context.Background()
+	t.Run("installed", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{ExitCode: 0}, nil)
+		if got, err := m.IsInstalled(ctx, "org.vim.Vim"); err != nil || !got {
+			t.Fatalf("got=%v err=%v", got, err)
+		}
+	})
+	t.Run("not installed", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
+		if got, err := m.IsInstalled(ctx, "org.ghost.App"); err != nil || got {
+			t.Fatalf("got=%v err=%v", got, err)
+		}
+	})
+	t.Run("IsInstalled exec error", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{}, errors.New("boom"))
+		if _, err := m.IsInstalled(ctx, "org.vim.Vim"); err == nil {
+			t.Fatal("want error")
+		}
+	})
+	t.Run("IsInstalled bad name", func(t *testing.T) {
+		m, f := flatpakM(t)
+		if _, err := m.IsInstalled(ctx, "a;b"); err == nil || len(f.Calls()) != 0 {
+			t.Fatal("want rejection")
+		}
+	})
+	t.Run("InstalledVersion present", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{ExitCode: 0, Stdout: "9.0\n"}, nil)
+		if v, err := m.InstalledVersion(ctx, "org.vim.Vim"); err != nil || v != "9.0" {
+			t.Fatalf("v=%q err=%v", v, err)
+		}
+	})
+	t.Run("InstalledVersion not installed -> ErrNotFound", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
+		if v, err := m.InstalledVersion(ctx, "org.ghost.App"); !errors.Is(err, ErrNotFound) || v != "" {
+			t.Fatalf("v=%q err=%v", v, err)
+		}
+	})
+	t.Run("InstalledVersion exec error", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{}, errors.New("boom"))
+		if _, err := m.InstalledVersion(ctx, "org.vim.Vim"); err == nil {
+			t.Fatal("want error")
+		}
+	})
+	t.Run("InstalledVersion bad name", func(t *testing.T) {
+		m, f := flatpakM(t)
+		if _, err := m.InstalledVersion(ctx, "a;b"); err == nil || len(f.Calls()) != 0 {
+			t.Fatal("want rejection")
+		}
+	})
+	t.Run("InstalledCount", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "org.vim.Vim\norg.gnu.emacs\n")
+		if n, err := m.InstalledCount(ctx); err != nil || n != 2 {
+			t.Fatalf("n=%d err=%v", n, err)
+		}
+	})
+	t.Run("InstalledCount exec error", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{}, errors.New("boom"))
+		if _, err := m.InstalledCount(ctx); err == nil {
+			t.Fatal("want error")
+		}
+	})
+}
+
+func TestFlatpak_HasUpdates(t *testing.T) {
+	ctx := context.Background()
+	t.Run("updates available", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "org.vim.Vim\n")
+		if got, err := m.HasUpdates(ctx); err != nil || !got {
+			t.Fatalf("got=%v err=%v", got, err)
+		}
+	})
+	t.Run("none", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "\n")
+		if got, err := m.HasUpdates(ctx); err != nil || got {
+			t.Fatalf("got=%v err=%v", got, err)
+		}
+	})
+	t.Run("exec error", func(t *testing.T) {
+		m, f := flatpakM(t)
+		runnerErr := errors.New("boom")
+		f.Push(sysexec.Result{}, runnerErr)
+		if _, err := m.HasUpdates(ctx); !errors.Is(err, runnerErr) {
+			t.Fatalf("err=%v, want runner error", err)
+		}
+	})
+}
+
+func TestFlatpak_PinUnpin(t *testing.T) {
+	ctx := context.Background()
+	t.Run("pin masks each package", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "")
+		ok(f, "")
+		if _, err := m.Pin(ctx, "org.vim.Vim", "org.gnu.emacs"); err != nil {
+			t.Fatal(err)
+		}
+		calls := f.Calls()
+		if len(calls) != 2 || argv(calls[0]) != "flatpak mask org.vim.Vim --system" {
+			t.Fatalf("calls=%d argv0=%q", len(calls), argv(calls[0]))
+		}
+	})
+	t.Run("unpin removes the mask", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "")
+		if _, err := m.Unpin(ctx, "org.vim.Vim"); err != nil {
+			t.Fatal(err)
+		}
+		if argv(f.Calls()[0]) != "flatpak mask --remove org.vim.Vim --system" {
+			t.Errorf("argv=%q", argv(f.Calls()[0]))
+		}
+	})
+	t.Run("unpin returns last error but attempts all", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "")
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "x"}, nil)
+		if _, err := m.Unpin(ctx, "org.a.A", "org.b.B"); err == nil {
+			t.Fatal("want last error")
+		}
+		if len(f.Calls()) != 2 {
+			t.Error("must attempt every package")
+		}
+	})
+	t.Run("pin returns last error but attempts all", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "")
+		f.Push(sysexec.Result{ExitCode: 1, Stderr: "x"}, nil)
+		_, err := m.Pin(ctx, "org.a.A", "org.b.B")
+		if err == nil {
+			t.Fatal("want last error")
+		}
+		if len(f.Calls()) != 2 {
+			t.Error("must attempt every package")
+		}
+	})
+	t.Run("pin bad name", func(t *testing.T) {
+		m, f := flatpakM(t)
+		if _, err := m.Pin(ctx, "a;b"); err == nil || len(f.Calls()) != 0 {
+			t.Fatal("want rejection")
+		}
+	})
+	t.Run("unpin bad name", func(t *testing.T) {
+		m, f := flatpakM(t)
+		if _, err := m.Unpin(ctx, "a;b"); err == nil || len(f.Calls()) != 0 {
+			t.Fatal("want rejection")
+		}
+	})
+}
+
+func TestFlatpak_ListPinnedAndIsPinned(t *testing.T) {
+	ctx := context.Background()
+	t.Run("ListPinned with versions", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "org.vim.Vim\n\norg.gnu.emacs\n")
+		ok(f, "9.0\n")
+		ok(f, "28\n")
+		pkgs, err := m.ListPinned(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(pkgs) != 2 || pkgs[0].Name != "org.vim.Vim" || pkgs[0].Version != "9.0" {
+			t.Fatalf("pkgs=%+v", pkgs)
+		}
+	})
+	t.Run("ListPinned exec error", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{}, errors.New("boom"))
+		if _, err := m.ListPinned(ctx); err == nil {
+			t.Fatal("want error")
+		}
+	})
+	t.Run("IsPinned true", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "org.vim.Vim\n")
+		if got, err := m.IsPinned(ctx, "org.vim.Vim"); err != nil || !got {
+			t.Fatalf("got=%v err=%v", got, err)
+		}
+	})
+	t.Run("IsPinned false", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "org.gnu.emacs\n")
+		if got, err := m.IsPinned(ctx, "org.vim.Vim"); err != nil || got {
+			t.Fatalf("got=%v err=%v", got, err)
+		}
+	})
+	t.Run("IsPinned tolerant of mask failure", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{ExitCode: 1}, nil)
+		if got, err := m.IsPinned(ctx, "org.vim.Vim"); err != nil || got {
+			t.Fatalf("got=%v err=%v", got, err)
+		}
+	})
+	t.Run("IsPinned bad name", func(t *testing.T) {
+		m, f := flatpakM(t)
+		if _, err := m.IsPinned(ctx, "a;b"); err == nil || len(f.Calls()) != 0 {
+			t.Fatal("want rejection")
+		}
+	})
+}
+
+func TestFlatpak_Remotes(t *testing.T) {
+	ctx := context.Background()
+	t.Run("AddRemote validates and adds", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "")
+		if err := m.AddRemote(ctx, "flathub", "https://dl.flathub.org/repo/flathub.flatpakrepo"); err != nil {
+			t.Fatal(err)
+		}
+		c := f.Calls()[0]
+		if !strings.HasPrefix(argv(c), "flatpak remote-add --if-not-exists flathub https://") || !c.Escalate {
+			t.Errorf("argv=%q escalate=%v", argv(c), c.Escalate)
+		}
+	})
+	t.Run("AddRemote rejects a bad remote name", func(t *testing.T) {
+		m, f := flatpakM(t)
+		if err := m.AddRemote(ctx, "--from=evil", "https://x/y"); err == nil || len(f.Calls()) != 0 {
+			t.Fatal("want name rejection, no exec")
+		}
+	})
+	t.Run("AddRemote rejects a non-https url", func(t *testing.T) {
+		m, f := flatpakM(t)
+		if err := m.AddRemote(ctx, "flathub", "http://insecure/repo"); err == nil || len(f.Calls()) != 0 {
+			t.Fatal("want url rejection, no exec")
+		}
+	})
+	t.Run("RemoveRemote", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "")
+		if err := m.RemoveRemote(ctx, "flathub"); err != nil {
+			t.Fatal(err)
+		}
+		if argv(f.Calls()[0]) != "flatpak remote-delete --force flathub --system" {
+			t.Errorf("argv=%q", argv(f.Calls()[0]))
+		}
+	})
+	t.Run("RemoveRemote rejects a bad name", func(t *testing.T) {
+		m, f := flatpakM(t)
+		if err := m.RemoveRemote(ctx, "a b"); err == nil || len(f.Calls()) != 0 {
+			t.Fatal("want rejection")
+		}
+	})
+	t.Run("ListRemotes", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "flathub\nfedora\n\n")
+		remotes, err := m.ListRemotes(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(remotes) != 2 || remotes[0] != "flathub" {
+			t.Fatalf("remotes=%v", remotes)
+		}
+	})
+	t.Run("ListRemotes exec error", func(t *testing.T) {
+		m, f := flatpakM(t)
+		f.Push(sysexec.Result{}, errors.New("boom"))
+		if _, err := m.ListRemotes(ctx); err == nil {
+			t.Fatal("want error")
+		}
+	})
+}
+
+func TestFlatpak_ParseHelpers(t *testing.T) {
+	t.Run("parseFlatpakSearchLine", func(t *testing.T) {
+		if r := parseFlatpakSearchLine("Name\tDesc\torg.app.Id\t1\tstable\tflathub"); r == nil || r.Name != "org.app.Id" || r.Description != "Desc" {
+			t.Errorf("got %+v", r)
+		}
+		if r := parseFlatpakSearchLine("too\tfew"); r != nil {
+			t.Errorf("a <3-field line must yield nil, got %+v", r)
+		}
+	})
+	t.Run("parseFlatpakValue", func(t *testing.T) {
+		if v := parseFlatpakValue("Version: 1.0"); v != "1.0" {
+			t.Errorf("got %q", v)
+		}
+		if v := parseFlatpakValue("nocolon"); v != "" {
+			t.Errorf("no-colon must be empty, got %q", v)
+		}
+	})
+	t.Run("parseFlatpakSize", func(t *testing.T) {
+		cases := map[string]int64{
+			"100 kB":    100 * 1000,
+			"100 KB":    100 * 1000,
+			"1 KiB":     1024,
+			"5 MB":      5 * 1000 * 1000,
+			"2 MiB":     2 * 1024 * 1024,
+			"3 GB":      3 * 1000 * 1000 * 1000,
+			"1 GiB":     1024 * 1024 * 1024,
+			"512 bytes": 512,
+			"1,024 KiB": 1024 * 1024,
+		}
+		for in, want := range cases {
+			got, sizeOK := parseFlatpakSize(in)
+			if !sizeOK {
+				t.Errorf("parseFlatpakSize(%q) reported a parse failure on valid input", in)
+				continue
+			}
+			if got != want {
+				t.Errorf("parseFlatpakSize(%q)=%d want %d", in, got, want)
+			}
+		}
+
+		for _, in := range []string{"", "unknown", "n/a", "5 MB and change"} {
+			if got, sizeOK := parseFlatpakSize(in); sizeOK {
+				t.Errorf("parseFlatpakSize(%q)=(%d, true), want ok=false", in, got)
+			} else if got != 0 {
+				t.Errorf("parseFlatpakSize(%q) failed but returned %d, want 0", in, got)
+			}
+		}
+	})
+}
+
+func TestFlatpak_EnrichmentRunnerFailuresPropagate(t *testing.T) {
+	ctx := context.Background()
+	t.Run("ListUpgradable: InstalledVersion runner failure", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "org.vim.Vim\t9.1\tflathub\n")
+		f.Push(sysexec.Result{}, errors.New("info"))
+		if _, err := m.ListUpgradable(ctx); err == nil {
+			t.Fatal("an InstalledVersion runner failure must propagate")
+		}
+	})
+	t.Run("ListPinned: InstalledVersion runner failure", func(t *testing.T) {
+		m, f := flatpakM(t)
+		ok(f, "org.vim.Vim\n")
+		f.Push(sysexec.Result{}, errors.New("info"))
+		if _, err := m.ListPinned(ctx); err == nil {
+			t.Fatal("an InstalledVersion runner failure must propagate")
+		}
+	})
+}

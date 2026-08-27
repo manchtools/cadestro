@@ -1,0 +1,123 @@
+FROM golang:1.26-bookworm AS systemd
+
+RUN apt-get update && apt-get install -y \
+    sudo \
+    openssh-server \
+    systemd \
+    systemd-sysv \
+    systemd-resolved \
+    procps \
+    locales \
+    && sed -i 's/^# *ja_JP.UTF-8 UTF-8/ja_JP.UTF-8 UTF-8/; s/^# *zh_CN.UTF-8 UTF-8/zh_CN.UTF-8 UTF-8/' /etc/locale.gen \
+    && locale-gen \
+    && rm -rf /var/lib/apt/lists/*
+
+
+
+
+
+
+
+
+RUN systemctl enable systemd-resolved
+
+
+
+
+
+
+
+
+
+
+RUN useradd --system --no-create-home --shell /usr/sbin/nologin cadestro && \
+    mkdir -p /home/cadestro && \
+    chown cadestro:cadestro /home/cadestro && \
+    usermod -aG systemd-journal cadestro
+
+
+RUN ssh-keygen -A
+
+WORKDIR /workspace
+
+COPY sdk/ ./sdk/
+
+
+RUN cd sdk && go mod download
+
+
+RUN printf '\
+cadestro ALL=(root) NOPASSWD: /usr/bin/systemctl *\n\
+cadestro ALL=(root) NOPASSWD: /bin/systemctl *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/systemctl\n\
+cadestro ALL=(root) NOPASSWD: /bin/systemctl\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/tee *\n\
+cadestro ALL=(root) NOPASSWD: /bin/tee *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/chown *\n\
+cadestro ALL=(root) NOPASSWD: /bin/chown *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/chmod *\n\
+cadestro ALL=(root) NOPASSWD: /bin/chmod *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/mkdir *\n\
+cadestro ALL=(root) NOPASSWD: /bin/mkdir *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/rm *\n\
+cadestro ALL=(root) NOPASSWD: /bin/rm *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/cp *\n\
+cadestro ALL=(root) NOPASSWD: /bin/cp *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/mv *\n\
+cadestro ALL=(root) NOPASSWD: /bin/mv *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/cat *\n\
+cadestro ALL=(root) NOPASSWD: /bin/cat *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/id *\n\
+cadestro ALL=(root) NOPASSWD: /bin/id *\n\
+cadestro ALL=(root) NOPASSWD: /usr/sbin/useradd *\n\
+cadestro ALL=(root) NOPASSWD: /sbin/useradd *\n\
+cadestro ALL=(root) NOPASSWD: /usr/sbin/usermod *\n\
+cadestro ALL=(root) NOPASSWD: /sbin/usermod *\n\
+cadestro ALL=(root) NOPASSWD: /usr/sbin/userdel *\n\
+cadestro ALL=(root) NOPASSWD: /sbin/userdel *\n\
+cadestro ALL=(root) NOPASSWD: /usr/sbin/groupadd *\n\
+cadestro ALL=(root) NOPASSWD: /sbin/groupadd *\n\
+cadestro ALL=(root) NOPASSWD: /usr/sbin/groupdel *\n\
+cadestro ALL=(root) NOPASSWD: /sbin/groupdel *\n\
+cadestro ALL=(root) NOPASSWD: /usr/sbin/gpasswd *\n\
+cadestro ALL=(root) NOPASSWD: /sbin/gpasswd *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/gpasswd *\n\
+cadestro ALL=(root) NOPASSWD: /bin/gpasswd *\n\
+cadestro ALL=(root) NOPASSWD: /usr/sbin/chpasswd\n\
+cadestro ALL=(root) NOPASSWD: /sbin/chpasswd\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/chage *\n\
+cadestro ALL=(root) NOPASSWD: /bin/chage *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/getent *\n\
+cadestro ALL=(root) NOPASSWD: /bin/getent *\n\
+cadestro ALL=(root) NOPASSWD: /bin/sh *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/sh *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/test *\n\
+cadestro ALL=(root) NOPASSWD: /bin/test *\n\
+cadestro ALL=(root) NOPASSWD: /usr/bin/resolvectl *\n\
+cadestro ALL=(root) NOPASSWD: /bin/resolvectl *\n\
+' > /etc/sudoers.d/cadestro && \
+    chmod 0440 /etc/sudoers.d/cadestro && \
+    visudo -c -f /etc/sudoers.d/cadestro
+
+
+RUN chown -R cadestro:cadestro /workspace /home/cadestro
+
+
+STOPSIGNAL SIGRTMIN+3
+ENTRYPOINT ["/sbin/init"]
+
+
+
+
+
+
+
+
+
+FROM systemd AS with-networkmanager
+RUN apt-get update && apt-get install -y --no-install-recommends network-manager \
+    && rm -rf /var/lib/apt/lists/* \
+    && systemctl enable NetworkManager \
+    && mkdir -p /etc/NetworkManager/conf.d \
+    && printf '[keyfile]\nunmanaged-devices=*\n' > /etc/NetworkManager/conf.d/90-cadestro-test-unmanaged.conf \
+    && nmcli --version

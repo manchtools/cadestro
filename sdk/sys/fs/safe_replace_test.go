@@ -1,0 +1,121 @@
+//go:build unix
+
+package fs
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+)
+
+func TestSafeReplaceFile_RoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	target := filepath.Join(dir, "creds")
+
+	if err := safeReplaceFile(target, []byte("hello"), 0o600, true); err != nil {
+		t.Fatalf("SafeReplaceFile: %v", err)
+	}
+	got, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	if string(got) != "hello" {
+		t.Errorf("content = %q, want %q", string(got), "hello")
+	}
+	info, err := os.Stat(target)
+	if err != nil {
+		t.Fatalf("Stat: %v", err)
+	}
+	if mode := info.Mode().Perm(); mode != 0o600 {
+		t.Errorf("mode = %v, want 0600", mode)
+	}
+}
+
+func TestSafeReplaceFile_OverwritesExisting(t *testing.T) {
+	dir := t.TempDir()
+	target := filepath.Join(dir, "f")
+	if err := os.WriteFile(target, []byte("old"), 0o644); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	if err := safeReplaceFile(target, []byte("new"), 0o600, true); err != nil {
+		t.Fatalf("SafeReplaceFile: %v", err)
+	}
+	got, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	if string(got) != "new" {
+		t.Errorf("content = %q, want %q", string(got), "new")
+	}
+}
+
+func TestSafeReplaceFile_RefusesExistingWhenNoReplace(t *testing.T) {
+	dir := t.TempDir()
+	target := filepath.Join(dir, "f")
+	if err := os.WriteFile(target, []byte("existing"), 0o644); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	err := safeReplaceFile(target, []byte("new"), 0o600, false)
+	if err == nil {
+		t.Fatalf("SafeReplaceFile: want error, got nil")
+	}
+	if !strings.Contains(err.Error(), "destination exists") {
+		t.Errorf("error = %v, want substring 'destination exists'", err)
+	}
+	got, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	if string(got) != "existing" {
+		t.Errorf("content = %q, want existing file untouched", string(got))
+	}
+}
+
+func TestSafeBackupAndReplace_MovesExistingThenWrites(t *testing.T) {
+	dir := t.TempDir()
+	bin := filepath.Join(dir, "agent")
+	bak := filepath.Join(dir, "agent.bak")
+	if err := os.WriteFile(bin, []byte("old-binary"), 0o755); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+
+	if err := safeBackupAndReplace(bin, bak, []byte("new-binary"), 0o755, true); err != nil {
+		t.Fatalf("SafeBackupAndReplace: %v", err)
+	}
+
+	got, err := os.ReadFile(bin)
+	if err != nil {
+		t.Fatalf("ReadFile bin: %v", err)
+	}
+	if string(got) != "new-binary" {
+		t.Errorf("bin = %q, want new-binary", string(got))
+	}
+	gotBak, err := os.ReadFile(bak)
+	if err != nil {
+		t.Fatalf("ReadFile bak: %v", err)
+	}
+	if string(gotBak) != "old-binary" {
+		t.Errorf("bak = %q, want old-binary", string(gotBak))
+	}
+}
+
+func TestSafeBackupAndReplace_NoExistingFile(t *testing.T) {
+	dir := t.TempDir()
+	bin := filepath.Join(dir, "agent")
+	bak := filepath.Join(dir, "agent.bak")
+
+	if err := safeBackupAndReplace(bin, bak, []byte("first"), 0o755, false); err != nil {
+		t.Fatalf("SafeBackupAndReplace: %v", err)
+	}
+	got, err := os.ReadFile(bin)
+	if err != nil {
+		t.Fatalf("ReadFile bin: %v", err)
+	}
+	if string(got) != "first" {
+		t.Errorf("bin = %q, want first", string(got))
+	}
+	if _, err := os.Stat(bak); !os.IsNotExist(err) {
+		t.Errorf("backup file unexpectedly exists: %v", err)
+	}
+}
