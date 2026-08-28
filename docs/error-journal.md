@@ -225,3 +225,15 @@
 **Harness fix**: Promoted a standing learning-artifact rule to root `AGENTS.md`: completion in interactive learning material must be derived from a durable learner-produced answer or exercise result, never a self-certification checkbox.
 
 **Prevention**: Parser-backed one-question/one-answer-field coverage per learning unit plus a restart-lifecycle test.
+
+## 2026-08-28 User correction: removed thin compliance and the shell escape hatch from the proposed core
+
+**What happened**: I proposed a smallest usable slice that removed shell actions and separate compliance authoring without distinguishing those bounded capabilities from interactive terminal access and a broad compliance product.
+
+**What the user said**: "Id like to keep compliance in but the same thin shell part we have currently. I also want to have a shell action as that is the escape hatch for everything"
+
+**Root cause**: I minimized the capability count instead of preserving the smallest complete administrator workflow, which needs a bounded compliance check and an explicit escape hatch while typed actions remain intentionally narrow.
+
+**Harness fix**: None, because this is an exploratory product-scope ruling rather than a missing repository-wide engineering rule; the correction is recorded here for future scope work.
+
+**Prevention**: Future core-scope proposals must evaluate self-service, interactive terminal access, shell actions, and thin compliance independently rather than removing them as one remote-management class.
