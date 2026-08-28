@@ -131,6 +131,7 @@ func TestOIDCProvider_ExchangeCode_UsesPKCEPublicClient(t *testing.T) {
 	var authorization string
 	var exchangeRequests int
 	var tokenForm url.Values
+	const redirectURL = "https://app.example.com/callback"
 	mux := http.NewServeMux()
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
@@ -161,13 +162,17 @@ func TestOIDCProvider_ExchangeCode_UsesPKCEPublicClient(t *testing.T) {
 		_ = json.NewEncoder(w).Encode(map[string]string{"access_token": "access", "token_type": "Bearer"})
 	})
 
-	provider, err := idp.NewOIDCProvider(context.Background(), idp.ProviderConfig{IssuerURL: srv.URL, ClientID: "public-client"})
+	provider, err := idp.NewOIDCProvider(context.Background(), idp.ProviderConfig{IssuerURL: srv.URL, ClientID: "public-client", RedirectURL: redirectURL})
 	require.NoError(t, err)
 	_, err = provider.ExchangeCode(context.Background(), "authorization-code", "verifier")
 	require.NoError(t, err)
 	assert.Equal(t, 1, exchangeRequests)
 	assert.Empty(t, authorization)
-	assert.Equal(t, "public-client", tokenForm.Get("client_id"))
-	assert.Equal(t, "verifier", tokenForm.Get("code_verifier"))
-	assert.Empty(t, tokenForm.Get("client"+"_"+"secret"))
+	assert.Equal(t, url.Values{
+		"code":          {"authorization-code"},
+		"client_id":     {"public-client"},
+		"code_verifier": {"verifier"},
+		"grant_type":    {"authorization_code"},
+		"redirect_uri":  {redirectURL},
+	}, tokenForm)
 }

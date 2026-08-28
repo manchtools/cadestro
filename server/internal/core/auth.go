@@ -44,7 +44,7 @@ func (service *Service) EnsureBootstrapProvider(ctx context.Context, config Boot
 		config.Slug = "sso"
 	}
 	id := ulid.Make().String()
-	if _, err := service.newOIDCProvider(ctx, id, config.ClientID, config.IssuerURL, config.Scopes, service.publicBaseURL); err != nil {
+	if _, err := service.newOIDCProvider(ctx, config.ClientID, config.IssuerURL, config.Scopes, service.publicBaseURL); err != nil {
 		return err
 	}
 	scopes, err := json.Marshal(config.Scopes)
@@ -239,7 +239,7 @@ func (service *Service) linkIdentity(ctx context.Context, providerID string, cla
 
 func (service *Service) CreateIdentityProvider(ctx context.Context, request *connect.Request[cadestrov1.CreateIdentityProviderRequest]) (*connect.Response[cadestrov1.CreateIdentityProviderResponse], error) {
 	id := ulid.Make().String()
-	if _, err := service.newOIDCProvider(ctx, id, request.Msg.GetClientId().GetValue(), request.Msg.GetIssuerUrl(), request.Msg.GetScopes(), service.publicBaseURL); err != nil {
+	if _, err := service.newOIDCProvider(ctx, request.Msg.GetClientId().GetValue(), request.Msg.GetIssuerUrl(), request.Msg.GetScopes(), service.publicBaseURL); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("identity provider discovery failed"))
 	}
 	scopes, err := json.Marshal(request.Msg.GetScopes())
@@ -308,7 +308,7 @@ func (service *Service) UpdateIdentityProvider(ctx context.Context, request *con
 		}
 		return nil, service.internal("get provider for update", err)
 	}
-	if _, err := service.newOIDCProvider(ctx, id, request.Msg.GetClientId().GetValue(), request.Msg.GetIssuerUrl(), request.Msg.GetScopes(), service.publicBaseURL); err != nil {
+	if _, err := service.newOIDCProvider(ctx, request.Msg.GetClientId().GetValue(), request.Msg.GetIssuerUrl(), request.Msg.GetScopes(), service.publicBaseURL); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("identity provider discovery failed"))
 	}
 	scopes, err := json.Marshal(request.Msg.GetScopes())
@@ -353,10 +353,10 @@ func (service *Service) providerClient(ctx context.Context, provider *db.Identit
 	if err := json.Unmarshal([]byte(provider.ScopesJson), &scopes); err != nil {
 		return nil, err
 	}
-	return service.newOIDCProvider(ctx, provider.ID, provider.ClientID, provider.IssuerUrl, scopes, redirectURL)
+	return service.newOIDCProvider(ctx, provider.ClientID, provider.IssuerUrl, scopes, redirectURL)
 }
 
-func (service *Service) newOIDCProvider(ctx context.Context, _, clientID, issuerURL string, scopes []string, redirectURL string) (*idp.OIDCProvider, error) {
+func (service *Service) newOIDCProvider(ctx context.Context, clientID, issuerURL string, scopes []string, redirectURL string) (*idp.OIDCProvider, error) {
 	return idp.NewOIDCProvider(ctx, idp.ProviderConfig{
 		IssuerURL: issuerURL, ClientID: clientID, Scopes: scopes, RedirectURL: redirectURL,
 	})
