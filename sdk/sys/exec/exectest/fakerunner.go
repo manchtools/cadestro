@@ -1,8 +1,5 @@
 // Package exectest provides a fake exec.Runner for unit-testing capability
-// packages with no host, no sudo, and no container. It is the keystone of the
-// additive unit tier in the SDK rework (sdk/docs/sdk-rework-design.md §6):
-// because every capability handle is built with an explicit Runner, a test
-// passes a FakeRunner and asserts on the exact Commands the capability built.
+// packages without touching the host.
 package exectest
 
 import (

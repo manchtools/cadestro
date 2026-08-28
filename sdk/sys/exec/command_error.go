@@ -14,7 +14,6 @@ var (
 	// default escalation).
 	ErrUnknownBackend = errors.New("unknown privilege backend")
 
-	// docref: begin escalation-sentinels
 	// ErrEscalationUnavailable is returned when the chosen escalation tool
 	// (sudo/doas) is not installed on this host.
 	ErrEscalationUnavailable = errors.New("escalation tool not installed")
@@ -23,7 +22,6 @@ var (
 	// password (no NOPASSWD rule) — the agent never has a terminal to type one,
 	// so this fails closed rather than hanging.
 	ErrEscalationDenied = errors.New("escalation requires a password")
-	// docref: end escalation-sentinels
 
 	// ErrRunnerRequired is returned by a capability constructor (New) when the
 	// caller passes a nil Runner. It is shared by every capability package so a

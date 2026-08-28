@@ -40,9 +40,7 @@ The complete pre-descope implementation is preserved on
 
 ## Deployment
 
-See [server/deploy/QUICKSTART.md](server/deploy/QUICKSTART.md). The reference
-deployment runs Traefik, the control plane, and the web console with separate
-browser/API and agent hostnames.
+The reference deployment is under `server/deploy/`.
 
 ## License
 

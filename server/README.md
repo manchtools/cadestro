@@ -19,5 +19,3 @@ migrations, and sqlc consumes the same migration source.
 ```bash
 ./scripts/verify.sh
 ```
-
-See [deploy/QUICKSTART.md](deploy/QUICKSTART.md) for the reference deployment.

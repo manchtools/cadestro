@@ -9,7 +9,5 @@ details, credentials, or affected deployment data.
 ## Scope
 
 This repository contains the Cadestro control plane, device agent,
-administration UI, wire contract, and system SDK. The full security model —
-trust boundaries, identity, device PKI, audit guarantees — is documented under
-`docs/` as the modules land and is the authoritative description of the
-security contract.
+administration UI, wire contract, and system SDK. The implementation and tests
+define the current security contract.

@@ -41,11 +41,4 @@ staticcheck ./...
 echo "== go test"
 go test -p 1 ./... -count=1
 
-if ! command -v docref >/dev/null 2>&1; then
-  echo "docref is not installed — the gate cannot certify this tree" >&2
-  exit 1
-fi
-echo "== docref check"
-docref check
-
 echo "== server gate green"

@@ -1,7 +1,4 @@
-// docref: begin module-path
 module github.com/manchtools/cadestro/sdk
-
-// docref: end module-path
 
 go 1.25.12
 
