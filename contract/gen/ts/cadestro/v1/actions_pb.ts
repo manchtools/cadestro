@@ -5,7 +5,7 @@
 import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
-import type { ActionId, CommandOutput, DesiredState, ExecutionStatus, FlatpakAppId, OccurrenceId, RunId } from "./common_pb";
+import type { ActionId, CommandOutput, DesiredState, ExecutionStatus, OccurrenceId, RunId } from "./common_pb";
 import { file_cadestro_v1_common } from "./common_pb";
 import type { Duration, Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_duration, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cadestro/v1/actions.proto.
  */
 export const file_cadestro_v1_actions: GenFile = /*@__PURE__*/
-  fileDesc("ChljYWRlc3Ryby92MS9hY3Rpb25zLnByb3RvEgtjYWRlc3Ryby52MSKyCAoGQWN0aW9uEikKAmlkGAEgASgLMhUuY2FkZXN0cm8udjEuQWN0aW9uSWRCBrpIA8gBARItCgR0eXBlGAIgASgOMhcuY2FkZXN0cm8udjEuQWN0aW9uVHlwZUIGukgDyAEBEjAKDWRlc2lyZWRfc3RhdGUYAyABKA4yGS5jYWRlc3Ryby52MS5EZXNpcmVkU3RhdGUSJgoPdGltZW91dF9zZWNvbmRzGAQgASgFQg26SArYAQEaBRiQHCgAEi0KCHNjaGVkdWxlGAUgASgLMhsuY2FkZXN0cm8udjEuQWN0aW9uU2NoZWR1bGUSLQoHcGFja2FnZRgIIAEoCzIaLmNhZGVzdHJvLnYxLlBhY2thZ2VQYXJhbXNIABIsCgNhcHAYCSABKAsyHS5jYWRlc3Ryby52MS5BcHBJbnN0YWxsUGFyYW1zSAASKQoFc2hlbGwYCiABKAsyGC5jYWRlc3Ryby52MS5TaGVsbFBhcmFtc0gAEi0KB3NlcnZpY2UYCyABKAsyGi5jYWRlc3Ryby52MS5TZXJ2aWNlUGFyYW1zSAASJwoEZmlsZRgMIAEoCzIXLmNhZGVzdHJvLnYxLkZpbGVQYXJhbXNIABIrCgZ1cGRhdGUYDSABKAsyGS5jYWRlc3Ryby52MS5VcGRhdGVQYXJhbXNIABIzCgpyZXBvc2l0b3J5GA4gASgLMh0uY2FkZXN0cm8udjEuUmVwb3NpdG9yeVBhcmFtc0gAEi0KB2ZsYXRwYWsYDyABKAsyGi5jYWRlc3Ryby52MS5GbGF0cGFrUGFyYW1zSAASMQoJZGlyZWN0b3J5GBAgASgLMhwuY2FkZXN0cm8udjEuRGlyZWN0b3J5UGFyYW1zSAASJwoEdXNlchgRIAEoCzIXLmNhZGVzdHJvLnYxLlVzZXJQYXJhbXNIABIlCgNzc2gYEiABKAsyFi5jYWRlc3Ryby52MS5Tc2hQYXJhbXNIABInCgRzc2hkGBMgASgLMhcuY2FkZXN0cm8udjEuU3NoZFBhcmFtc0gAEjYKDGFkbWluX3BvbGljeRgUIAEoCzIeLmNhZGVzdHJvLnYxLkFkbWluUG9saWN5UGFyYW1zSAASJQoDbHBzGBUgASgLMhYuY2FkZXN0cm8u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ZRgBIAEoCUIcukgZyAEBchQQARhAMg5eW2EtekEtWjAtOV0rJBInCgNhcHQYAiABKAsyGi5jYWRlc3Ryby52MS5BcHRSZXBvc2l0b3J5EicKA2RuZhgDIAEoCzIaLmNhZGVzdHJvLnYxLkRuZlJlcG9zaXRvcnkSLQoGcGFjbWFuGAQgASgLMh0uY2FkZXN0cm8udjEuUGFjbWFuUmVwb3NpdG9yeRItCgZ6eXBwZXIYBSABKAsyHS5jYWRlc3Ryby52MS5aeXBwZXJSZXBvc2l0b3J5IukCCg1BcHRSZXBvc2l0b3J5EhgKA3VybBgBIAEoCUILukgI2AEBcgOIAQESIAoMZGlzdHJpYnV0aW9uGAIgASgJQgq6SAfYAQFyAhhAEiAKCmNvbXBvbmVudHMYAyADKAlCDLpICZIBBiIEcgIYQBIgCgtncGdfa2V5X3VybBgEIAEoCUILukgI2AEBcgOIAQESHQoHZ3BnX2tleRgFIAEoCUIMukgJ2AEBcgQYgIAEEg8KB3RydXN0ZWQYBiABKAgSGAoEYXJjaBgHIAEoCUIKukgH2AEBcgIYIBIQCghkaXNhYmxlZBgIIAEoCDp8ukh5GncKLGFwdF9yZXBvc2l0b3J5LnVybF9yZXF1aXJlZF93aXRob3V0X2Rpc2FibGVkEiZ1cmwgaXMgcmVxdWlyZWQgdW5sZXNzIGRpc2FibGVkIGlzIHNldBofdGhpcy5kaXNhYmxlZCB8fCB0aGlzLnVybCAhPSAnJyK6AgoNRG5mUmVwb3NpdG9yeRIPCgdiYXNldXJsGAEgASgJEiAKC2Rlc2NyaXB0aW9uGAIgASgJQgu6SAjYAQFyAxj/ARIPCgdlbmFibGVkGAMgASgIEhAKCGdwZ2NoZWNrGAQgASgIEhsKBmdwZ2tleRgFIAEoCUILukgI2AEBcgOIAQESFwoPbW9kdWxlX2hvdGZpeGVzGAYgASgIEhAKCGRpc2FibGVkGAcgASgIOooBukiGARqDAQowZG5mX3JlcG9zaXRvcnkuYmFzZXVybF9yZXF1aXJlZF93aXRob3V0X2Rpc2FibGVkEipiYXNldXJsIGlzIHJlcXVpcmVkIHVubGVzcyBkaXNhYmxlZCBpcyBzZXQaI3RoaXMuZGlzYWJsZWQgfHwgdGhpcy5iYXNldXJsICE9ICcnIuEBChBQ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MhUuY2FkZXN0cm8udjEuQWN0aW9uSWRCBrpIA8gBARI0CgZzdGF0dXMYAiABKA4yHC5jYWRlc3Ryby52MS5FeGVjdXRpb25TdGF0dXNCBrpIA8gBARIaCgVlcnJvchgDIAEoCUILukgI2AEBcgMYgCASKgoGb3V0cHV0GAQgASgLMhouY2FkZXN0cm8udjEuQ29tbWFuZE91dHB1dBIwCgxjb21wbGV0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjUKCGR1cmF0aW9uGAYgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uQgi6SAWqAQIyABIPCgdjaGFuZ2VkGAcgASgIEjkKCG1ldGFkYXRhGAggAygLMicuY2FkZXN0cm8udjEuQWN0aW9uUmVzdWx0Lk1ldGFkYXRhRW50cnkSEQoJY29tcGxpYW50GAkgASgIEjQKEGRldGVjdGlvbl9vdXRwdXQYCiABKAsyGi5jYWRlc3Ryby52MS5Db21tYW5kT3V0cHV0EioKBnJ1bl9pZBgLIAEoCzISLmNhZGVzdHJvLnYxLlJ1bklkQga6SAPIAQESOAoNb2NjdXJyZW5jZV9pZBgMIAEoCzIZLmNhZGVzdHJvLnYxLk9jY3VycmVuY2VJZEIGukgDyAEBGi8KDU1ldGFkYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJpCg9BZ2VudFVwZGF0ZUFyY2gSKQoKYmluYXJ5X3VybBgBIAEoCUIVukgSyAEBcg06CGh0dHBzOi8viAEBEisKDGNoZWNrc3VtX3VybBgCIAEoCUIVukgSyAEBcg06CGh0dHBzOi8viAEBIp4BChFBZ2VudFVwZGF0ZVBhcmFtcxIrCgVhbWQ2NBgBIAEoCzIcLmNhZGVzdHJvLnYxLkFnZW50VXBkYXRlQXJjaBIrCgVhcm02NBgCIAEoCzIcLmNhZGVzdHJvLnYxLkFnZW50VXBkYXRlQXJjaBIXCg9hbGxvd19kb3duZ3JhZGUYAyABKAgSFgoOYWxsb3dfcmVkaXJlY3QYBCABKAgqugQKCkFjdGlvblR5cGUSGwoXQUNUSU9OX1RZUEVfVU5TUEVDSUZJRUQQABIXChNBQ1RJT05fVFlQRV9QQUNLQUdFEAESFgoSQUNUSU9OX1RZUEVfVVBEQVRFEAISGgoWQUNUSU9OX1RZUEVfUkVQT1NJVE9SWRADEhkKFUFDVElPTl9UWVBFX0FQUF9JTUFHRRBkEhMKD0FDVElPTl9UWVBFX0RFQhBlEhMKD0FDVElPTl9UWVBFX1JQTRBmEhcKE0FDVElPTl9UWVBFX0ZMQVRQQUsQZxIWChFBQ1RJT05fVFlQRV9TSEVMTBDIARIbChZBQ1RJT05fVFlQRV9TQ1JJUFRfUlVOEMkBEhgKE0FDVElPTl9UWVBFX1NFUlZJQ0UQrAISFQoQQUNUSU9OX1RZUEVfRklMRRCQAxIaChVBQ1RJT05fVFlQRV9ESVJFQ1RPUlkQkQMSFQoQQUNUSU9OX1RZUEVfVVNFUhDYBBIWChFBQ1RJT05fVFlQRV9HUk9VUBDZBBIUCg9BQ1RJT05fVFlQRV9TU0gQvAUSFQoQQUNUSU9OX1RZUEVfU1NIRBC9BRIdChhBQ1RJT05fVFlQRV9BRE1JTl9QT0xJQ1kQoAYSFAoPQUNUSU9OX1RZUEVfTFBTEIQHEhsKFkFDVElPTl9UWVBFX0VOQ1JZUFRJT04Q6AcSFQoQQUNUSU9OX1RZUEVfV0lGSRDMCBIdChhBQ1RJT05fVFlQRV9BR0VOVF9VUERBVEUQsAkqmAEKEFNlcnZpY2VVbml0U3RhdGUSIgoeU0VSVklDRV9VTklUX1NUQVRFX1VOU1BFQ0lGSUVEEAASHgoaU0VSVklDRV9VTklUX1NUQVRFX1NUQVJURUQQARIeChpTRVJWSUNFX1VOSVRfU1RBVEVfU1RPUFBFRBACEiAKHFNFUlZJQ0VfVU5JVF9TVEFURV9SRVNUQVJURUQQAyqoAQoUWnlwcGVyUmVwb3NpdG9yeVR5cGUSJgoiWllQUEVSX1JFUE9TSVRPUllfVFlQRV9VTlNQRUNJRklFRBAAEiEKHVpZUFBFUl9SRVBPU0lUT1JZX1RZUEVfUlBNX01EEAESIAocWllQUEVSX1JFUE9TSVRPUllfVFlQRV9ZQVNUMhACEiMKH1pZUFBFUl9SRVBPU0lUT1JZX1RZUEVfUExBSU5ESVIQAyrtAQoQQWRtaW5BY2Nlc3NMZXZlbBIiCh5BRE1JTl9BQ0NFU1NfTEVWRUxfVU5TUEVDSUZJRUQQABIbChdBRE1JTl9BQ0NFU1NfTEVWRUxfRlVMTBABEh4KGkFETUlOX0FDQ0VTU19MRVZFTF9MSU1JVEVEEAISHQoZQURNSU5fQUNDRVNTX0xFVkVMX0NVU1RPTRADEi0KKUFETUlOX0FDQ0VTU19MRVZFTF9URVJNSU5BTF9BRE1JTl9MSU1JVEVEEAQSKgomQURNSU5fQUNDRVNTX0xFVkVMX1RFUk1JTkFMX0FETUlOX0ZVTEwQBSpKChBQcml2aWxlZ2VCYWNrZW5kEhoKFlBSSVZJTEVHRV9CQUNLRU5EX1NVRE8QABIaChZQUklWSUxFR0VfQkFDS0VORF9ET0FTEAEqjwEKFUxwc1Bhc3N3b3JkQ29tcGxleGl0eRInCiNMUFNfUEFTU1dPUkRfQ09NUExFWElUWV9VTlNQRUNJRklFRBAAEigKJExQU19QQVNTV09SRF9DT01QTEVYSVRZX0FMUEhBTlVNRVJJQxABEiMKH0xQU19QQVNTV09SRF9DT01QTEVYSVRZX0NPTVBMRVgQAiqpAQocRW5jcnlwdGlvbkRldmljZUJvdW5kS2V5VHlwZRIpCiVFTkNSWVBUSU9OX0RFVklDRV9CT1VORF9LRVlfVFlQRV9OT05FEAASKAokRU5DUllQVElPTl9ERVZJQ0VfQk9VTkRfS0VZX1RZUEVfVFBNEAESNAowRU5DUllQVElPTl9ERVZJQ0VfQk9VTkRfS0VZX1RZUEVfVVNFUl9QQVNTUEhSQVNFEAIqYgoMV2lmaUF1dGhUeXBlEh4KGldJRklfQVVUSF9UWVBFX1VOU1BFQ0lGSUVEEAASFgoSV0lGSV9BVVRIX1RZUEVfUFNLEAESGgoWV0lGSV9BVVRIX1RZUEVfRUFQX1RMUxACQkdaRWdpdGh1Yi5jb20vbWFuY2h0b29scy9jYWRlc3Ryby9jb250cmFjdC9nZW4vZ28vY2FkZXN0cm8vdjE7Y2FkZXN0cm92MWIGcHJvdG8z", [file_buf_validate_validate, file_cadestro_v1_common, file_google_protobuf_duration, file_google_protobuf_timestamp]);
+  fileDesc("ChljYWRlc3Ryby92MS9hY3Rpb25zLnByb3RvEgtjYWRlc3Ryby52MSKEAwoGQWN0aW9uEikKAmlkGAEgASgLMhUuY2FkZXN0cm8udjEuQWN0aW9uSWRCBrpIA8gBARItCgR0eXBlGAIgASgOMhcuY2FkZXN0cm8udjEuQWN0aW9uVHlwZUIGukgDyAEBEjgKDWRlc2lyZWRfc3RhdGUYAyABKA4yGS5jYWRlc3Ryby52MS5EZXNpcmVkU3RhdGVCBrpIA8gBARImCg90aW1lb3V0X3NlY29uZHMYBCABKAVCDbpICtgBARoFGJAcKAASLQoIc2NoZWR1bGUYBSABKAsyGy5jYWRlc3Ryby52MS5BY3Rpb25TY2hlZHVsZRItCgdwYWNrYWdlGAYgASgLMhouY2FkZXN0cm8udjEuUGFja2FnZVBhcmFtc0gAEisKBnVwZGF0ZRgHIAEoCzIZLmNhZGVzdHJvLnYxLlVwZGF0ZVBhcmFtc0gAEikKBXNoZWxsGAggASgLMhguY2FkZXN0cm8udjEuU2hlbGxQYXJhbXNIAEIICgZwYXJhbXMiaQoOQWN0aW9uU2NoZWR1bGUSJQoOaW50ZXJ2YWxfaG91cnMYASABKAVCDbpICtgBARoFGLhEKAASFQoNcnVuX29uX2Fzc2lnbhgCIAEoCBIZChFza2lwX2lmX3VuY2hhbmdlZBgDIAEoCCJKCg1QYWNrYWdlUGFyYW1zEhsKBG5hbWUYASABKAlCDbpICsgBAXIFEAEY/wESHAoHdmVyc2lvbhgCIAEoCUILukgI2AEBcgMYgAEiDgoMVXBkYXRlUGFyYW1zIr4CCgtTaGVsbFBhcmFtcxIcCgZzY3JpcHQYASABKAlCDLpICdgBAXIEGICAQBIgCgtpbnRlcnByZXRlchgCIAEoCUILukgI2AEBcgMY/wESJgoRd29ya2luZ19kaXJlY3RvcnkYAyABKAlCC7pICNgBAXIDOgEvElQKC2Vudmlyb25tZW50GAQgAygLMikuY2FkZXN0cm8udjEuU2hlbGxQYXJhbXMuRW52aXJvbm1lbnRFbnRyeUIUukgRmgEOIgVyAxj/ASoFcgMYgCASJgoQZGV0ZWN0aW9uX3NjcmlwdBgFIAEoCUIMukgJ2AEBcgQYgIBAEhUKDWlzX2NvbXBsaWFuY2UYBiABKAgaMgoQRW52aXJvbm1lbnRFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIucDCgxBY3Rpb25SZXN1bHQSMAoJYWN0aW9uX2lkGAEgASgLMhUuY2FkZXN0cm8udjEuQWN0aW9uSWRCBrpIA8gBARI0CgZzdGF0dXMYAiABKA4yHC5jYWRlc3Ryby52MS5FeGVjdXRpb25TdGF0dXNCBrpIA8gBARIaCgVlcnJvchgDIAEoCUILukgI2AEBcgMYgCASKgoGb3V0cHV0GAQgASgLMhouY2FkZXN0cm8udjEuQ29tbWFuZE91dHB1dBIwCgxjb21wbGV0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjUKCGR1cmF0aW9uGAYgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uQgi6SAWqAQIyABIPCgdjaGFuZ2VkGAcgASgIEhEKCWNvbXBsaWFudBgIIAEoCBI0ChBkZXRlY3Rpb25fb3V0cHV0GAkgASgLMhouY2FkZXN0cm8udjEuQ29tbWFuZE91dHB1dBIqCgZydW5faWQYCiABKAsyEi5jYWRlc3Ryby52MS5SdW5JZEIGukgDyAEBEjgKDW9jY3VycmVuY2VfaWQYCyABKAsyGS5jYWRlc3Ryby52MS5PY2N1cnJlbmNlSWRCBrpIA8gBASpxCgpBY3Rpb25UeXBlEhsKF0FDVElPTl9UWVBFX1VOU1BFQ0lGSUVEEAASFwoTQUNUSU9OX1RZUEVfUEFDS0FHRRABEhYKEkFDVElPTl9UWVBFX1VQREFURRACEhUKEUFDVElPTl9UWVBFX1NIRUxMEANCR1pFZ2l0aHViLmNvbS9tYW5jaHRvb2xzL2NhZGVzdHJvL2NvbnRyYWN0L2dlbi9nby9jYWRlc3Ryby92MTtjYWRlc3Ryb3YxYgZwcm90bzM", [file_buf_validate_validate, file_cadestro_v1_common, file_google_protobuf_duration, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message cadestro.v1.Action
@@ -51,112 +51,22 @@ export type Action = Message<"cadestro.v1.Action"> & {
    */
   params: {
     /**
-     * @generated from field: cadestro.v1.PackageParams package = 8;
+     * @generated from field: cadestro.v1.PackageParams package = 6;
      */
     value: PackageParams;
     case: "package";
   } | {
     /**
-     * @generated from field: cadestro.v1.AppInstallParams app = 9;
-     */
-    value: AppInstallParams;
-    case: "app";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.ShellParams shell = 10;
-     */
-    value: ShellParams;
-    case: "shell";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.ServiceParams service = 11;
-     */
-    value: ServiceParams;
-    case: "service";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.FileParams file = 12;
-     */
-    value: FileParams;
-    case: "file";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.UpdateParams update = 13;
+     * @generated from field: cadestro.v1.UpdateParams update = 7;
      */
     value: UpdateParams;
     case: "update";
   } | {
     /**
-     * @generated from field: cadestro.v1.RepositoryParams repository = 14;
+     * @generated from field: cadestro.v1.ShellParams shell = 8;
      */
-    value: RepositoryParams;
-    case: "repository";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.FlatpakParams flatpak = 15;
-     */
-    value: FlatpakParams;
-    case: "flatpak";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.DirectoryParams directory = 16;
-     */
-    value: DirectoryParams;
-    case: "directory";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.UserParams user = 17;
-     */
-    value: UserParams;
-    case: "user";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.SshParams ssh = 18;
-     */
-    value: SshParams;
-    case: "ssh";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.SshdParams sshd = 19;
-     */
-    value: SshdParams;
-    case: "sshd";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.AdminPolicyParams admin_policy = 20;
-     */
-    value: AdminPolicyParams;
-    case: "adminPolicy";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.LpsParams lps = 21;
-     */
-    value: LpsParams;
-    case: "lps";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.GroupParams group = 22;
-     */
-    value: GroupParams;
-    case: "group";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.EncryptionParams encryption = 23;
-     */
-    value: EncryptionParams;
-    case: "encryption";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.WifiParams wifi = 24;
-     */
-    value: WifiParams;
-    case: "wifi";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.AgentUpdateParams agent_update = 25;
-     */
-    value: AgentUpdateParams;
-    case: "agentUpdate";
+    value: ShellParams;
+    case: "shell";
   } | { case: undefined; value?: undefined };
 };
 
@@ -172,22 +82,17 @@ export const ActionSchema: GenMessage<Action> = /*@__PURE__*/
  */
 export type ActionSchedule = Message<"cadestro.v1.ActionSchedule"> & {
   /**
-   * @generated from field: string cron = 1;
-   */
-  cron: string;
-
-  /**
-   * @generated from field: int32 interval_hours = 2;
+   * @generated from field: int32 interval_hours = 1;
    */
   intervalHours: number;
 
   /**
-   * @generated from field: bool run_on_assign = 3;
+   * @generated from field: bool run_on_assign = 2;
    */
   runOnAssign: boolean;
 
   /**
-   * @generated from field: bool skip_if_unchanged = 4;
+   * @generated from field: bool skip_if_unchanged = 3;
    */
   skipIfUnchanged: boolean;
 };
@@ -212,36 +117,6 @@ export type PackageParams = Message<"cadestro.v1.PackageParams"> & {
    * @generated from field: string version = 2;
    */
   version: string;
-
-  /**
-   * @generated from field: bool allow_downgrade = 3;
-   */
-  allowDowngrade: boolean;
-
-  /**
-   * @generated from field: bool pin = 4;
-   */
-  pin: boolean;
-
-  /**
-   * @generated from field: string apt_name = 5;
-   */
-  aptName: string;
-
-  /**
-   * @generated from field: string dnf_name = 6;
-   */
-  dnfName: string;
-
-  /**
-   * @generated from field: string pacman_name = 7;
-   */
-  pacmanName: string;
-
-  /**
-   * @generated from field: string zypper_name = 8;
-   */
-  zypperName: string;
 };
 
 /**
@@ -252,30 +127,16 @@ export const PackageParamsSchema: GenMessage<PackageParams> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 2);
 
 /**
- * @generated from message cadestro.v1.AppInstallParams
+ * @generated from message cadestro.v1.UpdateParams
  */
-export type AppInstallParams = Message<"cadestro.v1.AppInstallParams"> & {
-  /**
-   * @generated from field: string url = 1;
-   */
-  url: string;
-
-  /**
-   * @generated from field: string checksum_sha256 = 2;
-   */
-  checksumSha256: string;
-
-  /**
-   * @generated from field: string install_path = 3;
-   */
-  installPath: string;
+export type UpdateParams = Message<"cadestro.v1.UpdateParams"> & {
 };
 
 /**
- * Describes the message cadestro.v1.AppInstallParams.
- * Use `create(AppInstallParamsSchema)` to create a new message.
+ * Describes the message cadestro.v1.UpdateParams.
+ * Use `create(UpdateParamsSchema)` to create a new message.
  */
-export const AppInstallParamsSchema: GenMessage<AppInstallParams> = /*@__PURE__*/
+export const UpdateParamsSchema: GenMessage<UpdateParams> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 3);
 
 /**
@@ -293,27 +154,22 @@ export type ShellParams = Message<"cadestro.v1.ShellParams"> & {
   interpreter: string;
 
   /**
-   * @generated from field: bool run_as_root = 3;
-   */
-  runAsRoot: boolean;
-
-  /**
-   * @generated from field: string working_directory = 4;
+   * @generated from field: string working_directory = 3;
    */
   workingDirectory: string;
 
   /**
-   * @generated from field: map<string, string> environment = 5;
+   * @generated from field: map<string, string> environment = 4;
    */
   environment: { [key: string]: string };
 
   /**
-   * @generated from field: string detection_script = 6;
+   * @generated from field: string detection_script = 5;
    */
   detectionScript: string;
 
   /**
-   * @generated from field: bool is_compliance = 7;
+   * @generated from field: bool is_compliance = 6;
    */
   isCompliance: boolean;
 };
@@ -324,744 +180,6 @@ export type ShellParams = Message<"cadestro.v1.ShellParams"> & {
  */
 export const ShellParamsSchema: GenMessage<ShellParams> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 4);
-
-/**
- * @generated from message cadestro.v1.ServiceParams
- */
-export type ServiceParams = Message<"cadestro.v1.ServiceParams"> & {
-  /**
-   * @generated from field: string unit_name = 1;
-   */
-  unitName: string;
-
-  /**
-   * @generated from field: cadestro.v1.ServiceUnitState desired_state = 2;
-   */
-  desiredState: ServiceUnitState;
-
-  /**
-   * @generated from field: bool enable = 3;
-   */
-  enable: boolean;
-
-  /**
-   * @generated from field: string unit_content = 4;
-   */
-  unitContent: string;
-};
-
-/**
- * Describes the message cadestro.v1.ServiceParams.
- * Use `create(ServiceParamsSchema)` to create a new message.
- */
-export const ServiceParamsSchema: GenMessage<ServiceParams> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 5);
-
-/**
- * @generated from message cadestro.v1.FileParams
- */
-export type FileParams = Message<"cadestro.v1.FileParams"> & {
-  /**
-   * @generated from field: string path = 1;
-   */
-  path: string;
-
-  /**
-   * @generated from field: string content = 2;
-   */
-  content: string;
-
-  /**
-   * @generated from field: string owner = 3;
-   */
-  owner: string;
-
-  /**
-   * @generated from field: string group = 4;
-   */
-  group: string;
-
-  /**
-   * @generated from field: string mode = 5;
-   */
-  mode: string;
-
-  /**
-   * @generated from field: bool managed_block = 6;
-   */
-  managedBlock: boolean;
-};
-
-/**
- * Describes the message cadestro.v1.FileParams.
- * Use `create(FileParamsSchema)` to create a new message.
- */
-export const FileParamsSchema: GenMessage<FileParams> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 6);
-
-/**
- * @generated from message cadestro.v1.DirectoryParams
- */
-export type DirectoryParams = Message<"cadestro.v1.DirectoryParams"> & {
-  /**
-   * @generated from field: string path = 1;
-   */
-  path: string;
-
-  /**
-   * @generated from field: string owner = 2;
-   */
-  owner: string;
-
-  /**
-   * @generated from field: string group = 3;
-   */
-  group: string;
-
-  /**
-   * @generated from field: string mode = 4;
-   */
-  mode: string;
-
-  /**
-   * @generated from field: bool recursive = 5;
-   */
-  recursive: boolean;
-};
-
-/**
- * Describes the message cadestro.v1.DirectoryParams.
- * Use `create(DirectoryParamsSchema)` to create a new message.
- */
-export const DirectoryParamsSchema: GenMessage<DirectoryParams> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 7);
-
-/**
- * @generated from message cadestro.v1.UpdateParams
- */
-export type UpdateParams = Message<"cadestro.v1.UpdateParams"> & {
-  /**
-   * @generated from field: bool security_only = 1;
-   */
-  securityOnly: boolean;
-
-  /**
-   * @generated from field: bool autoremove = 2;
-   */
-  autoremove: boolean;
-
-  /**
-   * @generated from field: bool reboot_if_required = 3;
-   */
-  rebootIfRequired: boolean;
-};
-
-/**
- * Describes the message cadestro.v1.UpdateParams.
- * Use `create(UpdateParamsSchema)` to create a new message.
- */
-export const UpdateParamsSchema: GenMessage<UpdateParams> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 8);
-
-/**
- * @generated from message cadestro.v1.FlatpakParams
- */
-export type FlatpakParams = Message<"cadestro.v1.FlatpakParams"> & {
-  /**
-   * @generated from field: cadestro.v1.FlatpakAppId app_id = 1;
-   */
-  appId?: FlatpakAppId;
-
-  /**
-   * @generated from field: string remote = 2;
-   */
-  remote: string;
-
-  /**
-   * @generated from field: bool system_wide = 3;
-   */
-  systemWide: boolean;
-
-  /**
-   * @generated from field: bool pin = 4;
-   */
-  pin: boolean;
-};
-
-/**
- * Describes the message cadestro.v1.FlatpakParams.
- * Use `create(FlatpakParamsSchema)` to create a new message.
- */
-export const FlatpakParamsSchema: GenMessage<FlatpakParams> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 9);
-
-/**
- * @generated from message cadestro.v1.RepositoryParams
- */
-export type RepositoryParams = Message<"cadestro.v1.RepositoryParams"> & {
-  /**
-   * @generated from field: string name = 1;
-   */
-  name: string;
-
-  /**
-   * @generated from field: cadestro.v1.AptRepository apt = 2;
-   */
-  apt?: AptRepository;
-
-  /**
-   * @generated from field: cadestro.v1.DnfRepository dnf = 3;
-   */
-  dnf?: DnfRepository;
-
-  /**
-   * @generated from field: cadestro.v1.PacmanRepository pacman = 4;
-   */
-  pacman?: PacmanRepository;
-
-  /**
-   * @generated from field: cadestro.v1.ZypperRepository zypper = 5;
-   */
-  zypper?: ZypperRepository;
-};
-
-/**
- * Describes the message cadestro.v1.RepositoryParams.
- * Use `create(RepositoryParamsSchema)` to create a new message.
- */
-export const RepositoryParamsSchema: GenMessage<RepositoryParams> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 10);
-
-/**
- * @generated from message cadestro.v1.AptRepository
- */
-export type AptRepository = Message<"cadestro.v1.AptRepository"> & {
-  /**
-   * @generated from field: string url = 1;
-   */
-  url: string;
-
-  /**
-   * @generated from field: string distribution = 2;
-   */
-  distribution: string;
-
-  /**
-   * @generated from field: repeated string components = 3;
-   */
-  components: string[];
-
-  /**
-   * @generated from field: string gpg_key_url = 4;
-   */
-  gpgKeyUrl: string;
-
-  /**
-   * @generated from field: string gpg_key = 5;
-   */
-  gpgKey: string;
-
-  /**
-   * @generated from field: bool trusted = 6;
-   */
-  trusted: boolean;
-
-  /**
-   * @generated from field: string arch = 7;
-   */
-  arch: string;
-
-  /**
-   * @generated from field: bool disabled = 8;
-   */
-  disabled: boolean;
-};
-
-/**
- * Describes the message cadestro.v1.AptRepository.
- * Use `create(AptRepositorySchema)` to create a new message.
- */
-export const AptRepositorySchema: GenMessage<AptRepository> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 11);
-
-/**
- * @generated from message cadestro.v1.DnfRepository
- */
-export type DnfRepository = Message<"cadestro.v1.DnfRepository"> & {
-  /**
-   * @generated from field: string baseurl = 1;
-   */
-  baseurl: string;
-
-  /**
-   * @generated from field: string description = 2;
-   */
-  description: string;
-
-  /**
-   * @generated from field: bool enabled = 3;
-   */
-  enabled: boolean;
-
-  /**
-   * @generated from field: bool gpgcheck = 4;
-   */
-  gpgcheck: boolean;
-
-  /**
-   * @generated from field: string gpgkey = 5;
-   */
-  gpgkey: string;
-
-  /**
-   * @generated from field: bool module_hotfixes = 6;
-   */
-  moduleHotfixes: boolean;
-
-  /**
-   * @generated from field: bool disabled = 7;
-   */
-  disabled: boolean;
-};
-
-/**
- * Describes the message cadestro.v1.DnfRepository.
- * Use `create(DnfRepositorySchema)` to create a new message.
- */
-export const DnfRepositorySchema: GenMessage<DnfRepository> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 12);
-
-/**
- * @generated from message cadestro.v1.PacmanRepository
- */
-export type PacmanRepository = Message<"cadestro.v1.PacmanRepository"> & {
-  /**
-   * @generated from field: string server = 1;
-   */
-  server: string;
-
-  /**
-   * @generated from field: string sig_level = 2;
-   */
-  sigLevel: string;
-
-  /**
-   * @generated from field: bool disabled = 3;
-   */
-  disabled: boolean;
-};
-
-/**
- * Describes the message cadestro.v1.PacmanRepository.
- * Use `create(PacmanRepositorySchema)` to create a new message.
- */
-export const PacmanRepositorySchema: GenMessage<PacmanRepository> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 13);
-
-/**
- * @generated from message cadestro.v1.ZypperRepository
- */
-export type ZypperRepository = Message<"cadestro.v1.ZypperRepository"> & {
-  /**
-   * @generated from field: string url = 1;
-   */
-  url: string;
-
-  /**
-   * @generated from field: string description = 2;
-   */
-  description: string;
-
-  /**
-   * @generated from field: bool enabled = 3;
-   */
-  enabled: boolean;
-
-  /**
-   * @generated from field: bool autorefresh = 4;
-   */
-  autorefresh: boolean;
-
-  /**
-   * @generated from field: bool gpgcheck = 5;
-   */
-  gpgcheck: boolean;
-
-  /**
-   * @generated from field: string gpgkey = 6;
-   */
-  gpgkey: string;
-
-  /**
-   * @generated from field: cadestro.v1.ZypperRepositoryType type = 7;
-   */
-  type: ZypperRepositoryType;
-
-  /**
-   * @generated from field: bool disabled = 8;
-   */
-  disabled: boolean;
-};
-
-/**
- * Describes the message cadestro.v1.ZypperRepository.
- * Use `create(ZypperRepositorySchema)` to create a new message.
- */
-export const ZypperRepositorySchema: GenMessage<ZypperRepository> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 14);
-
-/**
- * @generated from message cadestro.v1.UserParams
- */
-export type UserParams = Message<"cadestro.v1.UserParams"> & {
-  /**
-   * @generated from field: string username = 1;
-   */
-  username: string;
-
-  /**
-   * @generated from field: int32 uid = 2;
-   */
-  uid: number;
-
-  /**
-   * @generated from field: int32 gid = 3;
-   */
-  gid: number;
-
-  /**
-   * @generated from field: string home_dir = 4;
-   */
-  homeDir: string;
-
-  /**
-   * @generated from field: string shell = 5;
-   */
-  shell: string;
-
-  /**
-   * @generated from field: repeated string ssh_authorized_keys = 6;
-   */
-  sshAuthorizedKeys: string[];
-
-  /**
-   * @generated from field: string comment = 7;
-   */
-  comment: string;
-
-  /**
-   * @generated from field: bool system_user = 8;
-   */
-  systemUser: boolean;
-
-  /**
-   * @generated from field: bool create_home = 9;
-   */
-  createHome: boolean;
-
-  /**
-   * @generated from field: bool disabled = 10;
-   */
-  disabled: boolean;
-
-  /**
-   * @generated from field: string primary_group = 11;
-   */
-  primaryGroup: string;
-
-  /**
-   * @generated from field: bool hidden = 12;
-   */
-  hidden: boolean;
-
-  /**
-   * @generated from field: bool no_password = 13;
-   */
-  noPassword: boolean;
-};
-
-/**
- * Describes the message cadestro.v1.UserParams.
- * Use `create(UserParamsSchema)` to create a new message.
- */
-export const UserParamsSchema: GenMessage<UserParams> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 15);
-
-/**
- * @generated from message cadestro.v1.GroupParams
- */
-export type GroupParams = Message<"cadestro.v1.GroupParams"> & {
-  /**
-   * @generated from field: string name = 1;
-   */
-  name: string;
-
-  /**
-   * @generated from field: repeated string members = 2;
-   */
-  members: string[];
-
-  /**
-   * @generated from field: int32 gid = 3;
-   */
-  gid: number;
-
-  /**
-   * @generated from field: bool system_group = 4;
-   */
-  systemGroup: boolean;
-};
-
-/**
- * Describes the message cadestro.v1.GroupParams.
- * Use `create(GroupParamsSchema)` to create a new message.
- */
-export const GroupParamsSchema: GenMessage<GroupParams> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 16);
-
-/**
- * @generated from message cadestro.v1.SshParams
- */
-export type SshParams = Message<"cadestro.v1.SshParams"> & {
-  /**
-   * @generated from field: bool allow_pubkey = 1;
-   */
-  allowPubkey: boolean;
-
-  /**
-   * @generated from field: bool allow_password = 2;
-   */
-  allowPassword: boolean;
-
-  /**
-   * @generated from field: repeated string users = 3;
-   */
-  users: string[];
-};
-
-/**
- * Describes the message cadestro.v1.SshParams.
- * Use `create(SshParamsSchema)` to create a new message.
- */
-export const SshParamsSchema: GenMessage<SshParams> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 17);
-
-/**
- * @generated from message cadestro.v1.SshdDirective
- */
-export type SshdDirective = Message<"cadestro.v1.SshdDirective"> & {
-  /**
-   * @generated from field: string key = 1;
-   */
-  key: string;
-
-  /**
-   * @generated from field: string value = 2;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.SshdDirective.
- * Use `create(SshdDirectiveSchema)` to create a new message.
- */
-export const SshdDirectiveSchema: GenMessage<SshdDirective> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 18);
-
-/**
- * @generated from message cadestro.v1.SshdParams
- */
-export type SshdParams = Message<"cadestro.v1.SshdParams"> & {
-  /**
-   * @generated from field: uint32 priority = 1;
-   */
-  priority: number;
-
-  /**
-   * @generated from field: repeated cadestro.v1.SshdDirective directives = 2;
-   */
-  directives: SshdDirective[];
-};
-
-/**
- * Describes the message cadestro.v1.SshdParams.
- * Use `create(SshdParamsSchema)` to create a new message.
- */
-export const SshdParamsSchema: GenMessage<SshdParams> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 19);
-
-/**
- * @generated from message cadestro.v1.AdminPolicyParams
- */
-export type AdminPolicyParams = Message<"cadestro.v1.AdminPolicyParams"> & {
-  /**
-   * @generated from field: cadestro.v1.AdminAccessLevel access_level = 1;
-   */
-  accessLevel: AdminAccessLevel;
-
-  /**
-   * @generated from field: repeated string users = 2;
-   */
-  users: string[];
-
-  /**
-   * @generated from field: string custom_config = 3;
-   */
-  customConfig: string;
-
-  /**
-   * @generated from field: cadestro.v1.PrivilegeBackend backend = 4;
-   */
-  backend: PrivilegeBackend;
-};
-
-/**
- * Describes the message cadestro.v1.AdminPolicyParams.
- * Use `create(AdminPolicyParamsSchema)` to create a new message.
- */
-export const AdminPolicyParamsSchema: GenMessage<AdminPolicyParams> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 20);
-
-/**
- * @generated from message cadestro.v1.LpsParams
- */
-export type LpsParams = Message<"cadestro.v1.LpsParams"> & {
-  /**
-   * @generated from field: repeated string usernames = 1;
-   */
-  usernames: string[];
-
-  /**
-   * @generated from field: int32 password_length = 2;
-   */
-  passwordLength: number;
-
-  /**
-   * @generated from field: cadestro.v1.LpsPasswordComplexity complexity = 3;
-   */
-  complexity: LpsPasswordComplexity;
-
-  /**
-   * @generated from field: int32 rotation_interval_days = 4;
-   */
-  rotationIntervalDays: number;
-
-  /**
-   * @generated from field: int32 grace_period_hours = 5;
-   */
-  gracePeriodHours: number;
-};
-
-/**
- * Describes the message cadestro.v1.LpsParams.
- * Use `create(LpsParamsSchema)` to create a new message.
- */
-export const LpsParamsSchema: GenMessage<LpsParams> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 21);
-
-/**
- * @generated from message cadestro.v1.EncryptionParams
- */
-export type EncryptionParams = Message<"cadestro.v1.EncryptionParams"> & {
-  /**
-   * @generated from field: bytes preshared_key = 1;
-   */
-  presharedKey: Uint8Array;
-
-  /**
-   * @generated from field: int32 rotation_interval_days = 2;
-   */
-  rotationIntervalDays: number;
-
-  /**
-   * @generated from field: int32 min_words = 3;
-   */
-  minWords: number;
-
-  /**
-   * @generated from field: cadestro.v1.EncryptionDeviceBoundKeyType device_bound_key_type = 4;
-   */
-  deviceBoundKeyType: EncryptionDeviceBoundKeyType;
-
-  /**
-   * @generated from field: int32 user_passphrase_min_length = 5;
-   */
-  userPassphraseMinLength: number;
-
-  /**
-   * @generated from field: cadestro.v1.LpsPasswordComplexity user_passphrase_complexity = 6;
-   */
-  userPassphraseComplexity: LpsPasswordComplexity;
-};
-
-/**
- * Describes the message cadestro.v1.EncryptionParams.
- * Use `create(EncryptionParamsSchema)` to create a new message.
- */
-export const EncryptionParamsSchema: GenMessage<EncryptionParams> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 22);
-
-/**
- * @generated from message cadestro.v1.WifiParams
- */
-export type WifiParams = Message<"cadestro.v1.WifiParams"> & {
-  /**
-   * @generated from field: string ssid = 1;
-   */
-  ssid: string;
-
-  /**
-   * @generated from field: cadestro.v1.WifiAuthType auth_type = 2;
-   */
-  authType: WifiAuthType;
-
-  /**
-   * @generated from field: bytes psk = 3;
-   */
-  psk: Uint8Array;
-
-  /**
-   * @generated from field: string ca_cert = 4;
-   */
-  caCert: string;
-
-  /**
-   * @generated from field: string client_cert = 5;
-   */
-  clientCert: string;
-
-  /**
-   * @generated from field: bytes client_key = 6;
-   */
-  clientKey: Uint8Array;
-
-  /**
-   * @generated from field: string identity = 7;
-   */
-  identity: string;
-
-  /**
-   * @generated from field: bool auto_connect = 8;
-   */
-  autoConnect: boolean;
-
-  /**
-   * @generated from field: bool hidden = 9;
-   */
-  hidden: boolean;
-
-  /**
-   * @generated from field: int32 priority = 10;
-   */
-  priority: number;
-};
-
-/**
- * Describes the message cadestro.v1.WifiParams.
- * Use `create(WifiParamsSchema)` to create a new message.
- */
-export const WifiParamsSchema: GenMessage<WifiParams> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 23);
 
 /**
  * @generated from message cadestro.v1.ActionResult
@@ -1103,27 +221,22 @@ export type ActionResult = Message<"cadestro.v1.ActionResult"> & {
   changed: boolean;
 
   /**
-   * @generated from field: map<string, string> metadata = 8;
-   */
-  metadata: { [key: string]: string };
-
-  /**
-   * @generated from field: bool compliant = 9;
+   * @generated from field: bool compliant = 8;
    */
   compliant: boolean;
 
   /**
-   * @generated from field: cadestro.v1.CommandOutput detection_output = 10;
+   * @generated from field: cadestro.v1.CommandOutput detection_output = 9;
    */
   detectionOutput?: CommandOutput;
 
   /**
-   * @generated from field: cadestro.v1.RunId run_id = 11;
+   * @generated from field: cadestro.v1.RunId run_id = 10;
    */
   runId?: RunId;
 
   /**
-   * @generated from field: cadestro.v1.OccurrenceId occurrence_id = 12;
+   * @generated from field: cadestro.v1.OccurrenceId occurrence_id = 11;
    */
   occurrenceId?: OccurrenceId;
 };
@@ -1133,61 +246,7 @@ export type ActionResult = Message<"cadestro.v1.ActionResult"> & {
  * Use `create(ActionResultSchema)` to create a new message.
  */
 export const ActionResultSchema: GenMessage<ActionResult> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 24);
-
-/**
- * @generated from message cadestro.v1.AgentUpdateArch
- */
-export type AgentUpdateArch = Message<"cadestro.v1.AgentUpdateArch"> & {
-  /**
-   * @generated from field: string binary_url = 1;
-   */
-  binaryUrl: string;
-
-  /**
-   * @generated from field: string checksum_url = 2;
-   */
-  checksumUrl: string;
-};
-
-/**
- * Describes the message cadestro.v1.AgentUpdateArch.
- * Use `create(AgentUpdateArchSchema)` to create a new message.
- */
-export const AgentUpdateArchSchema: GenMessage<AgentUpdateArch> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 25);
-
-/**
- * @generated from message cadestro.v1.AgentUpdateParams
- */
-export type AgentUpdateParams = Message<"cadestro.v1.AgentUpdateParams"> & {
-  /**
-   * @generated from field: cadestro.v1.AgentUpdateArch amd64 = 1;
-   */
-  amd64?: AgentUpdateArch;
-
-  /**
-   * @generated from field: cadestro.v1.AgentUpdateArch arm64 = 2;
-   */
-  arm64?: AgentUpdateArch;
-
-  /**
-   * @generated from field: bool allow_downgrade = 3;
-   */
-  allowDowngrade: boolean;
-
-  /**
-   * @generated from field: bool allow_redirect = 4;
-   */
-  allowRedirect: boolean;
-};
-
-/**
- * Describes the message cadestro.v1.AgentUpdateParams.
- * Use `create(AgentUpdateParamsSchema)` to create a new message.
- */
-export const AgentUpdateParamsSchema: GenMessage<AgentUpdateParams> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_actions, 26);
+  messageDesc(file_cadestro_v1_actions, 5);
 
 /**
  * @generated from enum cadestro.v1.ActionType
@@ -1209,99 +268,9 @@ export enum ActionType {
   UPDATE = 2,
 
   /**
-   * @generated from enum value: ACTION_TYPE_REPOSITORY = 3;
+   * @generated from enum value: ACTION_TYPE_SHELL = 3;
    */
-  REPOSITORY = 3,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_APP_IMAGE = 100;
-   */
-  APP_IMAGE = 100,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_DEB = 101;
-   */
-  DEB = 101,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_RPM = 102;
-   */
-  RPM = 102,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_FLATPAK = 103;
-   */
-  FLATPAK = 103,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_SHELL = 200;
-   */
-  SHELL = 200,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_SCRIPT_RUN = 201;
-   */
-  SCRIPT_RUN = 201,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_SERVICE = 300;
-   */
-  SERVICE = 300,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_FILE = 400;
-   */
-  FILE = 400,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_DIRECTORY = 401;
-   */
-  DIRECTORY = 401,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_USER = 600;
-   */
-  USER = 600,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_GROUP = 601;
-   */
-  GROUP = 601,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_SSH = 700;
-   */
-  SSH = 700,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_SSHD = 701;
-   */
-  SSHD = 701,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_ADMIN_POLICY = 800;
-   */
-  ADMIN_POLICY = 800,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_LPS = 900;
-   */
-  LPS = 900,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_ENCRYPTION = 1000;
-   */
-  ENCRYPTION = 1000,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_WIFI = 1100;
-   */
-  WIFI = 1100,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_AGENT_UPDATE = 1200;
-   */
-  AGENT_UPDATE = 1200,
+  SHELL = 3,
 }
 
 /**
@@ -1309,206 +278,4 @@ export enum ActionType {
  */
 export const ActionTypeSchema: GenEnum<ActionType> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_actions, 0);
-
-/**
- * @generated from enum cadestro.v1.ServiceUnitState
- */
-export enum ServiceUnitState {
-  /**
-   * @generated from enum value: SERVICE_UNIT_STATE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: SERVICE_UNIT_STATE_STARTED = 1;
-   */
-  STARTED = 1,
-
-  /**
-   * @generated from enum value: SERVICE_UNIT_STATE_STOPPED = 2;
-   */
-  STOPPED = 2,
-
-  /**
-   * @generated from enum value: SERVICE_UNIT_STATE_RESTARTED = 3;
-   */
-  RESTARTED = 3,
-}
-
-/**
- * Describes the enum cadestro.v1.ServiceUnitState.
- */
-export const ServiceUnitStateSchema: GenEnum<ServiceUnitState> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_actions, 1);
-
-/**
- * @generated from enum cadestro.v1.ZypperRepositoryType
- */
-export enum ZypperRepositoryType {
-  /**
-   * @generated from enum value: ZYPPER_REPOSITORY_TYPE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: ZYPPER_REPOSITORY_TYPE_RPM_MD = 1;
-   */
-  RPM_MD = 1,
-
-  /**
-   * @generated from enum value: ZYPPER_REPOSITORY_TYPE_YAST2 = 2;
-   */
-  YAST2 = 2,
-
-  /**
-   * @generated from enum value: ZYPPER_REPOSITORY_TYPE_PLAINDIR = 3;
-   */
-  PLAINDIR = 3,
-}
-
-/**
- * Describes the enum cadestro.v1.ZypperRepositoryType.
- */
-export const ZypperRepositoryTypeSchema: GenEnum<ZypperRepositoryType> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_actions, 2);
-
-/**
- * @generated from enum cadestro.v1.AdminAccessLevel
- */
-export enum AdminAccessLevel {
-  /**
-   * @generated from enum value: ADMIN_ACCESS_LEVEL_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: ADMIN_ACCESS_LEVEL_FULL = 1;
-   */
-  FULL = 1,
-
-  /**
-   * @generated from enum value: ADMIN_ACCESS_LEVEL_LIMITED = 2;
-   */
-  LIMITED = 2,
-
-  /**
-   * @generated from enum value: ADMIN_ACCESS_LEVEL_CUSTOM = 3;
-   */
-  CUSTOM = 3,
-
-  /**
-   * @generated from enum value: ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED = 4;
-   */
-  TERMINAL_ADMIN_LIMITED = 4,
-
-  /**
-   * @generated from enum value: ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL = 5;
-   */
-  TERMINAL_ADMIN_FULL = 5,
-}
-
-/**
- * Describes the enum cadestro.v1.AdminAccessLevel.
- */
-export const AdminAccessLevelSchema: GenEnum<AdminAccessLevel> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_actions, 3);
-
-/**
- * @generated from enum cadestro.v1.PrivilegeBackend
- */
-export enum PrivilegeBackend {
-  /**
-   * @generated from enum value: PRIVILEGE_BACKEND_SUDO = 0;
-   */
-  SUDO = 0,
-
-  /**
-   * @generated from enum value: PRIVILEGE_BACKEND_DOAS = 1;
-   */
-  DOAS = 1,
-}
-
-/**
- * Describes the enum cadestro.v1.PrivilegeBackend.
- */
-export const PrivilegeBackendSchema: GenEnum<PrivilegeBackend> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_actions, 4);
-
-/**
- * @generated from enum cadestro.v1.LpsPasswordComplexity
- */
-export enum LpsPasswordComplexity {
-  /**
-   * @generated from enum value: LPS_PASSWORD_COMPLEXITY_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: LPS_PASSWORD_COMPLEXITY_ALPHANUMERIC = 1;
-   */
-  ALPHANUMERIC = 1,
-
-  /**
-   * @generated from enum value: LPS_PASSWORD_COMPLEXITY_COMPLEX = 2;
-   */
-  COMPLEX = 2,
-}
-
-/**
- * Describes the enum cadestro.v1.LpsPasswordComplexity.
- */
-export const LpsPasswordComplexitySchema: GenEnum<LpsPasswordComplexity> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_actions, 5);
-
-/**
- * @generated from enum cadestro.v1.EncryptionDeviceBoundKeyType
- */
-export enum EncryptionDeviceBoundKeyType {
-  /**
-   * @generated from enum value: ENCRYPTION_DEVICE_BOUND_KEY_TYPE_NONE = 0;
-   */
-  NONE = 0,
-
-  /**
-   * @generated from enum value: ENCRYPTION_DEVICE_BOUND_KEY_TYPE_TPM = 1;
-   */
-  TPM = 1,
-
-  /**
-   * @generated from enum value: ENCRYPTION_DEVICE_BOUND_KEY_TYPE_USER_PASSPHRASE = 2;
-   */
-  USER_PASSPHRASE = 2,
-}
-
-/**
- * Describes the enum cadestro.v1.EncryptionDeviceBoundKeyType.
- */
-export const EncryptionDeviceBoundKeyTypeSchema: GenEnum<EncryptionDeviceBoundKeyType> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_actions, 6);
-
-/**
- * @generated from enum cadestro.v1.WifiAuthType
- */
-export enum WifiAuthType {
-  /**
-   * @generated from enum value: WIFI_AUTH_TYPE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: WIFI_AUTH_TYPE_PSK = 1;
-   */
-  PSK = 1,
-
-  /**
-   * @generated from enum value: WIFI_AUTH_TYPE_EAP_TLS = 2;
-   */
-  EAP_TLS = 2,
-}
-
-/**
- * Describes the enum cadestro.v1.WifiAuthType.
- */
-export const WifiAuthTypeSchema: GenEnum<WifiAuthType> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_actions, 7);
 

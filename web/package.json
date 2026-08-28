@@ -1,69 +1,31 @@
 {
-	"name": "web",
+	"name": "cadestro-web",
 	"private": true,
 	"license": "AGPL-3.0-only",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
-		"prepare": "svelte-kit sync || echo ''",
-		"check": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"test": "vitest run --project unit && export VITEST_CHROMIUM_GC_DISK_THRESHOLD_GB=8 && vitest run --project browser --shard=1/8 && vitest run --project browser --shard=2/8 && vitest run --project browser --shard=3/8 && vitest run --project browser --shard=4/8 && vitest run --project browser --shard=5/8 && vitest run --project browser --shard=6/8 && vitest run --project browser --shard=7/8 && vitest run --project browser --shard=8/8",
-		"test:watch": "vitest",
-		"test:e2e": "playwright test tests/e2e",
-		"test:e2e:ui": "playwright test tests/e2e --ui"
+		"prepare": "svelte-kit sync",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"test": "vitest run"
 	},
 	"devDependencies": {
-		"@internationalized/date": "^3.10.1",
-		"@lucide/svelte": "^0.561.0",
-		"@playwright/test": "^1.60.0",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
-		"@tailwindcss/vite": "^4.1.18",
 		"@types/node": "^25.2.1",
-		"@vite-pwa/sveltekit": "^1.1.0",
-		"@vitejs/plugin-basic-ssl": "^2.1.4",
-		"@vitest/browser": "^4.1.11",
-		"@vitest/browser-playwright": "^4.1.11",
-		"@vitest/coverage-v8": "^4.1.11",
-		"bits-ui": "^2.15.5",
-		"jsdom": "^29.1.1",
-		"mode-watcher": "^1.1.0",
-		"postcss": "^8.5.26",
 		"svelte-adapter-bun": "^1.0.1",
 		"svelte-check": "^4.3.5",
-		"tailwindcss": "^4.1.18",
-		"tw-animate-css": "^1.4.0",
 		"typescript": "^5.9.3",
 		"vite": "^7.3.6",
-		"vite-plugin-pwa": "^1.2.0",
-		"vitest": "^4.1.11",
-		"vitest-browser-svelte": "^3.0.0",
-		"workbox-window": "^7.4.0"
+		"vitest": "^4.1.11"
 	},
 	"dependencies": {
 		"@bufbuild/protobuf": "^2.11.0",
 		"@connectrpc/connect": "^2.1.1",
 		"@connectrpc/connect-web": "^2.1.1",
-		"@inlang/paraglide-js": "^2.10.0",
 		"@sveltejs/kit": "^2.70.3",
-		"@xterm/addon-fit": "^0.11.0",
-		"@xterm/addon-web-links": "^0.12.0",
-		"@xterm/xterm": "^6.0.0",
-		"clsx": "^2.1.1",
-		"idb": "^8.0.3",
-		"svelte": "^5.48.2",
-		"svelte-sonner": "^1.0.7",
-		"tailwind-merge": "^3.4.0",
-		"zod": "^4.3.6"
-	},
-	"overrides": {
-		"cookie": "0.7.2",
-		"@babel/core": "7.29.6",
-		"brace-expansion": "5.0.9",
-		"fast-uri": "3.1.6",
-		"undici": "7.29.0"
+		"svelte": "^5.48.2"
 	}
 }

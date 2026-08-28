@@ -11,12 +11,10 @@ import (
 // second record, so it is rejected at construction.
 var ErrSecretContainsNewline = errors.New("secret contains a newline or carriage return")
 
-// Secret wraps a sensitive string (password, LUKS key, wifi PSK / client key)
+// Secret wraps a sensitive string such as a password or private key
 // so it cannot reach a log or formatted string by accident: String, GoString,
 // and the %v/%s/%#v verbs all render "[REDACTED]". The plaintext is retrievable
-// ONLY via Reveal — the single sanctioned sink. A fitness function (see
-// sdk/docs/sdk-rework-design.md §6) fails the build if Reveal is called outside
-// the known credential sinks, so the redaction can't be quietly defeated.
+// only via Reveal.
 type Secret struct {
 	v string
 }

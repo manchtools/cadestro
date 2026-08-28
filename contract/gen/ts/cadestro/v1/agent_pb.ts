@@ -5,9 +5,9 @@
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
-import type { Action, ActionResult, ActionSchedule, LpsPasswordComplexity } from "./actions_pb";
+import type { Action, ActionResult, ActionSchedule } from "./actions_pb";
 import { file_cadestro_v1_actions } from "./actions_pb";
-import type { ActionId, ActionSetId, DefinitionId, DeviceId, ExecutionStatus, MaintenanceWindow, ManifestId, MessageId, OccurrenceId, PolicyRevisionId, QueryId, RotationReason, RunId, SessionId } from "./common_pb";
+import type { DeviceId, ExecutionStatus, ManifestId, MessageId, OccurrenceId, PolicyRevisionId, RunId } from "./common_pb";
 import { file_cadestro_v1_common } from "./common_pb";
 import type { Duration, Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_duration, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
@@ -17,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cadestro/v1/agent.proto.
  */
 export const file_cadestro_v1_agent: GenFile = /*@__PURE__*/
-  fileDesc("ChdjYWRlc3Ryby92MS9hZ2VudC5wcm90bxILY2FkZXN0cm8udjEi1QgKDEFnZW50TWVzc2FnZRIqCgJpZBgBIAEoCzIWLmNhZGVzdHJvLnYxLk1lc3NhZ2VJZEIGukgDyAEBEiMKBWhlbGxvGAogASgLMhIuY2FkZXN0cm8udjEuSGVsbG9IABIrCgloZWFydGJlYXQYCyABKAsyFi5jYWRlc3Ryby52MS5IZWFydGJlYXRIABIwCgxzeW5jX3JlcXVlc3QYDCABKAsyGC5jYWRlc3Ryby52MS5TeW5jUmVxdWVzdEgAEjsKEnN5bmNfZGV2aWNlX3Jlc3VsdBgYIAEoCzIdLmNhZGVzdHJvLnYxLlN5bmNEZXZpY2VSZXN1bHRIABI/ChRyZWJvb3RfZGV2aWNlX3Jlc3VsdBgZIAEoCzIfLmNhZGVzdHJvLnYxLlJlYm9vdERldmljZVJlc3VsdEgAEjIKDWFjdGlvbl9yZXN1bHQYFCABKAsyGS5jYWRlc3Ryby52MS5BY3Rpb25SZXN1bHRIABI2Cg9tYW5pZmVzdF9yZXN1bHQYFyABKAsyGy5jYWRlc3Ryby52MS5NYW5pZmVzdFJlc3VsdEgAEjIKDHF1ZXJ5X3Jlc3VsdBgeIAEoCzIaLmNhZGVzdHJvLnYxLk9TUXVlcnlSZXN1bHRIABIxCglpbnZlbnRvcnkYHyABKAsyHC5jYWRlc3Ryby52MS5EZXZpY2VJbnZlbnRvcnlIABI0Cg5zZWN1cml0eV9hbGVydBgoIAEoCzIaLmNhZGVzdHJvLnYxLlNlY3VyaXR5QWxlcnRIABI2CgxnZXRfbHVrc19rZXkYMiABKAsyHi5jYWRlc3Ryby52MS5HZXRMdWtzS2V5UmVxdWVzdEgAEjoKDnN0b3JlX2x1a3Nfa2V5GDMgASgLMiAuY2FkZXN0cm8udjEuU3RvcmVMdWtzS2V5UmVxdWVzdEgAEk8KHXJldm9rZV9sdWtzX2RldmljZV9rZXlfcmVzdWx0GDQgASgLMiYuY2FkZXN0cm8udjEuUmV2b2tlTHVrc0RldmljZUtleVJlc3VsdEgAEkQKE3N0b3JlX2xwc19wYXNzd29yZHMYNSABKAsyJS5jYWRlc3Ryby52MS5TdG9yZUxwc1Bhc3N3b3Jkc1JlcXVlc3RIABJEChN2YWxpZGF0ZV9sdWtzX3Rva2VuGDYgASgLMiUuY2FkZXN0cm8udjEuVmFsaWRhdGVMdWtzVG9rZW5SZXF1ZXN0SAASNwoQbG9nX3F1ZXJ5X3Jlc3VsdBg8IAEoCzIbLmNhZGVzdHJvLnYxLkxvZ1F1ZXJ5UmVzdWx0SAASNgoPdGVybWluYWxfb3V0cHV0GEYgASgLMhsuY2FkZXN0cm8udjEuVGVybWluYWxPdXRwdXRIABJBChV0ZXJtaW5hbF9zdGF0ZV9jaGFuZ2UYRyABKAsyIC5jYWRlc3Ryby52MS5UZXJtaW5hbFN0YXRlQ2hhbmdlSABCCQoHcGF5bG9hZCK6AQoFSGVsbG8SMAoJZGV2aWNlX2lkGAEgASgLMhUuY2FkZXN0cm8udjEuRGV2aWNlSWRCBrpIA8gBARIjCg1hZ2VudF92ZXJzaW9uGAIgASgJQgy6SAnIAQFyBBABGCASHwoIaG9zdG5hbWUYAyABKAlCDbpICsgBAXIFEAEY/QESHwoKYXV0aF90b2tlbhgEIAEoCUILukgI2AEBcgMYgCASGAoEYXJjaBgFIAEoCUIKukgH2AEBcgIYECILCglIZWFydGJlYXQi5AEKDVNlY3VyaXR5QWxlcnQSNAoEdHlwZRgBIAEoDjIeLmNhZGVzdHJvLnYxLlNlY3VyaXR5QWxlcnRUeXBlQga6SAPIAQESHgoHbWVzc2FnZRgCIAEoCUINukgKyAEBcgUQARiACBJNCgdkZXRhaWxzGAMgAygLMicuY2FkZXN0cm8udjEuU2VjdXJpdHlBbGVydC5EZXRhaWxzRW50cnlCE7pIEJoBDSIEcgIYQCoFcgMYgAgaLgoMRGV0YWlsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEikQgKDVNlcnZlck1lc3NhZ2USKgoCaWQYASABKAsyFi5jYWRlc3Ryby52MS5NZXNzYWdlSWRCBrpIA8gBARI1CgtzeW5jX2RldmljZRgLIAEoCzIeLmNhZGVzdHJvLnYxLlN5bmNEZXZpY2VDb21tYW5kSAASJwoHd2VsY29tZRgKIAEoCzIULmNhZGVzdHJvLnYxLldlbGNvbWVIABIsCgpzeW5jX3N0YXRlGAwgASgLMhYuY2FkZXN0cm8udjEuU3luY1N0YXRlSAASOQoNcmVib290X2RldmljZRgNIAEoCzIgLmNhZGVzdHJvLnYxLlJlYm9vdERldmljZUNvbW1hbmRIABIlCgVxdWVyeRgeIAEoCzIULmNhZGVzdHJvLnYxLk9TUXVlcnlIABI6ChFyZXF1ZXN0X2ludmVudG9yeRgfIAEoCzIdLmNhZGVzdHJvLnYxLlJlcXVlc3RJbnZlbnRvcnlIABIjCgVlcnJvchgoIAEoCzISLmNhZGVzdHJvLnYxLkVycm9ySAASNwoMZ2V0X2x1a3Nfa2V5GDIgASgLMh8uY2FkZXN0cm8udjEuR2V0THVrc0tleVJlc3BvbnNlSAASOwoOc3RvcmVfbHVrc19rZXkYMyABKAsyIS5jYWRlc3Ryby52MS5TdG9yZUx1a3NLZXlSZXNwb25zZUgAEkIKFnJldm9rZV9sdWtzX2RldmljZV9rZXkYNCABKAsyIC5jYWRlc3Ryby52MS5SZXZva2VMdWtzRGV2aWNlS2V5SAASRQoTc3RvcmVfbHBzX3Bhc3N3b3Jkcxg1IAEoCzImLmNhZGVzdHJvLnYxLlN0b3JlTHBzUGFzc3dvcmRzUmVzcG9uc2VIABJFChN2YWxpZGF0ZV9sdWtzX3Rva2VuGDYgASgLMiYuY2FkZXN0cm8udjEuVmFsaWRhdGVMdWtzVG9rZW5SZXNwb25zZUgAEiwKCnJlc3VsdF9hY2sYGCABKAsyFi5jYWRlc3Ryby52MS5SZXN1bHRBY2tIABIqCglsb2dfcXVlcnkYPCABKAsyFS5jYWRlc3Ryby52MS5Mb2dRdWVyeUgAEjQKDnRlcm1pbmFsX3N0YXJ0GEYgASgLMhouY2FkZXN0cm8udjEuVGVybWluYWxTdGFydEgAEjQKDnRlcm1pbmFsX2lucHV0GEcgASgLMhouY2FkZXN0cm8udjEuVGVybWluYWxJbnB1dEgAEjYKD3Rlcm1pbmFsX3Jlc2l6ZRhIIAEoCzIbLmNhZGVzdHJvLnYxLlRlcm1pbmFsUmVzaXplSAASMgoNdGVybWluYWxfc3RvcBhJIAEoCzIZLmNhZGVzdHJvLnYxLlRlcm1pbmFsU3RvcEgAQgkKB3BheWxvYWQiEwoRU3luY0RldmljZUNvbW1hbmQiFQoTUmVib290RGV2aWNlQ29tbWFuZCIjChBTeW5jRGV2aWNlUmVzdWx0Eg8KB3N1Y2Nlc3MYASABKAgiJQoSUmVib290RGV2aWNlUmVzdWx0Eg8KB3N1Y2Nlc3MYASABKAgigAEKB1dlbGNvbWUSJAoOc2VydmVyX3ZlcnNpb24YASABKAlCDLpICcgBAXIEEAEYIBI1ChJoZWFydGJlYXRfaW50ZXJ2YWwYAiABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24SGAoQZGV2aWNlX2xvZ2luX3VybBgDIAEoCSKhAQoSTWFuaWZlc3RQcm92ZW5hbmNlEjAKDWRlZmluaXRpb25faWQYASABKAsyGS5jYWRlc3Ryby52MS5EZWZpbml0aW9uSWQSLwoNYWN0aW9uX3NldF9pZBgCIAEoCzIYLmNhZGVzdHJvLnYxLkFjdGlvblNldElkEigKCWFjdGlvbl9pZBgDIAEoCzIVLmNhZGVzdHJvLnYxLkFjdGlvbklkIqcBChJNYW5pZmVzdE9jY3VycmVuY2USOAoNb2NjdXJyZW5jZV9pZBgBIAEoCzIZLmNhZGVzdHJvLnYxLk9jY3VycmVuY2VJZEIGukgDyAEBEisKBmFjdGlvbhgCIAEoCzITLmNhZGVzdHJvLnYxLkFjdGlvbkIGukgDyAEBEioKCm9uX2ZhaWx1cmUYAyABKA4yFi5jYWRlc3Ryby52MS5PbkZhaWx1cmUiqwIKCE1hbmlmZXN0EjQKC21hbmlmZXN0X2lkGAEgASgLMhcuY2FkZXN0cm8udjEuTWFuaWZlc3RJZEIGukgDyAEBEjsKCnByb3ZlbmFuY2UYAiABKAsyHy5jYWRlc3Ryby52MS5NYW5pZmVzdFByb3ZlbmFuY2VCBrpIA8gBARI1CghzY2hlZHVsZRgDIAEoCzIbLmNhZGVzdHJvLnYxLkFjdGlvblNjaGVkdWxlQga6SAPIAQESMgoSZGVmYXVsdF9vbl9mYWlsdXJlGAQgASgOMhYuY2FkZXN0cm8udjEuT25GYWlsdXJlEkEKC29jY3VycmVuY2VzGAUgAygLMh8uY2FkZXN0cm8udjEuTWFuaWZlc3RPY2N1cnJlbmNlQgu6SAjIAQGSAQIIASKtAgoOTWFuaWZlc3RSZXN1bHQSKgoGcnVuX2lkGAEgASgLMhIuY2FkZXN0cm8udjEuUnVuSWRCBrpIA8gBARI0CgttYW5pZmVzdF9pZBgCIAEoCzIXLmNhZGVzdHJvLnYxLk1hbmlmZXN0SWRCBrpIA8gBARI0CgZzdGF0dXMYAyABKA4yHC5jYWRlc3Ryby52MS5FeGVjdXRpb25TdGF0dXNCBrpIA8gBARIwCgxjb21wbGV0ZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjUKCGR1cmF0aW9uGAUgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uQgi6SAWqAQIyABIaCgVlcnJvchgGIAEoCUILukgI2AEBcgMYgCAiUQoJUmVzdWx0QWNrEhAKCGFjY2VwdGVkGAEgASgIEjIKBGNvZGUYAiABKA4yGi5jYWRlc3Ryby52MS5SZXN1bHRBY2tDb2RlQgi6SAWCAQIQASInCgVFcnJvchIeCgdtZXNzYWdlGAEgASgJQg26SArIAQFyBRABGIAIIt8CCgdPU1F1ZXJ5Ei4KCHF1ZXJ5X2lkGAEgASgLMhQuY2FkZXN0cm8udjEuUXVlcnlJZEIGukgDyAEBEhsKBXRhYmxlGAIgASgJQgy6SAnYAQFyBBABGEASHQoHY29sdW1ucxgDIAMoCUIMukgJkgEGIgRyAhhAEiwKBXdoZXJlGAQgAygLMh0uY2FkZXN0cm8udjEuT1NRdWVyeUNvbmRpdGlvbhIcCgVsaW1pdBgFIAEoBUINukgK2AEBGgUYkE4oABIcCgdyYXdfc3FsGAYgASgJQgu6SAjYAQFyAxiAIDp+ukh7GnkKJm9zcXVlcnkudGFibGVfcmVxdWlyZWRfd2l0aG91dF9yYXdfc3FsEid0YWJsZSBpcyByZXF1aXJlZCB1bmxlc3MgcmF3X3NxbCBpcyBzZXQaJnRoaXMudGFibGUgIT0gJycgfHwgdGhpcy5yYXdfc3FsICE9ICcnIngKEE9TUXVlcnlDb25kaXRpb24SHAoGY29sdW1uGAEgASgJQgy6SAnIAQFyBBABGEASKgoCb3AYAiABKA4yFi5jYWRlc3Ryby52MS5PU1F1ZXJ5T3BCBrpIA8gBARIaCgV2YWx1ZRgDIAEoCUILukgIyAEBcgMYgCAikwEKDU9TUXVlcnlSZXN1bHQSLgoIcXVlcnlfaWQYASABKAsyFC5jYWRlc3Ryby52MS5RdWVyeUlkQga6SAPIAQESDwoHc3VjY2VzcxgCIAEoCBIaCgVlcnJvchgDIAEoCUILukgI2AEBcgMYgAgSJQoEcm93cxgEIAMoCzIXLmNhZGVzdHJvLnYxLk9TUXVlcnlSb3cigAEKCk9TUXVlcnlSb3cSRQoEZGF0YRgBIAMoCzIhLmNhZGVzdHJvLnYxLk9TUXVlcnlSb3cuRGF0YUVudHJ5QhS6SBGaAQ4iBHICGEAqBnIEGICABBorCglEYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASI+Cg9EZXZpY2VJbnZlbnRvcnkSKwoGdGFibGVzGAEgAygLMhsuY2FkZXN0cm8udjEuSW52ZW50b3J5VGFibGUiWQoOSW52ZW50b3J5VGFibGUSIAoKdGFibGVfbmFtZRgBIAEoCUIMukgJyAEBcgQQARhAEiUKBHJvd3MYAiADKAsyFy5jYWRlc3Ryby52MS5PU1F1ZXJ5Um93IkIKEFJlcXVlc3RJbnZlbnRvcnkSLgoIcXVlcnlfaWQYASABKAsyFC5jYWRlc3Ryby52MS5RdWVyeUlkQga6SAPIAQEiRQoRR2V0THVrc0tleVJlcXVlc3QSMAoJYWN0aW9uX2lkGAEgASgLMhUuY2FkZXN0cm8udjEuQWN0aW9uSWRCBrpIA8gBASI4ChJHZXRMdWtzS2V5UmVzcG9uc2USIgoKcGFzc3BocmFzZRgBIAEoDEIOgAEBukgIyAEBegMYgCAi1QEKE1N0b3JlTHVrc0tleVJlcXVlc3QSMAoJYWN0aW9uX2lkGAEgASgLMhUuY2FkZXN0cm8udjEuQWN0aW9uSWRCBrpIA8gBARIjCgtkZXZpY2VfcGF0aBgCIAEoCUIOukgLyAEBcgYYgCA6AS8SIgoKcGFzc3BocmFzZRgDIAEoDEIOgAEBukgIyAEBegMYgCASQwoPcm90YXRpb25fcmVhc29uGAQgASgOMhsuY2FkZXN0cm8udjEuUm90YXRpb25SZWFzb25CDbpICsgBAYIBBBgBGAIiJwoUU3RvcmVMdWtzS2V5UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCK3AQoTTHBzUGFzc3dvcmRSb3RhdGlvbhIeCgh1c2VybmFtZRgBIAEoCUIMukgJyAEBcgQQARhAEiAKCHBhc3N3b3JkGAIgASgMQg6AAQG6SAjIAQF6AxiAARIgCgpyb3RhdGVkX2F0GAMgASgJQgy6SAnIAQFyBBABGEASPAoGcmVhc29uGAQgASgOMhsuY2FkZXN0cm8udjEuUm90YXRpb25SZWFzb25CD7pIDMgBAYIBBhgBGAIYAyKRAQoYU3RvcmVMcHNQYXNzd29yZHNSZXF1ZXN0EjAKCWFjdGlvbl9pZBgBIAEoCzIVLmNhZGVzdHJvLnYxLkFjdGlvbklkQga6SAPIAQESQwoJcm90YXRpb25zGAIgAygLMiAuY2FkZXN0cm8udjEuTHBzUGFzc3dvcmRSb3RhdGlvbkIOukgLyAEBkgEFCAEQgAIiLAoZU3RvcmVMcHNQYXNzd29yZHNSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIkcKE1Jldm9rZUx1a3NEZXZpY2VLZXkSMAoJYWN0aW9uX2lkGAEgASgLMhUuY2FkZXN0cm8udjEuQWN0aW9uSWRCBrpIA8gBASJ6ChlSZXZva2VMdWtzRGV2aWNlS2V5UmVzdWx0EjAKCWFjdGlvbl9pZBgBIAEoCzIVLmNhZGVzdHJvLnYxLkFjdGlvbklkQga6SAPIAQESDwoHc3VjY2VzcxgCIAEoCBIaCgVlcnJvchgDIAEoCUILukgI2AEBcgMYgAgiMwoYVmFsaWRhdGVMdWtzVG9rZW5SZXF1ZXN0EhcKBXRva2VuGAEgASgJQgi6SAVyA5gCASKmAQoZVmFsaWRhdGVMdWtzVG9rZW5SZXNwb25zZRIoCglhY3Rpb25faWQYASABKAsyFS5jYWRlc3Ryby52MS5BY3Rpb25JZBITCgtkZXZpY2VfcGF0aBgCIAEoCRISCgptaW5fbGVuZ3RoGAMgASgFEjYKCmNvbXBsZXhpdHkYBCABKA4yIi5jYWRlc3Ryby52MS5McHNQYXNzd29yZENvbXBsZXhpdHkiDQoLU3luY1JlcXVlc3QimgEKCVN5bmNTdGF0ZRIdChVzeW5jX2ludGVydmFsX21pbnV0ZXMYASABKAUSOgoSbWFpbnRlbmFuY2Vfd2luZG93GAIgASgLMh4uY2FkZXN0cm8udjEuTWFpbnRlbmFuY2VXaW5kb3cSMgoOZGVzaXJlZF9wb2xpY3kYAyABKAsyGi5jYWRlc3Ryby52MS5EZXNpcmVkUG9saWN5InIKDURlc2lyZWRQb2xpY3kSNwoIcmV2aXNpb24YASABKAsyHS5jYWRlc3Ryby52MS5Qb2xpY3lSZXZpc2lvbklkQga6SAPIAQESKAoJbWFuaWZlc3RzGAIgAygLMhUuY2FkZXN0cm8udjEuTWFuaWZlc3QimgIKCExvZ1F1ZXJ5Ei4KCHF1ZXJ5X2lkGAEgASgLMhQuY2FkZXN0cm8udjEuUXVlcnlJZEIGukgDyAEBEhwKBWxpbmVzGAIgASgFQg26SArYAQEaBRiQTigAEhkKBHVuaXQYAyABKAlCC7pICNgBAXIDGIACEhkKBXNpbmNlGAQgASgJQgq6SAfYAQFyAhhAEhkKBXVudGlsGAUgASgJQgq6SAfYAQFyAhhAEhwKCHByaW9yaXR5GAYgASgJQgq6SAfYAQFyAhggEhkKBGdyZXAYByABKAlCC7pICNgBAXIDGIACEg4KBmtlcm5lbBgIIAEoCBImCgZzb3VyY2UYCSABKA4yFi5jYWRlc3Ryby52MS5Mb2dTb3VyY2UiewoOTG9nUXVlcnlSZXN1bHQSLgoIcXVlcnlfaWQYASABKAsyFC5jYWRlc3Ryby52MS5RdWVyeUlkQga6SAPIAQESDwoHc3VjY2VzcxgCIAEoCBIaCgVlcnJvchgDIAEoCUILukgI2AEBcgMYgAgSDAoEbG9ncxgEIAEoCSKfAQoNVGVybWluYWxTdGFydBIyCgpzZXNzaW9uX2lkGAEgASgLMhYuY2FkZXN0cm8udjEuU2Vzc2lvbklkQga6SAPIAQESHgoIdHR5X3VzZXIYAiABKAlCDLpICcgBAXIEEAEYQBIcCgRjb2xzGAMgASgNQg66SAvIAQEqBhj//wMgABIcCgRyb3dzGAQgASgNQg66SAvIAQEqBhj//wMgACJfCg1UZXJtaW5hbElucHV0EjIKCnNlc3Npb25faWQYASABKAsyFi5jYWRlc3Ryby52MS5TZXNzaW9uSWRCBrpIA8gBARIaCgRkYXRhGAIgASgMQgy6SAnIAQF6BBiAgAQigAEKDlRlcm1pbmFsUmVzaXplEjIKCnNlc3Npb25faWQYASABKAsyFi5jYWRlc3Ryby52MS5TZXNzaW9uSWRCBrpIA8gBARIcCgRjb2xzGAIgASgNQg66SAvIAQEqBhj//wMgABIcCgRyb3dzGAMgASgNQg66SAvIAQEqBhj//wMgACJfCgxUZXJtaW5hbFN0b3ASMgoKc2Vzc2lvbl9pZBgBIAEoCzIWLmNhZGVzdHJvLnYxLlNlc3Npb25JZEIGukgDyAEBEhsKBnJlYXNvbhgCIAEoCUILukgI2AEBcgMYgAQiYAoOVGVybWluYWxPdXRwdXQSMgoKc2Vzc2lvbl9pZBgBIAEoCzIWLmNhZGVzdHJvLnYxLlNlc3Npb25JZEIGukgDyAEBEhoKBGRhdGEYAiABKAxCDLpICcgBAXoEGICABCKyAQoTVGVybWluYWxTdGF0ZUNoYW5nZRIyCgpzZXNzaW9uX2lkGAEgASgLMhYuY2FkZXN0cm8udjEuU2Vzc2lvbklkQga6SAPIAQESOAoFc3RhdGUYAiABKA4yIS5jYWRlc3Ryby52MS5UZXJtaW5hbFNlc3Npb25TdGF0ZUIGukgDyAEBEhEKCWV4aXRfY29kZRgDIAEoBRIaCgVlcnJvchgEIAEoCUILukgI2AEBcgMYgAgqyAEKEVNlY3VyaXR5QWxlcnRUeXBlEiMKH1NFQ1VSSVRZX0FMRVJUX1RZUEVfVU5TUEVDSUZJRUQQABIzCi9TRUNVUklUWV9BTEVSVF9UWVBFX1NFUlZFUl9SRUFTU0lHTk1FTlRfQVRURU1QVBABEiwKKFNFQ1VSSVRZX0FMRVJUX1RZUEVfQ1JFREVOVElBTF9UQU1QRVJJTkcQAhIrCidTRUNVUklUWV9BTEVSVF9UWVBFX0lOVkFMSURfQ0VSVElGSUNBVEUQAyo5CglPbkZhaWx1cmUSFwoTT05fRkFJTFVSRV9DT05USU5VRRAAEhMKD09OX0ZBSUxVUkVfU1RPUBABKmwKDVJlc3VsdEFja0NvZGUSHwobUkVTVUxUX0FDS19DT0RFX1VOU1BFQ0lGSUVEEAASHAoYUkVTVUxUX0FDS19DT0RFX0FDQ0VQVEVEEAESHAoYUkVTVUxUX0FDS19DT0RFX1JFSkVDVEVEEAIqzAEKCU9TUXVlcnlPcBIbChdPU19RVUVSWV9PUF9VTlNQRUNJRklFRBAAEhIKDk9TX1FVRVJZX09QX0VREAESEgoOT1NfUVVFUllfT1BfTkUQAhISCg5PU19RVUVSWV9PUF9HVBADEhIKDk9TX1FVRVJZX09QX0xUEAQSEgoOT1NfUVVFUllfT1BfR0UQBRISCg5PU19RVUVSWV9PUF9MRRAGEhQKEE9TX1FVRVJZX09QX0xJS0UQBxIUChBPU19RVUVSWV9PUF9HTE9CEAgqOwoJTG9nU291cmNlEhcKE0xPR19TT1VSQ0VfSk9VUk5BTEQQABIVChFMT0dfU09VUkNFX1NZU0xPRxABKqcBChRUZXJtaW5hbFNlc3Npb25TdGF0ZRImCiJURVJNSU5BTF9TRVNTSU9OX1NUQVRFX1VOU1BFQ0lGSUVEEAASIgoeVEVSTUlOQUxfU0VTU0lPTl9TVEFURV9TVEFSVEVEEAESIQodVEVSTUlOQUxfU0VTU0lPTl9TVEFURV9FWElURUQQAhIgChxURVJNSU5BTF9TRVNTSU9OX1NUQVRFX0VSUk9SEAMyUwoMQWdlbnRTZXJ2aWNlEkMKBlN0cmVhbRIZLmNhZGVzdHJvLnYxLkFnZW50TWVzc2FnZRoaLmNhZGVzdHJvLnYxLlNlcnZlck1lc3NhZ2UoATABQkdaRWdpdGh1Yi5jb20vbWFuY2h0b29scy9jYWRlc3Ryby9jb250cmFjdC9nZW4vZ28vY2FkZXN0cm8vdjE7Y2FkZXN0cm92MWIGcHJvdG8z", [file_buf_validate_validate, file_cadestro_v1_actions, file_cadestro_v1_common, file_google_protobuf_duration, file_google_protobuf_timestamp]);
+  fileDesc("ChdjYWRlc3Ryby92MS9hZ2VudC5wcm90bxILY2FkZXN0cm8udjEitQIKDEFnZW50TWVzc2FnZRIqCgJpZBgBIAEoCzIWLmNhZGVzdHJvLnYxLk1lc3NhZ2VJZEIGukgDyAEBEiMKBWhlbGxvGAogASgLMhIuY2FkZXN0cm8udjEuSGVsbG9IABIrCgloZWFydGJlYXQYCyABKAsyFi5jYWRlc3Ryby52MS5IZWFydGJlYXRIABIwCgxzeW5jX3JlcXVlc3QYDCABKAsyGC5jYWRlc3Ryby52MS5TeW5jUmVxdWVzdEgAEjIKDWFjdGlvbl9yZXN1bHQYFCABKAsyGS5jYWRlc3Ryby52MS5BY3Rpb25SZXN1bHRIABI2Cg9tYW5pZmVzdF9yZXN1bHQYFSABKAsyGy5jYWRlc3Ryby52MS5NYW5pZmVzdFJlc3VsdEgAQgkKB3BheWxvYWQi8AEKDVNlcnZlck1lc3NhZ2USKgoCaWQYASABKAsyFi5jYWRlc3Ryby52MS5NZXNzYWdlSWRCBrpIA8gBARInCgd3ZWxjb21lGAogASgLMhQuY2FkZXN0cm8udjEuV2VsY29tZUgAEiwKCnN5bmNfc3RhdGUYCyABKAsyFi5jYWRlc3Ryby52MS5TeW5jU3RhdGVIABIsCgpyZXN1bHRfYWNrGAwgASgLMhYuY2FkZXN0cm8udjEuUmVzdWx0QWNrSAASIwoFZXJyb3IYDSABKAsyEi5jYWRlc3Ryby52MS5FcnJvckgAQgkKB3BheWxvYWQimQEKBUhlbGxvEjAKCWRldmljZV9pZBgBIAEoCzIVLmNhZGVzdHJvLnYxLkRldmljZUlkQga6SAPIAQESIwoNYWdlbnRfdmVyc2lvbhgCIAEoCUIMukgJyAEBcgQQARggEh8KCGhvc3RuYW1lGAMgASgJQg26SArIAQFyBRABGP0BEhgKBGFyY2gYBCABKAlCCrpIB9gBAXICGBAiCwoJSGVhcnRiZWF0ImYKB1dlbGNvbWUSJAoOc2VydmVyX3ZlcnNpb24YASABKAlCDLpICcgBAXIEEAEYIBI1ChJoZWFydGJlYXRfaW50ZXJ2YWwYAiABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24iDQoLU3luY1JlcXVlc3QicgoJU3luY1N0YXRlEikKFXN5bmNfaW50ZXJ2YWxfbWludXRlcxgBIAEoBUIKukgHGgUYoAsoARI6Cg5kZXNpcmVkX3BvbGljeRgCIAEoCzIaLmNhZGVzdHJvLnYxLkRlc2lyZWRQb2xpY3lCBrpIA8gBASJyCg1EZXNpcmVkUG9saWN5EjcKCHJldmlzaW9uGAEgASgLMh0uY2FkZXN0cm8udjEuUG9saWN5UmV2aXNpb25JZEIGukgDyAEBEigKCW1hbmlmZXN0cxgCIAMoCzIVLmNhZGVzdHJvLnYxLk1hbmlmZXN0It4BCghNYW5pZmVzdBI0CgttYW5pZmVzdF9pZBgBIAEoCzIXLmNhZGVzdHJvLnYxLk1hbmlmZXN0SWRCBrpIA8gBARI4Cg1vY2N1cnJlbmNlX2lkGAIgASgLMhkuY2FkZXN0cm8udjEuT2NjdXJyZW5jZUlkQga6SAPIAQESKwoGYWN0aW9uGAMgASgLMhMuY2FkZXN0cm8udjEuQWN0aW9uQga6SAPIAQESNQoIc2NoZWR1bGUYBCABKAsyGy5jYWRlc3Ryby52MS5BY3Rpb25TY2hlZHVsZUIGukgDyAEBIq0CCg5NYW5pZmVzdFJlc3VsdBIqCgZydW5faWQYASABKAsyEi5jYWRlc3Ryby52MS5SdW5JZEIGukgDyAEBEjQKC21hbmlmZXN0X2lkGAIgASgLMhcuY2FkZXN0cm8udjEuTWFuaWZlc3RJZEIGukgDyAEBEjQKBnN0YXR1cxgDIAEoDjIcLmNhZGVzdHJvLnYxLkV4ZWN1dGlvblN0YXR1c0IGukgDyAEBEjAKDGNvbXBsZXRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNQoIZHVyYXRpb24YBSABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb25CCLpIBaoBAjIAEhoKBWVycm9yGAYgASgJQgu6SAjYAQFyAxiAICI9CglSZXN1bHRBY2sSMAoEY29kZRgBIAEoDjIaLmNhZGVzdHJvLnYxLlJlc3VsdEFja0NvZGVCBrpIA8gBASInCgVFcnJvchIeCgdtZXNzYWdlGAEgASgJQg26SArIAQFyBRABGIAIKmwKDVJlc3VsdEFja0NvZGUSHwobUkVTVUxUX0FDS19DT0RFX1VOU1BFQ0lGSUVEEAASHAoYUkVTVUxUX0FDS19DT0RFX0FDQ0VQVEVEEAESHAoYUkVTVUxUX0FDS19DT0RFX1JFSkVDVEVEEAIyUwoMQWdlbnRTZXJ2aWNlEkMKBlN0cmVhbRIZLmNhZGVzdHJvLnYxLkFnZW50TWVzc2FnZRoaLmNhZGVzdHJvLnYxLlNlcnZlck1lc3NhZ2UoATABQkdaRWdpdGh1Yi5jb20vbWFuY2h0b29scy9jYWRlc3Ryby9jb250cmFjdC9nZW4vZ28vY2FkZXN0cm8vdjE7Y2FkZXN0cm92MWIGcHJvdG8z", [file_buf_validate_validate, file_cadestro_v1_actions, file_cadestro_v1_common, file_google_protobuf_duration, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message cadestro.v1.AgentMessage
@@ -51,94 +51,16 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
     case: "syncRequest";
   } | {
     /**
-     * @generated from field: cadestro.v1.SyncDeviceResult sync_device_result = 24;
-     */
-    value: SyncDeviceResult;
-    case: "syncDeviceResult";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.RebootDeviceResult reboot_device_result = 25;
-     */
-    value: RebootDeviceResult;
-    case: "rebootDeviceResult";
-  } | {
-    /**
      * @generated from field: cadestro.v1.ActionResult action_result = 20;
      */
     value: ActionResult;
     case: "actionResult";
   } | {
     /**
-     * @generated from field: cadestro.v1.ManifestResult manifest_result = 23;
+     * @generated from field: cadestro.v1.ManifestResult manifest_result = 21;
      */
     value: ManifestResult;
     case: "manifestResult";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.OSQueryResult query_result = 30;
-     */
-    value: OSQueryResult;
-    case: "queryResult";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.DeviceInventory inventory = 31;
-     */
-    value: DeviceInventory;
-    case: "inventory";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.SecurityAlert security_alert = 40;
-     */
-    value: SecurityAlert;
-    case: "securityAlert";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.GetLuksKeyRequest get_luks_key = 50;
-     */
-    value: GetLuksKeyRequest;
-    case: "getLuksKey";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.StoreLuksKeyRequest store_luks_key = 51;
-     */
-    value: StoreLuksKeyRequest;
-    case: "storeLuksKey";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.RevokeLuksDeviceKeyResult revoke_luks_device_key_result = 52;
-     */
-    value: RevokeLuksDeviceKeyResult;
-    case: "revokeLuksDeviceKeyResult";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.StoreLpsPasswordsRequest store_lps_passwords = 53;
-     */
-    value: StoreLpsPasswordsRequest;
-    case: "storeLpsPasswords";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.ValidateLuksTokenRequest validate_luks_token = 54;
-     */
-    value: ValidateLuksTokenRequest;
-    case: "validateLuksToken";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.LogQueryResult log_query_result = 60;
-     */
-    value: LogQueryResult;
-    case: "logQueryResult";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.TerminalOutput terminal_output = 70;
-     */
-    value: TerminalOutput;
-    case: "terminalOutput";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.TerminalStateChange terminal_state_change = 71;
-     */
-    value: TerminalStateChange;
-    case: "terminalStateChange";
   } | { case: undefined; value?: undefined };
 };
 
@@ -148,6 +70,52 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
  */
 export const AgentMessageSchema: GenMessage<AgentMessage> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 0);
+
+/**
+ * @generated from message cadestro.v1.ServerMessage
+ */
+export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
+  /**
+   * @generated from field: cadestro.v1.MessageId id = 1;
+   */
+  id?: MessageId;
+
+  /**
+   * @generated from oneof cadestro.v1.ServerMessage.payload
+   */
+  payload: {
+    /**
+     * @generated from field: cadestro.v1.Welcome welcome = 10;
+     */
+    value: Welcome;
+    case: "welcome";
+  } | {
+    /**
+     * @generated from field: cadestro.v1.SyncState sync_state = 11;
+     */
+    value: SyncState;
+    case: "syncState";
+  } | {
+    /**
+     * @generated from field: cadestro.v1.ResultAck result_ack = 12;
+     */
+    value: ResultAck;
+    case: "resultAck";
+  } | {
+    /**
+     * @generated from field: cadestro.v1.Error error = 13;
+     */
+    value: Error;
+    case: "error";
+  } | { case: undefined; value?: undefined };
+};
+
+/**
+ * Describes the message cadestro.v1.ServerMessage.
+ * Use `create(ServerMessageSchema)` to create a new message.
+ */
+export const ServerMessageSchema: GenMessage<ServerMessage> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_agent, 1);
 
 /**
  * @generated from message cadestro.v1.Hello
@@ -169,12 +137,7 @@ export type Hello = Message<"cadestro.v1.Hello"> & {
   hostname: string;
 
   /**
-   * @generated from field: string auth_token = 4;
-   */
-  authToken: string;
-
-  /**
-   * @generated from field: string arch = 5;
+   * @generated from field: string arch = 4;
    */
   arch: string;
 };
@@ -184,7 +147,7 @@ export type Hello = Message<"cadestro.v1.Hello"> & {
  * Use `create(HelloSchema)` to create a new message.
  */
 export const HelloSchema: GenMessage<Hello> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 1);
+  messageDesc(file_cadestro_v1_agent, 2);
 
 /**
  * @generated from message cadestro.v1.Heartbeat
@@ -197,224 +160,7 @@ export type Heartbeat = Message<"cadestro.v1.Heartbeat"> & {
  * Use `create(HeartbeatSchema)` to create a new message.
  */
 export const HeartbeatSchema: GenMessage<Heartbeat> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 2);
-
-/**
- * @generated from message cadestro.v1.SecurityAlert
- */
-export type SecurityAlert = Message<"cadestro.v1.SecurityAlert"> & {
-  /**
-   * @generated from field: cadestro.v1.SecurityAlertType type = 1;
-   */
-  type: SecurityAlertType;
-
-  /**
-   * @generated from field: string message = 2;
-   */
-  message: string;
-
-  /**
-   * @generated from field: map<string, string> details = 3;
-   */
-  details: { [key: string]: string };
-};
-
-/**
- * Describes the message cadestro.v1.SecurityAlert.
- * Use `create(SecurityAlertSchema)` to create a new message.
- */
-export const SecurityAlertSchema: GenMessage<SecurityAlert> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 3);
-
-/**
- * @generated from message cadestro.v1.ServerMessage
- */
-export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
-  /**
-   * @generated from field: cadestro.v1.MessageId id = 1;
-   */
-  id?: MessageId;
-
-  /**
-   * @generated from oneof cadestro.v1.ServerMessage.payload
-   */
-  payload: {
-    /**
-     * @generated from field: cadestro.v1.SyncDeviceCommand sync_device = 11;
-     */
-    value: SyncDeviceCommand;
-    case: "syncDevice";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.Welcome welcome = 10;
-     */
-    value: Welcome;
-    case: "welcome";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.SyncState sync_state = 12;
-     */
-    value: SyncState;
-    case: "syncState";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.RebootDeviceCommand reboot_device = 13;
-     */
-    value: RebootDeviceCommand;
-    case: "rebootDevice";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.OSQuery query = 30;
-     */
-    value: OSQuery;
-    case: "query";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.RequestInventory request_inventory = 31;
-     */
-    value: RequestInventory;
-    case: "requestInventory";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.Error error = 40;
-     */
-    value: Error;
-    case: "error";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.GetLuksKeyResponse get_luks_key = 50;
-     */
-    value: GetLuksKeyResponse;
-    case: "getLuksKey";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.StoreLuksKeyResponse store_luks_key = 51;
-     */
-    value: StoreLuksKeyResponse;
-    case: "storeLuksKey";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.RevokeLuksDeviceKey revoke_luks_device_key = 52;
-     */
-    value: RevokeLuksDeviceKey;
-    case: "revokeLuksDeviceKey";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.StoreLpsPasswordsResponse store_lps_passwords = 53;
-     */
-    value: StoreLpsPasswordsResponse;
-    case: "storeLpsPasswords";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.ValidateLuksTokenResponse validate_luks_token = 54;
-     */
-    value: ValidateLuksTokenResponse;
-    case: "validateLuksToken";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.ResultAck result_ack = 24;
-     */
-    value: ResultAck;
-    case: "resultAck";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.LogQuery log_query = 60;
-     */
-    value: LogQuery;
-    case: "logQuery";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.TerminalStart terminal_start = 70;
-     */
-    value: TerminalStart;
-    case: "terminalStart";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.TerminalInput terminal_input = 71;
-     */
-    value: TerminalInput;
-    case: "terminalInput";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.TerminalResize terminal_resize = 72;
-     */
-    value: TerminalResize;
-    case: "terminalResize";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.TerminalStop terminal_stop = 73;
-     */
-    value: TerminalStop;
-    case: "terminalStop";
-  } | { case: undefined; value?: undefined };
-};
-
-/**
- * Describes the message cadestro.v1.ServerMessage.
- * Use `create(ServerMessageSchema)` to create a new message.
- */
-export const ServerMessageSchema: GenMessage<ServerMessage> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 4);
-
-/**
- * @generated from message cadestro.v1.SyncDeviceCommand
- */
-export type SyncDeviceCommand = Message<"cadestro.v1.SyncDeviceCommand"> & {
-};
-
-/**
- * Describes the message cadestro.v1.SyncDeviceCommand.
- * Use `create(SyncDeviceCommandSchema)` to create a new message.
- */
-export const SyncDeviceCommandSchema: GenMessage<SyncDeviceCommand> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 5);
-
-/**
- * @generated from message cadestro.v1.RebootDeviceCommand
- */
-export type RebootDeviceCommand = Message<"cadestro.v1.RebootDeviceCommand"> & {
-};
-
-/**
- * Describes the message cadestro.v1.RebootDeviceCommand.
- * Use `create(RebootDeviceCommandSchema)` to create a new message.
- */
-export const RebootDeviceCommandSchema: GenMessage<RebootDeviceCommand> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 6);
-
-/**
- * @generated from message cadestro.v1.SyncDeviceResult
- */
-export type SyncDeviceResult = Message<"cadestro.v1.SyncDeviceResult"> & {
-  /**
-   * @generated from field: bool success = 1;
-   */
-  success: boolean;
-};
-
-/**
- * Describes the message cadestro.v1.SyncDeviceResult.
- * Use `create(SyncDeviceResultSchema)` to create a new message.
- */
-export const SyncDeviceResultSchema: GenMessage<SyncDeviceResult> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 7);
-
-/**
- * @generated from message cadestro.v1.RebootDeviceResult
- */
-export type RebootDeviceResult = Message<"cadestro.v1.RebootDeviceResult"> & {
-  /**
-   * @generated from field: bool success = 1;
-   */
-  success: boolean;
-};
-
-/**
- * Describes the message cadestro.v1.RebootDeviceResult.
- * Use `create(RebootDeviceResultSchema)` to create a new message.
- */
-export const RebootDeviceResultSchema: GenMessage<RebootDeviceResult> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 8);
 
 /**
  * @generated from message cadestro.v1.Welcome
@@ -429,11 +175,6 @@ export type Welcome = Message<"cadestro.v1.Welcome"> & {
    * @generated from field: google.protobuf.Duration heartbeat_interval = 2;
    */
   heartbeatInterval?: Duration;
-
-  /**
-   * @generated from field: string device_login_url = 3;
-   */
-  deviceLoginUrl: string;
 };
 
 /**
@@ -441,61 +182,64 @@ export type Welcome = Message<"cadestro.v1.Welcome"> & {
  * Use `create(WelcomeSchema)` to create a new message.
  */
 export const WelcomeSchema: GenMessage<Welcome> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 9);
+  messageDesc(file_cadestro_v1_agent, 4);
 
 /**
- * @generated from message cadestro.v1.ManifestProvenance
+ * @generated from message cadestro.v1.SyncRequest
  */
-export type ManifestProvenance = Message<"cadestro.v1.ManifestProvenance"> & {
-  /**
-   * @generated from field: cadestro.v1.DefinitionId definition_id = 1;
-   */
-  definitionId?: DefinitionId;
-
-  /**
-   * @generated from field: cadestro.v1.ActionSetId action_set_id = 2;
-   */
-  actionSetId?: ActionSetId;
-
-  /**
-   * @generated from field: cadestro.v1.ActionId action_id = 3;
-   */
-  actionId?: ActionId;
+export type SyncRequest = Message<"cadestro.v1.SyncRequest"> & {
 };
 
 /**
- * Describes the message cadestro.v1.ManifestProvenance.
- * Use `create(ManifestProvenanceSchema)` to create a new message.
+ * Describes the message cadestro.v1.SyncRequest.
+ * Use `create(SyncRequestSchema)` to create a new message.
  */
-export const ManifestProvenanceSchema: GenMessage<ManifestProvenance> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 10);
+export const SyncRequestSchema: GenMessage<SyncRequest> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_agent, 5);
 
 /**
- * @generated from message cadestro.v1.ManifestOccurrence
+ * @generated from message cadestro.v1.SyncState
  */
-export type ManifestOccurrence = Message<"cadestro.v1.ManifestOccurrence"> & {
+export type SyncState = Message<"cadestro.v1.SyncState"> & {
   /**
-   * @generated from field: cadestro.v1.OccurrenceId occurrence_id = 1;
+   * @generated from field: int32 sync_interval_minutes = 1;
    */
-  occurrenceId?: OccurrenceId;
+  syncIntervalMinutes: number;
 
   /**
-   * @generated from field: cadestro.v1.Action action = 2;
+   * @generated from field: cadestro.v1.DesiredPolicy desired_policy = 2;
    */
-  action?: Action;
-
-  /**
-   * @generated from field: cadestro.v1.OnFailure on_failure = 3;
-   */
-  onFailure: OnFailure;
+  desiredPolicy?: DesiredPolicy;
 };
 
 /**
- * Describes the message cadestro.v1.ManifestOccurrence.
- * Use `create(ManifestOccurrenceSchema)` to create a new message.
+ * Describes the message cadestro.v1.SyncState.
+ * Use `create(SyncStateSchema)` to create a new message.
  */
-export const ManifestOccurrenceSchema: GenMessage<ManifestOccurrence> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 11);
+export const SyncStateSchema: GenMessage<SyncState> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_agent, 6);
+
+/**
+ * @generated from message cadestro.v1.DesiredPolicy
+ */
+export type DesiredPolicy = Message<"cadestro.v1.DesiredPolicy"> & {
+  /**
+   * @generated from field: cadestro.v1.PolicyRevisionId revision = 1;
+   */
+  revision?: PolicyRevisionId;
+
+  /**
+   * @generated from field: repeated cadestro.v1.Manifest manifests = 2;
+   */
+  manifests: Manifest[];
+};
+
+/**
+ * Describes the message cadestro.v1.DesiredPolicy.
+ * Use `create(DesiredPolicySchema)` to create a new message.
+ */
+export const DesiredPolicySchema: GenMessage<DesiredPolicy> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_agent, 7);
 
 /**
  * @generated from message cadestro.v1.Manifest
@@ -507,24 +251,19 @@ export type Manifest = Message<"cadestro.v1.Manifest"> & {
   manifestId?: ManifestId;
 
   /**
-   * @generated from field: cadestro.v1.ManifestProvenance provenance = 2;
+   * @generated from field: cadestro.v1.OccurrenceId occurrence_id = 2;
    */
-  provenance?: ManifestProvenance;
+  occurrenceId?: OccurrenceId;
 
   /**
-   * @generated from field: cadestro.v1.ActionSchedule schedule = 3;
+   * @generated from field: cadestro.v1.Action action = 3;
+   */
+  action?: Action;
+
+  /**
+   * @generated from field: cadestro.v1.ActionSchedule schedule = 4;
    */
   schedule?: ActionSchedule;
-
-  /**
-   * @generated from field: cadestro.v1.OnFailure default_on_failure = 4;
-   */
-  defaultOnFailure: OnFailure;
-
-  /**
-   * @generated from field: repeated cadestro.v1.ManifestOccurrence occurrences = 5;
-   */
-  occurrences: ManifestOccurrence[];
 };
 
 /**
@@ -532,7 +271,7 @@ export type Manifest = Message<"cadestro.v1.Manifest"> & {
  * Use `create(ManifestSchema)` to create a new message.
  */
 export const ManifestSchema: GenMessage<Manifest> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 12);
+  messageDesc(file_cadestro_v1_agent, 8);
 
 /**
  * @generated from message cadestro.v1.ManifestResult
@@ -574,19 +313,14 @@ export type ManifestResult = Message<"cadestro.v1.ManifestResult"> & {
  * Use `create(ManifestResultSchema)` to create a new message.
  */
 export const ManifestResultSchema: GenMessage<ManifestResult> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 13);
+  messageDesc(file_cadestro_v1_agent, 9);
 
 /**
  * @generated from message cadestro.v1.ResultAck
  */
 export type ResultAck = Message<"cadestro.v1.ResultAck"> & {
   /**
-   * @generated from field: bool accepted = 1;
-   */
-  accepted: boolean;
-
-  /**
-   * @generated from field: cadestro.v1.ResultAckCode code = 2;
+   * @generated from field: cadestro.v1.ResultAckCode code = 1;
    */
   code: ResultAckCode;
 };
@@ -596,7 +330,7 @@ export type ResultAck = Message<"cadestro.v1.ResultAck"> & {
  * Use `create(ResultAckSchema)` to create a new message.
  */
 export const ResultAckSchema: GenMessage<ResultAck> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 14);
+  messageDesc(file_cadestro_v1_agent, 10);
 
 /**
  * @generated from message cadestro.v1.Error
@@ -613,788 +347,7 @@ export type Error = Message<"cadestro.v1.Error"> & {
  * Use `create(ErrorSchema)` to create a new message.
  */
 export const ErrorSchema: GenMessage<Error> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 15);
-
-/**
- * @generated from message cadestro.v1.OSQuery
- */
-export type OSQuery = Message<"cadestro.v1.OSQuery"> & {
-  /**
-   * @generated from field: cadestro.v1.QueryId query_id = 1;
-   */
-  queryId?: QueryId;
-
-  /**
-   * @generated from field: string table = 2;
-   */
-  table: string;
-
-  /**
-   * @generated from field: repeated string columns = 3;
-   */
-  columns: string[];
-
-  /**
-   * @generated from field: repeated cadestro.v1.OSQueryCondition where = 4;
-   */
-  where: OSQueryCondition[];
-
-  /**
-   * @generated from field: int32 limit = 5;
-   */
-  limit: number;
-
-  /**
-   * @generated from field: string raw_sql = 6;
-   */
-  rawSql: string;
-};
-
-/**
- * Describes the message cadestro.v1.OSQuery.
- * Use `create(OSQuerySchema)` to create a new message.
- */
-export const OSQuerySchema: GenMessage<OSQuery> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 16);
-
-/**
- * @generated from message cadestro.v1.OSQueryCondition
- */
-export type OSQueryCondition = Message<"cadestro.v1.OSQueryCondition"> & {
-  /**
-   * @generated from field: string column = 1;
-   */
-  column: string;
-
-  /**
-   * @generated from field: cadestro.v1.OSQueryOp op = 2;
-   */
-  op: OSQueryOp;
-
-  /**
-   * @generated from field: string value = 3;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.OSQueryCondition.
- * Use `create(OSQueryConditionSchema)` to create a new message.
- */
-export const OSQueryConditionSchema: GenMessage<OSQueryCondition> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 17);
-
-/**
- * @generated from message cadestro.v1.OSQueryResult
- */
-export type OSQueryResult = Message<"cadestro.v1.OSQueryResult"> & {
-  /**
-   * @generated from field: cadestro.v1.QueryId query_id = 1;
-   */
-  queryId?: QueryId;
-
-  /**
-   * @generated from field: bool success = 2;
-   */
-  success: boolean;
-
-  /**
-   * @generated from field: string error = 3;
-   */
-  error: string;
-
-  /**
-   * @generated from field: repeated cadestro.v1.OSQueryRow rows = 4;
-   */
-  rows: OSQueryRow[];
-};
-
-/**
- * Describes the message cadestro.v1.OSQueryResult.
- * Use `create(OSQueryResultSchema)` to create a new message.
- */
-export const OSQueryResultSchema: GenMessage<OSQueryResult> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 18);
-
-/**
- * @generated from message cadestro.v1.OSQueryRow
- */
-export type OSQueryRow = Message<"cadestro.v1.OSQueryRow"> & {
-  /**
-   * @generated from field: map<string, string> data = 1;
-   */
-  data: { [key: string]: string };
-};
-
-/**
- * Describes the message cadestro.v1.OSQueryRow.
- * Use `create(OSQueryRowSchema)` to create a new message.
- */
-export const OSQueryRowSchema: GenMessage<OSQueryRow> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 19);
-
-/**
- * @generated from message cadestro.v1.DeviceInventory
- */
-export type DeviceInventory = Message<"cadestro.v1.DeviceInventory"> & {
-  /**
-   * @generated from field: repeated cadestro.v1.InventoryTable tables = 1;
-   */
-  tables: InventoryTable[];
-};
-
-/**
- * Describes the message cadestro.v1.DeviceInventory.
- * Use `create(DeviceInventorySchema)` to create a new message.
- */
-export const DeviceInventorySchema: GenMessage<DeviceInventory> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 20);
-
-/**
- * @generated from message cadestro.v1.InventoryTable
- */
-export type InventoryTable = Message<"cadestro.v1.InventoryTable"> & {
-  /**
-   * @generated from field: string table_name = 1;
-   */
-  tableName: string;
-
-  /**
-   * @generated from field: repeated cadestro.v1.OSQueryRow rows = 2;
-   */
-  rows: OSQueryRow[];
-};
-
-/**
- * Describes the message cadestro.v1.InventoryTable.
- * Use `create(InventoryTableSchema)` to create a new message.
- */
-export const InventoryTableSchema: GenMessage<InventoryTable> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 21);
-
-/**
- * @generated from message cadestro.v1.RequestInventory
- */
-export type RequestInventory = Message<"cadestro.v1.RequestInventory"> & {
-  /**
-   * @generated from field: cadestro.v1.QueryId query_id = 1;
-   */
-  queryId?: QueryId;
-};
-
-/**
- * Describes the message cadestro.v1.RequestInventory.
- * Use `create(RequestInventorySchema)` to create a new message.
- */
-export const RequestInventorySchema: GenMessage<RequestInventory> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 22);
-
-/**
- * @generated from message cadestro.v1.GetLuksKeyRequest
- */
-export type GetLuksKeyRequest = Message<"cadestro.v1.GetLuksKeyRequest"> & {
-  /**
-   * @generated from field: cadestro.v1.ActionId action_id = 1;
-   */
-  actionId?: ActionId;
-};
-
-/**
- * Describes the message cadestro.v1.GetLuksKeyRequest.
- * Use `create(GetLuksKeyRequestSchema)` to create a new message.
- */
-export const GetLuksKeyRequestSchema: GenMessage<GetLuksKeyRequest> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 23);
-
-/**
- * @generated from message cadestro.v1.GetLuksKeyResponse
- */
-export type GetLuksKeyResponse = Message<"cadestro.v1.GetLuksKeyResponse"> & {
-  /**
-   * @generated from field: bytes passphrase = 1;
-   */
-  passphrase: Uint8Array;
-};
-
-/**
- * Describes the message cadestro.v1.GetLuksKeyResponse.
- * Use `create(GetLuksKeyResponseSchema)` to create a new message.
- */
-export const GetLuksKeyResponseSchema: GenMessage<GetLuksKeyResponse> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 24);
-
-/**
- * @generated from message cadestro.v1.StoreLuksKeyRequest
- */
-export type StoreLuksKeyRequest = Message<"cadestro.v1.StoreLuksKeyRequest"> & {
-  /**
-   * @generated from field: cadestro.v1.ActionId action_id = 1;
-   */
-  actionId?: ActionId;
-
-  /**
-   * @generated from field: string device_path = 2;
-   */
-  devicePath: string;
-
-  /**
-   * @generated from field: bytes passphrase = 3;
-   */
-  passphrase: Uint8Array;
-
-  /**
-   * @generated from field: cadestro.v1.RotationReason rotation_reason = 4;
-   */
-  rotationReason: RotationReason;
-};
-
-/**
- * Describes the message cadestro.v1.StoreLuksKeyRequest.
- * Use `create(StoreLuksKeyRequestSchema)` to create a new message.
- */
-export const StoreLuksKeyRequestSchema: GenMessage<StoreLuksKeyRequest> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 25);
-
-/**
- * @generated from message cadestro.v1.StoreLuksKeyResponse
- */
-export type StoreLuksKeyResponse = Message<"cadestro.v1.StoreLuksKeyResponse"> & {
-  /**
-   * @generated from field: bool success = 1;
-   */
-  success: boolean;
-};
-
-/**
- * Describes the message cadestro.v1.StoreLuksKeyResponse.
- * Use `create(StoreLuksKeyResponseSchema)` to create a new message.
- */
-export const StoreLuksKeyResponseSchema: GenMessage<StoreLuksKeyResponse> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 26);
-
-/**
- * @generated from message cadestro.v1.LpsPasswordRotation
- */
-export type LpsPasswordRotation = Message<"cadestro.v1.LpsPasswordRotation"> & {
-  /**
-   * @generated from field: string username = 1;
-   */
-  username: string;
-
-  /**
-   * @generated from field: bytes password = 2;
-   */
-  password: Uint8Array;
-
-  /**
-   * @generated from field: string rotated_at = 3;
-   */
-  rotatedAt: string;
-
-  /**
-   * @generated from field: cadestro.v1.RotationReason reason = 4;
-   */
-  reason: RotationReason;
-};
-
-/**
- * Describes the message cadestro.v1.LpsPasswordRotation.
- * Use `create(LpsPasswordRotationSchema)` to create a new message.
- */
-export const LpsPasswordRotationSchema: GenMessage<LpsPasswordRotation> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 27);
-
-/**
- * @generated from message cadestro.v1.StoreLpsPasswordsRequest
- */
-export type StoreLpsPasswordsRequest = Message<"cadestro.v1.StoreLpsPasswordsRequest"> & {
-  /**
-   * @generated from field: cadestro.v1.ActionId action_id = 1;
-   */
-  actionId?: ActionId;
-
-  /**
-   * @generated from field: repeated cadestro.v1.LpsPasswordRotation rotations = 2;
-   */
-  rotations: LpsPasswordRotation[];
-};
-
-/**
- * Describes the message cadestro.v1.StoreLpsPasswordsRequest.
- * Use `create(StoreLpsPasswordsRequestSchema)` to create a new message.
- */
-export const StoreLpsPasswordsRequestSchema: GenMessage<StoreLpsPasswordsRequest> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 28);
-
-/**
- * @generated from message cadestro.v1.StoreLpsPasswordsResponse
- */
-export type StoreLpsPasswordsResponse = Message<"cadestro.v1.StoreLpsPasswordsResponse"> & {
-  /**
-   * @generated from field: bool success = 1;
-   */
-  success: boolean;
-};
-
-/**
- * Describes the message cadestro.v1.StoreLpsPasswordsResponse.
- * Use `create(StoreLpsPasswordsResponseSchema)` to create a new message.
- */
-export const StoreLpsPasswordsResponseSchema: GenMessage<StoreLpsPasswordsResponse> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 29);
-
-/**
- * @generated from message cadestro.v1.RevokeLuksDeviceKey
- */
-export type RevokeLuksDeviceKey = Message<"cadestro.v1.RevokeLuksDeviceKey"> & {
-  /**
-   * @generated from field: cadestro.v1.ActionId action_id = 1;
-   */
-  actionId?: ActionId;
-};
-
-/**
- * Describes the message cadestro.v1.RevokeLuksDeviceKey.
- * Use `create(RevokeLuksDeviceKeySchema)` to create a new message.
- */
-export const RevokeLuksDeviceKeySchema: GenMessage<RevokeLuksDeviceKey> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 30);
-
-/**
- * @generated from message cadestro.v1.RevokeLuksDeviceKeyResult
- */
-export type RevokeLuksDeviceKeyResult = Message<"cadestro.v1.RevokeLuksDeviceKeyResult"> & {
-  /**
-   * @generated from field: cadestro.v1.ActionId action_id = 1;
-   */
-  actionId?: ActionId;
-
-  /**
-   * @generated from field: bool success = 2;
-   */
-  success: boolean;
-
-  /**
-   * @generated from field: string error = 3;
-   */
-  error: string;
-};
-
-/**
- * Describes the message cadestro.v1.RevokeLuksDeviceKeyResult.
- * Use `create(RevokeLuksDeviceKeyResultSchema)` to create a new message.
- */
-export const RevokeLuksDeviceKeyResultSchema: GenMessage<RevokeLuksDeviceKeyResult> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 31);
-
-/**
- * @generated from message cadestro.v1.ValidateLuksTokenRequest
- */
-export type ValidateLuksTokenRequest = Message<"cadestro.v1.ValidateLuksTokenRequest"> & {
-  /**
-   * @generated from field: string token = 1;
-   */
-  token: string;
-};
-
-/**
- * Describes the message cadestro.v1.ValidateLuksTokenRequest.
- * Use `create(ValidateLuksTokenRequestSchema)` to create a new message.
- */
-export const ValidateLuksTokenRequestSchema: GenMessage<ValidateLuksTokenRequest> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 32);
-
-/**
- * @generated from message cadestro.v1.ValidateLuksTokenResponse
- */
-export type ValidateLuksTokenResponse = Message<"cadestro.v1.ValidateLuksTokenResponse"> & {
-  /**
-   * @generated from field: cadestro.v1.ActionId action_id = 1;
-   */
-  actionId?: ActionId;
-
-  /**
-   * @generated from field: string device_path = 2;
-   */
-  devicePath: string;
-
-  /**
-   * @generated from field: int32 min_length = 3;
-   */
-  minLength: number;
-
-  /**
-   * @generated from field: cadestro.v1.LpsPasswordComplexity complexity = 4;
-   */
-  complexity: LpsPasswordComplexity;
-};
-
-/**
- * Describes the message cadestro.v1.ValidateLuksTokenResponse.
- * Use `create(ValidateLuksTokenResponseSchema)` to create a new message.
- */
-export const ValidateLuksTokenResponseSchema: GenMessage<ValidateLuksTokenResponse> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 33);
-
-/**
- * @generated from message cadestro.v1.SyncRequest
- */
-export type SyncRequest = Message<"cadestro.v1.SyncRequest"> & {
-};
-
-/**
- * Describes the message cadestro.v1.SyncRequest.
- * Use `create(SyncRequestSchema)` to create a new message.
- */
-export const SyncRequestSchema: GenMessage<SyncRequest> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 34);
-
-/**
- * @generated from message cadestro.v1.SyncState
- */
-export type SyncState = Message<"cadestro.v1.SyncState"> & {
-  /**
-   * @generated from field: int32 sync_interval_minutes = 1;
-   */
-  syncIntervalMinutes: number;
-
-  /**
-   * @generated from field: cadestro.v1.MaintenanceWindow maintenance_window = 2;
-   */
-  maintenanceWindow?: MaintenanceWindow;
-
-  /**
-   * @generated from field: cadestro.v1.DesiredPolicy desired_policy = 3;
-   */
-  desiredPolicy?: DesiredPolicy;
-};
-
-/**
- * Describes the message cadestro.v1.SyncState.
- * Use `create(SyncStateSchema)` to create a new message.
- */
-export const SyncStateSchema: GenMessage<SyncState> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 35);
-
-/**
- * @generated from message cadestro.v1.DesiredPolicy
- */
-export type DesiredPolicy = Message<"cadestro.v1.DesiredPolicy"> & {
-  /**
-   * @generated from field: cadestro.v1.PolicyRevisionId revision = 1;
-   */
-  revision?: PolicyRevisionId;
-
-  /**
-   * @generated from field: repeated cadestro.v1.Manifest manifests = 2;
-   */
-  manifests: Manifest[];
-};
-
-/**
- * Describes the message cadestro.v1.DesiredPolicy.
- * Use `create(DesiredPolicySchema)` to create a new message.
- */
-export const DesiredPolicySchema: GenMessage<DesiredPolicy> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 36);
-
-/**
- * @generated from message cadestro.v1.LogQuery
- */
-export type LogQuery = Message<"cadestro.v1.LogQuery"> & {
-  /**
-   * @generated from field: cadestro.v1.QueryId query_id = 1;
-   */
-  queryId?: QueryId;
-
-  /**
-   * @generated from field: int32 lines = 2;
-   */
-  lines: number;
-
-  /**
-   * @generated from field: string unit = 3;
-   */
-  unit: string;
-
-  /**
-   * @generated from field: string since = 4;
-   */
-  since: string;
-
-  /**
-   * @generated from field: string until = 5;
-   */
-  until: string;
-
-  /**
-   * @generated from field: string priority = 6;
-   */
-  priority: string;
-
-  /**
-   * @generated from field: string grep = 7;
-   */
-  grep: string;
-
-  /**
-   * @generated from field: bool kernel = 8;
-   */
-  kernel: boolean;
-
-  /**
-   * @generated from field: cadestro.v1.LogSource source = 9;
-   */
-  source: LogSource;
-};
-
-/**
- * Describes the message cadestro.v1.LogQuery.
- * Use `create(LogQuerySchema)` to create a new message.
- */
-export const LogQuerySchema: GenMessage<LogQuery> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 37);
-
-/**
- * @generated from message cadestro.v1.LogQueryResult
- */
-export type LogQueryResult = Message<"cadestro.v1.LogQueryResult"> & {
-  /**
-   * @generated from field: cadestro.v1.QueryId query_id = 1;
-   */
-  queryId?: QueryId;
-
-  /**
-   * @generated from field: bool success = 2;
-   */
-  success: boolean;
-
-  /**
-   * @generated from field: string error = 3;
-   */
-  error: string;
-
-  /**
-   * @generated from field: string logs = 4;
-   */
-  logs: string;
-};
-
-/**
- * Describes the message cadestro.v1.LogQueryResult.
- * Use `create(LogQueryResultSchema)` to create a new message.
- */
-export const LogQueryResultSchema: GenMessage<LogQueryResult> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 38);
-
-/**
- * @generated from message cadestro.v1.TerminalStart
- */
-export type TerminalStart = Message<"cadestro.v1.TerminalStart"> & {
-  /**
-   * @generated from field: cadestro.v1.SessionId session_id = 1;
-   */
-  sessionId?: SessionId;
-
-  /**
-   * @generated from field: string tty_user = 2;
-   */
-  ttyUser: string;
-
-  /**
-   * @generated from field: uint32 cols = 3;
-   */
-  cols: number;
-
-  /**
-   * @generated from field: uint32 rows = 4;
-   */
-  rows: number;
-};
-
-/**
- * Describes the message cadestro.v1.TerminalStart.
- * Use `create(TerminalStartSchema)` to create a new message.
- */
-export const TerminalStartSchema: GenMessage<TerminalStart> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 39);
-
-/**
- * @generated from message cadestro.v1.TerminalInput
- */
-export type TerminalInput = Message<"cadestro.v1.TerminalInput"> & {
-  /**
-   * @generated from field: cadestro.v1.SessionId session_id = 1;
-   */
-  sessionId?: SessionId;
-
-  /**
-   * @generated from field: bytes data = 2;
-   */
-  data: Uint8Array;
-};
-
-/**
- * Describes the message cadestro.v1.TerminalInput.
- * Use `create(TerminalInputSchema)` to create a new message.
- */
-export const TerminalInputSchema: GenMessage<TerminalInput> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 40);
-
-/**
- * @generated from message cadestro.v1.TerminalResize
- */
-export type TerminalResize = Message<"cadestro.v1.TerminalResize"> & {
-  /**
-   * @generated from field: cadestro.v1.SessionId session_id = 1;
-   */
-  sessionId?: SessionId;
-
-  /**
-   * @generated from field: uint32 cols = 2;
-   */
-  cols: number;
-
-  /**
-   * @generated from field: uint32 rows = 3;
-   */
-  rows: number;
-};
-
-/**
- * Describes the message cadestro.v1.TerminalResize.
- * Use `create(TerminalResizeSchema)` to create a new message.
- */
-export const TerminalResizeSchema: GenMessage<TerminalResize> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 41);
-
-/**
- * @generated from message cadestro.v1.TerminalStop
- */
-export type TerminalStop = Message<"cadestro.v1.TerminalStop"> & {
-  /**
-   * @generated from field: cadestro.v1.SessionId session_id = 1;
-   */
-  sessionId?: SessionId;
-
-  /**
-   * @generated from field: string reason = 2;
-   */
-  reason: string;
-};
-
-/**
- * Describes the message cadestro.v1.TerminalStop.
- * Use `create(TerminalStopSchema)` to create a new message.
- */
-export const TerminalStopSchema: GenMessage<TerminalStop> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 42);
-
-/**
- * @generated from message cadestro.v1.TerminalOutput
- */
-export type TerminalOutput = Message<"cadestro.v1.TerminalOutput"> & {
-  /**
-   * @generated from field: cadestro.v1.SessionId session_id = 1;
-   */
-  sessionId?: SessionId;
-
-  /**
-   * @generated from field: bytes data = 2;
-   */
-  data: Uint8Array;
-};
-
-/**
- * Describes the message cadestro.v1.TerminalOutput.
- * Use `create(TerminalOutputSchema)` to create a new message.
- */
-export const TerminalOutputSchema: GenMessage<TerminalOutput> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 43);
-
-/**
- * @generated from message cadestro.v1.TerminalStateChange
- */
-export type TerminalStateChange = Message<"cadestro.v1.TerminalStateChange"> & {
-  /**
-   * @generated from field: cadestro.v1.SessionId session_id = 1;
-   */
-  sessionId?: SessionId;
-
-  /**
-   * @generated from field: cadestro.v1.TerminalSessionState state = 2;
-   */
-  state: TerminalSessionState;
-
-  /**
-   * @generated from field: int32 exit_code = 3;
-   */
-  exitCode: number;
-
-  /**
-   * @generated from field: string error = 4;
-   */
-  error: string;
-};
-
-/**
- * Describes the message cadestro.v1.TerminalStateChange.
- * Use `create(TerminalStateChangeSchema)` to create a new message.
- */
-export const TerminalStateChangeSchema: GenMessage<TerminalStateChange> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 44);
-
-/**
- * @generated from enum cadestro.v1.SecurityAlertType
- */
-export enum SecurityAlertType {
-  /**
-   * @generated from enum value: SECURITY_ALERT_TYPE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: SECURITY_ALERT_TYPE_SERVER_REASSIGNMENT_ATTEMPT = 1;
-   */
-  SERVER_REASSIGNMENT_ATTEMPT = 1,
-
-  /**
-   * @generated from enum value: SECURITY_ALERT_TYPE_CREDENTIAL_TAMPERING = 2;
-   */
-  CREDENTIAL_TAMPERING = 2,
-
-  /**
-   * @generated from enum value: SECURITY_ALERT_TYPE_INVALID_CERTIFICATE = 3;
-   */
-  INVALID_CERTIFICATE = 3,
-}
-
-/**
- * Describes the enum cadestro.v1.SecurityAlertType.
- */
-export const SecurityAlertTypeSchema: GenEnum<SecurityAlertType> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_agent, 0);
-
-/**
- * @generated from enum cadestro.v1.OnFailure
- */
-export enum OnFailure {
-  /**
-   * @generated from enum value: ON_FAILURE_CONTINUE = 0;
-   */
-  CONTINUE = 0,
-
-  /**
-   * @generated from enum value: ON_FAILURE_STOP = 1;
-   */
-  STOP = 1,
-}
-
-/**
- * Describes the enum cadestro.v1.OnFailure.
- */
-export const OnFailureSchema: GenEnum<OnFailure> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_agent, 1);
+  messageDesc(file_cadestro_v1_agent, 11);
 
 /**
  * @generated from enum cadestro.v1.ResultAckCode
@@ -1420,115 +373,7 @@ export enum ResultAckCode {
  * Describes the enum cadestro.v1.ResultAckCode.
  */
 export const ResultAckCodeSchema: GenEnum<ResultAckCode> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_agent, 2);
-
-/**
- * @generated from enum cadestro.v1.OSQueryOp
- */
-export enum OSQueryOp {
-  /**
-   * @generated from enum value: OS_QUERY_OP_UNSPECIFIED = 0;
-   */
-  OS_QUERY_OP_UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: OS_QUERY_OP_EQ = 1;
-   */
-  OS_QUERY_OP_EQ = 1,
-
-  /**
-   * @generated from enum value: OS_QUERY_OP_NE = 2;
-   */
-  OS_QUERY_OP_NE = 2,
-
-  /**
-   * @generated from enum value: OS_QUERY_OP_GT = 3;
-   */
-  OS_QUERY_OP_GT = 3,
-
-  /**
-   * @generated from enum value: OS_QUERY_OP_LT = 4;
-   */
-  OS_QUERY_OP_LT = 4,
-
-  /**
-   * @generated from enum value: OS_QUERY_OP_GE = 5;
-   */
-  OS_QUERY_OP_GE = 5,
-
-  /**
-   * @generated from enum value: OS_QUERY_OP_LE = 6;
-   */
-  OS_QUERY_OP_LE = 6,
-
-  /**
-   * @generated from enum value: OS_QUERY_OP_LIKE = 7;
-   */
-  OS_QUERY_OP_LIKE = 7,
-
-  /**
-   * @generated from enum value: OS_QUERY_OP_GLOB = 8;
-   */
-  OS_QUERY_OP_GLOB = 8,
-}
-
-/**
- * Describes the enum cadestro.v1.OSQueryOp.
- */
-export const OSQueryOpSchema: GenEnum<OSQueryOp> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_agent, 3);
-
-/**
- * @generated from enum cadestro.v1.LogSource
- */
-export enum LogSource {
-  /**
-   * @generated from enum value: LOG_SOURCE_JOURNALD = 0;
-   */
-  JOURNALD = 0,
-
-  /**
-   * @generated from enum value: LOG_SOURCE_SYSLOG = 1;
-   */
-  SYSLOG = 1,
-}
-
-/**
- * Describes the enum cadestro.v1.LogSource.
- */
-export const LogSourceSchema: GenEnum<LogSource> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_agent, 4);
-
-/**
- * @generated from enum cadestro.v1.TerminalSessionState
- */
-export enum TerminalSessionState {
-  /**
-   * @generated from enum value: TERMINAL_SESSION_STATE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: TERMINAL_SESSION_STATE_STARTED = 1;
-   */
-  STARTED = 1,
-
-  /**
-   * @generated from enum value: TERMINAL_SESSION_STATE_EXITED = 2;
-   */
-  EXITED = 2,
-
-  /**
-   * @generated from enum value: TERMINAL_SESSION_STATE_ERROR = 3;
-   */
-  ERROR = 3,
-}
-
-/**
- * Describes the enum cadestro.v1.TerminalSessionState.
- */
-export const TerminalSessionStateSchema: GenEnum<TerminalSessionState> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_agent, 5);
+  enumDesc(file_cadestro_v1_agent, 0);
 
 /**
  * @generated from service cadestro.v1.AgentService

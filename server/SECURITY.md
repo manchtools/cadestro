@@ -1,94 +1,25 @@
 # Security policy
 
-## Reporting a vulnerability
-
 Report vulnerabilities privately to the repository maintainers. Do not open a
-public issue containing exploit details, credentials, or affected deployment
-data.
+public issue containing exploit details, credentials, or deployment data.
 
-## Architecture authority
+Administrators authenticate through OIDC. Agents bootstrap with a one-time
+registration token, generate an Ed25519 key locally, pin the control CA, and
+then authenticate directly to the agent listener with mTLS.
 
-The sole system security design is
-`../DESIGN_2026_07_31/00_TARGET_DESIGN.md`. This file describes the
-repository's security contract without creating a competing architecture.
+The public and agent listeners are distinct TLS endpoints. Validation runs
+before authentication and authorization. Device identity comes from the
+verified client certificate and active certificate serial.
 
-## Trust boundaries
+OIDC client secrets are encrypted at rest with AES-256-GCM and resource-bound
+additional authenticated data. CA keys, TLS keys, session signing keys,
+encryption keys, and the SQLite database require owner-only storage.
 
-- Traefik is the only internet-facing server component.
-- The browser authenticates to control with an OIDC-derived session.
-- Agents authenticate directly to control with device mTLS certificates.
-- The embedded SQLite database is trusted for availability and persistence, but
-  a database copy must not reveal plaintext protected secrets.
-- The control host and its CA/key material are trusted. A hostile host
-  administrator is outside the application threat boundary.
+Shell actions run as root and are therefore equivalent to administrator code
+execution on assigned devices. Only trusted administrators should be able to
+author or assign them. Agents accept desired actions only from their
+authenticated control connection.
 
-## Required guarantees
-
-### Identity and authorization
-
-Human login is OIDC only. SCIM owns managed provisioning and erasure; providers
-without SCIM may opt into OIDC JIT provisioning, whose subjects can be erased
-only through the provenance-gated local JIT-erasure path. MFA belongs to the
-identity provider. The bootstrap-admin token is single-use, short-lived, and
-cannot act as an ordinary `:self` user.
-
-Every trust-boundary input is validated before authentication and
-authorization. Object-scoped non-owner access returns NotFound. Privilege-
-widening permissions remain global-only.
-
-### Device transport
-
-The device generates its own Ed25519 key and CSR. Its private key never leaves
-the device. Control terminates mTLS, derives device identity from the
-certificate, checks the device's active serial during handshake and privileged
-frames, and rejects a live stream as soon as another certificate is promoted.
-
-Ordinary application frames are not separately signed. There is no untrusted
-relay or offline verifier between agent and control.
-
-### Secrets
-
-Classified protobuf fields carry raw bytes only inside the authenticated mTLS
-device stream. The peer certificate supplies the device identity; there is no
-second application envelope or caller-supplied device binding.
-
-At rest, secret values use AES-256-GCM with resource-context AAD and distinct
-domain tags. Values are decrypted only on a fresh outbound copy or at an
-explicit audited reveal sink.
-
-Logging is metadata-only. Secrets must not enter debug formatting, logs,
-errors, traces, audit payloads, or support bundles.
-
-### State and audit
-
-Application state is ordinary CRUD. The audit log is append-only evidence, not
-authoritative state. Ordinary mutations and their initial operation/effect rows
-commit in one transaction. Coalesced heartbeat liveness is the sole named
-unaudited telemetry writer. Shared boundaries and exact-set tests enforce
-coverage for RPCs, sensitive reads, rejected authentication, SCIM, enrollment,
-jobs, and background writers.
-
-### Device control
-
-Assignments compile into a deterministic manifest snapshot during device
-synchronization. Sync and reboot are the only ordinary control-to-agent
-commands. Policy results are keyed by run identity and remain idempotent
-across reconnects; an explicit INDETERMINATE outcome prevents silent replay
-of non-idempotent effects.
-
-## Deployment requirements
-
-- Do not expose control directly to the internet.
-- Do not mount the Docker socket into Traefik.
-- Restrict the PROXY-protocol listener to the isolated Traefik network.
-- Protect CA, JWT, database, and at-rest encryption keys with strict
-  filesystem or deployment-secret permissions.
-<!-- docref: begin src=deploy/backup.sh#@sqlite-backup:c19c264f,cmd/cadestro/backup_status.go#runBackupStatus:41ed4e6c -->
-- Run `deploy/backup.sh` from a host timer and replicate the
-  `CADESTRO_BACKUP_PATH` directory off-host: it contains verified bounded
-  SQLite backups. Back up artifacts too, and monitor `cadestro backup-status`.
-<!-- docref: end -->
-
-Gateway, Valkey, Asynq, external indexing, CRL distribution, local
-password/TOTP, and application-frame signing are not compensating controls and
-must not be reintroduced.
+Traefik is the only component that publishes host ports in the reference
+deployment. It terminates browser/API TLS and passes agent TLS through without
+terminating the device certificate exchange.

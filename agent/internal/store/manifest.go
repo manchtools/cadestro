@@ -41,12 +41,6 @@ type ScheduledWork struct {
 	RunInProgress bool
 }
 
-type ManifestOccurrenceState struct {
-	State        string
-	ResultStatus pb.ExecutionStatus
-	ResultError  string
-}
-
 type PendingResult struct {
 	ID             string
 	ActionResult   *pb.ActionResult
@@ -66,7 +60,7 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 	}
 	current := make(map[string]*pb.Manifest, len(policy.Manifests))
 	for _, manifest := range policy.Manifests {
-		if manifest == nil || manifest.GetManifestId().GetValue() == "" || len(manifest.GetOccurrences()) == 0 {
+		if manifest == nil || manifest.GetManifestId().GetValue() == "" || manifest.GetOccurrenceId().GetValue() == "" || manifest.GetAction().GetId().GetValue() == "" {
 			return errors.New("reconcile policy: malformed manifest")
 		}
 		if _, exists := current[manifest.GetManifestId().GetValue()]; exists {
@@ -135,15 +129,10 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 		}); err != nil {
 			return fmt.Errorf("reconcile policy: insert %s: %w", id, err)
 		}
-		for position, occurrence := range manifest.GetOccurrences() {
-			if occurrence == nil || occurrence.GetOccurrenceId().GetValue() == "" || occurrence.GetAction().GetId().GetValue() == "" {
-				return errors.New("reconcile policy: malformed occurrence")
-			}
-			if err := queries.InsertOccurrence(ctx, generated.InsertOccurrenceParams{
-				WorkID: id, OccurrenceID: occurrence.GetOccurrenceId().GetValue(), Position: int64(position), ActionID: occurrence.GetAction().GetId().GetValue(),
-			}); err != nil {
-				return fmt.Errorf("reconcile policy: insert occurrence: %w", err)
-			}
+		if err := queries.InsertOccurrence(ctx, generated.InsertOccurrenceParams{
+			WorkID: id, OccurrenceID: manifest.GetOccurrenceId().GetValue(), Position: 0, ActionID: manifest.GetAction().GetId().GetValue(),
+		}); err != nil {
+			return fmt.Errorf("reconcile policy: insert occurrence: %w", err)
 		}
 	}
 	if err := queries.SetAssignedPolicyRevision(ctx, policy.GetRevision().GetValue()); err != nil {
@@ -199,19 +188,14 @@ func (s *Store) GetManifestActions(ctx context.Context) ([]*StoredAction, error)
 		if err := unmarshalStoredProto(blob, manifest); err != nil {
 			return nil, fmt.Errorf("decode manifest work %s: %w", workID, err)
 		}
-		for _, occurrence := range manifest.GetOccurrences() {
-			stored := &StoredAction{
-				ID:            occurrence.GetAction().GetId().GetValue(),
-				Action:        occurrence.GetAction(),
-				AssignedAt:    received,
-				NextExecuteAt: next,
-			}
-			if row.LastExecutedAt != nil {
-				lastTime := *row.LastExecutedAt
-				stored.LastExecutedAt = &lastTime
-			}
-			actions = append(actions, stored)
+		stored := &StoredAction{
+			ID: manifest.GetAction().GetId().GetValue(), Action: manifest.GetAction(), AssignedAt: received, NextExecuteAt: next,
 		}
+		if row.LastExecutedAt != nil {
+			lastTime := *row.LastExecutedAt
+			stored.LastExecutedAt = &lastTime
+		}
+		actions = append(actions, stored)
 	}
 	return actions, nil
 }
@@ -289,28 +273,6 @@ func (s *Store) MarkOccurrenceStarted(ctx context.Context, workID, occurrenceID 
 		return fmt.Errorf("mark occurrence started: invalid state for %s/%s", workID, occurrenceID)
 	}
 	return nil
-}
-
-func (s *Store) GetManifestOccurrenceStates(ctx context.Context, workID string) (map[string]ManifestOccurrenceState, error) {
-	workID, err := s.resolveWorkID(ctx, workID)
-	if err != nil {
-		return nil, err
-	}
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	rows, err := s.queries.GetOccurrenceStates(ctx, workID)
-	if err != nil {
-		return nil, err
-	}
-	states := make(map[string]ManifestOccurrenceState)
-	for _, row := range rows {
-		item := ManifestOccurrenceState{State: row.State, ResultError: row.ResultError}
-		if row.ResultStatus != nil {
-			item.ResultStatus = pb.ExecutionStatus(*row.ResultStatus)
-		}
-		states[row.OccurrenceID] = item
-	}
-	return states, nil
 }
 
 func (s *Store) RecordOccurrenceResult(ctx context.Context, result *pb.ActionResult, suppressUnchanged bool) (string, bool, error) {
@@ -548,9 +510,7 @@ func occurrenceState(status pb.ExecutionStatus) (string, error) {
 		return OccurrenceIndeterminate, nil
 	case pb.ExecutionStatus_EXECUTION_STATUS_FAILED,
 		pb.ExecutionStatus_EXECUTION_STATUS_TIMEOUT,
-		pb.ExecutionStatus_EXECUTION_STATUS_CANCELLED,
-		pb.ExecutionStatus_EXECUTION_STATUS_SKIPPED,
-		pb.ExecutionStatus_EXECUTION_STATUS_NOT_APPLICABLE:
+		pb.ExecutionStatus_EXECUTION_STATUS_SKIPPED:
 		return OccurrenceFailed, nil
 	default:
 		return "", fmt.Errorf("record occurrence result: non-terminal status %s", status)

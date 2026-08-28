@@ -5,14 +5,12 @@ on:
     paths:
       - 'web/**'
       - 'contract/gen/ts/**'
-      - 'contract/ts/**'
       - '.github/workflows/web.yml'
   push:
     branches: [main]
     paths:
       - 'web/**'
       - 'contract/gen/ts/**'
-      - 'contract/ts/**'
       - '.github/workflows/web.yml'
 
 concurrency:
@@ -30,19 +28,12 @@ jobs:
         working-directory: web
     steps:
       - uses: actions/checkout@v5
-
-      - uses: oven-sh/setup-bun@v2
-
-      - run: bun install
-      - run: ln -s $(pwd)/node_modules ../contract/node_modules
-      - run: bun run check
-      - run: bunx playwright install --with-deps chromium
-      - run: bun run test
-      - run: bun run test:e2e
-
-      - uses: actions/upload-artifact@v5
-        if: ${{ !cancelled() }}
+      - uses: actions/setup-node@v4
         with:
-          name: playwright-report
-          path: web/playwright-report/
-          retention-days: 30
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run build

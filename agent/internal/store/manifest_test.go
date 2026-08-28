@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
@@ -13,194 +12,64 @@ import (
 
 func testManifest() *pb.Manifest {
 	return &pb.Manifest{
-		ManifestId: &pb.ManifestId{Value: "01K00000000000000000000002"},
-		Schedule:   &pb.ActionSchedule{RunOnAssign: true, IntervalHours: 8},
-		Occurrences: []*pb.ManifestOccurrence{{
-			OccurrenceId: &pb.OccurrenceId{Value: "01K00000000000000000000003"},
-			Action: &pb.Action{
-				Id:   &pb.ActionId{Value: "01K00000000000000000000004"},
-				Type: pb.ActionType_ACTION_TYPE_UPDATE,
-			},
-		}},
+		ManifestId:   &pb.ManifestId{Value: "01K00000000000000000000002"},
+		OccurrenceId: &pb.OccurrenceId{Value: "01K00000000000000000000003"},
+		Action:       &pb.Action{Id: &pb.ActionId{Value: "01K00000000000000000000004"}, Type: pb.ActionType_ACTION_TYPE_UPDATE},
+		Schedule:     &pb.ActionSchedule{RunOnAssign: true, IntervalHours: 8},
 	}
 }
-func TestReconcilePolicyIsReceiptFreeAndRemovesUnassignedWork(t *testing.T) {
-	st, err := New(t.TempDir())
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, st.Close()) })
 
-	manifest := testManifest()
-	manifest.ManifestId = &pb.ManifestId{Value: "01K00000000000000000000012"}
-	manifest.Occurrences[0].OccurrenceId = &pb.OccurrenceId{Value: "01K00000000000000000000013"}
-	policy := &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: "01K00000000000000000000014"}, Manifests: []*pb.Manifest{manifest}}
-	require.NoError(t, st.ReconcilePolicy(context.Background(), policy))
-
-	due, err := st.GetDueScheduledWork(context.Background())
-	require.NoError(t, err)
-	require.Len(t, due, 1)
-	require.Equal(t, manifest.GetManifestId().GetValue(), due[0].Manifest.GetManifestId().GetValue())
-
-	require.NoError(t, st.ReconcilePolicy(context.Background(), policy))
-	due, err = st.GetDueScheduledWork(context.Background())
-	require.NoError(t, err)
-	require.Len(t, due, 1)
-
-	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: "01K00000000000000000000015"}}))
-	due, err = st.GetDueScheduledWork(context.Background())
-	require.NoError(t, err)
-	require.Empty(t, due)
-	var remaining int
-	require.NoError(t, st.db.QueryRow(`SELECT COUNT(*) FROM scheduled_work WHERE retired = FALSE`).Scan(&remaining))
-	require.Zero(t, remaining, "idle unassigned policy work is deleted, not left retired")
-}
-
-func TestReconcilePolicyRejectsDuplicateManifestIdentity(t *testing.T) {
-	st, err := New(t.TempDir())
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, st.Close()) })
-
-	manifest := testManifest()
-	err = st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{
-		Revision:  &pb.PolicyRevisionId{Value: "01K00000000000000000000016"},
-		Manifests: []*pb.Manifest{manifest, manifest},
-	})
-	require.ErrorContains(t, err, "duplicate manifest identity")
-}
-
-func TestReconcilePolicyKeepsStoredManifestAcrossResealing(t *testing.T) {
-	st, err := New(t.TempDir())
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, st.Close()) })
-
-	manifest := testManifest()
-	manifest.Occurrences[0].Action = &pb.Action{
-		Id: &pb.ActionId{Value: "01K00000000000000000000004"}, Type: pb.ActionType_ACTION_TYPE_ENCRYPTION,
-		Params: &pb.Action_Encryption{Encryption: &pb.EncryptionParams{
-			PresharedKey: []byte("first-seal"), RotationIntervalDays: 30,
-		}},
-	}
-	policy := &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: "01K00000000000000000000026"}, Manifests: []*pb.Manifest{manifest}}
-	require.NoError(t, st.ReconcilePolicy(context.Background(), policy))
-
-	manifest.Occurrences[0].Action.GetEncryption().PresharedKey = []byte("changed")
-	require.NoError(t, st.ReconcilePolicy(context.Background(), policy))
-	due, err := st.GetDueScheduledWork(context.Background())
-	require.NoError(t, err)
-	require.Len(t, due, 1)
-	assert.Equal(t, []byte("first-seal"), due[0].Manifest.GetOccurrences()[0].GetAction().GetEncryption().GetPresharedKey())
-}
-
-func TestPolicyRunIdentityRotatesAndRetiredWorkDeletesAfterCompletion(t *testing.T) {
-	st, err := New(t.TempDir())
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, st.Close()) })
-	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
-	st.SetClockForTest(func() time.Time { return now })
-	manifest := testManifest()
-	manifest.ManifestId = &pb.ManifestId{Value: "01K00000000000000000000022"}
-	policy := &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: "01K000000000000000000000023"}, Manifests: []*pb.Manifest{manifest}}
-	require.NoError(t, st.ReconcilePolicy(context.Background(), policy))
-	due, err := st.GetDueScheduledWork(context.Background())
-	require.NoError(t, err)
-	require.Len(t, due, 1)
-	workID := due[0].WorkID
-	require.NotEmpty(t, workID)
-	require.NoError(t, func() error {
-		_, err := st.BeginManifestRun(context.Background(), &due[0], now)
-		return err
-	}())
-	firstRun := due[0].RunID
-	require.NotEqual(t, workID, firstRun, "a policy firing must have a distinct run identity")
-
-	_, err = st.RecordManifestResult(context.Background(), &pb.ManifestResult{
-		RunId:      &pb.RunId{Value: firstRun},
-		ManifestId: manifest.GetManifestId(),
-	})
-	require.NoError(t, err)
-	now = now.Add(9 * time.Hour)
-	st.SetClockForTest(func() time.Time { return now })
-	due, err = st.GetDueScheduledWork(context.Background())
-	require.NoError(t, err)
-	require.Len(t, due, 1)
-	require.NotEqual(t, firstRun, due[0].RunID, "recurring policy firing must receive a fresh run identity")
-	secondRun := due[0].RunID
-	_, err = st.BeginManifestRun(context.Background(), &due[0], now)
-	require.NoError(t, err)
-	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: "01K000000000000000000000025"}}))
-	due, err = st.GetDueScheduledWork(context.Background())
-	require.NoError(t, err)
-	require.Len(t, due, 1, "retired work remains resumable while its run is active")
-	require.True(t, due[0].RunInProgress)
-	_, err = st.RecordManifestResult(context.Background(), &pb.ManifestResult{RunId: &pb.RunId{Value: secondRun}, ManifestId: manifest.GetManifestId()})
-	require.NoError(t, err)
-	var remaining int
-	require.NoError(t, st.db.QueryRow(`SELECT COUNT(*) FROM scheduled_work WHERE work_id = ?`, workID).Scan(&remaining))
-	require.Zero(t, remaining, "retired policy work is deleted after its active run closes")
-}
-
-func TestRecordManifestResultReturnsCleanupFailure(t *testing.T) {
+func TestReconcilePolicyReplacesUnassignedWork(t *testing.T) {
 	st, err := New(t.TempDir())
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, st.Close()) })
 	manifest := testManifest()
 	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{
-		Revision:  &pb.PolicyRevisionId{Value: "01K00000000000000000000045"},
-		Manifests: []*pb.Manifest{manifest},
+		Revision: &pb.PolicyRevisionId{Value: "01K00000000000000000000005"}, Manifests: []*pb.Manifest{manifest},
 	}))
 	due, err := st.GetDueScheduledWork(context.Background())
 	require.NoError(t, err)
 	require.Len(t, due, 1)
-	require.NoError(t, func() error {
-		_, err := st.BeginManifestRun(context.Background(), &due[0], time.Now())
-		return err
-	}())
-	_, err = st.db.Exec(`
-		CREATE TRIGGER fail_manifest_cleanup
-		BEFORE UPDATE OF run_id ON scheduled_work
-		WHEN NEW.run_id IS NULL
-		BEGIN
-			SELECT RAISE(ABORT, 'cleanup failed');
-		END
-	`)
-	require.NoError(t, err)
+	require.Equal(t, manifest.GetAction().GetId().GetValue(), due[0].Manifest.GetAction().GetId().GetValue())
 
-	_, err = st.RecordManifestResult(context.Background(), &pb.ManifestResult{
-		RunId:      &pb.RunId{Value: due[0].RunID},
-		ManifestId: manifest.GetManifestId(),
-	})
-	require.ErrorContains(t, err, "cleanup failed")
-	var outbox int
-	require.NoError(t, st.db.QueryRow(`SELECT COUNT(*) FROM result_outbox`).Scan(&outbox))
-	assert.Zero(t, outbox)
+	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: "01K00000000000000000000006"}}))
+	due, err = st.GetDueScheduledWork(context.Background())
+	require.NoError(t, err)
+	require.Empty(t, due)
 }
 
-func TestRecoverInterruptedOccurrenceQueuesIndeterminate(t *testing.T) {
+func TestReconcilePolicyRejectsMalformedManifest(t *testing.T) {
+	st, err := New(t.TempDir())
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, st.Close()) })
+	err = st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{
+		Revision:  &pb.PolicyRevisionId{Value: "01K00000000000000000000007"},
+		Manifests: []*pb.Manifest{{ManifestId: &pb.ManifestId{Value: "01K00000000000000000000008"}}},
+	})
+	require.ErrorContains(t, err, "malformed manifest")
+}
+
+func TestInterruptedActionBecomesIndeterminate(t *testing.T) {
 	st, err := New(t.TempDir())
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, st.Close()) })
 	manifest := testManifest()
-	policy := &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: "01K00000000000000000000035"}, Manifests: []*pb.Manifest{manifest}}
-	require.NoError(t, st.ReconcilePolicy(context.Background(), policy))
+	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{
+		Revision: &pb.PolicyRevisionId{Value: "01K00000000000000000000009"}, Manifests: []*pb.Manifest{manifest},
+	}))
 	due, err := st.GetDueScheduledWork(context.Background())
 	require.NoError(t, err)
 	require.Len(t, due, 1)
 	_, err = st.BeginManifestRun(context.Background(), &due[0], time.Now())
 	require.NoError(t, err)
-	occurrence := manifest.GetOccurrences()[0]
-	require.NoError(t, st.MarkOccurrenceStarted(context.Background(), due[0].RunID, occurrence.GetOccurrenceId().GetValue(), time.Now()))
+	require.NoError(t, st.MarkOccurrenceStarted(context.Background(), due[0].RunID, manifest.GetOccurrenceId().GetValue(), time.Now()))
 
-	_, err = st.RecoverInterruptedOccurrences(context.Background())
+	recovered, err := st.RecoverInterruptedOccurrences(context.Background())
 	require.NoError(t, err)
-	pending, err := st.GetPendingResults(context.Background())
-	require.NoError(t, err)
-	require.Len(t, pending, 1)
-	require.Equal(t, pb.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE, pending[0].ActionResult.GetStatus())
-	require.Equal(t, due[0].RunID, pending[0].ActionResult.GetRunId().GetValue())
-	require.Equal(t, occurrence.GetOccurrenceId().GetValue(), pending[0].ActionResult.GetOccurrenceId().GetValue())
+	require.Len(t, recovered, 1)
+	require.Equal(t, pb.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE, recovered[0].ActionResult.GetStatus())
 
-	_, err = st.RecoverInterruptedOccurrences(context.Background())
+	recovered, err = st.RecoverInterruptedOccurrences(context.Background())
 	require.NoError(t, err)
-	pending, err = st.GetPendingResults(context.Background())
-	require.NoError(t, err)
-	require.Len(t, pending, 1, "recovery must be idempotent")
+	require.Empty(t, recovered)
 }

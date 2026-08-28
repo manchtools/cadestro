@@ -1,44 +1,19 @@
 [Unit]
 Description=Cadestro Agent
-Documentation=https://github.com/manchtools/cadestro
 After=network-online.target
 Wants=network-online.target
-StartLimitIntervalSec=60
-StartLimitBurst=3
 
 [Service]
 Type=simple
-
 User=root
 Group=root
-
 Environment="CADESTRO_DATA_DIR={{.DataDir}}"
-
 ExecStart={{.BinaryPath}} -data-dir={{.DataDir}} -log-level=info
-
 Restart=always
 RestartSec=10
-
 RuntimeDirectory=cadestro
-RuntimeDirectoryMode=0755
-
-# docref: begin capability-boundary
-NoNewPrivileges=false
-ProtectSystem=false
-ProtectHome=false
-PrivateTmp=false
-ProtectKernelTunables=false
-ProtectKernelModules=false
+RuntimeDirectoryMode=0700
 ProtectControlGroups=true
-RestrictRealtime={{if .RestrictRealtime}}true{{else}}false{{end}}
-RestrictSUIDSGID=false
-
-AmbientCapabilities=CAP_SETUID CAP_SETGID
-CapabilityBoundingSet=CAP_SETUID CAP_SETGID CAP_AUDIT_WRITE CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER CAP_NET_BIND_SERVICE CAP_NET_ADMIN CAP_SYS_ADMIN CAP_KILL CAP_SETFCAP CAP_NET_RAW
-
-PrivateNetwork=false
-# docref: end capability-boundary
-
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=cadestrod

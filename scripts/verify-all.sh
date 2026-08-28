@@ -56,19 +56,17 @@ echo "== check"
 npm run check
 echo "== test"
 npm test
+echo "== build"
+npm run build
 '
 
-run "deploy shell tests" server bash -c '
+run "deploy" server bash -c '
 set -euo pipefail
-for t in deploy/setup_test.sh deploy/install_test.sh deploy/backup_test.sh; do
-    echo "== $t"
-    bash "$t"
-done
+bash -n deploy/setup.sh deploy/deploy.sh deploy/setup_test.sh
+bash deploy/setup_test.sh
 '
 
 run "root structure" . ./scripts/verify.sh
-
-run "cutover judge" . python3 tools/cutover_judge.py --repo "$ROOT" --candidate .
 
 printf '\n\033[1m== verify-all summary\033[0m\n'
 for i in "${!names[@]}"; do

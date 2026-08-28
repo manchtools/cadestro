@@ -93,8 +93,6 @@ func TestRegistrationURIRefusedByHandler(t *testing.T) {
 	}{
 		{"cadestro://control.example.com:8080?token=abc123", true},
 		{"cadestro://server?token=t&pin=DEADBEEF", true},
-		{"cadestro://luks/set-passphrase?token=xxx", false},
-		{"cadestro://luks/rotate", false},
 		{"https://example.com/?token=x", false},
 		{"", false},
 	}

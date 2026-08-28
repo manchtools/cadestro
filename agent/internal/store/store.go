@@ -1,11 +1,9 @@
 package store
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,7 +11,6 @@ import (
 	"time"
 
 	"github.com/pressly/goose/v3"
-	"github.com/robfig/cron/v3"
 	"google.golang.org/protobuf/proto"
 	_ "modernc.org/sqlite"
 
@@ -22,10 +19,8 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-var cronParser = cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
-
 const (
-	nilScheduleDrift  = 8 * time.Hour
+	defaultInterval   = 8 * time.Hour
 	binaryProtoPrefix = byte(0x00)
 )
 
@@ -65,7 +60,7 @@ func open(dataDir string, migrate bool) (*Store, error) {
 	if strings.ContainsAny(dbPath, "?#") {
 		return nil, fmt.Errorf("store: data dir path %q contains '?' or '#', which would corrupt SQLite DSN pragmas", dbPath)
 	}
-	dsn := dbPath + "?_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)"
+	dsn := dbPath + "?_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=synchronous(FULL)"
 	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
@@ -103,7 +98,7 @@ func verifyRestrictiveDirMode(dir string) error {
 		return fmt.Errorf("stat data dir after chmod: %w", err)
 	}
 	if perm := info.Mode().Perm(); perm&0o077 != 0 {
-		return fmt.Errorf("data dir %s is %#o after tightening; refusing to store secrets there", dir, perm)
+		return fmt.Errorf("data dir %s is %#o after tightening; refusing to store state there", dir, perm)
 	}
 	return nil
 }
@@ -137,33 +132,16 @@ func unmarshalStoredProto(raw []byte, message proto.Message) error {
 
 func calculateNextExecuteFromSchedule(schedule *pb.ActionSchedule, lastExecuted *time.Time, runImmediately bool, now time.Time) time.Time {
 	now = now.UTC()
-	if runImmediately && lastExecuted == nil {
+	if (runImmediately || schedule.GetRunOnAssign()) && lastExecuted == nil {
 		return now
 	}
-	if schedule == nil {
-		if lastExecuted == nil {
-			return now
-		}
-		return clampInterval(lastExecuted.UTC().Add(nilScheduleDrift), now, nilScheduleDrift)
-	}
-	if schedule.GetRunOnAssign() && lastExecuted == nil {
-		return now
-	}
-	if schedule.GetCron() != "" {
-		scheduleParser, err := cronParser.Parse(schedule.GetCron())
-		if err == nil {
-			return scheduleParser.Next(now.Local()).UTC()
-		}
-		slog.Warn("invalid manifest cron expression; using interval fallback", "cron", schedule.GetCron(), "error", err)
-	}
-	intervalHours := schedule.GetIntervalHours()
-	if intervalHours <= 0 {
-		intervalHours = 8
+	interval := defaultInterval
+	if hours := schedule.GetIntervalHours(); hours > 0 {
+		interval = time.Duration(hours) * time.Hour
 	}
 	if lastExecuted == nil {
 		return now
 	}
-	interval := time.Duration(intervalHours) * time.Hour
 	return clampInterval(lastExecuted.UTC().Add(interval), now, interval)
 }
 
@@ -173,151 +151,4 @@ func clampInterval(computed, now time.Time, interval time.Duration) time.Time {
 		return ceiling
 	}
 	return computed
-}
-
-type LuksState struct {
-	ActionID       string
-	DevicePath     string
-	OwnershipTaken bool
-	DeviceKeyType  string
-	LastRotatedAt  time.Time
-}
-
-func (s *Store) GetLuksState(ctx context.Context, actionID string) (*LuksState, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	row, err := s.queries.GetLuksState(ctx, actionID)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	state := LuksState{
-		ActionID:       row.ActionID,
-		DevicePath:     row.DevicePath,
-		OwnershipTaken: row.OwnershipTaken,
-		DeviceKeyType:  row.DeviceKeyType,
-	}
-	if row.LastRotatedAt != "" {
-		state.LastRotatedAt, err = time.Parse(time.RFC3339, row.LastRotatedAt)
-		if err != nil {
-			return nil, fmt.Errorf("parse LUKS last_rotated_at: %w", err)
-		}
-	}
-	return &state, nil
-}
-
-func (s *Store) SetLuksOwnershipTaken(ctx context.Context, actionID, devicePath string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.queries.SetLuksOwnershipTaken(ctx, generated.SetLuksOwnershipTakenParams{
-		ActionID: actionID, DevicePath: devicePath, LastRotatedAt: s.now().UTC().Format(time.RFC3339),
-	})
-}
-
-func (s *Store) SetLuksDeviceKeyType(ctx context.Context, actionID, keyType string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.queries.SetLuksDeviceKeyType(ctx, generated.SetLuksDeviceKeyTypeParams{DeviceKeyType: keyType, ActionID: actionID})
-}
-
-func (s *Store) SetLuksLastRotatedAt(ctx context.Context, actionID string, at time.Time) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.queries.SetLuksLastRotatedAt(ctx, generated.SetLuksLastRotatedAtParams{LastRotatedAt: at.UTC().Format(time.RFC3339), ActionID: actionID})
-}
-
-func (s *Store) DeleteLuksState(ctx context.Context, actionID string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.queries.DeleteLuksState(ctx, actionID)
-}
-
-func (s *Store) GetLuksPassphraseHashes(ctx context.Context, actionID string) ([]string, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.queries.GetLuksPassphraseHashes(ctx, actionID)
-}
-
-func (s *Store) AddLuksPassphraseHash(ctx context.Context, actionID, hash string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-	queries := s.queries.WithTx(tx)
-	if err := queries.AddLuksPassphraseHash(ctx, generated.AddLuksPassphraseHashParams{ActionID: actionID, PassphraseHash: hash}); err != nil {
-		return err
-	}
-	if err := queries.PruneLuksPassphraseHashes(ctx, generated.PruneLuksPassphraseHashesParams{ActionID: actionID, ActionID_2: actionID}); err != nil {
-		return err
-	}
-	return tx.Commit()
-}
-
-type LpsUserState struct {
-	ActionID      string
-	Username      string
-	LastRotatedAt time.Time
-	PasswordHash  string
-}
-
-func (s *Store) GetLpsState(ctx context.Context, actionID string) (map[string]*LpsUserState, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	rows, err := s.queries.GetLpsState(ctx, actionID)
-	if err != nil {
-		return nil, err
-	}
-	users := make(map[string]*LpsUserState)
-	for _, row := range rows {
-		state := LpsUserState{ActionID: row.ActionID, Username: row.Username, PasswordHash: row.PasswordHash}
-		if row.LastRotatedAt != "" {
-			state.LastRotatedAt, err = time.Parse(time.RFC3339, row.LastRotatedAt)
-			if err != nil {
-				return nil, fmt.Errorf("parse LPS last_rotated_at for %s: %w", state.Username, err)
-			}
-		}
-		users[state.Username] = &state
-	}
-	return users, nil
-}
-
-func (s *Store) SetLpsUserState(ctx context.Context, actionID, username string, lastRotatedAt time.Time, passwordHash string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.queries.SetLpsUserState(ctx, generated.SetLpsUserStateParams{
-		ActionID: actionID, Username: username, LastRotatedAt: lastRotatedAt.UTC().Format(time.RFC3339), PasswordHash: passwordHash,
-	})
-}
-
-func (s *Store) DeleteLpsState(ctx context.Context, actionID string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.queries.DeleteLpsState(ctx, actionID)
-}
-
-func (s *Store) GetSetting(ctx context.Context, key string) (string, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	value, err := s.queries.GetSetting(ctx, key)
-	if errors.Is(err, sql.ErrNoRows) {
-		return "", nil
-	}
-	return value, err
-}
-
-func (s *Store) SetSetting(ctx context.Context, key, value string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.queries.SetSetting(ctx, generated.SetSettingParams{Key: key, Value: value})
-}
-
-func (s *Store) DeleteSetting(ctx context.Context, key string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.queries.DeleteSetting(ctx, key)
 }

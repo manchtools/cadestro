@@ -71,8 +71,8 @@ func ValidateRpmPackageName(name string) error {
 
 // ValidateLocalPackagePath validates a filesystem path before it reaches a
 // package manager as the operand of a local-file install (apt-get install
-// <file>, dnf install <file>, pacman -U <file>, zypper install <file>, flatpak
-// install <bundle>). It is NOT a package name, so the package-name grammar does
+// <file>, dnf install <file>, pacman -U <file>, or zypper install <file>). It is
+// NOT a package name, so the package-name grammar does
 // not apply; what matters is that the path cannot masquerade as an option and
 // cannot smuggle a config/log-injecting control character:
 //
@@ -135,22 +135,6 @@ func hasControlChar(s string) bool {
 	return false
 }
 
-var validRemoteName = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$`)
-
-// ValidateRemoteName returns a non-nil error when name is not a safe
-// flatpak remote alias to pass as an operand to `flatpak install`. A
-// flag-shaped remote (`--from=…`) would otherwise be parsed as an
-// option.
-func ValidateRemoteName(name string) error {
-	if name == "" {
-		return fmt.Errorf("%w: flatpak remote name is empty", ErrInvalidArgument)
-	}
-	if !validRemoteName.MatchString(name) {
-		return fmt.Errorf("%w: invalid flatpak remote name %q: must start with [a-zA-Z0-9] and contain only [a-zA-Z0-9._-]", ErrInvalidArgument, name)
-	}
-	return nil
-}
-
 func hasCtrlOrSpace(s string) bool {
 	for _, r := range s {
 		if r <= ' ' || r == 0x7f {
@@ -158,37 +142,6 @@ func hasCtrlOrSpace(s string) bool {
 		}
 	}
 	return false
-}
-
-// ValidateRepoBaseURL validates a dnf baseurl / zypper url / pacman
-// server. A repository base URL is where the package manager fetches
-// ROOT-installed packages, so it must be https (no http/ftp/file — the
-// transport is the only thing standing between a MITM and arbitrary
-// root code), a real URL with a host, and free of control characters.
-// Package-manager template variables ($releasever, $arch, $basearch)
-// survive url.Parse and are intentionally allowed.
-//
-// NOTE: apt is deliberately NOT validated through here — apt's security
-// model is the gpg-signed Release file, so an http transport with a
-// trusted key is a legitimate, long-standing configuration.
-func ValidateRepoBaseURL(rawURL string) error {
-	if rawURL == "" {
-		return fmt.Errorf("%w: repository base URL is empty", ErrInvalidArgument)
-	}
-	if hasCtrlOrSpace(rawURL) {
-		return fmt.Errorf("%w: repository base URL contains whitespace or control characters", ErrInvalidArgument)
-	}
-	u, err := url.Parse(rawURL)
-	if err != nil {
-		return fmt.Errorf("%w: repository base URL is not a valid URL: %w", ErrInvalidArgument, err)
-	}
-	if u.Scheme != "https" {
-		return fmt.Errorf("%w: repository base URL must use https, got scheme %q", ErrInvalidArgument, u.Scheme)
-	}
-	if u.Host == "" {
-		return fmt.Errorf("%w: repository base URL has no host", ErrInvalidArgument)
-	}
-	return nil
 }
 
 // ValidateGpgKeyRef validates a dnf/zypper Gpgkey reference before it

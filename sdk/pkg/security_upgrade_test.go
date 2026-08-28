@@ -76,12 +76,6 @@ func TestUpgradeAll_SecurityOnly(t *testing.T) {
 		}
 	})
 
-	t.Run("flatpak security-only unsupported", func(t *testing.T) {
-		m, _ := flatpakM(t)
-		if _, err := m.HasSecurityUpdates(ctx); !errors.Is(err, ErrUnsupported) {
-			t.Errorf("err = %v, want ErrUnsupported", err)
-		}
-	})
 }
 
 func TestApt_HasSecurityUpdates(t *testing.T) {

@@ -21,7 +21,7 @@ func TestEveryManagerMethodNeutralizesFlagShapedOperands(t *testing.T) {
 	const flag = "-rf"
 	const safe = "coreutils"
 
-	stubLookPath(t, "apt", "apt-get", "dnf", "pacman", "zypper", "flatpak")
+	stubLookPath(t, "apt", "apt-get", "dnf", "pacman", "zypper")
 
 	mt := reflect.TypeOf((*Manager)(nil)).Elem()
 	if mt.NumMethod() == 0 {
@@ -108,7 +108,7 @@ func TestSearch_RejectsFlagShapedQuery(t *testing.T) {
 	ctx := context.Background()
 	for _, b := range []Backend{Apt, Dnf, Dnf5, Pacman, Zypper} {
 		t.Run(b.String(), func(t *testing.T) {
-			stubLookPath(t, "apt", "apt-get", "dnf", "pacman", "zypper", "flatpak")
+			stubLookPath(t, "apt", "apt-get", "dnf", "pacman", "zypper")
 			m, f := mustNew(t, b)
 			if _, err := m.Search(ctx, "-rf"); err == nil {
 				t.Errorf("Search(%q) = nil error, want a validation error", "-rf")

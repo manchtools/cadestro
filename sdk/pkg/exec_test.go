@@ -55,7 +55,7 @@ func TestRunPriv_EscalatesAndCarriesEnv(t *testing.T) {
 func TestRunPriv_NoEscalateForUserScope(t *testing.T) {
 	f := newFake()
 	ok(f, "")
-	if _, err := runPriv(context.Background(), f, false, nil, "flatpak", "update", "--user"); err != nil {
+	if _, err := runPriv(context.Background(), f, false, nil, "apt", "list"); err != nil {
 		t.Fatal(err)
 	}
 	if f.Calls()[0].Escalate {

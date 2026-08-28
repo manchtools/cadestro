@@ -21,27 +21,19 @@ message AgentMessage {
     Hello hello = 10;
     Heartbeat heartbeat = 11;
     SyncRequest sync_request = 12;
-
-    SyncDeviceResult sync_device_result = 24;
-
-    RebootDeviceResult reboot_device_result = 25;
     ActionResult action_result = 20;
-    ManifestResult manifest_result = 23;
-    OSQueryResult query_result = 30;
-    DeviceInventory inventory = 31;
-    SecurityAlert security_alert = 40;
+    ManifestResult manifest_result = 21;
+  }
+}
 
-    GetLuksKeyRequest get_luks_key = 50;
-    StoreLuksKeyRequest store_luks_key = 51;
-    RevokeLuksDeviceKeyResult revoke_luks_device_key_result = 52;
+message ServerMessage {
+  MessageId id = 1 [(buf.validate.field).required = true];
 
-    StoreLpsPasswordsRequest store_lps_passwords = 53;
-    ValidateLuksTokenRequest validate_luks_token = 54;
-
-    LogQueryResult log_query_result = 60;
-
-    TerminalOutput terminal_output = 70;
-    TerminalStateChange terminal_state_change = 71;
+  oneof payload {
+    Welcome welcome = 10;
+    SyncState sync_state = 11;
+    ResultAck result_ack = 12;
+    Error error = 13;
   }
 }
 
@@ -57,82 +49,13 @@ message Hello {
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 253
   ];
-  string auth_token = 4 [
-    (buf.validate.field).string.max_len = 4096,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string arch = 5 [
+  string arch = 4 [
     (buf.validate.field).string.max_len = 16,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
 }
 
 message Heartbeat {}
-
-enum SecurityAlertType {
-  SECURITY_ALERT_TYPE_UNSPECIFIED = 0;
-
-  SECURITY_ALERT_TYPE_SERVER_REASSIGNMENT_ATTEMPT = 1;
-
-  SECURITY_ALERT_TYPE_CREDENTIAL_TAMPERING = 2;
-
-  SECURITY_ALERT_TYPE_INVALID_CERTIFICATE = 3;
-}
-
-message SecurityAlert {
-  SecurityAlertType type = 1 [(buf.validate.field).required = true];
-  string message = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 1024
-  ];
-
-  map<string, string> details = 3 [
-    (buf.validate.field).map.keys.string.max_len = 64,
-    (buf.validate.field).map.values.string.max_len = 1024
-  ];
-}
-
-message ServerMessage {
-  MessageId id = 1 [(buf.validate.field).required = true];
-
-  oneof payload {
-    SyncDeviceCommand sync_device = 11;
-    Welcome welcome = 10;
-    SyncState sync_state = 12;
-    RebootDeviceCommand reboot_device = 13;
-    OSQuery query = 30;
-    RequestInventory request_inventory = 31;
-    Error error = 40;
-
-    GetLuksKeyResponse get_luks_key = 50;
-    StoreLuksKeyResponse store_luks_key = 51;
-    RevokeLuksDeviceKey revoke_luks_device_key = 52;
-    StoreLpsPasswordsResponse store_lps_passwords = 53;
-    ValidateLuksTokenResponse validate_luks_token = 54;
-
-    ResultAck result_ack = 24;
-
-    LogQuery log_query = 60;
-
-    TerminalStart terminal_start = 70;
-    TerminalInput terminal_input = 71;
-    TerminalResize terminal_resize = 72;
-    TerminalStop terminal_stop = 73;
-  }
-}
-
-message SyncDeviceCommand {}
-
-message RebootDeviceCommand {}
-
-message SyncDeviceResult {
-  bool success = 1;
-}
-
-message RebootDeviceResult {
-  bool success = 1;
-}
 
 message Welcome {
   string server_version = 1 [
@@ -141,40 +64,28 @@ message Welcome {
     (buf.validate.field).string.max_len = 32
   ];
   google.protobuf.Duration heartbeat_interval = 2;
-
-  string device_login_url = 3;
 }
 
-enum OnFailure {
-  ON_FAILURE_CONTINUE = 0;
-  ON_FAILURE_STOP = 1;
+message SyncRequest {}
+
+message SyncState {
+  int32 sync_interval_minutes = 1 [
+    (buf.validate.field).int32.gte = 1,
+    (buf.validate.field).int32.lte = 1440
+  ];
+  DesiredPolicy desired_policy = 2 [(buf.validate.field).required = true];
 }
 
-message ManifestProvenance {
-  DefinitionId definition_id = 1;
-  ActionSetId action_set_id = 2;
-  ActionId action_id = 3;
-}
-
-message ManifestOccurrence {
-  OccurrenceId occurrence_id = 1 [(buf.validate.field).required = true];
-  Action action = 2 [(buf.validate.field).required = true];
-
-  OnFailure on_failure = 3;
+message DesiredPolicy {
+  PolicyRevisionId revision = 1 [(buf.validate.field).required = true];
+  repeated Manifest manifests = 2;
 }
 
 message Manifest {
   ManifestId manifest_id = 1 [(buf.validate.field).required = true];
-  ManifestProvenance provenance = 2 [(buf.validate.field).required = true];
-
-  ActionSchedule schedule = 3 [(buf.validate.field).required = true];
-
-  OnFailure default_on_failure = 4;
-
-  repeated ManifestOccurrence occurrences = 5 [
-    (buf.validate.field).repeated.min_items = 1,
-    (buf.validate.field).required = true
-  ];
+  OccurrenceId occurrence_id = 2 [(buf.validate.field).required = true];
+  Action action = 3 [(buf.validate.field).required = true];
+  ActionSchedule schedule = 4 [(buf.validate.field).required = true];
 }
 
 message ManifestResult {
@@ -196,8 +107,7 @@ enum ResultAckCode {
 }
 
 message ResultAck {
-  bool accepted = 1;
-  ResultAckCode code = 2 [(buf.validate.field).enum.defined_only = true];
+  ResultAckCode code = 1 [(buf.validate.field).required = true];
 }
 
 message Error {
@@ -205,349 +115,5 @@ message Error {
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 1024
-  ];
-}
-
-message OSQuery {
-  option (buf.validate.message).cel = {
-    id: "osquery.table_required_without_raw_sql"
-    message: "table is required unless raw_sql is set"
-    expression: "this.table != '' || this.raw_sql != ''"
-  };
-
-  QueryId query_id = 1 [(buf.validate.field).required = true];
-  string table = 2 [
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  repeated string columns = 3 [(buf.validate.field).repeated.items.string.max_len = 64];
-  repeated OSQueryCondition where = 4;
-  int32 limit = 5 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 10000,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  string raw_sql = 6 [
-    (buf.validate.field).string.max_len = 4096,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message OSQueryCondition {
-  string column = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64
-  ];
-  OSQueryOp op = 2 [(buf.validate.field).required = true];
-  string value = 3 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.max_len = 4096
-  ];
-}
-
-enum OSQueryOp {
-  OS_QUERY_OP_UNSPECIFIED = 0;
-  OS_QUERY_OP_EQ = 1;
-  OS_QUERY_OP_NE = 2;
-  OS_QUERY_OP_GT = 3;
-  OS_QUERY_OP_LT = 4;
-  OS_QUERY_OP_GE = 5;
-  OS_QUERY_OP_LE = 6;
-  OS_QUERY_OP_LIKE = 7;
-  OS_QUERY_OP_GLOB = 8;
-}
-
-message OSQueryResult {
-  QueryId query_id = 1 [(buf.validate.field).required = true];
-  bool success = 2;
-  string error = 3 [
-    (buf.validate.field).string.max_len = 1024,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  repeated OSQueryRow rows = 4;
-}
-
-message OSQueryRow {
-  map<string, string> data = 1 [
-    (buf.validate.field).map.keys.string.max_len = 64,
-    (buf.validate.field).map.values.string.max_len = 65536
-  ];
-}
-
-message DeviceInventory {
-  repeated InventoryTable tables = 1;
-}
-
-message InventoryTable {
-  string table_name = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64
-  ];
-  repeated OSQueryRow rows = 2;
-}
-
-message RequestInventory {
-  QueryId query_id = 1 [(buf.validate.field).required = true];
-}
-
-message GetLuksKeyRequest {
-  ActionId action_id = 1 [(buf.validate.field).required = true];
-}
-
-message GetLuksKeyResponse {
-  bytes passphrase = 1 [
-    debug_redact = true,
-    (buf.validate.field).required = true,
-    (buf.validate.field).bytes.max_len = 4096
-  ];
-}
-
-message StoreLuksKeyRequest {
-  ActionId action_id = 1 [(buf.validate.field).required = true];
-
-  string device_path = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.prefix = "/",
-    (buf.validate.field).string.max_len = 4096
-  ];
-
-  bytes passphrase = 3 [
-    debug_redact = true,
-    (buf.validate.field).required = true,
-    (buf.validate.field).bytes.max_len = 4096
-  ];
-
-  RotationReason rotation_reason = 4 [
-    (buf.validate.field).enum = {
-      in: [
-        1,
-        2
-      ]
-    },
-    (buf.validate.field).required = true
-  ];
-}
-
-message StoreLuksKeyResponse {
-  bool success = 1;
-}
-
-message LpsPasswordRotation {
-  string username = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64
-  ];
-
-  bytes password = 2 [
-    debug_redact = true,
-    (buf.validate.field).required = true,
-    (buf.validate.field).bytes.max_len = 128
-  ];
-
-  string rotated_at = 3 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64
-  ];
-
-  RotationReason reason = 4 [
-    (buf.validate.field).enum = {
-      in: [
-        1,
-        2,
-        3
-      ]
-    },
-    (buf.validate.field).required = true
-  ];
-}
-
-message StoreLpsPasswordsRequest {
-  ActionId action_id = 1 [(buf.validate.field).required = true];
-
-  repeated LpsPasswordRotation rotations = 2 [
-    (buf.validate.field).repeated.min_items = 1,
-    (buf.validate.field).repeated.max_items = 256,
-    (buf.validate.field).required = true
-  ];
-}
-
-message StoreLpsPasswordsResponse {
-  bool success = 1;
-}
-
-message RevokeLuksDeviceKey {
-  ActionId action_id = 1 [(buf.validate.field).required = true];
-}
-
-message RevokeLuksDeviceKeyResult {
-  ActionId action_id = 1 [(buf.validate.field).required = true];
-  bool success = 2;
-  string error = 3 [
-    (buf.validate.field).string.max_len = 1024,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message ValidateLuksTokenRequest {
-  string token = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message ValidateLuksTokenResponse {
-  ActionId action_id = 1;
-
-  string device_path = 2;
-
-  int32 min_length = 3;
-
-  LpsPasswordComplexity complexity = 4;
-}
-
-message SyncRequest {}
-
-message SyncState {
-  int32 sync_interval_minutes = 1;
-
-  MaintenanceWindow maintenance_window = 2;
-
-  DesiredPolicy desired_policy = 3;
-}
-
-message DesiredPolicy {
-  PolicyRevisionId revision = 1 [(buf.validate.field).required = true];
-
-  repeated Manifest manifests = 2;
-}
-
-enum LogSource {
-  LOG_SOURCE_JOURNALD = 0;
-  LOG_SOURCE_SYSLOG = 1;
-}
-
-message LogQuery {
-  QueryId query_id = 1 [(buf.validate.field).required = true];
-  int32 lines = 2 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 10000,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string unit = 3 [
-    (buf.validate.field).string.max_len = 256,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string since = 4 [
-    (buf.validate.field).string.max_len = 64,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string until = 5 [
-    (buf.validate.field).string.max_len = 64,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string priority = 6 [
-    (buf.validate.field).string.max_len = 32,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string grep = 7 [
-    (buf.validate.field).string.max_len = 256,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  bool kernel = 8;
-
-  LogSource source = 9;
-}
-
-message LogQueryResult {
-  QueryId query_id = 1 [(buf.validate.field).required = true];
-  bool success = 2;
-  string error = 3 [
-    (buf.validate.field).string.max_len = 1024,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  string logs = 4;
-}
-
-enum TerminalSessionState {
-  TERMINAL_SESSION_STATE_UNSPECIFIED = 0;
-
-  TERMINAL_SESSION_STATE_STARTED = 1;
-
-  TERMINAL_SESSION_STATE_EXITED = 2;
-
-  TERMINAL_SESSION_STATE_ERROR = 3;
-}
-
-message TerminalStart {
-  SessionId session_id = 1 [(buf.validate.field).required = true];
-
-  string tty_user = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64
-  ];
-  uint32 cols = 3 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).uint32.gt = 0,
-    (buf.validate.field).uint32.lte = 65535
-  ];
-  uint32 rows = 4 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).uint32.gt = 0,
-    (buf.validate.field).uint32.lte = 65535
-  ];
-}
-
-message TerminalInput {
-  SessionId session_id = 1 [(buf.validate.field).required = true];
-  bytes data = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).bytes.max_len = 65536
-  ];
-}
-
-message TerminalResize {
-  SessionId session_id = 1 [(buf.validate.field).required = true];
-  uint32 cols = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).uint32.gt = 0,
-    (buf.validate.field).uint32.lte = 65535
-  ];
-  uint32 rows = 3 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).uint32.gt = 0,
-    (buf.validate.field).uint32.lte = 65535
-  ];
-}
-
-message TerminalStop {
-  SessionId session_id = 1 [(buf.validate.field).required = true];
-  string reason = 2 [
-    (buf.validate.field).string.max_len = 512,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message TerminalOutput {
-  SessionId session_id = 1 [(buf.validate.field).required = true];
-  bytes data = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).bytes.max_len = 65536
-  ];
-}
-
-message TerminalStateChange {
-  SessionId session_id = 1 [(buf.validate.field).required = true];
-  TerminalSessionState state = 2 [(buf.validate.field).required = true];
-
-  int32 exit_code = 3;
-
-  string error = 4 [
-    (buf.validate.field).string.max_len = 1024,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
 }

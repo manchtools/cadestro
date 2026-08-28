@@ -1,5 +1,4 @@
 http:
-  # docref: begin public-backend-tls
   serversTransports:
     control-tls:
       serverName: control
@@ -8,29 +7,14 @@ http:
       minVersion: VersionTLS13
       maxVersion: VersionTLS13
   routers:
-
-
-
-
-
-
-
-
-
-
     control:
-      rule: >-
-        Host(`{{ env "CONTROL_DOMAIN" }}`) &&
-        (PathPrefix(`/cadestro.v1.ControlService`) || PathPrefix(`/scim`) ||
-        Path(`/terminal`) || Path(`/health`) || Path(`/ready`))
+      rule: 'Host(`{{ env "CONTROL_DOMAIN" }}`) && (PathPrefix(`/cadestro.v1.ControlService`) || Path(`/health`) || Path(`/ready`))'
       priority: 100
       entryPoints: [websecure]
       middlewares: [security-headers]
       service: control
       tls:
         certResolver: letsencrypt
-
-
     web:
       rule: 'Host(`{{ env "CONTROL_DOMAIN" }}`)'
       priority: 10
@@ -53,17 +37,11 @@ http:
         serversTransport: control-tls
         servers:
           - url: https://control:8081
-
-
-
-
     web:
       loadBalancer:
         servers:
           - url: http://web:3000
-  # docref: end public-backend-tls
 
-# docref: begin agent-route
 tcp:
   routers:
     agents:
@@ -75,8 +53,5 @@ tcp:
   services:
     agents:
       loadBalancer:
-        proxyProtocol:
-          version: 2
         servers:
-          - address: 172.30.0.3:8082
-# docref: end agent-route
+          - address: control:8082

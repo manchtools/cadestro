@@ -1,29 +1,10 @@
 #!/usr/bin/env bash
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 export GOWORK=off
 
 echo "== gofmt"
-
-
-
 unfmt=$(gofmt -l .)
 if [ -n "$unfmt" ]; then
   echo "gofmt violations:" >&2
@@ -36,8 +17,6 @@ go build ./...
 
 echo "== go vet"
 go vet ./...
-
-
 
 if ! command -v staticcheck >/dev/null 2>&1; then
   echo "staticcheck is not installed — the gate cannot certify this tree" >&2

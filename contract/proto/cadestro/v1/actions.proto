@@ -11,139 +11,52 @@ option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;
 
 enum ActionType {
   ACTION_TYPE_UNSPECIFIED = 0;
-
   ACTION_TYPE_PACKAGE = 1;
   ACTION_TYPE_UPDATE = 2;
-  ACTION_TYPE_REPOSITORY = 3;
-
-  ACTION_TYPE_APP_IMAGE = 100;
-  ACTION_TYPE_DEB = 101;
-  ACTION_TYPE_RPM = 102;
-  ACTION_TYPE_FLATPAK = 103;
-
-  ACTION_TYPE_SHELL = 200;
-  ACTION_TYPE_SCRIPT_RUN = 201;
-
-  ACTION_TYPE_SERVICE = 300;
-
-  ACTION_TYPE_FILE = 400;
-  ACTION_TYPE_DIRECTORY = 401;
-
-  ACTION_TYPE_USER = 600;
-  ACTION_TYPE_GROUP = 601;
-
-  ACTION_TYPE_SSH = 700;
-  ACTION_TYPE_SSHD = 701;
-
-  ACTION_TYPE_ADMIN_POLICY = 800;
-
-  ACTION_TYPE_LPS = 900;
-
-  ACTION_TYPE_ENCRYPTION = 1000;
-
-  ACTION_TYPE_WIFI = 1100;
-
-  ACTION_TYPE_AGENT_UPDATE = 1200;
+  ACTION_TYPE_SHELL = 3;
 }
 
 message Action {
   ActionId id = 1 [(buf.validate.field).required = true];
   ActionType type = 2 [(buf.validate.field).required = true];
-
-  DesiredState desired_state = 3;
+  DesiredState desired_state = 3 [(buf.validate.field).required = true];
   int32 timeout_seconds = 4 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).int32.lte = 3600,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-
   ActionSchedule schedule = 5;
 
   oneof params {
-    PackageParams package = 8;
-    AppInstallParams app = 9;
-    ShellParams shell = 10;
-    ServiceParams service = 11;
-    FileParams file = 12;
-    UpdateParams update = 13;
-    RepositoryParams repository = 14;
-    FlatpakParams flatpak = 15;
-    DirectoryParams directory = 16;
-    UserParams user = 17;
-    SshParams ssh = 18;
-    SshdParams sshd = 19;
-    AdminPolicyParams admin_policy = 20;
-    LpsParams lps = 21;
-    GroupParams group = 22;
-    EncryptionParams encryption = 23;
-    WifiParams wifi = 24;
-    AgentUpdateParams agent_update = 25;
+    PackageParams package = 6;
+    UpdateParams update = 7;
+    ShellParams shell = 8;
   }
 }
 
 message ActionSchedule {
-  string cron = 1 [
-    (buf.validate.field).string.max_len = 128,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  int32 interval_hours = 2 [
+  int32 interval_hours = 1 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).int32.lte = 8760,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-
-  bool run_on_assign = 3;
-
-  bool skip_if_unchanged = 4;
+  bool run_on_assign = 2;
+  bool skip_if_unchanged = 3;
 }
 
 message PackageParams {
   string name = 1 [
-    (buf.validate.field).string.max_len = 255,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 255
   ];
   string version = 2 [
     (buf.validate.field).string.max_len = 128,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  bool allow_downgrade = 3;
-  bool pin = 4;
-
-  string apt_name = 5 [
-    (buf.validate.field).string.max_len = 255,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string dnf_name = 6 [
-    (buf.validate.field).string.max_len = 255,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string pacman_name = 7 [
-    (buf.validate.field).string.max_len = 255,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string zypper_name = 8 [
-    (buf.validate.field).string.max_len = 255,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
 }
 
-message AppInstallParams {
-  string url = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.uri = true
-  ];
-
-  string checksum_sha256 = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.len = 64,
-    (buf.validate.field).string.pattern = "^[0-9a-fA-F]+$"
-  ];
-  string install_path = 3 [
-    (buf.validate.field).string.prefix = "/",
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
+message UpdateParams {}
 
 message ShellParams {
   string script = 1 [
@@ -154,517 +67,19 @@ message ShellParams {
     (buf.validate.field).string.max_len = 255,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  bool run_as_root = 3;
-  string working_directory = 4 [
+  string working_directory = 3 [
     (buf.validate.field).string.prefix = "/",
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  map<string, string> environment = 5 [
+  map<string, string> environment = 4 [
     (buf.validate.field).map.keys.string.max_len = 255,
     (buf.validate.field).map.values.string.max_len = 4096
   ];
-
-  string detection_script = 6 [
+  string detection_script = 5 [
     (buf.validate.field).string.max_len = 1048576,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-
-  bool is_compliance = 7;
-}
-
-message ServiceParams {
-  string unit_name = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 255
-  ];
-  ServiceUnitState desired_state = 2;
-  bool enable = 3;
-  string unit_content = 4 [
-    (buf.validate.field).string.max_len = 65536,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-enum ServiceUnitState {
-  SERVICE_UNIT_STATE_UNSPECIFIED = 0;
-  SERVICE_UNIT_STATE_STARTED = 1;
-  SERVICE_UNIT_STATE_STOPPED = 2;
-  SERVICE_UNIT_STATE_RESTARTED = 3;
-}
-
-message FileParams {
-  string path = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.prefix = "/"
-  ];
-  string content = 2 [
-    (buf.validate.field).string.max_len = 10485760,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string owner = 3 [
-    (buf.validate.field).string.max_len = 32,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string group = 4 [
-    (buf.validate.field).string.max_len = 32,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string mode = 5 [
-    (buf.validate.field).string.max_len = 4,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  bool managed_block = 6;
-}
-
-message DirectoryParams {
-  string path = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.prefix = "/"
-  ];
-  string owner = 2 [
-    (buf.validate.field).string.max_len = 32,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string group = 3 [
-    (buf.validate.field).string.max_len = 32,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string mode = 4 [
-    (buf.validate.field).string.max_len = 4,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  bool recursive = 5;
-}
-
-message UpdateParams {
-  bool security_only = 1;
-  bool autoremove = 2;
-  bool reboot_if_required = 3;
-}
-
-message FlatpakParams {
-  FlatpakAppId app_id = 1 [(buf.validate.field).required = true];
-
-  string remote = 2 [
-    (buf.validate.field).string.max_len = 64,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  bool system_wide = 3;
-
-  bool pin = 4;
-}
-
-message RepositoryParams {
-  string name = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64,
-    (buf.validate.field).string.pattern = "^[a-zA-Z0-9]+$"
-  ];
-
-  AptRepository apt = 2;
-
-  DnfRepository dnf = 3;
-
-  PacmanRepository pacman = 4;
-
-  ZypperRepository zypper = 5;
-}
-
-message AptRepository {
-  option (buf.validate.message).cel = {
-    id: "apt_repository.url_required_without_disabled"
-    message: "url is required unless disabled is set"
-    expression: "this.disabled || this.url != ''"
-  };
-
-  string url = 1 [
-    (buf.validate.field).string.uri = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  string distribution = 2 [
-    (buf.validate.field).string.max_len = 64,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  repeated string components = 3 [(buf.validate.field).repeated.items.string.max_len = 64];
-
-  string gpg_key_url = 4 [
-    (buf.validate.field).string.uri = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  string gpg_key = 5 [
-    (buf.validate.field).string.max_len = 65536,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  bool trusted = 6;
-
-  string arch = 7 [
-    (buf.validate.field).string.max_len = 32,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  bool disabled = 8;
-}
-
-message DnfRepository {
-  option (buf.validate.message).cel = {
-    id: "dnf_repository.baseurl_required_without_disabled"
-    message: "baseurl is required unless disabled is set"
-    expression: "this.disabled || this.baseurl != ''"
-  };
-
-  string baseurl = 1;
-
-  string description = 2 [
-    (buf.validate.field).string.max_len = 255,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  bool enabled = 3;
-
-  bool gpgcheck = 4;
-
-  string gpgkey = 5 [
-    (buf.validate.field).string.uri = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  bool module_hotfixes = 6;
-
-  bool disabled = 7;
-}
-
-message PacmanRepository {
-  option (buf.validate.message).cel = {
-    id: "pacman_repository.server_required_without_disabled"
-    message: "server is required unless disabled is set"
-    expression: "this.disabled || this.server != ''"
-  };
-
-  string server = 1;
-
-  string sig_level = 2 [
-    (buf.validate.field).string.max_len = 128,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  bool disabled = 3;
-}
-
-enum ZypperRepositoryType {
-  ZYPPER_REPOSITORY_TYPE_UNSPECIFIED = 0;
-  ZYPPER_REPOSITORY_TYPE_RPM_MD = 1;
-  ZYPPER_REPOSITORY_TYPE_YAST2 = 2;
-  ZYPPER_REPOSITORY_TYPE_PLAINDIR = 3;
-}
-
-message ZypperRepository {
-  option (buf.validate.message).cel = {
-    id: "zypper_repository.url_required_without_disabled"
-    message: "url is required unless disabled is set"
-    expression: "this.disabled || this.url != ''"
-  };
-
-  string url = 1 [
-    (buf.validate.field).string.uri = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  string description = 2 [
-    (buf.validate.field).string.max_len = 255,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  bool enabled = 3;
-
-  bool autorefresh = 4;
-
-  bool gpgcheck = 5;
-
-  string gpgkey = 6 [
-    (buf.validate.field).string.uri = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  ZypperRepositoryType type = 7 [
-    (buf.validate.field).enum.defined_only = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  bool disabled = 8;
-}
-
-message UserParams {
-  string username = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 32,
-    (buf.validate.field).string.pattern = "^[a-zA-Z0-9]+$"
-  ];
-
-  int32 uid = 2 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 65534,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  int32 gid = 3 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 65534,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  string home_dir = 4 [
-    (buf.validate.field).string.prefix = "/",
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  string shell = 5 [
-    (buf.validate.field).string.prefix = "/",
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  repeated string ssh_authorized_keys = 6 [(buf.validate.field).repeated.items.string.max_len = 4096];
-
-  string comment = 7 [
-    (buf.validate.field).string.max_len = 255,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  bool system_user = 8;
-
-  bool create_home = 9;
-
-  bool disabled = 10;
-
-  string primary_group = 11 [
-    (buf.validate.field).string.max_len = 32,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  bool hidden = 12;
-
-  bool no_password = 13;
-}
-
-message GroupParams {
-  string name = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 32
-  ];
-
-  repeated string members = 2 [
-    (buf.validate.field).repeated.items.string.min_len = 1,
-    (buf.validate.field).repeated.items.string.max_len = 32
-  ];
-
-  int32 gid = 3 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 65534,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  bool system_group = 4;
-}
-
-message SshParams {
-  bool allow_pubkey = 1;
-
-  bool allow_password = 2;
-
-  repeated string users = 3 [
-    (buf.validate.field).repeated.items.string.min_len = 1,
-    (buf.validate.field).repeated.items.string.max_len = 32
-  ];
-}
-
-message SshdDirective {
-  string key = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 128
-  ];
-
-  string value = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 1024
-  ];
-}
-
-message SshdParams {
-  uint32 priority = 1;
-
-  repeated SshdDirective directives = 2 [
-    (buf.validate.field).repeated.min_items = 1,
-    (buf.validate.field).required = true
-  ];
-}
-
-enum AdminAccessLevel {
-  ADMIN_ACCESS_LEVEL_UNSPECIFIED = 0;
-  ADMIN_ACCESS_LEVEL_FULL = 1;
-  ADMIN_ACCESS_LEVEL_LIMITED = 2;
-  ADMIN_ACCESS_LEVEL_CUSTOM = 3;
-  ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED = 4;
-  ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL = 5;
-}
-
-enum PrivilegeBackend {
-  PRIVILEGE_BACKEND_SUDO = 0;
-  PRIVILEGE_BACKEND_DOAS = 1;
-}
-
-message AdminPolicyParams {
-  option (buf.validate.message).cel = {
-    id: "admin_policy_params.custom_config_required_if_custom"
-    message: "custom_config is required when access_level is CUSTOM"
-    expression: "this.access_level != 3 || this.custom_config != ''"
-  };
-
-  AdminAccessLevel access_level = 1 [(buf.validate.field).required = true];
-
-  repeated string users = 2 [
-    (buf.validate.field).repeated.min_items = 1,
-    (buf.validate.field).required = true,
-    (buf.validate.field).repeated.items.string.min_len = 1,
-    (buf.validate.field).repeated.items.string.max_len = 32
-  ];
-
-  string custom_config = 3 [(buf.validate.field).string.max_len = 65536];
-
-  PrivilegeBackend backend = 4;
-}
-
-enum LpsPasswordComplexity {
-  LPS_PASSWORD_COMPLEXITY_UNSPECIFIED = 0;
-  LPS_PASSWORD_COMPLEXITY_ALPHANUMERIC = 1;
-  LPS_PASSWORD_COMPLEXITY_COMPLEX = 2;
-}
-
-message LpsParams {
-  repeated string usernames = 1 [
-    (buf.validate.field).repeated.min_items = 1,
-    (buf.validate.field).required = true,
-    (buf.validate.field).repeated.items.string.min_len = 1,
-    (buf.validate.field).repeated.items.string.max_len = 32
-  ];
-
-  int32 password_length = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).int32.gte = 8,
-    (buf.validate.field).int32.lte = 128
-  ];
-
-  LpsPasswordComplexity complexity = 3 [(buf.validate.field).required = true];
-
-  int32 rotation_interval_days = 4 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).int32.gte = 1,
-    (buf.validate.field).int32.lte = 365
-  ];
-
-  int32 grace_period_hours = 5 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 8760,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-enum EncryptionDeviceBoundKeyType {
-  ENCRYPTION_DEVICE_BOUND_KEY_TYPE_NONE = 0;
-  ENCRYPTION_DEVICE_BOUND_KEY_TYPE_TPM = 1;
-  ENCRYPTION_DEVICE_BOUND_KEY_TYPE_USER_PASSPHRASE = 2;
-}
-
-message EncryptionParams {
-  bytes preshared_key = 1 [
-    debug_redact = true,
-    (buf.validate.field).required = true,
-    (buf.validate.field).bytes.max_len = 512
-  ];
-
-  int32 rotation_interval_days = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).int32.gte = 1,
-    (buf.validate.field).int32.lte = 365
-  ];
-
-  int32 min_words = 3 [
-    (buf.validate.field).int32.gte = 3,
-    (buf.validate.field).int32.lte = 10,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  EncryptionDeviceBoundKeyType device_bound_key_type = 4 [
-    (buf.validate.field).enum.defined_only = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  int32 user_passphrase_min_length = 5 [
-    (buf.validate.field).int32.gte = 16,
-    (buf.validate.field).int32.lte = 128,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  LpsPasswordComplexity user_passphrase_complexity = 6 [
-    (buf.validate.field).enum.defined_only = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-enum WifiAuthType {
-  WIFI_AUTH_TYPE_UNSPECIFIED = 0;
-  WIFI_AUTH_TYPE_PSK = 1;
-  WIFI_AUTH_TYPE_EAP_TLS = 2;
-}
-
-message WifiParams {
-  string ssid = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 255
-  ];
-
-  WifiAuthType auth_type = 2 [(buf.validate.field).required = true];
-
-  bytes psk = 3 [
-    debug_redact = true,
-    (buf.validate.field).bytes.max_len = 256,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  string ca_cert = 4;
-  string client_cert = 5;
-
-  bytes client_key = 6 [
-    debug_redact = true,
-    (buf.validate.field).bytes.max_len = 131072,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string identity = 7 [
-    (buf.validate.field).string.max_len = 254,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  bool auto_connect = 8;
-
-  bool hidden = 9;
-
-  int32 priority = 10 [
-    (buf.validate.field).int32.gte = -1,
-    (buf.validate.field).int32.lte = 999,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
+  bool is_compliance = 6;
 }
 
 message ActionResult {
@@ -677,39 +92,9 @@ message ActionResult {
   CommandOutput output = 4;
   google.protobuf.Timestamp completed_at = 5;
   google.protobuf.Duration duration = 6 [(buf.validate.field).duration.gte = {}];
-
   bool changed = 7;
-
-  map<string, string> metadata = 8;
-
-  bool compliant = 9;
-
-  CommandOutput detection_output = 10;
-
-  RunId run_id = 11 [(buf.validate.field).required = true];
-  OccurrenceId occurrence_id = 12 [(buf.validate.field).required = true];
-}
-
-message AgentUpdateArch {
-  string binary_url = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.uri = true,
-    (buf.validate.field).string.prefix = "https://"
-  ];
-
-  string checksum_url = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.uri = true,
-    (buf.validate.field).string.prefix = "https://"
-  ];
-}
-
-message AgentUpdateParams {
-  AgentUpdateArch amd64 = 1;
-
-  AgentUpdateArch arm64 = 2;
-
-  bool allow_downgrade = 3;
-
-  bool allow_redirect = 4;
+  bool compliant = 8;
+  CommandOutput detection_output = 9;
+  RunId run_id = 10 [(buf.validate.field).required = true];
+  OccurrenceId occurrence_id = 11 [(buf.validate.field).required = true];
 }

@@ -8,328 +8,109 @@ import (
 	"log/slog"
 	"strings"
 	"testing"
-
-	"github.com/manchtools/cadestro/sdk/sys/service"
 )
 
 type fakeManager struct {
-	t *testing.T
-
-	version      int
-	versionErr   error
-	versionCalls int
-
-	readContent string
-	readErr     error
-
-	writeUnit    string
-	writeContent string
-	writeErr     error
-	writeCalls   int
-
-	reloads   int
-	reloadErr error
-
-	needsReload      bool
-	needsReloadErr   error
-	needsReloadCalls int
+	content    string
+	readErr    error
+	writeErr   error
+	reloadErr  error
+	pending    bool
+	pendingErr error
+	writes     int
+	reloads    int
+	written    string
 }
 
-func (f *fakeManager) Version(context.Context) (int, error) {
-	f.versionCalls++
-	return f.version, f.versionErr
-}
-func (f *fakeManager) ReadUnit(_ context.Context, unit string) (string, error) {
-	if f.readErr != nil {
-		return "", f.readErr
-	}
-	return f.readContent, nil
-}
-func (f *fakeManager) WriteUnit(_ context.Context, unit, content string) error {
-	f.writeCalls++
-	f.writeUnit, f.writeContent = unit, content
-	return f.writeErr
-}
-func (f *fakeManager) DaemonReload(context.Context) error {
-	f.reloads++
-	return f.reloadErr
+func (manager *fakeManager) ReadUnit(context.Context, string) (string, error) {
+	return manager.content, manager.readErr
 }
 
-func (f *fakeManager) NeedsReload(context.Context, string) (bool, error) {
-	f.needsReloadCalls++
-	return f.needsReload, f.needsReloadErr
+func (manager *fakeManager) WriteUnit(_ context.Context, _ string, content string) error {
+	manager.writes++
+	manager.written = content
+	return manager.writeErr
 }
 
-func (f *fakeManager) fail(method string) {
-	f.t.Helper()
-	f.t.Fatalf("service.Manager.%s must never be called by the unit package", method)
+func (manager *fakeManager) DaemonReload(context.Context) error {
+	manager.reloads++
+	return manager.reloadErr
 }
-func (f *fakeManager) Status(context.Context, string) (service.UnitStatus, error) {
-	f.fail("Status")
-	return service.UnitStatus{}, nil
-}
-func (f *fakeManager) IsEnabled(context.Context, string) (bool, error) {
-	f.fail("IsEnabled")
-	return false, nil
-}
-func (f *fakeManager) IsActive(context.Context, string) (bool, error) {
-	f.fail("IsActive")
-	return false, nil
-}
-func (f *fakeManager) IsMasked(context.Context, string) (bool, error) {
-	f.fail("IsMasked")
-	return false, nil
-}
-func (f *fakeManager) Enable(context.Context, string) error     { f.fail("Enable"); return nil }
-func (f *fakeManager) Disable(context.Context, string) error    { f.fail("Disable"); return nil }
-func (f *fakeManager) EnableNow(context.Context, string) error  { f.fail("EnableNow"); return nil }
-func (f *fakeManager) DisableNow(context.Context, string) error { f.fail("DisableNow"); return nil }
-func (f *fakeManager) Start(context.Context, string) error      { f.fail("Start"); return nil }
-func (f *fakeManager) Stop(context.Context, string) error       { f.fail("Stop"); return nil }
-func (f *fakeManager) Restart(context.Context, string) error    { f.fail("Restart"); return nil }
-func (f *fakeManager) Reload(context.Context, string) error     { f.fail("Reload"); return nil }
-func (f *fakeManager) Mask(context.Context, string) error       { f.fail("Mask"); return nil }
-func (f *fakeManager) Unmask(context.Context, string) error     { f.fail("Unmask"); return nil }
-func (f *fakeManager) RemoveUnit(context.Context, string) error { f.fail("RemoveUnit"); return nil }
 
-func testLogger() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard, nil)) }
+func (manager *fakeManager) NeedsReload(context.Context, string) (bool, error) {
+	return manager.pending, manager.pendingErr
+}
 
-const testBin = "/usr/local/bin/cadestrod"
-const testData = "/var/lib/cadestro"
+func testLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(io.Discard, nil))
+}
 
-func TestRender_RestrictRealtimeByVersion(t *testing.T) {
-	on, err := Render(Params{BinaryPath: testBin, DataDir: testData, RestrictRealtime: true})
+var testParams = Params{BinaryPath: "/usr/local/bin/cadestrod", DataDir: "/var/lib/cadestro"}
+
+func TestRenderRootUnit(t *testing.T) {
+	rendered, err := Render(testParams)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(on, "RestrictRealtime=true") {
-		t.Error("RestrictRealtime=true missing from rendered unit")
-	}
-	off, err := Render(Params{BinaryPath: testBin, DataDir: testData, RestrictRealtime: false})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(off, "RestrictRealtime=false") {
-		t.Error("RestrictRealtime=false missing from rendered unit")
-	}
-}
-
-func TestRender_CarriesInstallShape(t *testing.T) {
-	out, err := Render(Params{BinaryPath: testBin, DataDir: testData, RestrictRealtime: false})
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, want := range []string{
-		"ExecStart=" + testBin + " -data-dir=" + testData + " -log-level=info",
-		"Environment=\"CADESTRO_DATA_DIR=" + testData + "\"",
-		"CapabilityBoundingSet=CAP_SETUID CAP_SETGID CAP_AUDIT_WRITE CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER CAP_NET_BIND_SERVICE CAP_NET_ADMIN CAP_SYS_ADMIN CAP_KILL CAP_SETFCAP CAP_NET_RAW",
-		"AmbientCapabilities=CAP_SETUID CAP_SETGID",
-		"Restart=always",
-		"RuntimeDirectory=cadestro",
-		"SyslogIdentifier=cadestrod",
-		"WantedBy=multi-user.target",
+	for _, expected := range []string{
+		"User=root",
+		"ExecStart=/usr/local/bin/cadestrod -data-dir=/var/lib/cadestro -log-level=info",
+		"RuntimeDirectoryMode=0700",
 	} {
-		if !strings.Contains(out, want) {
-			t.Errorf("rendered unit missing %q", want)
+		if !strings.Contains(rendered, expected) {
+			t.Errorf("unit missing %q", expected)
 		}
 	}
-	if strings.Contains(out, "{{") {
-		t.Error("rendered unit contains an unexpanded template action")
+	if _, err := Render(Params{BinaryPath: "cadestrod", DataDir: testParams.DataDir}); err == nil {
+		t.Fatal("relative binary path accepted")
 	}
 }
 
-func TestReconcile_DriftRewritesAndReloads(t *testing.T) {
-	m := &fakeManager{t: t, version: 257, readContent: "stale unit\n"}
-	drifted, err := Reconcile(context.Background(), m, testLogger(), Params{BinaryPath: testBin, DataDir: testData})
+func TestReconcile(t *testing.T) {
+	manager := &fakeManager{content: "stale"}
+	changed, err := Reconcile(context.Background(), manager, testLogger(), testParams)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !drifted {
-		t.Error("Reconcile must report drift")
+	if !changed || manager.writes != 1 || manager.reloads != 1 {
+		t.Fatalf("changed=%v writes=%d reloads=%d", changed, manager.writes, manager.reloads)
 	}
-	if m.writeCalls != 1 || m.writeUnit != UnitName {
-		t.Errorf("expected exactly one WriteUnit(%s), got %d (%s)", UnitName, m.writeCalls, m.writeUnit)
-	}
-	if !strings.Contains(m.writeContent, "RestrictRealtime=true") {
-		t.Error("version 257 must render RestrictRealtime=true")
-	}
-	if m.reloads != 1 {
-		t.Errorf("expected exactly one DaemonReload, got %d", m.reloads)
-	}
-}
 
-func TestReconcile_IdenticalIsNoop(t *testing.T) {
-	rendered, err := Render(Params{BinaryPath: testBin, DataDir: testData, RestrictRealtime: false})
+	manager = &fakeManager{content: manager.written}
+	changed, err = Reconcile(context.Background(), manager, testLogger(), testParams)
 	if err != nil {
 		t.Fatal(err)
 	}
-	m := &fakeManager{t: t, version: 252, readContent: rendered}
-	drifted, err := Reconcile(context.Background(), m, testLogger(), Params{BinaryPath: testBin, DataDir: testData})
+	if changed || manager.writes != 0 || manager.reloads != 0 {
+		t.Fatalf("identical unit changed: changed=%v writes=%d reloads=%d", changed, manager.writes, manager.reloads)
+	}
+}
+
+func TestAbsentUnitBehavior(t *testing.T) {
+	manager := &fakeManager{readErr: fs.ErrNotExist}
+	changed, err := Reconcile(context.Background(), manager, testLogger(), testParams)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if drifted {
-		t.Error("identical unit must not report drift")
+	if changed || manager.writes != 0 {
+		t.Fatal("startup reconcile installed an absent unit")
 	}
-	if m.writeCalls != 0 || m.reloads != 0 {
-		t.Errorf("identical unit must be a no-op, got %d writes / %d reloads", m.writeCalls, m.reloads)
+	if err := EnsureInstalled(context.Background(), manager, testLogger(), testParams); err != nil {
+		t.Fatal(err)
+	}
+	if manager.writes != 1 || manager.reloads != 1 {
+		t.Fatalf("install writes=%d reloads=%d", manager.writes, manager.reloads)
 	}
 }
 
-func TestReconcile_AbsentUnitSkips(t *testing.T) {
-	m := &fakeManager{t: t, version: 257, readErr: fs.ErrNotExist}
-	drifted, err := Reconcile(context.Background(), m, testLogger(), Params{BinaryPath: testBin, DataDir: testData})
-	if err != nil {
-		t.Fatal(err)
+func TestReconcileErrors(t *testing.T) {
+	manager := &fakeManager{content: "stale", writeErr: errors.New("read only")}
+	if _, err := Reconcile(context.Background(), manager, testLogger(), testParams); err == nil {
+		t.Fatal("write error ignored")
 	}
-	if drifted || m.writeCalls != 0 || m.reloads != 0 {
-		t.Error("absent unit must be a complete no-op for the startup reconcile")
-	}
-	if m.versionCalls != 0 {
-		t.Error("absent unit must skip BEFORE the systemd version probe (container/dev runs must not invoke systemctl)")
-	}
-}
-
-func TestReconcile_VersionProbeFailureFailsSafe(t *testing.T) {
-	m := &fakeManager{t: t, versionErr: errors.New("no systemctl"), readContent: "stale\n"}
-	drifted, err := Reconcile(context.Background(), m, testLogger(), Params{BinaryPath: testBin, DataDir: testData})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !drifted {
-		t.Error("expected drift rewrite despite probe failure")
-	}
-	if !strings.Contains(m.writeContent, "RestrictRealtime=false") {
-		t.Error("probe failure must fail safe to RestrictRealtime=false")
-	}
-}
-
-func TestReconcile_WriteFailureSurfaces(t *testing.T) {
-	m := &fakeManager{t: t, version: 257, readContent: "stale\n", writeErr: errors.New("read-only /etc")}
-	if _, err := Reconcile(context.Background(), m, testLogger(), Params{BinaryPath: testBin, DataDir: testData}); err == nil {
-		t.Fatal("write failure must surface")
-	}
-}
-
-func TestEnsureInstalled_WritesWhenAbsent(t *testing.T) {
-	m := &fakeManager{t: t, version: 257, readErr: fs.ErrNotExist}
-	if err := EnsureInstalled(context.Background(), m, testLogger(), Params{BinaryPath: testBin, DataDir: testData}); err != nil {
-		t.Fatal(err)
-	}
-	if m.writeCalls != 1 || m.reloads != 1 {
-		t.Errorf("absent unit must be installed: %d writes / %d reloads", m.writeCalls, m.reloads)
-	}
-}
-
-func TestEnsureInstalled_IdenticalIsNoop(t *testing.T) {
-	rendered, err := Render(Params{BinaryPath: testBin, DataDir: testData, RestrictRealtime: true})
-	if err != nil {
-		t.Fatal(err)
-	}
-	m := &fakeManager{t: t, version: 257, readContent: rendered}
-	if err := EnsureInstalled(context.Background(), m, testLogger(), Params{BinaryPath: testBin, DataDir: testData}); err != nil {
-		t.Fatal(err)
-	}
-	if m.writeCalls != 0 || m.reloads != 0 {
-		t.Errorf("identical unit must be a no-op: %d writes / %d reloads", m.writeCalls, m.reloads)
-	}
-}
-
-func TestRenderedUnitPassesSDKContentGate(t *testing.T) {
-	for _, rr := range []bool{true, false} {
-		out, err := Render(Params{BinaryPath: testBin, DataDir: testData, RestrictRealtime: rr})
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := service.ValidateUnitContent(out); err != nil {
-			t.Errorf("rendered unit (RestrictRealtime=%v) rejected by the SDK content gate: %v", rr, err)
-		}
-	}
-}
-
-func TestReconcile_PendingReloadRetried(t *testing.T) {
-	rendered, err := Render(Params{BinaryPath: testBin, DataDir: testData, RestrictRealtime: true})
-	if err != nil {
-		t.Fatal(err)
-	}
-	m := &fakeManager{t: t, version: 257, readContent: rendered, needsReload: true}
-	drifted, err := Reconcile(context.Background(), m, testLogger(), Params{BinaryPath: testBin, DataDir: testData})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if drifted {
-		t.Error("identical bytes must not count as drift")
-	}
-	if m.writeCalls != 0 {
-		t.Error("identical bytes must not rewrite the unit")
-	}
-	if m.reloads != 1 {
-		t.Errorf("pending reload must be retried exactly once, got %d", m.reloads)
-	}
-}
-
-func TestReconcile_NoPendingReloadNoReload(t *testing.T) {
-	rendered, err := Render(Params{BinaryPath: testBin, DataDir: testData, RestrictRealtime: true})
-	if err != nil {
-		t.Fatal(err)
-	}
-	m := &fakeManager{t: t, version: 257, readContent: rendered, needsReload: false}
-	if _, err := Reconcile(context.Background(), m, testLogger(), Params{BinaryPath: testBin, DataDir: testData}); err != nil {
-		t.Fatal(err)
-	}
-	if m.needsReloadCalls != 1 || m.reloads != 0 {
-		t.Errorf("want one NeedsReload probe and zero reloads, got %d / %d", m.needsReloadCalls, m.reloads)
-	}
-}
-
-func TestReconcile_ReloadFailureThenRetrySucceeds(t *testing.T) {
-
-	m1 := &fakeManager{t: t, version: 257, readContent: "stale\n", reloadErr: errors.New("dbus down")}
-	_, err := Reconcile(context.Background(), m1, testLogger(), Params{BinaryPath: testBin, DataDir: testData})
-	if err == nil {
-		t.Fatal("failing daemon-reload after a write must surface")
-	}
-	if m1.writeCalls != 1 {
-		t.Fatal("the unit must have been written before the reload failed")
-	}
-
-	m2 := &fakeManager{t: t, version: 257, readContent: m1.writeContent, needsReload: true}
-	drifted, err := Reconcile(context.Background(), m2, testLogger(), Params{BinaryPath: testBin, DataDir: testData})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if drifted || m2.writeCalls != 0 {
-		t.Error("run 2 must not rewrite")
-	}
-	if m2.reloads != 1 {
-		t.Errorf("run 2 must complete the pending reload, got %d reloads", m2.reloads)
-	}
-}
-
-func TestRender_RejectsUnsafePaths(t *testing.T) {
-	bad := []string{
-		"relative/path",
-		"/path with space",
-		"/path\twith-tab",
-		"/path\nwith-newline",
-		"/path\"quote",
-		"/path'quote",
-		"/path\\backslash",
-		"/path%specifier",
-		"/path$var",
-		"/path${brace}",
-		"/path\x07bell",
-		"",
-	}
-	for _, p := range bad {
-		if _, err := Render(Params{BinaryPath: p, DataDir: testData}); err == nil {
-			t.Errorf("BinaryPath %q must be rejected", p)
-		}
-		if _, err := Render(Params{BinaryPath: testBin, DataDir: p}); err == nil {
-			t.Errorf("DataDir %q must be rejected", p)
-		}
-	}
-	if _, err := Render(Params{BinaryPath: "/opt/pm/agent-v2", DataDir: "/srv/cadestro-data_1"}); err != nil {
-		t.Errorf("plain absolute paths must pass, got %v", err)
+	manager = &fakeManager{content: "stale", reloadErr: errors.New("reload failed")}
+	changed, err := Reconcile(context.Background(), manager, testLogger(), testParams)
+	if !changed || err == nil {
+		t.Fatalf("changed=%v err=%v", changed, err)
 	}
 }

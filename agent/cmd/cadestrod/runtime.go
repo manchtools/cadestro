@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/manchtools/cadestro/agent/internal/credentials"
 	"github.com/manchtools/cadestro/agent/internal/handler"
-	"github.com/manchtools/cadestro/agent/internal/luksd"
 	"github.com/manchtools/cadestro/agent/internal/scheduler"
 	sdk "github.com/manchtools/cadestro/contract"
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
@@ -35,321 +33,180 @@ func waitForWelcome(ctx context.Context, cancel context.CancelFunc, wait func(co
 	return err
 }
 
-func runAgent(ctx context.Context, credStore *credentials.Store, creds *credentials.Credentials, hostname string, h *handler.Handler, sched *scheduler.Scheduler, syncTrigger <-chan struct{}, securityAlert *pendingSecurityAlert, luksDaemon *luksd.Daemon, logger *slog.Logger, now func() time.Time) {
-
-	syncInterval := defaultSyncInterval
-
-	currentBackoff := randomBackoff()
-
-	firstConnect := true
+func runAgent(ctx context.Context, credStore *credentials.Store, creds *credentials.Credentials, hostname string, handler *handler.Handler, scheduler *scheduler.Scheduler, logger *slog.Logger, now func() time.Time) {
+	backoff := randomBackoff()
 	fallbackActive := false
+	firstConnect := true
 
-	for {
+	for ctx.Err() == nil {
 		if !firstConnect {
 			creds = reloadCredsForReconnect(credStore, creds, logger)
 		}
 		firstConnect = false
-
-		h.ResetConnection()
+		handler.ResetConnection()
 
 		if err := requireHTTPSAgentAddr(creds.AgentAddr); err != nil {
-			logger.Error("refusing stream URL — re-enrol against an https:// control server or delete the cached credentials",
-				"agent_addr", creds.AgentAddr, "error", err)
-			os.Exit(1)
+			logger.Error("refusing invalid control URL", "control", creds.AgentAddr, "error", err)
+			return
+		}
+		mtlsOption, usingPending, pendingInvalid, err := configureAgentMTLS(creds, fallbackActive)
+		if err != nil {
+			if pendingInvalid {
+				fallbackActive = true
+				logger.Warn("pending certificate is unusable; falling back to the active certificate", "error", err)
+				continue
+			}
+			logger.Error("configure mTLS", "error", err)
+			return
 		}
 
 		sessionCtx, cancelSession := context.WithCancel(ctx)
-
-		mtlsOpt, usingPending, pendingConfigFailed, err := configureAgentMTLS(creds, fallbackActive)
-		if err != nil {
-			if pendingConfigFailed {
-
-				logger.Warn("pending certificate unusable; falling back to active certificate", "error", err)
-				fallbackActive = true
-				cancelSession()
-				timer := time.NewTimer(currentBackoff)
-				select {
-				case <-ctx.Done():
-					timer.Stop()
-					return
-				case <-timer.C:
-				}
-				continue
-			}
-			logger.Error("failed to configure mTLS", "error", err)
-			os.Exit(1)
-		}
-		client := sdk.NewClient(strings.TrimSpace(creds.AgentAddr),
-			mtlsOpt,
-			sdk.WithAuth(creds.DeviceID, ""),
-		)
-
-		luksStore := &clientLuksKeyStore{client: client, executor: h.Executor()}
-
-		h.SetTerminalSender(client)
-
+		client := sdk.NewClient(strings.TrimSpace(creds.AgentAddr), mtlsOption, sdk.WithAuth(creds.DeviceID, ""), sdk.WithLogger(logger))
 		streamDone := make(chan error, 1)
-		go func() {
-			defer cancelSession()
-			streamDone <- client.Run(sessionCtx, hostname, version, defaultHeartbeatInterval, h)
-		}()
+		go func() { streamDone <- client.Run(sessionCtx, hostname, version, defaultHeartbeatInterval, handler) }()
 
-		connected := waitForWelcome(sessionCtx, cancelSession, h.WaitConnected, defaultHeartbeatInterval) == nil
+		connected := waitForWelcome(sessionCtx, cancelSession, handler.WaitConnected, defaultHeartbeatInterval) == nil
 		staged := false
-		if connected {
-			if !usingPending {
-
-				fallbackActive = false
-				var renewErr error
-				staged, renewErr = renewCertificateIfDue(sessionCtx, credStore, creds, hostname, logger, now, len(creds.PendingCertificate) > 0)
-				if renewErr != nil {
-					logger.Warn("certificate renewal check failed", "error", renewErr)
-				} else if staged {
-					cancelSession()
-				}
+		if connected && usingPending {
+			creds.Certificate = append([]byte(nil), creds.PendingCertificate...)
+			creds.PendingCertificate = nil
+			if err := credStore.Save(creds); err != nil {
+				logger.Warn("persist promoted certificate", "error", err)
 			}
-			if usingPending {
-
-				creds.Certificate = append([]byte(nil), creds.PendingCertificate...)
-				creds.PendingCertificate = nil
-				if err := credStore.Save(creds); err != nil {
-					logger.Warn("certificate promotion: failed to persist active bundle", "error", err)
-				}
+			fallbackActive = false
+		}
+		if connected && !usingPending {
+			staged, err = renewCertificateIfDue(sessionCtx, credStore, creds, hostname, logger, now, len(creds.PendingCertificate) > 0)
+			if err != nil {
+				logger.Warn("certificate renewal", "error", err)
 			}
 			if staged {
-
-			} else {
-				h.Executor().SetLuksKeyStore(luksStore)
-				h.Executor().SetLpsPasswordStore(&clientLpsPasswordStore{client: client})
-				if luksDaemon != nil {
-					luksDaemon.SetSession(luksStore)
-				}
-
-				if newInterval := syncStateFromControl(sessionCtx, client, sched, logger); newInterval > 0 {
-					syncInterval = newInterval
-				}
-				syncPendingResults(sessionCtx, sched, client, logger)
-
-				if securityAlert != nil {
-					go sendSecurityAlert(sessionCtx, client, securityAlert, logger)
-					securityAlert = nil
-				}
+				cancelSession()
 			}
 		}
 
-		intervalUpdatesOut := make(chan time.Duration, 1)
-		syncDone := make(chan struct{})
-		go func() {
-			defer close(syncDone)
-			var beforeSync func() bool
-			if !usingPending && !staged {
-				beforeSync = func() bool {
-					staged, renewErr := renewCertificateIfDue(sessionCtx, credStore, creds, hostname, logger, now, len(creds.PendingCertificate) > 0)
-					if renewErr != nil {
-						logger.Warn("certificate renewal check failed", "error", renewErr)
-						return false
-					}
-					if staged {
-						cancelSession()
-						return true
-					}
-					return false
-				}
-			}
-			periodicSync(sessionCtx, client, sched, syncInterval, intervalUpdatesOut, syncTrigger, logger, beforeSync)
-		}()
+		var workers syncWorkers
+		if connected && !staged {
+			interval := syncStateFromControl(sessionCtx, client, scheduler, logger)
+			syncPendingResults(sessionCtx, scheduler, client, logger)
+			workers.start(sessionCtx, client, scheduler, interval, logger)
+		}
 
-		resultsDone := make(chan struct{})
-		go func() {
-			defer close(resultsDone)
-			sendScheduledResults(sessionCtx, client, sched, logger)
-		}()
-
-		connStart := now()
-		streamErr := waitForStreamEnd(streamDone, intervalUpdatesOut, &syncInterval)
-		err = streamErr
-
+		started := now()
+		streamErr := <-streamDone
 		fallbackActive = fallbackAfterConnection(len(creds.PendingCertificate) > 0, usingPending, connected)
-
 		cancelSession()
-		h.Executor().SetLuksKeyStore(nil)
-
-		h.Executor().SetLpsPasswordStore(nil)
-		if luksDaemon != nil {
-			luksDaemon.ClearSession()
-		}
-		<-syncDone
-		<-resultsDone
-
+		workers.wait()
 		client.CloseIdleConnections()
-
-		select {
-		case updated := <-intervalUpdatesOut:
-			syncInterval = updated
-		default:
-		}
-
 		if ctx.Err() != nil {
-			logger.Info("agent stopped")
 			return
 		}
-
-		if now().Sub(connStart) > currentBackoff {
-			currentBackoff = randomBackoff()
+		if now().Sub(started) > backoff {
+			backoff = randomBackoff()
 		}
-
-		logger.Error("connection lost, continuing with scheduled actions",
-			"error", err,
-			"backoff", currentBackoff.String(),
-		)
-
+		logger.Warn("connection lost; scheduled actions remain active", "error", streamErr, "backoff", backoff)
+		timer := time.NewTimer(backoff)
 		select {
 		case <-ctx.Done():
-			logger.Info("agent stopped during backoff")
+			timer.Stop()
 			return
-		case <-time.After(currentBackoff):
+		case <-timer.C:
 		}
-
-		currentBackoff = time.Duration(float64(currentBackoff) * backoffFactor)
-		if currentBackoff > maxBackoff {
-			currentBackoff = maxBackoff
-		}
+		backoff = min(backoff*2, maxBackoff)
 	}
 }
 
-func waitForStreamEnd(streamDone <-chan error, intervalUpdatesOut <-chan time.Duration, interval *time.Duration) error {
-	for {
-		select {
-		case err := <-streamDone:
-			return err
-		case updated := <-intervalUpdatesOut:
-			*interval = updated
-		}
+type syncWorkers struct {
+	done []<-chan struct{}
+}
+
+func (workers *syncWorkers) start(ctx context.Context, client *sdk.Client, scheduler *scheduler.Scheduler, interval time.Duration, logger *slog.Logger) {
+	for _, run := range []func(){
+		func() { periodicSync(ctx, client, scheduler, interval, logger) },
+		func() { sendScheduledResults(ctx, client, scheduler, logger) },
+	} {
+		done := make(chan struct{})
+		workers.done = append(workers.done, done)
+		go func() {
+			defer close(done)
+			run()
+		}()
 	}
 }
 
-func periodicSync(
-	ctx context.Context,
-	client *sdk.Client,
-	sched *scheduler.Scheduler,
-	initialInterval time.Duration,
-	intervalUpdatesOut chan<- time.Duration,
-	syncTrigger <-chan struct{},
-	logger *slog.Logger,
-	beforeSync func() bool,
-) {
-	syncInterval := initialInterval
-	ticker := time.NewTicker(syncInterval)
+func (workers *syncWorkers) wait() {
+	for _, done := range workers.done {
+		<-done
+	}
+}
+
+func periodicSync(ctx context.Context, client *sdk.Client, scheduler *scheduler.Scheduler, interval time.Duration, logger *slog.Logger) {
+	if interval <= 0 {
+		interval = defaultSyncInterval
+	}
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
-
-	logger.Info("periodic sync started", "interval", syncInterval.String())
-
-	doSync := func(reason string) {
-		if beforeSync != nil && beforeSync() {
-			return
-		}
-		logger.Info("synchronizing stream state", "reason", reason)
-		newInterval := syncStateFromControl(ctx, client, sched, logger)
-		if newInterval > 0 && newInterval != syncInterval {
-			syncInterval = newInterval
-			ticker.Reset(syncInterval)
-			logger.Info("sync interval updated", "new_interval", syncInterval.String())
-
-			select {
-			case intervalUpdatesOut <- syncInterval:
-			default:
-			}
-		}
-	}
-
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Debug("periodic sync stopped")
 			return
 		case <-ticker.C:
-			doSync("periodic")
-		case <-syncTrigger:
-			doSync("live sync trigger")
+			if updated := syncStateFromControl(ctx, client, scheduler, logger); updated > 0 && updated != interval {
+				interval = updated
+				ticker.Reset(interval)
+			}
 		}
 	}
 }
 
-func sendScheduledResults(ctx context.Context, client *sdk.Client, sched *scheduler.Scheduler, logger *slog.Logger) {
+func sendScheduledResults(ctx context.Context, client *sdk.Client, scheduler *scheduler.Scheduler, logger *slog.Logger) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case result, ok := <-sched.Results():
-			if !ok {
-				return
-			}
-
+		case result := <-scheduler.Results():
 			if err := sendResult(ctx, client, result.ActionResult, result.ManifestResult); err != nil {
-				logger.Warn("failed to send scheduled result", "result_id", result.ResultID, "error", err)
+				logger.Warn("send scheduled result", "result_id", result.ResultID, "error", err)
 				continue
 			}
-			if err := sched.MarkPendingResultSynced(ctx, result.ResultID); err != nil {
-				logger.Warn("failed to mark result synced", "result_id", result.ResultID, "error", err)
+			if err := scheduler.MarkPendingResultSynced(ctx, result.ResultID); err != nil {
+				logger.Warn("mark result synced", "result_id", result.ResultID, "error", err)
 			}
 		}
 	}
 }
 
-func syncStateFromControl(ctx context.Context, client *sdk.Client, sched *scheduler.Scheduler, logger *slog.Logger) time.Duration {
-	logger.Info("synchronizing state from control")
-
-	result, err := client.Sync(ctx)
+func syncStateFromControl(ctx context.Context, client *sdk.Client, scheduler *scheduler.Scheduler, logger *slog.Logger) time.Duration {
+	state, err := client.Sync(ctx)
 	if err != nil {
-		logger.Warn("failed to synchronize state from control", "error", err)
+		logger.Warn("pull desired state", "error", err)
 		return 0
 	}
-
-	sched.SetMaintenanceWindow(ctx, result.MaintenanceWindow)
-	if result.DesiredPolicy != nil {
-		if err := sched.ReconcilePolicy(ctx, result.DesiredPolicy); err != nil {
-			logger.Warn("failed to reconcile assigned policy", "error", err)
+	if state.DesiredPolicy != nil {
+		if err := scheduler.ReconcilePolicy(ctx, state.DesiredPolicy); err != nil {
+			logger.Warn("reconcile desired state", "error", err)
 		}
 	}
-
-	var syncInterval time.Duration
-	if result.SyncIntervalMinutes > 0 {
-		syncInterval = time.Duration(result.SyncIntervalMinutes) * time.Minute
-	} else {
-		syncInterval = defaultSyncInterval
+	if state.SyncIntervalMinutes <= 0 {
+		return defaultSyncInterval
 	}
-
-	logger.Info("manifests synced from server", "sync_interval", syncInterval.String())
-
-	return syncInterval
+	return time.Duration(state.SyncIntervalMinutes) * time.Minute
 }
 
-func syncPendingResults(ctx context.Context, sched *scheduler.Scheduler, client *sdk.Client, logger *slog.Logger) {
-	results, err := sched.GetPendingResults(ctx)
+func syncPendingResults(ctx context.Context, scheduler *scheduler.Scheduler, client *sdk.Client, logger *slog.Logger) {
+	results, err := scheduler.GetPendingResults(ctx)
 	if err != nil {
-		logger.Warn("failed to get unsynced results", "error", err)
+		logger.Warn("load pending results", "error", err)
 		return
 	}
-
-	if len(results) == 0 {
-		return
-	}
-
-	logger.Info("syncing pending results", "count", len(results))
-
-	for _, r := range results {
-		select {
-		case <-ctx.Done():
+	for _, result := range results {
+		if err := sendResult(ctx, client, result.ActionResult, result.ManifestResult); err != nil {
+			logger.Warn("send pending result", "result_id", result.ID, "error", err)
 			return
-		default:
 		}
-
-		if err := sendResult(ctx, client, r.ActionResult, r.ManifestResult); err != nil {
-			logger.Warn("failed to send pending result", "result_id", r.ID, "error", err)
-			continue
-		}
-		if err := sched.MarkPendingResultSynced(ctx, r.ID); err != nil {
-			logger.Warn("failed to mark result synced", "result_id", r.ID, "error", err)
+		if err := scheduler.MarkPendingResultSynced(ctx, result.ID); err != nil {
+			logger.Warn("mark pending result synced", "result_id", result.ID, "error", err)
+			return
 		}
 	}
 }
@@ -362,42 +219,5 @@ func sendResult(ctx context.Context, client *sdk.Client, action *cadestrov1.Acti
 		return client.SendManifestResult(ctx, manifest)
 	default:
 		return fmt.Errorf("result outbox entry must contain exactly one payload")
-	}
-}
-
-func sendSecurityAlert(ctx context.Context, client *sdk.Client, alert *pendingSecurityAlert, logger *slog.Logger) {
-
-	select {
-	case <-ctx.Done():
-		return
-	case <-time.After(2 * time.Second):
-	}
-
-	logger.Info("sending security alert to server",
-		"type", alert.alertType,
-		"message", alert.message,
-	)
-
-	var alertType cadestrov1.SecurityAlertType
-	switch alert.alertType {
-	case "server_reassignment_attempt":
-		alertType = cadestrov1.SecurityAlertType_SECURITY_ALERT_TYPE_SERVER_REASSIGNMENT_ATTEMPT
-	default:
-		alertType = cadestrov1.SecurityAlertType_SECURITY_ALERT_TYPE_UNSPECIFIED
-	}
-
-	protoAlert := &cadestrov1.SecurityAlert{
-		Type:    alertType,
-		Message: alert.message,
-		Details: map[string]string{
-			"requested_server":  alert.requestedServer,
-			"registered_server": alert.registeredServer,
-		},
-	}
-
-	if err := client.SendSecurityAlert(ctx, protoAlert); err != nil {
-		logger.Warn("failed to send security alert", "error", err)
-	} else {
-		logger.Debug("security alert sent successfully")
 	}
 }

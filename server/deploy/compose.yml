@@ -1,15 +1,9 @@
-# docref: begin deployment-services
 services:
   traefik:
     image: docker.io/traefik:v3.7.1
-    container_name: cadestro-traefik
     restart: unless-stopped
-
-
-
     env_file:
-      - ./config/traefik-acme.env
-      - ./config/traefik-dns.env
+      - ./config/traefik.env
     environment:
       CONTROL_DOMAIN: ${CONTROL_DOMAIN:?CONTROL_DOMAIN is required}
       AGENT_DOMAIN: ${AGENT_DOMAIN:?AGENT_DOMAIN is required}
@@ -22,81 +16,41 @@ services:
       - ./traefik/dynamic:/etc/traefik/dynamic:ro,z
       - ./certs/ca.crt:/run/certs/ca.crt:ro,z
       - ./data/traefik:/letsencrypt:z
-
-
-
-
-
     healthcheck:
       test: ["CMD", "traefik", "healthcheck", "--ping"]
       interval: 10s
       timeout: 3s
       retries: 5
-      start_period: 15s
-    networks:
-      internal:
-        ipv4_address: 172.29.0.2
-      agent_proxy:
-        ipv4_address: 172.30.0.2
+    networks: [internal]
 
   control:
     image: ghcr.io/manchtools/cadestro:${IMAGE_TAG:-latest}
-    container_name: cadestro-control
     restart: unless-stopped
-    env_file: ./config/control.env
+    env_file:
+      - ./config/control.env
     volumes:
-      - ./certs/ca.crt:/run/certs/ca.crt:ro,z
-      - ./certs/ca.key:/run/certs/ca.key:ro,z
-      - ./certs/control.crt:/run/certs/control.crt:ro,z
-      - ./certs/control.key:/run/certs/control.key:ro,z
-      - ./secrets/encryption.key:/run/secrets/encryption.key:ro,z
-      - ./secrets/session-signing.pem:/run/secrets/session-signing.pem:ro,z
-      - ./data/control:/var/lib/cadestro/state:z
-      - ./data/artifacts:/var/lib/cadestro/artifacts:z
-      - ./data/backups:/var/lib/cadestro/backups:z
+      - ./certs:/run/certs:ro,z
+      - ./secrets:/run/secrets:ro,z
+      - ./data/control:/var/lib/cadestro:z
     healthcheck:
       test: ["CMD", "wget", "--no-check-certificate", "-q", "--spider", "https://127.0.0.1:8081/ready"]
       interval: 10s
       timeout: 5s
       retries: 10
-    networks:
-      internal:
-        ipv4_address: 172.29.0.3
-      agent_proxy:
-        ipv4_address: 172.30.0.3
-
-
-
-
-
-
-
+    networks: [internal]
 
   web:
     image: ghcr.io/manchtools/cadestro-web:${IMAGE_TAG:-latest}
-    container_name: cadestro-web
     restart: unless-stopped
-    env_file: ./config/web.env
+    env_file:
+      - ./config/web.env
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/"]
       interval: 10s
       timeout: 3s
       retries: 5
-      start_period: 10s
-    networks:
-      internal:
-        ipv4_address: 172.29.0.4
-# docref: end deployment-services
+    networks: [internal]
 
 networks:
   internal:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.29.0.0/24
-  agent_proxy:
-    driver: bridge
-    internal: true
-    ipam:
-      config:
-        - subnet: 172.30.0.0/24

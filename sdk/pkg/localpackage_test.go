@@ -108,23 +108,6 @@ func TestLocalPackageInfo_PacmanRejectsNamelessOutput(t *testing.T) {
 	}
 }
 
-func TestLocalPackageInfo_FlatpakUnsupported(t *testing.T) {
-	m, f := flatpakM(t)
-	info, err := m.LocalPackageInfo(context.Background(), "/tmp/app.flatpak")
-	if err == nil {
-		t.Fatal("flatpak LocalPackageInfo must return a not-supported error")
-	}
-	if info != nil {
-		t.Errorf("info = %+v, want nil on the unsupported path", info)
-	}
-	if !strings.Contains(strings.ToLower(err.Error()), "flatpak") {
-		t.Errorf("error = %v, want it to name flatpak", err)
-	}
-	if n := len(f.Calls()); n != 0 {
-		t.Errorf("unsupported backend ran %d commands, want 0", n)
-	}
-}
-
 func TestLocalPackageInfo_RejectsBadPath(t *testing.T) {
 	for _, mk := range []func(t *testing.T) (Manager, *exectest.FakeRunner){aptM, dnfM, zypperM, pacmanM} {
 		m, f := mk(t)

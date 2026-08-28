@@ -8,28 +8,6 @@ import (
 	"time"
 )
 
-type LpsState struct {
-	ActionID      string `json:"action_id"`
-	Username      string `json:"username"`
-	LastRotatedAt string `json:"last_rotated_at"`
-	PasswordHash  string `json:"password_hash"`
-}
-
-type LuksState struct {
-	ActionID       string `json:"action_id"`
-	DevicePath     string `json:"device_path"`
-	OwnershipTaken bool   `json:"ownership_taken"`
-	DeviceKeyType  string `json:"device_key_type"`
-	LastRotatedAt  string `json:"last_rotated_at"`
-}
-
-type LuksUserPassphraseHistory struct {
-	ID             int64  `json:"id"`
-	ActionID       string `json:"action_id"`
-	PassphraseHash string `json:"passphrase_hash"`
-	CreatedAt      string `json:"created_at"`
-}
-
 type ResultOutbox struct {
 	Sequence  int64     `json:"sequence"`
 	ID        string    `json:"id"`

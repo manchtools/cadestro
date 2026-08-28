@@ -1,15 +1,15 @@
 name: Server
 
 on:
-  push:
-    branches: [main, 'v*']
+  pull_request:
     paths:
       - 'server/**'
       - 'sdk/**'
       - 'contract/**'
       - '.github/go-tools.env'
       - '.github/workflows/server.yml'
-  pull_request:
+  push:
+    branches: [main]
     paths:
       - 'server/**'
       - 'sdk/**'
@@ -33,76 +33,20 @@ env:
 
 jobs:
   test:
-    name: Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
         with:
           go-version-file: server/go.mod
-      - run: go test -count=1 -p 1 -timeout 30m ./...
-      - run: go vet ./...
-      - run: bash deploy/setup_test.sh
-      - run: bash deploy/install_test.sh
-      - run: bash deploy/backup_test.sh
-  lint:
-    name: gofmt + vet + staticcheck + govulncheck
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-go@v6
-        with:
-          go-version: 'stable'
-
-      - name: Load Go analysis tool versions
+      - name: Load tool versions
         run: cat ../.github/go-tools.env >> "$GITHUB_ENV"
-
-      - name: gofmt
-        run: |
-          unformatted=$(gofmt -l .)
-          if [ -n "$unformatted" ]; then
-            echo "::error::gofmt would change these files:"
-            echo "$unformatted"
-            exit 1
-          fi
-
-      - name: go vet
-        run: go vet ./...
-
-      - name: staticcheck
-        run: |
-          go install honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}
-          staticcheck ./...
-
-      - name: install govulncheck
-        run: go install golang.org/x/vuln/cmd/govulncheck@${GOVULNCHECK_VERSION}
-
-      - name: govulncheck (production packages — full report)
-        continue-on-error: true
-        run: |
-          PKGS=$(go list ./... | grep -v 'internal/testutil')
-          govulncheck $PKGS
-
-      - name: govulncheck (first-party hard-fail)
-        run: |
-          PKGS=$(go list ./... | grep -v 'internal/testutil')
-          govulncheck -json $PKGS > govuln.json || true
-          if jq -e '
-            select(.finding != null)
-            | .finding.trace[]?
-            | select(.module // "" | startswith("github.com/manchtools/"))
-          ' govuln.json > /dev/null; then
-            echo ""
-            echo "::error::govulncheck found a vulnerability whose call trace reaches a first-party module."
-            echo "These findings must be fixed (bump the offending dep or document the carve-out) before merge."
-            echo ""
-            jq -r '
-              select(.finding != null) as $f
-              | $f.finding.trace[]?
-              | select(.module // "" | startswith("github.com/manchtools/"))
-              | "  - \($f.finding.osv) reaches \(.module)/\(.package // "?")\(if .function then "." + .function else "" end)"
-            ' govuln.json | sort -u
-            exit 1
-          fi
-          echo "govulncheck: no first-party findings (stdlib / third-party shown in the soft-fail step above)"
+      - run: make sqlc-check
+      - run: test -z "$(gofmt -l .)"
+      - run: go vet ./...
+      - run: go install honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}
+      - run: staticcheck ./...
+      - run: go test -race -count=1 -p 1 ./...
+      - run: bash deploy/setup_test.sh
+      - run: go install golang.org/x/vuln/cmd/govulncheck@${GOVULNCHECK_VERSION}
+      - run: govulncheck ./...

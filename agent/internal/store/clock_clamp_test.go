@@ -30,5 +30,5 @@ func TestManifestScheduleWithoutExplicitCadenceUsesDriftDefault(t *testing.T) {
 
 	got := calculateNextExecuteFromSchedule(nil, &lastExecuted, false, now)
 
-	require.Equal(t, now.Add(nilScheduleDrift), got)
+	require.Equal(t, now.Add(defaultInterval), got)
 }

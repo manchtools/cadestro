@@ -22,19 +22,7 @@ message OccurrenceId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }
 
-message DefinitionId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message ActionSetId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
 message ManifestId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message QueryId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }
 
@@ -46,35 +34,11 @@ message PolicyRevisionId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }
 
-message SessionId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
 message UserId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }
 
-message RoleId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message GroupId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message SshKeyId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message UserGroupId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
 message RegistrationTokenId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message ApiTokenId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }
 
@@ -86,19 +50,15 @@ message AssignmentId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }
 
-message AssignmentSourceId {
+message IdentityProviderId {
   string value = 1 [(buf.validate.field).string.ulid = true];
+}
+
+message OidcClientId {
+  string value = 1 [(buf.validate.field).string.max_len = 255];
 }
 
 message AssignmentTargetId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message UserSelectionId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message ScopeId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }
 
@@ -114,49 +74,6 @@ message AuditActorId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }
 
-message LpsPasswordId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message LuksKeyId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message IdentityProviderId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message IdentityLinkId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message CompliancePolicyId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message SearchResultId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message RequestId {
-  string value = 1 [(buf.validate.field).string.max_len = 64];
-}
-
-message FlatpakAppId {
-  string value = 1 [
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 255
-  ];
-}
-
-message OidcClientId {
-  string value = 1 [(buf.validate.field).string.max_len = 255];
-}
-
-message ExternalIdentityId {
-  string value = 1;
-}
-
 enum ExecutionStatus {
   EXECUTION_STATUS_UNSPECIFIED = 0;
   EXECUTION_STATUS_PENDING = 1;
@@ -165,54 +82,13 @@ enum ExecutionStatus {
   EXECUTION_STATUS_FAILED = 4;
   EXECUTION_STATUS_SKIPPED = 5;
   EXECUTION_STATUS_TIMEOUT = 6;
-
-  EXECUTION_STATUS_CANCELLED = 7;
-
-  EXECUTION_STATUS_NOT_APPLICABLE = 8;
-
-  EXECUTION_STATUS_INDETERMINATE = 9;
+  EXECUTION_STATUS_INDETERMINATE = 7;
 }
 
 enum DesiredState {
-  DESIRED_STATE_PRESENT = 0;
-  DESIRED_STATE_ABSENT = 1;
-}
-
-enum AssignmentMode {
-  ASSIGNMENT_MODE_REQUIRED = 0;
-  ASSIGNMENT_MODE_AVAILABLE = 1;
-  ASSIGNMENT_MODE_EXCLUDED = 2;
-  ASSIGNMENT_MODE_UNINSTALL = 3;
-}
-
-enum AssignmentSourceType {
-  ASSIGNMENT_SOURCE_TYPE_UNSPECIFIED = 0;
-  ASSIGNMENT_SOURCE_TYPE_ACTION = 1;
-  ASSIGNMENT_SOURCE_TYPE_ACTION_SET = 2;
-  ASSIGNMENT_SOURCE_TYPE_DEFINITION = 3;
-  ASSIGNMENT_SOURCE_TYPE_COMPLIANCE_POLICY = 4;
-}
-
-enum AssignmentTargetType {
-  ASSIGNMENT_TARGET_TYPE_UNSPECIFIED = 0;
-  ASSIGNMENT_TARGET_TYPE_DEVICE = 1;
-  ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP = 2;
-  ASSIGNMENT_TARGET_TYPE_USER = 3;
-  ASSIGNMENT_TARGET_TYPE_USER_GROUP = 4;
-}
-
-enum RoleGrantScopeKind {
-  ROLE_GRANT_SCOPE_KIND_UNSPECIFIED = 0;
-  ROLE_GRANT_SCOPE_KIND_DEVICE_GROUP = 1;
-  ROLE_GRANT_SCOPE_KIND_USER_GROUP = 2;
-}
-
-enum PermissionTargetKind {
-  PERMISSION_TARGET_KIND_UNSPECIFIED = 0;
-
-  PERMISSION_TARGET_KIND_DEVICE = 1;
-
-  PERMISSION_TARGET_KIND_USER = 2;
+  DESIRED_STATE_UNSPECIFIED = 0;
+  DESIRED_STATE_PRESENT = 1;
+  DESIRED_STATE_ABSENT = 2;
 }
 
 enum DeviceStatus {
@@ -221,186 +97,16 @@ enum DeviceStatus {
   DEVICE_STATUS_OFFLINE = 2;
 }
 
-enum SearchScope {
-  SEARCH_SCOPE_UNSPECIFIED = 0;
-  SEARCH_SCOPE_ACTIONS = 1;
-  SEARCH_SCOPE_ACTION_SETS = 2;
-  SEARCH_SCOPE_DEFINITIONS = 3;
-  SEARCH_SCOPE_COMPLIANCE_POLICIES = 4;
-  SEARCH_SCOPE_DEVICES = 5;
-  SEARCH_SCOPE_USERS = 6;
-  SEARCH_SCOPE_DEVICE_GROUPS = 7;
-  SEARCH_SCOPE_USER_GROUPS = 8;
-  SEARCH_SCOPE_AUDIT_EVENTS = 9;
-}
-
-enum SortField {
-  SORT_FIELD_UNSPECIFIED = 0;
-  SORT_FIELD_NAME = 1;
-  SORT_FIELD_TYPE = 2;
-  SORT_FIELD_HOSTNAME = 3;
-  SORT_FIELD_COMPLIANCE_STATUS = 4;
-  SORT_FIELD_EMAIL = 5;
-  SORT_FIELD_DISPLAY_NAME = 6;
-  SORT_FIELD_DISABLED = 7;
-  SORT_FIELD_MEMBER_COUNT = 8;
-  SORT_FIELD_STATUS = 9;
-  SORT_FIELD_ACTION_TYPE = 10;
-  SORT_FIELD_DEVICE_HOSTNAME = 11;
-  SORT_FIELD_ACTOR_TYPE = 12;
-  SORT_FIELD_STREAM_TYPE = 13;
-  SORT_FIELD_EVENT_TYPE = 14;
-  SORT_FIELD_RULE_COUNT = 15;
-  SORT_FIELD_LAST_LOGIN_AT = 16;
-  SORT_FIELD_CREATED_AT = 17;
-  SORT_FIELD_UPDATED_AT = 18;
-  SORT_FIELD_LAST_SEEN_AT = 19;
-  SORT_FIELD_REGISTERED_AT = 20;
-  SORT_FIELD_OCCURRED_AT = 21;
-}
-
-enum SortDirection {
-  SORT_DIRECTION_UNSPECIFIED = 0;
-  SORT_DIRECTION_ASC = 1;
-  SORT_DIRECTION_DESC = 2;
-}
-
-enum IdentityProviderType {
-  IDENTITY_PROVIDER_TYPE_UNSPECIFIED = 0;
-  IDENTITY_PROVIDER_TYPE_OIDC = 1;
-}
-
-enum RotationReason {
-  ROTATION_REASON_UNSPECIFIED = 0;
-  ROTATION_REASON_INITIAL = 1;
-  ROTATION_REASON_SCHEDULED = 2;
-  ROTATION_REASON_AUTH_GRACE = 3;
-}
-
-enum LuksRevocationStatus {
-  LUKS_REVOCATION_STATUS_UNSPECIFIED = 0;
-  LUKS_REVOCATION_STATUS_NONE = 1;
-  LUKS_REVOCATION_STATUS_DISPATCHED = 2;
-  LUKS_REVOCATION_STATUS_SUCCESS = 3;
-  LUKS_REVOCATION_STATUS_FAILED = 4;
-}
-
-enum ErrorCode {
-  ERROR_CODE_UNSPECIFIED = 0;
-  ERROR_CODE_ACTION_ALREADY_IN_SET = 1;
-  ERROR_CODE_ACTION_NOT_COMPLIANCE = 2;
-  ERROR_CODE_ACTION_NOT_FOUND = 3;
-  ERROR_CODE_ACTION_SET_ALREADY_IN_DEFINITION = 4;
-  ERROR_CODE_ACTION_SET_MEMBER_NOT_FOUND = 5;
-  ERROR_CODE_ACTION_SET_NOT_FOUND = 6;
-  ERROR_CODE_ASSIGNMENT_NOT_FOUND = 7;
-  ERROR_CODE_ASSIGNMENT_SOURCE_NOT_FOUND = 8;
-  ERROR_CODE_ASSIGNMENT_TARGET_NOT_FOUND = 9;
-  ERROR_CODE_CANNOT_DELETE_SYSTEM_ROLE = 10;
-  ERROR_CODE_CANNOT_MODIFY_SYSTEM_ACTION = 11;
-  ERROR_CODE_CANNOT_MODIFY_SYSTEM_ROLE = 12;
-  ERROR_CODE_CANNOT_RENAME_SYSTEM_ROLE = 13;
-  ERROR_CODE_CANNOT_UNLINK_OTHER_USER = 14;
-  ERROR_CODE_COMPLIANCE_ACTION_NEEDS_DETECTION = 15;
-  ERROR_CODE_COMPLIANCE_POLICY_NAME_EXISTS = 16;
-  ERROR_CODE_COMPLIANCE_POLICY_NOT_FOUND = 17;
-  ERROR_CODE_COMPLIANCE_POLICY_RULE_EXISTS = 18;
-  ERROR_CODE_COMPLIANCE_POLICY_RULE_NOT_FOUND = 19;
-  ERROR_CODE_DEFINITION_MEMBER_NOT_FOUND = 20;
-  ERROR_CODE_DEFINITION_NOT_FOUND = 21;
-  ERROR_CODE_DEVICE_ALREADY_IN_GROUP = 22;
-  ERROR_CODE_DEVICE_GROUP_MEMBER_NOT_FOUND = 23;
-  ERROR_CODE_DEVICE_GROUP_NAME_EXISTS = 24;
-  ERROR_CODE_DEVICE_GROUP_NOT_FOUND = 25;
-  ERROR_CODE_DEVICE_NOT_CONNECTED = 26;
-  ERROR_CODE_DEVICE_NOT_FOUND = 27;
-  ERROR_CODE_DEVICE_UNAVAILABLE = 28;
-  ERROR_CODE_DYNAMIC_GROUP_MANUAL_MODIFY = 29;
-  ERROR_CODE_DYNAMIC_GROUP_MEMBERSHIP_MANAGED = 30;
-  ERROR_CODE_EMAIL_ALREADY_EXISTS = 31;
-  ERROR_CODE_GRANT_NOT_FOUND = 32;
-  ERROR_CODE_GROUP_ALREADY_HAS_ROLE = 33;
-  ERROR_CODE_GROUP_NOT_DYNAMIC = 34;
-  ERROR_CODE_IDENTITY_LINK_NOT_FOUND = 35;
-  ERROR_CODE_INTERNAL_ERROR = 36;
-  ERROR_CODE_INVALID_DYNAMIC_QUERY = 37;
-  ERROR_CODE_INVALID_PAGE_TOKEN = 38;
-  ERROR_CODE_INVALID_QUERY = 39;
-  ERROR_CODE_LAST_AUTH_METHOD = 40;
-  ERROR_CODE_LPS_PASSWORD_NOT_FOUND = 41;
-  ERROR_CODE_LUKS_KEY_ALREADY_REVOKED = 42;
-  ERROR_CODE_LUKS_KEY_NOT_FOUND = 43;
-  ERROR_CODE_LUKS_KEY_REVOCATION_PENDING = 44;
-  ERROR_CODE_NO_ASSIGNMENT_FOUND = 45;
-  ERROR_CODE_NOT_AUTHENTICATED = 46;
-  ERROR_CODE_PERMISSION_DENIED = 47;
-  ERROR_CODE_PROVIDER_DISABLED = 48;
-  ERROR_CODE_PROVIDER_NOT_FOUND = 49;
-  ERROR_CODE_PROVIDER_SLUG_EXISTS = 50;
-  ERROR_CODE_QUERY_RESULT_NOT_FOUND = 51;
-  ERROR_CODE_RATE_LIMITED = 52;
-  ERROR_CODE_ROLE_IN_USE = 53;
-  ERROR_CODE_ROLE_NAME_EXISTS = 54;
-  ERROR_CODE_ROLE_NOT_FOUND = 55;
-  ERROR_CODE_SCIM_ALREADY_ENABLED = 56;
-  ERROR_CODE_SCIM_MANAGED_RESOURCE = 57;
-  ERROR_CODE_SCIM_NOT_ENABLED = 58;
-  ERROR_CODE_SCOPE_NOT_PERMITTED = 59;
-  ERROR_CODE_SSO_NO_MATCHING_ACCOUNT = 60;
-  ERROR_CODE_SSO_STATE_EXPIRED = 61;
-  ERROR_CODE_TERMINAL_LINUX_USERNAME_NOT_SET = 62;
-  ERROR_CODE_TERMINAL_NOT_CONFIGURED = 63;
-  ERROR_CODE_TERMINAL_SESSION_NOT_FOUND = 64;
-  ERROR_CODE_TOKEN_EXPIRED = 65;
-  ERROR_CODE_TOKEN_NOT_FOUND = 66;
-  ERROR_CODE_UNIMPLEMENTED = 67;
-  ERROR_CODE_USER_ALREADY_HAS_ROLE = 68;
-  ERROR_CODE_USER_ALREADY_IN_GROUP = 69;
-  ERROR_CODE_USER_GROUP_MEMBER_NOT_FOUND = 70;
-  ERROR_CODE_USER_GROUP_NAME_EXISTS = 71;
-  ERROR_CODE_USER_GROUP_NOT_FOUND = 72;
-  ERROR_CODE_USER_NOT_FOUND = 73;
-  ERROR_CODE_VALIDATION_FAILED = 74;
-}
-
-message ErrorDetail {
-  ErrorCode code = 1 [(buf.validate.field).enum.defined_only = true];
-
-  RequestId request_id = 2;
-}
-
 enum ComplianceStatus {
-  COMPLIANCE_STATUS_UNKNOWN = 0;
+  COMPLIANCE_STATUS_UNSPECIFIED = 0;
   COMPLIANCE_STATUS_COMPLIANT = 1;
   COMPLIANCE_STATUS_NON_COMPLIANT = 2;
-  COMPLIANCE_STATUS_IN_GRACE_PERIOD = 3;
 }
 
-message MaintenanceWindow {
-  repeated MaintenanceWindowEntry schedule = 1;
-}
-
-message MaintenanceWindowEntry {
-  repeated string days = 1 [
-    (buf.validate.field).repeated.min_items = 1,
-    (buf.validate.field).repeated.max_items = 7,
-    (buf.validate.field).required = true,
-    (buf.validate.field).repeated.items.string = {
-      in: [
-        "mon",
-        "tue",
-        "wed",
-        "thu",
-        "fri",
-        "sat",
-        "sun"
-      ]
-    }
-  ];
-  string allow = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.len = 11
-  ];
+enum AssignmentTargetType {
+  ASSIGNMENT_TARGET_TYPE_UNSPECIFIED = 0;
+  ASSIGNMENT_TARGET_TYPE_DEVICE = 1;
+  ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP = 2;
 }
 
 message CommandOutput {

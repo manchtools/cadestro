@@ -27,79 +27,25 @@ const (
 type ActionType int32
 
 const (
-	ActionType_ACTION_TYPE_UNSPECIFIED  ActionType = 0
-	ActionType_ACTION_TYPE_PACKAGE      ActionType = 1
-	ActionType_ACTION_TYPE_UPDATE       ActionType = 2
-	ActionType_ACTION_TYPE_REPOSITORY   ActionType = 3
-	ActionType_ACTION_TYPE_APP_IMAGE    ActionType = 100
-	ActionType_ACTION_TYPE_DEB          ActionType = 101
-	ActionType_ACTION_TYPE_RPM          ActionType = 102
-	ActionType_ACTION_TYPE_FLATPAK      ActionType = 103
-	ActionType_ACTION_TYPE_SHELL        ActionType = 200
-	ActionType_ACTION_TYPE_SCRIPT_RUN   ActionType = 201
-	ActionType_ACTION_TYPE_SERVICE      ActionType = 300
-	ActionType_ACTION_TYPE_FILE         ActionType = 400
-	ActionType_ACTION_TYPE_DIRECTORY    ActionType = 401
-	ActionType_ACTION_TYPE_USER         ActionType = 600
-	ActionType_ACTION_TYPE_GROUP        ActionType = 601
-	ActionType_ACTION_TYPE_SSH          ActionType = 700
-	ActionType_ACTION_TYPE_SSHD         ActionType = 701
-	ActionType_ACTION_TYPE_ADMIN_POLICY ActionType = 800
-	ActionType_ACTION_TYPE_LPS          ActionType = 900
-	ActionType_ACTION_TYPE_ENCRYPTION   ActionType = 1000
-	ActionType_ACTION_TYPE_WIFI         ActionType = 1100
-	ActionType_ACTION_TYPE_AGENT_UPDATE ActionType = 1200
+	ActionType_ACTION_TYPE_UNSPECIFIED ActionType = 0
+	ActionType_ACTION_TYPE_PACKAGE     ActionType = 1
+	ActionType_ACTION_TYPE_UPDATE      ActionType = 2
+	ActionType_ACTION_TYPE_SHELL       ActionType = 3
 )
 
 // Enum value maps for ActionType.
 var (
 	ActionType_name = map[int32]string{
-		0:    "ACTION_TYPE_UNSPECIFIED",
-		1:    "ACTION_TYPE_PACKAGE",
-		2:    "ACTION_TYPE_UPDATE",
-		3:    "ACTION_TYPE_REPOSITORY",
-		100:  "ACTION_TYPE_APP_IMAGE",
-		101:  "ACTION_TYPE_DEB",
-		102:  "ACTION_TYPE_RPM",
-		103:  "ACTION_TYPE_FLATPAK",
-		200:  "ACTION_TYPE_SHELL",
-		201:  "ACTION_TYPE_SCRIPT_RUN",
-		300:  "ACTION_TYPE_SERVICE",
-		400:  "ACTION_TYPE_FILE",
-		401:  "ACTION_TYPE_DIRECTORY",
-		600:  "ACTION_TYPE_USER",
-		601:  "ACTION_TYPE_GROUP",
-		700:  "ACTION_TYPE_SSH",
-		701:  "ACTION_TYPE_SSHD",
-		800:  "ACTION_TYPE_ADMIN_POLICY",
-		900:  "ACTION_TYPE_LPS",
-		1000: "ACTION_TYPE_ENCRYPTION",
-		1100: "ACTION_TYPE_WIFI",
-		1200: "ACTION_TYPE_AGENT_UPDATE",
+		0: "ACTION_TYPE_UNSPECIFIED",
+		1: "ACTION_TYPE_PACKAGE",
+		2: "ACTION_TYPE_UPDATE",
+		3: "ACTION_TYPE_SHELL",
 	}
 	ActionType_value = map[string]int32{
-		"ACTION_TYPE_UNSPECIFIED":  0,
-		"ACTION_TYPE_PACKAGE":      1,
-		"ACTION_TYPE_UPDATE":       2,
-		"ACTION_TYPE_REPOSITORY":   3,
-		"ACTION_TYPE_APP_IMAGE":    100,
-		"ACTION_TYPE_DEB":          101,
-		"ACTION_TYPE_RPM":          102,
-		"ACTION_TYPE_FLATPAK":      103,
-		"ACTION_TYPE_SHELL":        200,
-		"ACTION_TYPE_SCRIPT_RUN":   201,
-		"ACTION_TYPE_SERVICE":      300,
-		"ACTION_TYPE_FILE":         400,
-		"ACTION_TYPE_DIRECTORY":    401,
-		"ACTION_TYPE_USER":         600,
-		"ACTION_TYPE_GROUP":        601,
-		"ACTION_TYPE_SSH":          700,
-		"ACTION_TYPE_SSHD":         701,
-		"ACTION_TYPE_ADMIN_POLICY": 800,
-		"ACTION_TYPE_LPS":          900,
-		"ACTION_TYPE_ENCRYPTION":   1000,
-		"ACTION_TYPE_WIFI":         1100,
-		"ACTION_TYPE_AGENT_UPDATE": 1200,
+		"ACTION_TYPE_UNSPECIFIED": 0,
+		"ACTION_TYPE_PACKAGE":     1,
+		"ACTION_TYPE_UPDATE":      2,
+		"ACTION_TYPE_SHELL":       3,
 	}
 )
 
@@ -130,361 +76,6 @@ func (ActionType) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{0}
 }
 
-type ServiceUnitState int32
-
-const (
-	ServiceUnitState_SERVICE_UNIT_STATE_UNSPECIFIED ServiceUnitState = 0
-	ServiceUnitState_SERVICE_UNIT_STATE_STARTED     ServiceUnitState = 1
-	ServiceUnitState_SERVICE_UNIT_STATE_STOPPED     ServiceUnitState = 2
-	ServiceUnitState_SERVICE_UNIT_STATE_RESTARTED   ServiceUnitState = 3
-)
-
-// Enum value maps for ServiceUnitState.
-var (
-	ServiceUnitState_name = map[int32]string{
-		0: "SERVICE_UNIT_STATE_UNSPECIFIED",
-		1: "SERVICE_UNIT_STATE_STARTED",
-		2: "SERVICE_UNIT_STATE_STOPPED",
-		3: "SERVICE_UNIT_STATE_RESTARTED",
-	}
-	ServiceUnitState_value = map[string]int32{
-		"SERVICE_UNIT_STATE_UNSPECIFIED": 0,
-		"SERVICE_UNIT_STATE_STARTED":     1,
-		"SERVICE_UNIT_STATE_STOPPED":     2,
-		"SERVICE_UNIT_STATE_RESTARTED":   3,
-	}
-)
-
-func (x ServiceUnitState) Enum() *ServiceUnitState {
-	p := new(ServiceUnitState)
-	*p = x
-	return p
-}
-
-func (x ServiceUnitState) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (ServiceUnitState) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_actions_proto_enumTypes[1].Descriptor()
-}
-
-func (ServiceUnitState) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_actions_proto_enumTypes[1]
-}
-
-func (x ServiceUnitState) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use ServiceUnitState.Descriptor instead.
-func (ServiceUnitState) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{1}
-}
-
-type ZypperRepositoryType int32
-
-const (
-	ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_UNSPECIFIED ZypperRepositoryType = 0
-	ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_RPM_MD      ZypperRepositoryType = 1
-	ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_YAST2       ZypperRepositoryType = 2
-	ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_PLAINDIR    ZypperRepositoryType = 3
-)
-
-// Enum value maps for ZypperRepositoryType.
-var (
-	ZypperRepositoryType_name = map[int32]string{
-		0: "ZYPPER_REPOSITORY_TYPE_UNSPECIFIED",
-		1: "ZYPPER_REPOSITORY_TYPE_RPM_MD",
-		2: "ZYPPER_REPOSITORY_TYPE_YAST2",
-		3: "ZYPPER_REPOSITORY_TYPE_PLAINDIR",
-	}
-	ZypperRepositoryType_value = map[string]int32{
-		"ZYPPER_REPOSITORY_TYPE_UNSPECIFIED": 0,
-		"ZYPPER_REPOSITORY_TYPE_RPM_MD":      1,
-		"ZYPPER_REPOSITORY_TYPE_YAST2":       2,
-		"ZYPPER_REPOSITORY_TYPE_PLAINDIR":    3,
-	}
-)
-
-func (x ZypperRepositoryType) Enum() *ZypperRepositoryType {
-	p := new(ZypperRepositoryType)
-	*p = x
-	return p
-}
-
-func (x ZypperRepositoryType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (ZypperRepositoryType) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_actions_proto_enumTypes[2].Descriptor()
-}
-
-func (ZypperRepositoryType) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_actions_proto_enumTypes[2]
-}
-
-func (x ZypperRepositoryType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use ZypperRepositoryType.Descriptor instead.
-func (ZypperRepositoryType) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{2}
-}
-
-type AdminAccessLevel int32
-
-const (
-	AdminAccessLevel_ADMIN_ACCESS_LEVEL_UNSPECIFIED            AdminAccessLevel = 0
-	AdminAccessLevel_ADMIN_ACCESS_LEVEL_FULL                   AdminAccessLevel = 1
-	AdminAccessLevel_ADMIN_ACCESS_LEVEL_LIMITED                AdminAccessLevel = 2
-	AdminAccessLevel_ADMIN_ACCESS_LEVEL_CUSTOM                 AdminAccessLevel = 3
-	AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED AdminAccessLevel = 4
-	AdminAccessLevel_ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL    AdminAccessLevel = 5
-)
-
-// Enum value maps for AdminAccessLevel.
-var (
-	AdminAccessLevel_name = map[int32]string{
-		0: "ADMIN_ACCESS_LEVEL_UNSPECIFIED",
-		1: "ADMIN_ACCESS_LEVEL_FULL",
-		2: "ADMIN_ACCESS_LEVEL_LIMITED",
-		3: "ADMIN_ACCESS_LEVEL_CUSTOM",
-		4: "ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED",
-		5: "ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL",
-	}
-	AdminAccessLevel_value = map[string]int32{
-		"ADMIN_ACCESS_LEVEL_UNSPECIFIED":            0,
-		"ADMIN_ACCESS_LEVEL_FULL":                   1,
-		"ADMIN_ACCESS_LEVEL_LIMITED":                2,
-		"ADMIN_ACCESS_LEVEL_CUSTOM":                 3,
-		"ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED": 4,
-		"ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL":    5,
-	}
-)
-
-func (x AdminAccessLevel) Enum() *AdminAccessLevel {
-	p := new(AdminAccessLevel)
-	*p = x
-	return p
-}
-
-func (x AdminAccessLevel) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (AdminAccessLevel) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_actions_proto_enumTypes[3].Descriptor()
-}
-
-func (AdminAccessLevel) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_actions_proto_enumTypes[3]
-}
-
-func (x AdminAccessLevel) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use AdminAccessLevel.Descriptor instead.
-func (AdminAccessLevel) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{3}
-}
-
-type PrivilegeBackend int32
-
-const (
-	PrivilegeBackend_PRIVILEGE_BACKEND_SUDO PrivilegeBackend = 0
-	PrivilegeBackend_PRIVILEGE_BACKEND_DOAS PrivilegeBackend = 1
-)
-
-// Enum value maps for PrivilegeBackend.
-var (
-	PrivilegeBackend_name = map[int32]string{
-		0: "PRIVILEGE_BACKEND_SUDO",
-		1: "PRIVILEGE_BACKEND_DOAS",
-	}
-	PrivilegeBackend_value = map[string]int32{
-		"PRIVILEGE_BACKEND_SUDO": 0,
-		"PRIVILEGE_BACKEND_DOAS": 1,
-	}
-)
-
-func (x PrivilegeBackend) Enum() *PrivilegeBackend {
-	p := new(PrivilegeBackend)
-	*p = x
-	return p
-}
-
-func (x PrivilegeBackend) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (PrivilegeBackend) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_actions_proto_enumTypes[4].Descriptor()
-}
-
-func (PrivilegeBackend) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_actions_proto_enumTypes[4]
-}
-
-func (x PrivilegeBackend) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use PrivilegeBackend.Descriptor instead.
-func (PrivilegeBackend) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{4}
-}
-
-type LpsPasswordComplexity int32
-
-const (
-	LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_UNSPECIFIED  LpsPasswordComplexity = 0
-	LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_ALPHANUMERIC LpsPasswordComplexity = 1
-	LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_COMPLEX      LpsPasswordComplexity = 2
-)
-
-// Enum value maps for LpsPasswordComplexity.
-var (
-	LpsPasswordComplexity_name = map[int32]string{
-		0: "LPS_PASSWORD_COMPLEXITY_UNSPECIFIED",
-		1: "LPS_PASSWORD_COMPLEXITY_ALPHANUMERIC",
-		2: "LPS_PASSWORD_COMPLEXITY_COMPLEX",
-	}
-	LpsPasswordComplexity_value = map[string]int32{
-		"LPS_PASSWORD_COMPLEXITY_UNSPECIFIED":  0,
-		"LPS_PASSWORD_COMPLEXITY_ALPHANUMERIC": 1,
-		"LPS_PASSWORD_COMPLEXITY_COMPLEX":      2,
-	}
-)
-
-func (x LpsPasswordComplexity) Enum() *LpsPasswordComplexity {
-	p := new(LpsPasswordComplexity)
-	*p = x
-	return p
-}
-
-func (x LpsPasswordComplexity) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (LpsPasswordComplexity) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_actions_proto_enumTypes[5].Descriptor()
-}
-
-func (LpsPasswordComplexity) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_actions_proto_enumTypes[5]
-}
-
-func (x LpsPasswordComplexity) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use LpsPasswordComplexity.Descriptor instead.
-func (LpsPasswordComplexity) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{5}
-}
-
-type EncryptionDeviceBoundKeyType int32
-
-const (
-	EncryptionDeviceBoundKeyType_ENCRYPTION_DEVICE_BOUND_KEY_TYPE_NONE            EncryptionDeviceBoundKeyType = 0
-	EncryptionDeviceBoundKeyType_ENCRYPTION_DEVICE_BOUND_KEY_TYPE_TPM             EncryptionDeviceBoundKeyType = 1
-	EncryptionDeviceBoundKeyType_ENCRYPTION_DEVICE_BOUND_KEY_TYPE_USER_PASSPHRASE EncryptionDeviceBoundKeyType = 2
-)
-
-// Enum value maps for EncryptionDeviceBoundKeyType.
-var (
-	EncryptionDeviceBoundKeyType_name = map[int32]string{
-		0: "ENCRYPTION_DEVICE_BOUND_KEY_TYPE_NONE",
-		1: "ENCRYPTION_DEVICE_BOUND_KEY_TYPE_TPM",
-		2: "ENCRYPTION_DEVICE_BOUND_KEY_TYPE_USER_PASSPHRASE",
-	}
-	EncryptionDeviceBoundKeyType_value = map[string]int32{
-		"ENCRYPTION_DEVICE_BOUND_KEY_TYPE_NONE":            0,
-		"ENCRYPTION_DEVICE_BOUND_KEY_TYPE_TPM":             1,
-		"ENCRYPTION_DEVICE_BOUND_KEY_TYPE_USER_PASSPHRASE": 2,
-	}
-)
-
-func (x EncryptionDeviceBoundKeyType) Enum() *EncryptionDeviceBoundKeyType {
-	p := new(EncryptionDeviceBoundKeyType)
-	*p = x
-	return p
-}
-
-func (x EncryptionDeviceBoundKeyType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (EncryptionDeviceBoundKeyType) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_actions_proto_enumTypes[6].Descriptor()
-}
-
-func (EncryptionDeviceBoundKeyType) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_actions_proto_enumTypes[6]
-}
-
-func (x EncryptionDeviceBoundKeyType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use EncryptionDeviceBoundKeyType.Descriptor instead.
-func (EncryptionDeviceBoundKeyType) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{6}
-}
-
-type WifiAuthType int32
-
-const (
-	WifiAuthType_WIFI_AUTH_TYPE_UNSPECIFIED WifiAuthType = 0
-	WifiAuthType_WIFI_AUTH_TYPE_PSK         WifiAuthType = 1
-	WifiAuthType_WIFI_AUTH_TYPE_EAP_TLS     WifiAuthType = 2
-)
-
-// Enum value maps for WifiAuthType.
-var (
-	WifiAuthType_name = map[int32]string{
-		0: "WIFI_AUTH_TYPE_UNSPECIFIED",
-		1: "WIFI_AUTH_TYPE_PSK",
-		2: "WIFI_AUTH_TYPE_EAP_TLS",
-	}
-	WifiAuthType_value = map[string]int32{
-		"WIFI_AUTH_TYPE_UNSPECIFIED": 0,
-		"WIFI_AUTH_TYPE_PSK":         1,
-		"WIFI_AUTH_TYPE_EAP_TLS":     2,
-	}
-)
-
-func (x WifiAuthType) Enum() *WifiAuthType {
-	p := new(WifiAuthType)
-	*p = x
-	return p
-}
-
-func (x WifiAuthType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (WifiAuthType) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_actions_proto_enumTypes[7].Descriptor()
-}
-
-func (WifiAuthType) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_actions_proto_enumTypes[7]
-}
-
-func (x WifiAuthType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use WifiAuthType.Descriptor instead.
-func (WifiAuthType) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{7}
-}
-
 type Action struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Id             *ActionId              `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -495,23 +86,8 @@ type Action struct {
 	// Types that are valid to be assigned to Params:
 	//
 	//	*Action_Package
-	//	*Action_App
-	//	*Action_Shell
-	//	*Action_Service
-	//	*Action_File
 	//	*Action_Update
-	//	*Action_Repository
-	//	*Action_Flatpak
-	//	*Action_Directory
-	//	*Action_User
-	//	*Action_Ssh
-	//	*Action_Sshd
-	//	*Action_AdminPolicy
-	//	*Action_Lps
-	//	*Action_Group
-	//	*Action_Encryption
-	//	*Action_Wifi
-	//	*Action_AgentUpdate
+	//	*Action_Shell
 	Params        isAction_Params `protobuf_oneof:"params"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -565,7 +141,7 @@ func (x *Action) GetDesiredState() DesiredState {
 	if x != nil {
 		return x.DesiredState
 	}
-	return DesiredState_DESIRED_STATE_PRESENT
+	return DesiredState_DESIRED_STATE_UNSPECIFIED
 }
 
 func (x *Action) GetTimeoutSeconds() int32 {
@@ -598,10 +174,10 @@ func (x *Action) GetPackage() *PackageParams {
 	return nil
 }
 
-func (x *Action) GetApp() *AppInstallParams {
+func (x *Action) GetUpdate() *UpdateParams {
 	if x != nil {
-		if x, ok := x.Params.(*Action_App); ok {
-			return x.App
+		if x, ok := x.Params.(*Action_Update); ok {
+			return x.Update
 		}
 	}
 	return nil
@@ -616,259 +192,33 @@ func (x *Action) GetShell() *ShellParams {
 	return nil
 }
 
-func (x *Action) GetService() *ServiceParams {
-	if x != nil {
-		if x, ok := x.Params.(*Action_Service); ok {
-			return x.Service
-		}
-	}
-	return nil
-}
-
-func (x *Action) GetFile() *FileParams {
-	if x != nil {
-		if x, ok := x.Params.(*Action_File); ok {
-			return x.File
-		}
-	}
-	return nil
-}
-
-func (x *Action) GetUpdate() *UpdateParams {
-	if x != nil {
-		if x, ok := x.Params.(*Action_Update); ok {
-			return x.Update
-		}
-	}
-	return nil
-}
-
-func (x *Action) GetRepository() *RepositoryParams {
-	if x != nil {
-		if x, ok := x.Params.(*Action_Repository); ok {
-			return x.Repository
-		}
-	}
-	return nil
-}
-
-func (x *Action) GetFlatpak() *FlatpakParams {
-	if x != nil {
-		if x, ok := x.Params.(*Action_Flatpak); ok {
-			return x.Flatpak
-		}
-	}
-	return nil
-}
-
-func (x *Action) GetDirectory() *DirectoryParams {
-	if x != nil {
-		if x, ok := x.Params.(*Action_Directory); ok {
-			return x.Directory
-		}
-	}
-	return nil
-}
-
-func (x *Action) GetUser() *UserParams {
-	if x != nil {
-		if x, ok := x.Params.(*Action_User); ok {
-			return x.User
-		}
-	}
-	return nil
-}
-
-func (x *Action) GetSsh() *SshParams {
-	if x != nil {
-		if x, ok := x.Params.(*Action_Ssh); ok {
-			return x.Ssh
-		}
-	}
-	return nil
-}
-
-func (x *Action) GetSshd() *SshdParams {
-	if x != nil {
-		if x, ok := x.Params.(*Action_Sshd); ok {
-			return x.Sshd
-		}
-	}
-	return nil
-}
-
-func (x *Action) GetAdminPolicy() *AdminPolicyParams {
-	if x != nil {
-		if x, ok := x.Params.(*Action_AdminPolicy); ok {
-			return x.AdminPolicy
-		}
-	}
-	return nil
-}
-
-func (x *Action) GetLps() *LpsParams {
-	if x != nil {
-		if x, ok := x.Params.(*Action_Lps); ok {
-			return x.Lps
-		}
-	}
-	return nil
-}
-
-func (x *Action) GetGroup() *GroupParams {
-	if x != nil {
-		if x, ok := x.Params.(*Action_Group); ok {
-			return x.Group
-		}
-	}
-	return nil
-}
-
-func (x *Action) GetEncryption() *EncryptionParams {
-	if x != nil {
-		if x, ok := x.Params.(*Action_Encryption); ok {
-			return x.Encryption
-		}
-	}
-	return nil
-}
-
-func (x *Action) GetWifi() *WifiParams {
-	if x != nil {
-		if x, ok := x.Params.(*Action_Wifi); ok {
-			return x.Wifi
-		}
-	}
-	return nil
-}
-
-func (x *Action) GetAgentUpdate() *AgentUpdateParams {
-	if x != nil {
-		if x, ok := x.Params.(*Action_AgentUpdate); ok {
-			return x.AgentUpdate
-		}
-	}
-	return nil
-}
-
 type isAction_Params interface {
 	isAction_Params()
 }
 
 type Action_Package struct {
-	Package *PackageParams `protobuf:"bytes,8,opt,name=package,proto3,oneof"`
-}
-
-type Action_App struct {
-	App *AppInstallParams `protobuf:"bytes,9,opt,name=app,proto3,oneof"`
-}
-
-type Action_Shell struct {
-	Shell *ShellParams `protobuf:"bytes,10,opt,name=shell,proto3,oneof"`
-}
-
-type Action_Service struct {
-	Service *ServiceParams `protobuf:"bytes,11,opt,name=service,proto3,oneof"`
-}
-
-type Action_File struct {
-	File *FileParams `protobuf:"bytes,12,opt,name=file,proto3,oneof"`
+	Package *PackageParams `protobuf:"bytes,6,opt,name=package,proto3,oneof"`
 }
 
 type Action_Update struct {
-	Update *UpdateParams `protobuf:"bytes,13,opt,name=update,proto3,oneof"`
+	Update *UpdateParams `protobuf:"bytes,7,opt,name=update,proto3,oneof"`
 }
 
-type Action_Repository struct {
-	Repository *RepositoryParams `protobuf:"bytes,14,opt,name=repository,proto3,oneof"`
-}
-
-type Action_Flatpak struct {
-	Flatpak *FlatpakParams `protobuf:"bytes,15,opt,name=flatpak,proto3,oneof"`
-}
-
-type Action_Directory struct {
-	Directory *DirectoryParams `protobuf:"bytes,16,opt,name=directory,proto3,oneof"`
-}
-
-type Action_User struct {
-	User *UserParams `protobuf:"bytes,17,opt,name=user,proto3,oneof"`
-}
-
-type Action_Ssh struct {
-	Ssh *SshParams `protobuf:"bytes,18,opt,name=ssh,proto3,oneof"`
-}
-
-type Action_Sshd struct {
-	Sshd *SshdParams `protobuf:"bytes,19,opt,name=sshd,proto3,oneof"`
-}
-
-type Action_AdminPolicy struct {
-	AdminPolicy *AdminPolicyParams `protobuf:"bytes,20,opt,name=admin_policy,json=adminPolicy,proto3,oneof"`
-}
-
-type Action_Lps struct {
-	Lps *LpsParams `protobuf:"bytes,21,opt,name=lps,proto3,oneof"`
-}
-
-type Action_Group struct {
-	Group *GroupParams `protobuf:"bytes,22,opt,name=group,proto3,oneof"`
-}
-
-type Action_Encryption struct {
-	Encryption *EncryptionParams `protobuf:"bytes,23,opt,name=encryption,proto3,oneof"`
-}
-
-type Action_Wifi struct {
-	Wifi *WifiParams `protobuf:"bytes,24,opt,name=wifi,proto3,oneof"`
-}
-
-type Action_AgentUpdate struct {
-	AgentUpdate *AgentUpdateParams `protobuf:"bytes,25,opt,name=agent_update,json=agentUpdate,proto3,oneof"`
+type Action_Shell struct {
+	Shell *ShellParams `protobuf:"bytes,8,opt,name=shell,proto3,oneof"`
 }
 
 func (*Action_Package) isAction_Params() {}
 
-func (*Action_App) isAction_Params() {}
+func (*Action_Update) isAction_Params() {}
 
 func (*Action_Shell) isAction_Params() {}
 
-func (*Action_Service) isAction_Params() {}
-
-func (*Action_File) isAction_Params() {}
-
-func (*Action_Update) isAction_Params() {}
-
-func (*Action_Repository) isAction_Params() {}
-
-func (*Action_Flatpak) isAction_Params() {}
-
-func (*Action_Directory) isAction_Params() {}
-
-func (*Action_User) isAction_Params() {}
-
-func (*Action_Ssh) isAction_Params() {}
-
-func (*Action_Sshd) isAction_Params() {}
-
-func (*Action_AdminPolicy) isAction_Params() {}
-
-func (*Action_Lps) isAction_Params() {}
-
-func (*Action_Group) isAction_Params() {}
-
-func (*Action_Encryption) isAction_Params() {}
-
-func (*Action_Wifi) isAction_Params() {}
-
-func (*Action_AgentUpdate) isAction_Params() {}
-
 type ActionSchedule struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	Cron            string                 `protobuf:"bytes,1,opt,name=cron,proto3" json:"cron,omitempty"`
-	IntervalHours   int32                  `protobuf:"varint,2,opt,name=interval_hours,json=intervalHours,proto3" json:"interval_hours,omitempty"`
-	RunOnAssign     bool                   `protobuf:"varint,3,opt,name=run_on_assign,json=runOnAssign,proto3" json:"run_on_assign,omitempty"`
-	SkipIfUnchanged bool                   `protobuf:"varint,4,opt,name=skip_if_unchanged,json=skipIfUnchanged,proto3" json:"skip_if_unchanged,omitempty"`
+	IntervalHours   int32                  `protobuf:"varint,1,opt,name=interval_hours,json=intervalHours,proto3" json:"interval_hours,omitempty"`
+	RunOnAssign     bool                   `protobuf:"varint,2,opt,name=run_on_assign,json=runOnAssign,proto3" json:"run_on_assign,omitempty"`
+	SkipIfUnchanged bool                   `protobuf:"varint,3,opt,name=skip_if_unchanged,json=skipIfUnchanged,proto3" json:"skip_if_unchanged,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -903,13 +253,6 @@ func (*ActionSchedule) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ActionSchedule) GetCron() string {
-	if x != nil {
-		return x.Cron
-	}
-	return ""
-}
-
 func (x *ActionSchedule) GetIntervalHours() int32 {
 	if x != nil {
 		return x.IntervalHours
@@ -932,17 +275,11 @@ func (x *ActionSchedule) GetSkipIfUnchanged() bool {
 }
 
 type PackageParams struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Name           string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Version        string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
-	AllowDowngrade bool                   `protobuf:"varint,3,opt,name=allow_downgrade,json=allowDowngrade,proto3" json:"allow_downgrade,omitempty"`
-	Pin            bool                   `protobuf:"varint,4,opt,name=pin,proto3" json:"pin,omitempty"`
-	AptName        string                 `protobuf:"bytes,5,opt,name=apt_name,json=aptName,proto3" json:"apt_name,omitempty"`
-	DnfName        string                 `protobuf:"bytes,6,opt,name=dnf_name,json=dnfName,proto3" json:"dnf_name,omitempty"`
-	PacmanName     string                 `protobuf:"bytes,7,opt,name=pacman_name,json=pacmanName,proto3" json:"pacman_name,omitempty"`
-	ZypperName     string                 `protobuf:"bytes,8,opt,name=zypper_name,json=zypperName,proto3" json:"zypper_name,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Version       string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PackageParams) Reset() {
@@ -989,71 +326,26 @@ func (x *PackageParams) GetVersion() string {
 	return ""
 }
 
-func (x *PackageParams) GetAllowDowngrade() bool {
-	if x != nil {
-		return x.AllowDowngrade
-	}
-	return false
+type UpdateParams struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PackageParams) GetPin() bool {
-	if x != nil {
-		return x.Pin
-	}
-	return false
-}
-
-func (x *PackageParams) GetAptName() string {
-	if x != nil {
-		return x.AptName
-	}
-	return ""
-}
-
-func (x *PackageParams) GetDnfName() string {
-	if x != nil {
-		return x.DnfName
-	}
-	return ""
-}
-
-func (x *PackageParams) GetPacmanName() string {
-	if x != nil {
-		return x.PacmanName
-	}
-	return ""
-}
-
-func (x *PackageParams) GetZypperName() string {
-	if x != nil {
-		return x.ZypperName
-	}
-	return ""
-}
-
-type AppInstallParams struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Url            string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
-	ChecksumSha256 string                 `protobuf:"bytes,2,opt,name=checksum_sha256,json=checksumSha256,proto3" json:"checksum_sha256,omitempty"`
-	InstallPath    string                 `protobuf:"bytes,3,opt,name=install_path,json=installPath,proto3" json:"install_path,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
-}
-
-func (x *AppInstallParams) Reset() {
-	*x = AppInstallParams{}
+func (x *UpdateParams) Reset() {
+	*x = UpdateParams{}
 	mi := &file_cadestro_v1_actions_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AppInstallParams) String() string {
+func (x *UpdateParams) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AppInstallParams) ProtoMessage() {}
+func (*UpdateParams) ProtoMessage() {}
 
-func (x *AppInstallParams) ProtoReflect() protoreflect.Message {
+func (x *UpdateParams) ProtoReflect() protoreflect.Message {
 	mi := &file_cadestro_v1_actions_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1065,41 +357,19 @@ func (x *AppInstallParams) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AppInstallParams.ProtoReflect.Descriptor instead.
-func (*AppInstallParams) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpdateParams.ProtoReflect.Descriptor instead.
+func (*UpdateParams) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *AppInstallParams) GetUrl() string {
-	if x != nil {
-		return x.Url
-	}
-	return ""
-}
-
-func (x *AppInstallParams) GetChecksumSha256() string {
-	if x != nil {
-		return x.ChecksumSha256
-	}
-	return ""
-}
-
-func (x *AppInstallParams) GetInstallPath() string {
-	if x != nil {
-		return x.InstallPath
-	}
-	return ""
 }
 
 type ShellParams struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	Script           string                 `protobuf:"bytes,1,opt,name=script,proto3" json:"script,omitempty"`
 	Interpreter      string                 `protobuf:"bytes,2,opt,name=interpreter,proto3" json:"interpreter,omitempty"`
-	RunAsRoot        bool                   `protobuf:"varint,3,opt,name=run_as_root,json=runAsRoot,proto3" json:"run_as_root,omitempty"`
-	WorkingDirectory string                 `protobuf:"bytes,4,opt,name=working_directory,json=workingDirectory,proto3" json:"working_directory,omitempty"`
-	Environment      map[string]string      `protobuf:"bytes,5,rep,name=environment,proto3" json:"environment,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	DetectionScript  string                 `protobuf:"bytes,6,opt,name=detection_script,json=detectionScript,proto3" json:"detection_script,omitempty"`
-	IsCompliance     bool                   `protobuf:"varint,7,opt,name=is_compliance,json=isCompliance,proto3" json:"is_compliance,omitempty"`
+	WorkingDirectory string                 `protobuf:"bytes,3,opt,name=working_directory,json=workingDirectory,proto3" json:"working_directory,omitempty"`
+	Environment      map[string]string      `protobuf:"bytes,4,rep,name=environment,proto3" json:"environment,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	DetectionScript  string                 `protobuf:"bytes,5,opt,name=detection_script,json=detectionScript,proto3" json:"detection_script,omitempty"`
+	IsCompliance     bool                   `protobuf:"varint,6,opt,name=is_compliance,json=isCompliance,proto3" json:"is_compliance,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -1148,13 +418,6 @@ func (x *ShellParams) GetInterpreter() string {
 	return ""
 }
 
-func (x *ShellParams) GetRunAsRoot() bool {
-	if x != nil {
-		return x.RunAsRoot
-	}
-	return false
-}
-
 func (x *ShellParams) GetWorkingDirectory() string {
 	if x != nil {
 		return x.WorkingDirectory
@@ -1183,1506 +446,6 @@ func (x *ShellParams) GetIsCompliance() bool {
 	return false
 }
 
-type ServiceParams struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UnitName      string                 `protobuf:"bytes,1,opt,name=unit_name,json=unitName,proto3" json:"unit_name,omitempty"`
-	DesiredState  ServiceUnitState       `protobuf:"varint,2,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.ServiceUnitState" json:"desired_state,omitempty"`
-	Enable        bool                   `protobuf:"varint,3,opt,name=enable,proto3" json:"enable,omitempty"`
-	UnitContent   string                 `protobuf:"bytes,4,opt,name=unit_content,json=unitContent,proto3" json:"unit_content,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ServiceParams) Reset() {
-	*x = ServiceParams{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ServiceParams) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ServiceParams) ProtoMessage() {}
-
-func (x *ServiceParams) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ServiceParams.ProtoReflect.Descriptor instead.
-func (*ServiceParams) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *ServiceParams) GetUnitName() string {
-	if x != nil {
-		return x.UnitName
-	}
-	return ""
-}
-
-func (x *ServiceParams) GetDesiredState() ServiceUnitState {
-	if x != nil {
-		return x.DesiredState
-	}
-	return ServiceUnitState_SERVICE_UNIT_STATE_UNSPECIFIED
-}
-
-func (x *ServiceParams) GetEnable() bool {
-	if x != nil {
-		return x.Enable
-	}
-	return false
-}
-
-func (x *ServiceParams) GetUnitContent() string {
-	if x != nil {
-		return x.UnitContent
-	}
-	return ""
-}
-
-type FileParams struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
-	Content       string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
-	Owner         string                 `protobuf:"bytes,3,opt,name=owner,proto3" json:"owner,omitempty"`
-	Group         string                 `protobuf:"bytes,4,opt,name=group,proto3" json:"group,omitempty"`
-	Mode          string                 `protobuf:"bytes,5,opt,name=mode,proto3" json:"mode,omitempty"`
-	ManagedBlock  bool                   `protobuf:"varint,6,opt,name=managed_block,json=managedBlock,proto3" json:"managed_block,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *FileParams) Reset() {
-	*x = FileParams{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *FileParams) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FileParams) ProtoMessage() {}
-
-func (x *FileParams) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FileParams.ProtoReflect.Descriptor instead.
-func (*FileParams) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *FileParams) GetPath() string {
-	if x != nil {
-		return x.Path
-	}
-	return ""
-}
-
-func (x *FileParams) GetContent() string {
-	if x != nil {
-		return x.Content
-	}
-	return ""
-}
-
-func (x *FileParams) GetOwner() string {
-	if x != nil {
-		return x.Owner
-	}
-	return ""
-}
-
-func (x *FileParams) GetGroup() string {
-	if x != nil {
-		return x.Group
-	}
-	return ""
-}
-
-func (x *FileParams) GetMode() string {
-	if x != nil {
-		return x.Mode
-	}
-	return ""
-}
-
-func (x *FileParams) GetManagedBlock() bool {
-	if x != nil {
-		return x.ManagedBlock
-	}
-	return false
-}
-
-type DirectoryParams struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
-	Owner         string                 `protobuf:"bytes,2,opt,name=owner,proto3" json:"owner,omitempty"`
-	Group         string                 `protobuf:"bytes,3,opt,name=group,proto3" json:"group,omitempty"`
-	Mode          string                 `protobuf:"bytes,4,opt,name=mode,proto3" json:"mode,omitempty"`
-	Recursive     bool                   `protobuf:"varint,5,opt,name=recursive,proto3" json:"recursive,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DirectoryParams) Reset() {
-	*x = DirectoryParams{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DirectoryParams) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DirectoryParams) ProtoMessage() {}
-
-func (x *DirectoryParams) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DirectoryParams.ProtoReflect.Descriptor instead.
-func (*DirectoryParams) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *DirectoryParams) GetPath() string {
-	if x != nil {
-		return x.Path
-	}
-	return ""
-}
-
-func (x *DirectoryParams) GetOwner() string {
-	if x != nil {
-		return x.Owner
-	}
-	return ""
-}
-
-func (x *DirectoryParams) GetGroup() string {
-	if x != nil {
-		return x.Group
-	}
-	return ""
-}
-
-func (x *DirectoryParams) GetMode() string {
-	if x != nil {
-		return x.Mode
-	}
-	return ""
-}
-
-func (x *DirectoryParams) GetRecursive() bool {
-	if x != nil {
-		return x.Recursive
-	}
-	return false
-}
-
-type UpdateParams struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	SecurityOnly     bool                   `protobuf:"varint,1,opt,name=security_only,json=securityOnly,proto3" json:"security_only,omitempty"`
-	Autoremove       bool                   `protobuf:"varint,2,opt,name=autoremove,proto3" json:"autoremove,omitempty"`
-	RebootIfRequired bool                   `protobuf:"varint,3,opt,name=reboot_if_required,json=rebootIfRequired,proto3" json:"reboot_if_required,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *UpdateParams) Reset() {
-	*x = UpdateParams{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpdateParams) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateParams) ProtoMessage() {}
-
-func (x *UpdateParams) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpdateParams.ProtoReflect.Descriptor instead.
-func (*UpdateParams) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *UpdateParams) GetSecurityOnly() bool {
-	if x != nil {
-		return x.SecurityOnly
-	}
-	return false
-}
-
-func (x *UpdateParams) GetAutoremove() bool {
-	if x != nil {
-		return x.Autoremove
-	}
-	return false
-}
-
-func (x *UpdateParams) GetRebootIfRequired() bool {
-	if x != nil {
-		return x.RebootIfRequired
-	}
-	return false
-}
-
-type FlatpakParams struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AppId         *FlatpakAppId          `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
-	Remote        string                 `protobuf:"bytes,2,opt,name=remote,proto3" json:"remote,omitempty"`
-	SystemWide    bool                   `protobuf:"varint,3,opt,name=system_wide,json=systemWide,proto3" json:"system_wide,omitempty"`
-	Pin           bool                   `protobuf:"varint,4,opt,name=pin,proto3" json:"pin,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *FlatpakParams) Reset() {
-	*x = FlatpakParams{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *FlatpakParams) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FlatpakParams) ProtoMessage() {}
-
-func (x *FlatpakParams) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FlatpakParams.ProtoReflect.Descriptor instead.
-func (*FlatpakParams) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *FlatpakParams) GetAppId() *FlatpakAppId {
-	if x != nil {
-		return x.AppId
-	}
-	return nil
-}
-
-func (x *FlatpakParams) GetRemote() string {
-	if x != nil {
-		return x.Remote
-	}
-	return ""
-}
-
-func (x *FlatpakParams) GetSystemWide() bool {
-	if x != nil {
-		return x.SystemWide
-	}
-	return false
-}
-
-func (x *FlatpakParams) GetPin() bool {
-	if x != nil {
-		return x.Pin
-	}
-	return false
-}
-
-type RepositoryParams struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Apt           *AptRepository         `protobuf:"bytes,2,opt,name=apt,proto3" json:"apt,omitempty"`
-	Dnf           *DnfRepository         `protobuf:"bytes,3,opt,name=dnf,proto3" json:"dnf,omitempty"`
-	Pacman        *PacmanRepository      `protobuf:"bytes,4,opt,name=pacman,proto3" json:"pacman,omitempty"`
-	Zypper        *ZypperRepository      `protobuf:"bytes,5,opt,name=zypper,proto3" json:"zypper,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RepositoryParams) Reset() {
-	*x = RepositoryParams{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RepositoryParams) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RepositoryParams) ProtoMessage() {}
-
-func (x *RepositoryParams) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RepositoryParams.ProtoReflect.Descriptor instead.
-func (*RepositoryParams) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *RepositoryParams) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *RepositoryParams) GetApt() *AptRepository {
-	if x != nil {
-		return x.Apt
-	}
-	return nil
-}
-
-func (x *RepositoryParams) GetDnf() *DnfRepository {
-	if x != nil {
-		return x.Dnf
-	}
-	return nil
-}
-
-func (x *RepositoryParams) GetPacman() *PacmanRepository {
-	if x != nil {
-		return x.Pacman
-	}
-	return nil
-}
-
-func (x *RepositoryParams) GetZypper() *ZypperRepository {
-	if x != nil {
-		return x.Zypper
-	}
-	return nil
-}
-
-type AptRepository struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
-	Distribution  string                 `protobuf:"bytes,2,opt,name=distribution,proto3" json:"distribution,omitempty"`
-	Components    []string               `protobuf:"bytes,3,rep,name=components,proto3" json:"components,omitempty"`
-	GpgKeyUrl     string                 `protobuf:"bytes,4,opt,name=gpg_key_url,json=gpgKeyUrl,proto3" json:"gpg_key_url,omitempty"`
-	GpgKey        string                 `protobuf:"bytes,5,opt,name=gpg_key,json=gpgKey,proto3" json:"gpg_key,omitempty"`
-	Trusted       bool                   `protobuf:"varint,6,opt,name=trusted,proto3" json:"trusted,omitempty"`
-	Arch          string                 `protobuf:"bytes,7,opt,name=arch,proto3" json:"arch,omitempty"`
-	Disabled      bool                   `protobuf:"varint,8,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *AptRepository) Reset() {
-	*x = AptRepository{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[11]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *AptRepository) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AptRepository) ProtoMessage() {}
-
-func (x *AptRepository) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[11]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AptRepository.ProtoReflect.Descriptor instead.
-func (*AptRepository) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *AptRepository) GetUrl() string {
-	if x != nil {
-		return x.Url
-	}
-	return ""
-}
-
-func (x *AptRepository) GetDistribution() string {
-	if x != nil {
-		return x.Distribution
-	}
-	return ""
-}
-
-func (x *AptRepository) GetComponents() []string {
-	if x != nil {
-		return x.Components
-	}
-	return nil
-}
-
-func (x *AptRepository) GetGpgKeyUrl() string {
-	if x != nil {
-		return x.GpgKeyUrl
-	}
-	return ""
-}
-
-func (x *AptRepository) GetGpgKey() string {
-	if x != nil {
-		return x.GpgKey
-	}
-	return ""
-}
-
-func (x *AptRepository) GetTrusted() bool {
-	if x != nil {
-		return x.Trusted
-	}
-	return false
-}
-
-func (x *AptRepository) GetArch() string {
-	if x != nil {
-		return x.Arch
-	}
-	return ""
-}
-
-func (x *AptRepository) GetDisabled() bool {
-	if x != nil {
-		return x.Disabled
-	}
-	return false
-}
-
-type DnfRepository struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Baseurl        string                 `protobuf:"bytes,1,opt,name=baseurl,proto3" json:"baseurl,omitempty"`
-	Description    string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	Enabled        bool                   `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	Gpgcheck       bool                   `protobuf:"varint,4,opt,name=gpgcheck,proto3" json:"gpgcheck,omitempty"`
-	Gpgkey         string                 `protobuf:"bytes,5,opt,name=gpgkey,proto3" json:"gpgkey,omitempty"`
-	ModuleHotfixes bool                   `protobuf:"varint,6,opt,name=module_hotfixes,json=moduleHotfixes,proto3" json:"module_hotfixes,omitempty"`
-	Disabled       bool                   `protobuf:"varint,7,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
-}
-
-func (x *DnfRepository) Reset() {
-	*x = DnfRepository{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DnfRepository) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DnfRepository) ProtoMessage() {}
-
-func (x *DnfRepository) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DnfRepository.ProtoReflect.Descriptor instead.
-func (*DnfRepository) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *DnfRepository) GetBaseurl() string {
-	if x != nil {
-		return x.Baseurl
-	}
-	return ""
-}
-
-func (x *DnfRepository) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
-}
-
-func (x *DnfRepository) GetEnabled() bool {
-	if x != nil {
-		return x.Enabled
-	}
-	return false
-}
-
-func (x *DnfRepository) GetGpgcheck() bool {
-	if x != nil {
-		return x.Gpgcheck
-	}
-	return false
-}
-
-func (x *DnfRepository) GetGpgkey() string {
-	if x != nil {
-		return x.Gpgkey
-	}
-	return ""
-}
-
-func (x *DnfRepository) GetModuleHotfixes() bool {
-	if x != nil {
-		return x.ModuleHotfixes
-	}
-	return false
-}
-
-func (x *DnfRepository) GetDisabled() bool {
-	if x != nil {
-		return x.Disabled
-	}
-	return false
-}
-
-type PacmanRepository struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Server        string                 `protobuf:"bytes,1,opt,name=server,proto3" json:"server,omitempty"`
-	SigLevel      string                 `protobuf:"bytes,2,opt,name=sig_level,json=sigLevel,proto3" json:"sig_level,omitempty"`
-	Disabled      bool                   `protobuf:"varint,3,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PacmanRepository) Reset() {
-	*x = PacmanRepository{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PacmanRepository) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PacmanRepository) ProtoMessage() {}
-
-func (x *PacmanRepository) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PacmanRepository.ProtoReflect.Descriptor instead.
-func (*PacmanRepository) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{13}
-}
-
-func (x *PacmanRepository) GetServer() string {
-	if x != nil {
-		return x.Server
-	}
-	return ""
-}
-
-func (x *PacmanRepository) GetSigLevel() string {
-	if x != nil {
-		return x.SigLevel
-	}
-	return ""
-}
-
-func (x *PacmanRepository) GetDisabled() bool {
-	if x != nil {
-		return x.Disabled
-	}
-	return false
-}
-
-type ZypperRepository struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
-	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	Enabled       bool                   `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	Autorefresh   bool                   `protobuf:"varint,4,opt,name=autorefresh,proto3" json:"autorefresh,omitempty"`
-	Gpgcheck      bool                   `protobuf:"varint,5,opt,name=gpgcheck,proto3" json:"gpgcheck,omitempty"`
-	Gpgkey        string                 `protobuf:"bytes,6,opt,name=gpgkey,proto3" json:"gpgkey,omitempty"`
-	Type          ZypperRepositoryType   `protobuf:"varint,7,opt,name=type,proto3,enum=cadestro.v1.ZypperRepositoryType" json:"type,omitempty"`
-	Disabled      bool                   `protobuf:"varint,8,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ZypperRepository) Reset() {
-	*x = ZypperRepository{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ZypperRepository) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ZypperRepository) ProtoMessage() {}
-
-func (x *ZypperRepository) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ZypperRepository.ProtoReflect.Descriptor instead.
-func (*ZypperRepository) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *ZypperRepository) GetUrl() string {
-	if x != nil {
-		return x.Url
-	}
-	return ""
-}
-
-func (x *ZypperRepository) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
-}
-
-func (x *ZypperRepository) GetEnabled() bool {
-	if x != nil {
-		return x.Enabled
-	}
-	return false
-}
-
-func (x *ZypperRepository) GetAutorefresh() bool {
-	if x != nil {
-		return x.Autorefresh
-	}
-	return false
-}
-
-func (x *ZypperRepository) GetGpgcheck() bool {
-	if x != nil {
-		return x.Gpgcheck
-	}
-	return false
-}
-
-func (x *ZypperRepository) GetGpgkey() string {
-	if x != nil {
-		return x.Gpgkey
-	}
-	return ""
-}
-
-func (x *ZypperRepository) GetType() ZypperRepositoryType {
-	if x != nil {
-		return x.Type
-	}
-	return ZypperRepositoryType_ZYPPER_REPOSITORY_TYPE_UNSPECIFIED
-}
-
-func (x *ZypperRepository) GetDisabled() bool {
-	if x != nil {
-		return x.Disabled
-	}
-	return false
-}
-
-type UserParams struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	Username          string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
-	Uid               int32                  `protobuf:"varint,2,opt,name=uid,proto3" json:"uid,omitempty"`
-	Gid               int32                  `protobuf:"varint,3,opt,name=gid,proto3" json:"gid,omitempty"`
-	HomeDir           string                 `protobuf:"bytes,4,opt,name=home_dir,json=homeDir,proto3" json:"home_dir,omitempty"`
-	Shell             string                 `protobuf:"bytes,5,opt,name=shell,proto3" json:"shell,omitempty"`
-	SshAuthorizedKeys []string               `protobuf:"bytes,6,rep,name=ssh_authorized_keys,json=sshAuthorizedKeys,proto3" json:"ssh_authorized_keys,omitempty"`
-	Comment           string                 `protobuf:"bytes,7,opt,name=comment,proto3" json:"comment,omitempty"`
-	SystemUser        bool                   `protobuf:"varint,8,opt,name=system_user,json=systemUser,proto3" json:"system_user,omitempty"`
-	CreateHome        bool                   `protobuf:"varint,9,opt,name=create_home,json=createHome,proto3" json:"create_home,omitempty"`
-	Disabled          bool                   `protobuf:"varint,10,opt,name=disabled,proto3" json:"disabled,omitempty"`
-	PrimaryGroup      string                 `protobuf:"bytes,11,opt,name=primary_group,json=primaryGroup,proto3" json:"primary_group,omitempty"`
-	Hidden            bool                   `protobuf:"varint,12,opt,name=hidden,proto3" json:"hidden,omitempty"`
-	NoPassword        bool                   `protobuf:"varint,13,opt,name=no_password,json=noPassword,proto3" json:"no_password,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
-}
-
-func (x *UserParams) Reset() {
-	*x = UserParams{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UserParams) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UserParams) ProtoMessage() {}
-
-func (x *UserParams) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[15]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UserParams.ProtoReflect.Descriptor instead.
-func (*UserParams) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *UserParams) GetUsername() string {
-	if x != nil {
-		return x.Username
-	}
-	return ""
-}
-
-func (x *UserParams) GetUid() int32 {
-	if x != nil {
-		return x.Uid
-	}
-	return 0
-}
-
-func (x *UserParams) GetGid() int32 {
-	if x != nil {
-		return x.Gid
-	}
-	return 0
-}
-
-func (x *UserParams) GetHomeDir() string {
-	if x != nil {
-		return x.HomeDir
-	}
-	return ""
-}
-
-func (x *UserParams) GetShell() string {
-	if x != nil {
-		return x.Shell
-	}
-	return ""
-}
-
-func (x *UserParams) GetSshAuthorizedKeys() []string {
-	if x != nil {
-		return x.SshAuthorizedKeys
-	}
-	return nil
-}
-
-func (x *UserParams) GetComment() string {
-	if x != nil {
-		return x.Comment
-	}
-	return ""
-}
-
-func (x *UserParams) GetSystemUser() bool {
-	if x != nil {
-		return x.SystemUser
-	}
-	return false
-}
-
-func (x *UserParams) GetCreateHome() bool {
-	if x != nil {
-		return x.CreateHome
-	}
-	return false
-}
-
-func (x *UserParams) GetDisabled() bool {
-	if x != nil {
-		return x.Disabled
-	}
-	return false
-}
-
-func (x *UserParams) GetPrimaryGroup() string {
-	if x != nil {
-		return x.PrimaryGroup
-	}
-	return ""
-}
-
-func (x *UserParams) GetHidden() bool {
-	if x != nil {
-		return x.Hidden
-	}
-	return false
-}
-
-func (x *UserParams) GetNoPassword() bool {
-	if x != nil {
-		return x.NoPassword
-	}
-	return false
-}
-
-type GroupParams struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Members       []string               `protobuf:"bytes,2,rep,name=members,proto3" json:"members,omitempty"`
-	Gid           int32                  `protobuf:"varint,3,opt,name=gid,proto3" json:"gid,omitempty"`
-	SystemGroup   bool                   `protobuf:"varint,4,opt,name=system_group,json=systemGroup,proto3" json:"system_group,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GroupParams) Reset() {
-	*x = GroupParams{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[16]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GroupParams) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GroupParams) ProtoMessage() {}
-
-func (x *GroupParams) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[16]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GroupParams.ProtoReflect.Descriptor instead.
-func (*GroupParams) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{16}
-}
-
-func (x *GroupParams) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *GroupParams) GetMembers() []string {
-	if x != nil {
-		return x.Members
-	}
-	return nil
-}
-
-func (x *GroupParams) GetGid() int32 {
-	if x != nil {
-		return x.Gid
-	}
-	return 0
-}
-
-func (x *GroupParams) GetSystemGroup() bool {
-	if x != nil {
-		return x.SystemGroup
-	}
-	return false
-}
-
-type SshParams struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AllowPubkey   bool                   `protobuf:"varint,1,opt,name=allow_pubkey,json=allowPubkey,proto3" json:"allow_pubkey,omitempty"`
-	AllowPassword bool                   `protobuf:"varint,2,opt,name=allow_password,json=allowPassword,proto3" json:"allow_password,omitempty"`
-	Users         []string               `protobuf:"bytes,3,rep,name=users,proto3" json:"users,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SshParams) Reset() {
-	*x = SshParams{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SshParams) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SshParams) ProtoMessage() {}
-
-func (x *SshParams) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SshParams.ProtoReflect.Descriptor instead.
-func (*SshParams) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{17}
-}
-
-func (x *SshParams) GetAllowPubkey() bool {
-	if x != nil {
-		return x.AllowPubkey
-	}
-	return false
-}
-
-func (x *SshParams) GetAllowPassword() bool {
-	if x != nil {
-		return x.AllowPassword
-	}
-	return false
-}
-
-func (x *SshParams) GetUsers() []string {
-	if x != nil {
-		return x.Users
-	}
-	return nil
-}
-
-type SshdDirective struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	Value         string                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SshdDirective) Reset() {
-	*x = SshdDirective{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[18]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SshdDirective) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SshdDirective) ProtoMessage() {}
-
-func (x *SshdDirective) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[18]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SshdDirective.ProtoReflect.Descriptor instead.
-func (*SshdDirective) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{18}
-}
-
-func (x *SshdDirective) GetKey() string {
-	if x != nil {
-		return x.Key
-	}
-	return ""
-}
-
-func (x *SshdDirective) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type SshdParams struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Priority      uint32                 `protobuf:"varint,1,opt,name=priority,proto3" json:"priority,omitempty"`
-	Directives    []*SshdDirective       `protobuf:"bytes,2,rep,name=directives,proto3" json:"directives,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SshdParams) Reset() {
-	*x = SshdParams{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[19]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SshdParams) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SshdParams) ProtoMessage() {}
-
-func (x *SshdParams) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[19]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SshdParams.ProtoReflect.Descriptor instead.
-func (*SshdParams) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{19}
-}
-
-func (x *SshdParams) GetPriority() uint32 {
-	if x != nil {
-		return x.Priority
-	}
-	return 0
-}
-
-func (x *SshdParams) GetDirectives() []*SshdDirective {
-	if x != nil {
-		return x.Directives
-	}
-	return nil
-}
-
-type AdminPolicyParams struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccessLevel   AdminAccessLevel       `protobuf:"varint,1,opt,name=access_level,json=accessLevel,proto3,enum=cadestro.v1.AdminAccessLevel" json:"access_level,omitempty"`
-	Users         []string               `protobuf:"bytes,2,rep,name=users,proto3" json:"users,omitempty"`
-	CustomConfig  string                 `protobuf:"bytes,3,opt,name=custom_config,json=customConfig,proto3" json:"custom_config,omitempty"`
-	Backend       PrivilegeBackend       `protobuf:"varint,4,opt,name=backend,proto3,enum=cadestro.v1.PrivilegeBackend" json:"backend,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *AdminPolicyParams) Reset() {
-	*x = AdminPolicyParams{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[20]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *AdminPolicyParams) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AdminPolicyParams) ProtoMessage() {}
-
-func (x *AdminPolicyParams) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[20]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AdminPolicyParams.ProtoReflect.Descriptor instead.
-func (*AdminPolicyParams) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{20}
-}
-
-func (x *AdminPolicyParams) GetAccessLevel() AdminAccessLevel {
-	if x != nil {
-		return x.AccessLevel
-	}
-	return AdminAccessLevel_ADMIN_ACCESS_LEVEL_UNSPECIFIED
-}
-
-func (x *AdminPolicyParams) GetUsers() []string {
-	if x != nil {
-		return x.Users
-	}
-	return nil
-}
-
-func (x *AdminPolicyParams) GetCustomConfig() string {
-	if x != nil {
-		return x.CustomConfig
-	}
-	return ""
-}
-
-func (x *AdminPolicyParams) GetBackend() PrivilegeBackend {
-	if x != nil {
-		return x.Backend
-	}
-	return PrivilegeBackend_PRIVILEGE_BACKEND_SUDO
-}
-
-type LpsParams struct {
-	state                protoimpl.MessageState `protogen:"open.v1"`
-	Usernames            []string               `protobuf:"bytes,1,rep,name=usernames,proto3" json:"usernames,omitempty"`
-	PasswordLength       int32                  `protobuf:"varint,2,opt,name=password_length,json=passwordLength,proto3" json:"password_length,omitempty"`
-	Complexity           LpsPasswordComplexity  `protobuf:"varint,3,opt,name=complexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"complexity,omitempty"`
-	RotationIntervalDays int32                  `protobuf:"varint,4,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty"`
-	GracePeriodHours     int32                  `protobuf:"varint,5,opt,name=grace_period_hours,json=gracePeriodHours,proto3" json:"grace_period_hours,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
-}
-
-func (x *LpsParams) Reset() {
-	*x = LpsParams{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[21]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *LpsParams) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*LpsParams) ProtoMessage() {}
-
-func (x *LpsParams) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[21]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use LpsParams.ProtoReflect.Descriptor instead.
-func (*LpsParams) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{21}
-}
-
-func (x *LpsParams) GetUsernames() []string {
-	if x != nil {
-		return x.Usernames
-	}
-	return nil
-}
-
-func (x *LpsParams) GetPasswordLength() int32 {
-	if x != nil {
-		return x.PasswordLength
-	}
-	return 0
-}
-
-func (x *LpsParams) GetComplexity() LpsPasswordComplexity {
-	if x != nil {
-		return x.Complexity
-	}
-	return LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_UNSPECIFIED
-}
-
-func (x *LpsParams) GetRotationIntervalDays() int32 {
-	if x != nil {
-		return x.RotationIntervalDays
-	}
-	return 0
-}
-
-func (x *LpsParams) GetGracePeriodHours() int32 {
-	if x != nil {
-		return x.GracePeriodHours
-	}
-	return 0
-}
-
-type EncryptionParams struct {
-	state                    protoimpl.MessageState       `protogen:"open.v1"`
-	PresharedKey             []byte                       `protobuf:"bytes,1,opt,name=preshared_key,json=presharedKey,proto3" json:"preshared_key,omitempty"`
-	RotationIntervalDays     int32                        `protobuf:"varint,2,opt,name=rotation_interval_days,json=rotationIntervalDays,proto3" json:"rotation_interval_days,omitempty"`
-	MinWords                 int32                        `protobuf:"varint,3,opt,name=min_words,json=minWords,proto3" json:"min_words,omitempty"`
-	DeviceBoundKeyType       EncryptionDeviceBoundKeyType `protobuf:"varint,4,opt,name=device_bound_key_type,json=deviceBoundKeyType,proto3,enum=cadestro.v1.EncryptionDeviceBoundKeyType" json:"device_bound_key_type,omitempty"`
-	UserPassphraseMinLength  int32                        `protobuf:"varint,5,opt,name=user_passphrase_min_length,json=userPassphraseMinLength,proto3" json:"user_passphrase_min_length,omitempty"`
-	UserPassphraseComplexity LpsPasswordComplexity        `protobuf:"varint,6,opt,name=user_passphrase_complexity,json=userPassphraseComplexity,proto3,enum=cadestro.v1.LpsPasswordComplexity" json:"user_passphrase_complexity,omitempty"`
-	unknownFields            protoimpl.UnknownFields
-	sizeCache                protoimpl.SizeCache
-}
-
-func (x *EncryptionParams) Reset() {
-	*x = EncryptionParams{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[22]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *EncryptionParams) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*EncryptionParams) ProtoMessage() {}
-
-func (x *EncryptionParams) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[22]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use EncryptionParams.ProtoReflect.Descriptor instead.
-func (*EncryptionParams) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{22}
-}
-
-func (x *EncryptionParams) GetPresharedKey() []byte {
-	if x != nil {
-		return x.PresharedKey
-	}
-	return nil
-}
-
-func (x *EncryptionParams) GetRotationIntervalDays() int32 {
-	if x != nil {
-		return x.RotationIntervalDays
-	}
-	return 0
-}
-
-func (x *EncryptionParams) GetMinWords() int32 {
-	if x != nil {
-		return x.MinWords
-	}
-	return 0
-}
-
-func (x *EncryptionParams) GetDeviceBoundKeyType() EncryptionDeviceBoundKeyType {
-	if x != nil {
-		return x.DeviceBoundKeyType
-	}
-	return EncryptionDeviceBoundKeyType_ENCRYPTION_DEVICE_BOUND_KEY_TYPE_NONE
-}
-
-func (x *EncryptionParams) GetUserPassphraseMinLength() int32 {
-	if x != nil {
-		return x.UserPassphraseMinLength
-	}
-	return 0
-}
-
-func (x *EncryptionParams) GetUserPassphraseComplexity() LpsPasswordComplexity {
-	if x != nil {
-		return x.UserPassphraseComplexity
-	}
-	return LpsPasswordComplexity_LPS_PASSWORD_COMPLEXITY_UNSPECIFIED
-}
-
-type WifiParams struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ssid          string                 `protobuf:"bytes,1,opt,name=ssid,proto3" json:"ssid,omitempty"`
-	AuthType      WifiAuthType           `protobuf:"varint,2,opt,name=auth_type,json=authType,proto3,enum=cadestro.v1.WifiAuthType" json:"auth_type,omitempty"`
-	Psk           []byte                 `protobuf:"bytes,3,opt,name=psk,proto3" json:"psk,omitempty"`
-	CaCert        string                 `protobuf:"bytes,4,opt,name=ca_cert,json=caCert,proto3" json:"ca_cert,omitempty"`
-	ClientCert    string                 `protobuf:"bytes,5,opt,name=client_cert,json=clientCert,proto3" json:"client_cert,omitempty"`
-	ClientKey     []byte                 `protobuf:"bytes,6,opt,name=client_key,json=clientKey,proto3" json:"client_key,omitempty"`
-	Identity      string                 `protobuf:"bytes,7,opt,name=identity,proto3" json:"identity,omitempty"`
-	AutoConnect   bool                   `protobuf:"varint,8,opt,name=auto_connect,json=autoConnect,proto3" json:"auto_connect,omitempty"`
-	Hidden        bool                   `protobuf:"varint,9,opt,name=hidden,proto3" json:"hidden,omitempty"`
-	Priority      int32                  `protobuf:"varint,10,opt,name=priority,proto3" json:"priority,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *WifiParams) Reset() {
-	*x = WifiParams{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[23]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *WifiParams) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*WifiParams) ProtoMessage() {}
-
-func (x *WifiParams) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[23]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use WifiParams.ProtoReflect.Descriptor instead.
-func (*WifiParams) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{23}
-}
-
-func (x *WifiParams) GetSsid() string {
-	if x != nil {
-		return x.Ssid
-	}
-	return ""
-}
-
-func (x *WifiParams) GetAuthType() WifiAuthType {
-	if x != nil {
-		return x.AuthType
-	}
-	return WifiAuthType_WIFI_AUTH_TYPE_UNSPECIFIED
-}
-
-func (x *WifiParams) GetPsk() []byte {
-	if x != nil {
-		return x.Psk
-	}
-	return nil
-}
-
-func (x *WifiParams) GetCaCert() string {
-	if x != nil {
-		return x.CaCert
-	}
-	return ""
-}
-
-func (x *WifiParams) GetClientCert() string {
-	if x != nil {
-		return x.ClientCert
-	}
-	return ""
-}
-
-func (x *WifiParams) GetClientKey() []byte {
-	if x != nil {
-		return x.ClientKey
-	}
-	return nil
-}
-
-func (x *WifiParams) GetIdentity() string {
-	if x != nil {
-		return x.Identity
-	}
-	return ""
-}
-
-func (x *WifiParams) GetAutoConnect() bool {
-	if x != nil {
-		return x.AutoConnect
-	}
-	return false
-}
-
-func (x *WifiParams) GetHidden() bool {
-	if x != nil {
-		return x.Hidden
-	}
-	return false
-}
-
-func (x *WifiParams) GetPriority() int32 {
-	if x != nil {
-		return x.Priority
-	}
-	return 0
-}
-
 type ActionResult struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	ActionId        *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
@@ -2692,18 +455,17 @@ type ActionResult struct {
 	CompletedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
 	Duration        *durationpb.Duration   `protobuf:"bytes,6,opt,name=duration,proto3" json:"duration,omitempty"`
 	Changed         bool                   `protobuf:"varint,7,opt,name=changed,proto3" json:"changed,omitempty"`
-	Metadata        map[string]string      `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Compliant       bool                   `protobuf:"varint,9,opt,name=compliant,proto3" json:"compliant,omitempty"`
-	DetectionOutput *CommandOutput         `protobuf:"bytes,10,opt,name=detection_output,json=detectionOutput,proto3" json:"detection_output,omitempty"`
-	RunId           *RunId                 `protobuf:"bytes,11,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	OccurrenceId    *OccurrenceId          `protobuf:"bytes,12,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`
+	Compliant       bool                   `protobuf:"varint,8,opt,name=compliant,proto3" json:"compliant,omitempty"`
+	DetectionOutput *CommandOutput         `protobuf:"bytes,9,opt,name=detection_output,json=detectionOutput,proto3" json:"detection_output,omitempty"`
+	RunId           *RunId                 `protobuf:"bytes,10,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	OccurrenceId    *OccurrenceId          `protobuf:"bytes,11,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
 func (x *ActionResult) Reset() {
 	*x = ActionResult{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[24]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2715,7 +477,7 @@ func (x *ActionResult) String() string {
 func (*ActionResult) ProtoMessage() {}
 
 func (x *ActionResult) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[24]
+	mi := &file_cadestro_v1_actions_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2728,7 +490,7 @@ func (x *ActionResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActionResult.ProtoReflect.Descriptor instead.
 func (*ActionResult) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{24}
+	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ActionResult) GetActionId() *ActionId {
@@ -2780,13 +542,6 @@ func (x *ActionResult) GetChanged() bool {
 	return false
 }
 
-func (x *ActionResult) GetMetadata() map[string]string {
-	if x != nil {
-		return x.Metadata
-	}
-	return nil
-}
-
 func (x *ActionResult) GetCompliant() bool {
 	if x != nil {
 		return x.Compliant
@@ -2815,364 +570,42 @@ func (x *ActionResult) GetOccurrenceId() *OccurrenceId {
 	return nil
 }
 
-type AgentUpdateArch struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	BinaryUrl     string                 `protobuf:"bytes,1,opt,name=binary_url,json=binaryUrl,proto3" json:"binary_url,omitempty"`
-	ChecksumUrl   string                 `protobuf:"bytes,2,opt,name=checksum_url,json=checksumUrl,proto3" json:"checksum_url,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *AgentUpdateArch) Reset() {
-	*x = AgentUpdateArch{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[25]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *AgentUpdateArch) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AgentUpdateArch) ProtoMessage() {}
-
-func (x *AgentUpdateArch) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[25]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AgentUpdateArch.ProtoReflect.Descriptor instead.
-func (*AgentUpdateArch) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{25}
-}
-
-func (x *AgentUpdateArch) GetBinaryUrl() string {
-	if x != nil {
-		return x.BinaryUrl
-	}
-	return ""
-}
-
-func (x *AgentUpdateArch) GetChecksumUrl() string {
-	if x != nil {
-		return x.ChecksumUrl
-	}
-	return ""
-}
-
-type AgentUpdateParams struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Amd64          *AgentUpdateArch       `protobuf:"bytes,1,opt,name=amd64,proto3" json:"amd64,omitempty"`
-	Arm64          *AgentUpdateArch       `protobuf:"bytes,2,opt,name=arm64,proto3" json:"arm64,omitempty"`
-	AllowDowngrade bool                   `protobuf:"varint,3,opt,name=allow_downgrade,json=allowDowngrade,proto3" json:"allow_downgrade,omitempty"`
-	AllowRedirect  bool                   `protobuf:"varint,4,opt,name=allow_redirect,json=allowRedirect,proto3" json:"allow_redirect,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
-}
-
-func (x *AgentUpdateParams) Reset() {
-	*x = AgentUpdateParams{}
-	mi := &file_cadestro_v1_actions_proto_msgTypes[26]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *AgentUpdateParams) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AgentUpdateParams) ProtoMessage() {}
-
-func (x *AgentUpdateParams) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_actions_proto_msgTypes[26]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AgentUpdateParams.ProtoReflect.Descriptor instead.
-func (*AgentUpdateParams) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{26}
-}
-
-func (x *AgentUpdateParams) GetAmd64() *AgentUpdateArch {
-	if x != nil {
-		return x.Amd64
-	}
-	return nil
-}
-
-func (x *AgentUpdateParams) GetArm64() *AgentUpdateArch {
-	if x != nil {
-		return x.Arm64
-	}
-	return nil
-}
-
-func (x *AgentUpdateParams) GetAllowDowngrade() bool {
-	if x != nil {
-		return x.AllowDowngrade
-	}
-	return false
-}
-
-func (x *AgentUpdateParams) GetAllowRedirect() bool {
-	if x != nil {
-		return x.AllowRedirect
-	}
-	return false
-}
-
 var File_cadestro_v1_actions_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\n" +
-	"\x19cadestro/v1/actions.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x18cadestro/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf9\t\n" +
+	"\x19cadestro/v1/actions.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x18cadestro/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xce\x03\n" +
 	"\x06Action\x12-\n" +
 	"\x02id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x123\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x17.cadestro.v1.ActionTypeB\x06\xbaH\x03\xc8\x01\x01R\x04type\x12>\n" +
-	"\rdesired_state\x18\x03 \x01(\x0e2\x19.cadestro.v1.DesiredStateR\fdesiredState\x126\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x17.cadestro.v1.ActionTypeB\x06\xbaH\x03\xc8\x01\x01R\x04type\x12F\n" +
+	"\rdesired_state\x18\x03 \x01(\x0e2\x19.cadestro.v1.DesiredStateB\x06\xbaH\x03\xc8\x01\x01R\fdesiredState\x126\n" +
 	"\x0ftimeout_seconds\x18\x04 \x01(\x05B\r\xbaH\n" +
 	"\xd8\x01\x01\x1a\x05\x18\x90\x1c(\x00R\x0etimeoutSeconds\x127\n" +
 	"\bschedule\x18\x05 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x126\n" +
-	"\apackage\x18\b \x01(\v2\x1a.cadestro.v1.PackageParamsH\x00R\apackage\x121\n" +
-	"\x03app\x18\t \x01(\v2\x1d.cadestro.v1.AppInstallParamsH\x00R\x03app\x120\n" +
-	"\x05shell\x18\n" +
-	" \x01(\v2\x18.cadestro.v1.ShellParamsH\x00R\x05shell\x126\n" +
-	"\aservice\x18\v \x01(\v2\x1a.cadestro.v1.ServiceParamsH\x00R\aservice\x12-\n" +
-	"\x04file\x18\f \x01(\v2\x17.cadestro.v1.FileParamsH\x00R\x04file\x123\n" +
-	"\x06update\x18\r \x01(\v2\x19.cadestro.v1.UpdateParamsH\x00R\x06update\x12?\n" +
-	"\n" +
-	"repository\x18\x0e \x01(\v2\x1d.cadestro.v1.RepositoryParamsH\x00R\n" +
-	"repository\x126\n" +
-	"\aflatpak\x18\x0f \x01(\v2\x1a.cadestro.v1.FlatpakParamsH\x00R\aflatpak\x12<\n" +
-	"\tdirectory\x18\x10 \x01(\v2\x1c.cadestro.v1.DirectoryParamsH\x00R\tdirectory\x12-\n" +
-	"\x04user\x18\x11 \x01(\v2\x17.cadestro.v1.UserParamsH\x00R\x04user\x12*\n" +
-	"\x03ssh\x18\x12 \x01(\v2\x16.cadestro.v1.SshParamsH\x00R\x03ssh\x12-\n" +
-	"\x04sshd\x18\x13 \x01(\v2\x17.cadestro.v1.SshdParamsH\x00R\x04sshd\x12C\n" +
-	"\fadmin_policy\x18\x14 \x01(\v2\x1e.cadestro.v1.AdminPolicyParamsH\x00R\vadminPolicy\x12*\n" +
-	"\x03lps\x18\x15 \x01(\v2\x16.cadestro.v1.LpsParamsH\x00R\x03lps\x120\n" +
-	"\x05group\x18\x16 \x01(\v2\x18.cadestro.v1.GroupParamsH\x00R\x05group\x12?\n" +
-	"\n" +
-	"encryption\x18\x17 \x01(\v2\x1d.cadestro.v1.EncryptionParamsH\x00R\n" +
-	"encryption\x12-\n" +
-	"\x04wifi\x18\x18 \x01(\v2\x17.cadestro.v1.WifiParamsH\x00R\x04wifi\x12C\n" +
-	"\fagent_update\x18\x19 \x01(\v2\x1e.cadestro.v1.AgentUpdateParamsH\x00R\vagentUpdateB\b\n" +
-	"\x06params\"\xb7\x01\n" +
-	"\x0eActionSchedule\x12\x1f\n" +
-	"\x04cron\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x01R\x04cron\x124\n" +
-	"\x0einterval_hours\x18\x02 \x01(\x05B\r\xbaH\n" +
+	"\apackage\x18\x06 \x01(\v2\x1a.cadestro.v1.PackageParamsH\x00R\apackage\x123\n" +
+	"\x06update\x18\a \x01(\v2\x19.cadestro.v1.UpdateParamsH\x00R\x06update\x120\n" +
+	"\x05shell\x18\b \x01(\v2\x18.cadestro.v1.ShellParamsH\x00R\x05shellB\b\n" +
+	"\x06params\"\x96\x01\n" +
+	"\x0eActionSchedule\x124\n" +
+	"\x0einterval_hours\x18\x01 \x01(\x05B\r\xbaH\n" +
 	"\xd8\x01\x01\x1a\x05\x18\xb8D(\x00R\rintervalHours\x12\"\n" +
-	"\rrun_on_assign\x18\x03 \x01(\bR\vrunOnAssign\x12*\n" +
-	"\x11skip_if_unchanged\x18\x04 \x01(\bR\x0fskipIfUnchanged\"\xbe\x02\n" +
-	"\rPackageParams\x12\x1f\n" +
-	"\x04name\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\x04name\x12%\n" +
-	"\aversion\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x01R\aversion\x12'\n" +
-	"\x0fallow_downgrade\x18\x03 \x01(\bR\x0eallowDowngrade\x12\x10\n" +
-	"\x03pin\x18\x04 \x01(\bR\x03pin\x12&\n" +
-	"\bapt_name\x18\x05 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\aaptName\x12&\n" +
-	"\bdnf_name\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\adnfName\x12,\n" +
-	"\vpacman_name\x18\a \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\n" +
-	"pacmanName\x12,\n" +
-	"\vzypper_name\x18\b \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\n" +
-	"zypperName\"\xa7\x01\n" +
-	"\x10AppInstallParams\x12\x1d\n" +
-	"\x03url\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x88\x01\x01R\x03url\x12D\n" +
-	"\x0fchecksum_sha256\x18\x02 \x01(\tB\x1b\xbaH\x18\xc8\x01\x01r\x132\x0e^[0-9a-fA-F]+$\x98\x01@R\x0echecksumSha256\x12.\n" +
-	"\finstall_path\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03:\x01/R\vinstallPath\"\xbd\x03\n" +
+	"\rrun_on_assign\x18\x02 \x01(\bR\vrunOnAssign\x12*\n" +
+	"\x11skip_if_unchanged\x18\x03 \x01(\bR\x0fskipIfUnchanged\"Y\n" +
+	"\rPackageParams\x12!\n" +
+	"\x04name\x18\x01 \x01(\tB\r\xbaH\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x04name\x12%\n" +
+	"\aversion\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x01R\aversion\"\x0e\n" +
+	"\fUpdateParams\"\x9d\x03\n" +
 	"\vShellParams\x12$\n" +
 	"\x06script\x18\x01 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x06script\x12-\n" +
-	"\vinterpreter\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\vinterpreter\x12\x1e\n" +
-	"\vrun_as_root\x18\x03 \x01(\bR\trunAsRoot\x128\n" +
-	"\x11working_directory\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03:\x01/R\x10workingDirectory\x12a\n" +
-	"\venvironment\x18\x05 \x03(\v2).cadestro.v1.ShellParams.EnvironmentEntryB\x14\xbaH\x11\x9a\x01\x0e\"\x05r\x03\x18\xff\x01*\x05r\x03\x18\x80 R\venvironment\x127\n" +
-	"\x10detection_script\x18\x06 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x0fdetectionScript\x12#\n" +
-	"\ris_compliance\x18\a \x01(\bR\fisCompliance\x1a>\n" +
+	"\vinterpreter\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\vinterpreter\x128\n" +
+	"\x11working_directory\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03:\x01/R\x10workingDirectory\x12a\n" +
+	"\venvironment\x18\x04 \x03(\v2).cadestro.v1.ShellParams.EnvironmentEntryB\x14\xbaH\x11\x9a\x01\x0e\"\x05r\x03\x18\xff\x01*\x05r\x03\x18\x80 R\venvironment\x127\n" +
+	"\x10detection_script\x18\x05 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x0fdetectionScript\x12#\n" +
+	"\ris_compliance\x18\x06 \x01(\bR\fisCompliance\x1a>\n" +
 	"\x10EnvironmentEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xc8\x01\n" +
-	"\rServiceParams\x12*\n" +
-	"\tunit_name\x18\x01 \x01(\tB\r\xbaH\n" +
-	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\bunitName\x12B\n" +
-	"\rdesired_state\x18\x02 \x01(\x0e2\x1d.cadestro.v1.ServiceUnitStateR\fdesiredState\x12\x16\n" +
-	"\x06enable\x18\x03 \x01(\bR\x06enable\x12/\n" +
-	"\funit_content\x18\x04 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80\x04R\vunitContent\"\xdf\x01\n" +
-	"\n" +
-	"FileParams\x12\x1f\n" +
-	"\x04path\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03:\x01/R\x04path\x12'\n" +
-	"\acontent\x18\x02 \x01(\tB\r\xbaH\n" +
-	"\xd8\x01\x01r\x05\x18\x80\x80\x80\x05R\acontent\x12 \n" +
-	"\x05owner\x18\x03 \x01(\tB\n" +
-	"\xbaH\a\xd8\x01\x01r\x02\x18 R\x05owner\x12 \n" +
-	"\x05group\x18\x04 \x01(\tB\n" +
-	"\xbaH\a\xd8\x01\x01r\x02\x18 R\x05group\x12\x1e\n" +
-	"\x04mode\x18\x05 \x01(\tB\n" +
-	"\xbaH\a\xd8\x01\x01r\x02\x18\x04R\x04mode\x12#\n" +
-	"\rmanaged_block\x18\x06 \x01(\bR\fmanagedBlock\"\xb4\x01\n" +
-	"\x0fDirectoryParams\x12\x1f\n" +
-	"\x04path\x18\x01 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03:\x01/R\x04path\x12 \n" +
-	"\x05owner\x18\x02 \x01(\tB\n" +
-	"\xbaH\a\xd8\x01\x01r\x02\x18 R\x05owner\x12 \n" +
-	"\x05group\x18\x03 \x01(\tB\n" +
-	"\xbaH\a\xd8\x01\x01r\x02\x18 R\x05group\x12\x1e\n" +
-	"\x04mode\x18\x04 \x01(\tB\n" +
-	"\xbaH\a\xd8\x01\x01r\x02\x18\x04R\x04mode\x12\x1c\n" +
-	"\trecursive\x18\x05 \x01(\bR\trecursive\"\x81\x01\n" +
-	"\fUpdateParams\x12#\n" +
-	"\rsecurity_only\x18\x01 \x01(\bR\fsecurityOnly\x12\x1e\n" +
-	"\n" +
-	"autoremove\x18\x02 \x01(\bR\n" +
-	"autoremove\x12,\n" +
-	"\x12reboot_if_required\x18\x03 \x01(\bR\x10rebootIfRequired\"\xa0\x01\n" +
-	"\rFlatpakParams\x128\n" +
-	"\x06app_id\x18\x01 \x01(\v2\x19.cadestro.v1.FlatpakAppIdB\x06\xbaH\x03\xc8\x01\x01R\x05appId\x12\"\n" +
-	"\x06remote\x18\x02 \x01(\tB\n" +
-	"\xbaH\a\xd8\x01\x01r\x02\x18@R\x06remote\x12\x1f\n" +
-	"\vsystem_wide\x18\x03 \x01(\bR\n" +
-	"systemWide\x12\x10\n" +
-	"\x03pin\x18\x04 \x01(\bR\x03pin\"\x8e\x02\n" +
-	"\x10RepositoryParams\x120\n" +
-	"\x04name\x18\x01 \x01(\tB\x1c\xbaH\x19\xc8\x01\x01r\x14\x10\x01\x18@2\x0e^[a-zA-Z0-9]+$R\x04name\x12,\n" +
-	"\x03apt\x18\x02 \x01(\v2\x1a.cadestro.v1.AptRepositoryR\x03apt\x12,\n" +
-	"\x03dnf\x18\x03 \x01(\v2\x1a.cadestro.v1.DnfRepositoryR\x03dnf\x125\n" +
-	"\x06pacman\x18\x04 \x01(\v2\x1d.cadestro.v1.PacmanRepositoryR\x06pacman\x125\n" +
-	"\x06zypper\x18\x05 \x01(\v2\x1d.cadestro.v1.ZypperRepositoryR\x06zypper\"\xb4\x03\n" +
-	"\rAptRepository\x12\x1d\n" +
-	"\x03url\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\x03url\x12.\n" +
-	"\fdistribution\x18\x02 \x01(\tB\n" +
-	"\xbaH\a\xd8\x01\x01r\x02\x18@R\fdistribution\x12,\n" +
-	"\n" +
-	"components\x18\x03 \x03(\tB\f\xbaH\t\x92\x01\x06\"\x04r\x02\x18@R\n" +
-	"components\x12+\n" +
-	"\vgpg_key_url\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\tgpgKeyUrl\x12%\n" +
-	"\agpg_key\x18\x05 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80\x04R\x06gpgKey\x12\x18\n" +
-	"\atrusted\x18\x06 \x01(\bR\atrusted\x12\x1e\n" +
-	"\x04arch\x18\a \x01(\tB\n" +
-	"\xbaH\a\xd8\x01\x01r\x02\x18 R\x04arch\x12\x1a\n" +
-	"\bdisabled\x18\b \x01(\bR\bdisabled:|\xbaHy\x1aw\n" +
-	",apt_repository.url_required_without_disabled\x12&url is required unless disabled is set\x1a\x1fthis.disabled || this.url != ''\"\x85\x03\n" +
-	"\rDnfRepository\x12\x18\n" +
-	"\abaseurl\x18\x01 \x01(\tR\abaseurl\x12-\n" +
-	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\vdescription\x12\x18\n" +
-	"\aenabled\x18\x03 \x01(\bR\aenabled\x12\x1a\n" +
-	"\bgpgcheck\x18\x04 \x01(\bR\bgpgcheck\x12#\n" +
-	"\x06gpgkey\x18\x05 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\x06gpgkey\x12'\n" +
-	"\x0fmodule_hotfixes\x18\x06 \x01(\bR\x0emoduleHotfixes\x12\x1a\n" +
-	"\bdisabled\x18\a \x01(\bR\bdisabled:\x8a\x01\xbaH\x86\x01\x1a\x83\x01\n" +
-	"0dnf_repository.baseurl_required_without_disabled\x12*baseurl is required unless disabled is set\x1a#this.disabled || this.baseurl != ''\"\xfd\x01\n" +
-	"\x10PacmanRepository\x12\x16\n" +
-	"\x06server\x18\x01 \x01(\tR\x06server\x12(\n" +
-	"\tsig_level\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x01R\bsigLevel\x12\x1a\n" +
-	"\bdisabled\x18\x03 \x01(\bR\bdisabled:\x8a\x01\xbaH\x86\x01\x1a\x83\x01\n" +
-	"2pacman_repository.server_required_without_disabled\x12)server is required unless disabled is set\x1a\"this.disabled || this.server != ''\"\xbe\x03\n" +
-	"\x10ZypperRepository\x12\x1d\n" +
-	"\x03url\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\x03url\x12-\n" +
-	"\vdescription\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\vdescription\x12\x18\n" +
-	"\aenabled\x18\x03 \x01(\bR\aenabled\x12 \n" +
-	"\vautorefresh\x18\x04 \x01(\bR\vautorefresh\x12\x1a\n" +
-	"\bgpgcheck\x18\x05 \x01(\bR\bgpgcheck\x12#\n" +
-	"\x06gpgkey\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x88\x01\x01R\x06gpgkey\x12B\n" +
-	"\x04type\x18\a \x01(\x0e2!.cadestro.v1.ZypperRepositoryTypeB\v\xbaH\b\xd8\x01\x01\x82\x01\x02\x10\x01R\x04type\x12\x1a\n" +
-	"\bdisabled\x18\b \x01(\bR\bdisabled:\x7f\xbaH|\x1az\n" +
-	"/zypper_repository.url_required_without_disabled\x12&url is required unless disabled is set\x1a\x1fthis.disabled || this.url != ''\"\x83\x04\n" +
-	"\n" +
-	"UserParams\x128\n" +
-	"\busername\x18\x01 \x01(\tB\x1c\xbaH\x19\xc8\x01\x01r\x14\x10\x01\x18 2\x0e^[a-zA-Z0-9]+$R\busername\x12 \n" +
-	"\x03uid\x18\x02 \x01(\x05B\x0e\xbaH\v\xd8\x01\x01\x1a\x06\x18\xfe\xff\x03(\x00R\x03uid\x12 \n" +
-	"\x03gid\x18\x03 \x01(\x05B\x0e\xbaH\v\xd8\x01\x01\x1a\x06\x18\xfe\xff\x03(\x00R\x03gid\x12&\n" +
-	"\bhome_dir\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03:\x01/R\ahomeDir\x12!\n" +
-	"\x05shell\x18\x05 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03:\x01/R\x05shell\x12=\n" +
-	"\x13ssh_authorized_keys\x18\x06 \x03(\tB\r\xbaH\n" +
-	"\x92\x01\a\"\x05r\x03\x18\x80 R\x11sshAuthorizedKeys\x12%\n" +
-	"\acomment\x18\a \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\acomment\x12\x1f\n" +
-	"\vsystem_user\x18\b \x01(\bR\n" +
-	"systemUser\x12\x1f\n" +
-	"\vcreate_home\x18\t \x01(\bR\n" +
-	"createHome\x12\x1a\n" +
-	"\bdisabled\x18\n" +
-	" \x01(\bR\bdisabled\x12/\n" +
-	"\rprimary_group\x18\v \x01(\tB\n" +
-	"\xbaH\a\xd8\x01\x01r\x02\x18 R\fprimaryGroup\x12\x16\n" +
-	"\x06hidden\x18\f \x01(\bR\x06hidden\x12\x1f\n" +
-	"\vno_password\x18\r \x01(\bR\n" +
-	"noPassword\"\x9e\x01\n" +
-	"\vGroupParams\x12 \n" +
-	"\x04name\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18 R\x04name\x12(\n" +
-	"\amembers\x18\x02 \x03(\tB\x0e\xbaH\v\x92\x01\b\"\x06r\x04\x10\x01\x18 R\amembers\x12 \n" +
-	"\x03gid\x18\x03 \x01(\x05B\x0e\xbaH\v\xd8\x01\x01\x1a\x06\x18\xfe\xff\x03(\x00R\x03gid\x12!\n" +
-	"\fsystem_group\x18\x04 \x01(\bR\vsystemGroup\"{\n" +
-	"\tSshParams\x12!\n" +
-	"\fallow_pubkey\x18\x01 \x01(\bR\vallowPubkey\x12%\n" +
-	"\x0eallow_password\x18\x02 \x01(\bR\rallowPassword\x12$\n" +
-	"\x05users\x18\x03 \x03(\tB\x0e\xbaH\v\x92\x01\b\"\x06r\x04\x10\x01\x18 R\x05users\"U\n" +
-	"\rSshdDirective\x12\x1f\n" +
-	"\x03key\x18\x01 \x01(\tB\r\xbaH\n" +
-	"\xc8\x01\x01r\x05\x10\x01\x18\x80\x01R\x03key\x12#\n" +
-	"\x05value\x18\x02 \x01(\tB\r\xbaH\n" +
-	"\xc8\x01\x01r\x05\x10\x01\x18\x80\bR\x05value\"q\n" +
-	"\n" +
-	"SshdParams\x12\x1a\n" +
-	"\bpriority\x18\x01 \x01(\rR\bpriority\x12G\n" +
-	"\n" +
-	"directives\x18\x02 \x03(\v2\x1a.cadestro.v1.SshdDirectiveB\v\xbaH\b\xc8\x01\x01\x92\x01\x02\b\x01R\n" +
-	"directives\"\x9c\x03\n" +
-	"\x11AdminPolicyParams\x12H\n" +
-	"\faccess_level\x18\x01 \x01(\x0e2\x1d.cadestro.v1.AdminAccessLevelB\x06\xbaH\x03\xc8\x01\x01R\vaccessLevel\x12)\n" +
-	"\x05users\x18\x02 \x03(\tB\x13\xbaH\x10\xc8\x01\x01\x92\x01\n" +
-	"\b\x01\"\x06r\x04\x10\x01\x18 R\x05users\x12.\n" +
-	"\rcustom_config\x18\x03 \x01(\tB\t\xbaH\x06r\x04\x18\x80\x80\x04R\fcustomConfig\x127\n" +
-	"\abackend\x18\x04 \x01(\x0e2\x1d.cadestro.v1.PrivilegeBackendR\abackend:\xa8\x01\xbaH\xa4\x01\x1a\xa1\x01\n" +
-	"4admin_policy_params.custom_config_required_if_custom\x125custom_config is required when access_level is CUSTOM\x1a2this.access_level != 3 || this.custom_config != ''\"\xc4\x02\n" +
-	"\tLpsParams\x121\n" +
-	"\tusernames\x18\x01 \x03(\tB\x13\xbaH\x10\xc8\x01\x01\x92\x01\n" +
-	"\b\x01\"\x06r\x04\x10\x01\x18 R\tusernames\x126\n" +
-	"\x0fpassword_length\x18\x02 \x01(\x05B\r\xbaH\n" +
-	"\xc8\x01\x01\x1a\x05\x18\x80\x01(\bR\x0epasswordLength\x12J\n" +
-	"\n" +
-	"complexity\x18\x03 \x01(\x0e2\".cadestro.v1.LpsPasswordComplexityB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"complexity\x12C\n" +
-	"\x16rotation_interval_days\x18\x04 \x01(\x05B\r\xbaH\n" +
-	"\xc8\x01\x01\x1a\x05\x18\xed\x02(\x01R\x14rotationIntervalDays\x12;\n" +
-	"\x12grace_period_hours\x18\x05 \x01(\x05B\r\xbaH\n" +
-	"\xd8\x01\x01\x1a\x05\x18\xb8D(\x00R\x10gracePeriodHours\"\xdd\x03\n" +
-	"\x10EncryptionParams\x123\n" +
-	"\rpreshared_key\x18\x01 \x01(\fB\x0e\xbaH\b\xc8\x01\x01z\x03\x18\x80\x04\x80\x01\x01R\fpresharedKey\x12C\n" +
-	"\x16rotation_interval_days\x18\x02 \x01(\x05B\r\xbaH\n" +
-	"\xc8\x01\x01\x1a\x05\x18\xed\x02(\x01R\x14rotationIntervalDays\x12)\n" +
-	"\tmin_words\x18\x03 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18\n" +
-	"(\x03R\bminWords\x12i\n" +
-	"\x15device_bound_key_type\x18\x04 \x01(\x0e2).cadestro.v1.EncryptionDeviceBoundKeyTypeB\v\xbaH\b\xd8\x01\x01\x82\x01\x02\x10\x01R\x12deviceBoundKeyType\x12J\n" +
-	"\x1auser_passphrase_min_length\x18\x05 \x01(\x05B\r\xbaH\n" +
-	"\xd8\x01\x01\x1a\x05\x18\x80\x01(\x10R\x17userPassphraseMinLength\x12m\n" +
-	"\x1auser_passphrase_complexity\x18\x06 \x01(\x0e2\".cadestro.v1.LpsPasswordComplexityB\v\xbaH\b\xd8\x01\x01\x82\x01\x02\x10\x01R\x18userPassphraseComplexity\"\x93\x03\n" +
-	"\n" +
-	"WifiParams\x12!\n" +
-	"\x04ssid\x18\x01 \x01(\tB\r\xbaH\n" +
-	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x04ssid\x12>\n" +
-	"\tauth_type\x18\x02 \x01(\x0e2\x19.cadestro.v1.WifiAuthTypeB\x06\xbaH\x03\xc8\x01\x01R\bauthType\x12 \n" +
-	"\x03psk\x18\x03 \x01(\fB\x0e\xbaH\b\xd8\x01\x01z\x03\x18\x80\x02\x80\x01\x01R\x03psk\x12\x17\n" +
-	"\aca_cert\x18\x04 \x01(\tR\x06caCert\x12\x1f\n" +
-	"\vclient_cert\x18\x05 \x01(\tR\n" +
-	"clientCert\x12.\n" +
-	"\n" +
-	"client_key\x18\x06 \x01(\fB\x0f\xbaH\t\xd8\x01\x01z\x04\x18\x80\x80\b\x80\x01\x01R\tclientKey\x12'\n" +
-	"\bidentity\x18\a \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xfe\x01R\bidentity\x12!\n" +
-	"\fauto_connect\x18\b \x01(\bR\vautoConnect\x12\x16\n" +
-	"\x06hidden\x18\t \x01(\bR\x06hidden\x122\n" +
-	"\bpriority\x18\n" +
-	" \x01(\x05B\x16\xbaH\x13\xd8\x01\x01\x1a\x0e\x18\xe7\a(\xff\xff\xff\xff\xff\xff\xff\xff\xff\x01R\bpriority\"\xdb\x05\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd9\x04\n" +
 	"\fActionResult\x12:\n" +
 	"\taction_id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\bactionId\x12<\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusB\x06\xbaH\x03\xc8\x01\x01R\x06status\x12!\n" +
@@ -3180,81 +613,18 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\x06output\x18\x04 \x01(\v2\x1a.cadestro.v1.CommandOutputR\x06output\x12=\n" +
 	"\fcompleted_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12?\n" +
 	"\bduration\x18\x06 \x01(\v2\x19.google.protobuf.DurationB\b\xbaH\x05\xaa\x01\x022\x00R\bduration\x12\x18\n" +
-	"\achanged\x18\a \x01(\bR\achanged\x12C\n" +
-	"\bmetadata\x18\b \x03(\v2'.cadestro.v1.ActionResult.MetadataEntryR\bmetadata\x12\x1c\n" +
-	"\tcompliant\x18\t \x01(\bR\tcompliant\x12E\n" +
-	"\x10detection_output\x18\n" +
-	" \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x121\n" +
-	"\x06run_id\x18\v \x01(\v2\x12.cadestro.v1.RunIdB\x06\xbaH\x03\xc8\x01\x01R\x05runId\x12F\n" +
-	"\roccurrence_id\x18\f \x01(\v2\x19.cadestro.v1.OccurrenceIdB\x06\xbaH\x03\xc8\x01\x01R\foccurrenceId\x1a;\n" +
-	"\rMetadataEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x81\x01\n" +
-	"\x0fAgentUpdateArch\x124\n" +
-	"\n" +
-	"binary_url\x18\x01 \x01(\tB\x15\xbaH\x12\xc8\x01\x01r\r:\bhttps://\x88\x01\x01R\tbinaryUrl\x128\n" +
-	"\fchecksum_url\x18\x02 \x01(\tB\x15\xbaH\x12\xc8\x01\x01r\r:\bhttps://\x88\x01\x01R\vchecksumUrl\"\xcb\x01\n" +
-	"\x11AgentUpdateParams\x122\n" +
-	"\x05amd64\x18\x01 \x01(\v2\x1c.cadestro.v1.AgentUpdateArchR\x05amd64\x122\n" +
-	"\x05arm64\x18\x02 \x01(\v2\x1c.cadestro.v1.AgentUpdateArchR\x05arm64\x12'\n" +
-	"\x0fallow_downgrade\x18\x03 \x01(\bR\x0eallowDowngrade\x12%\n" +
-	"\x0eallow_redirect\x18\x04 \x01(\bR\rallowRedirect*\xba\x04\n" +
+	"\achanged\x18\a \x01(\bR\achanged\x12\x1c\n" +
+	"\tcompliant\x18\b \x01(\bR\tcompliant\x12E\n" +
+	"\x10detection_output\x18\t \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x121\n" +
+	"\x06run_id\x18\n" +
+	" \x01(\v2\x12.cadestro.v1.RunIdB\x06\xbaH\x03\xc8\x01\x01R\x05runId\x12F\n" +
+	"\roccurrence_id\x18\v \x01(\v2\x19.cadestro.v1.OccurrenceIdB\x06\xbaH\x03\xc8\x01\x01R\foccurrenceId*q\n" +
 	"\n" +
 	"ActionType\x12\x1b\n" +
 	"\x17ACTION_TYPE_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13ACTION_TYPE_PACKAGE\x10\x01\x12\x16\n" +
-	"\x12ACTION_TYPE_UPDATE\x10\x02\x12\x1a\n" +
-	"\x16ACTION_TYPE_REPOSITORY\x10\x03\x12\x19\n" +
-	"\x15ACTION_TYPE_APP_IMAGE\x10d\x12\x13\n" +
-	"\x0fACTION_TYPE_DEB\x10e\x12\x13\n" +
-	"\x0fACTION_TYPE_RPM\x10f\x12\x17\n" +
-	"\x13ACTION_TYPE_FLATPAK\x10g\x12\x16\n" +
-	"\x11ACTION_TYPE_SHELL\x10\xc8\x01\x12\x1b\n" +
-	"\x16ACTION_TYPE_SCRIPT_RUN\x10\xc9\x01\x12\x18\n" +
-	"\x13ACTION_TYPE_SERVICE\x10\xac\x02\x12\x15\n" +
-	"\x10ACTION_TYPE_FILE\x10\x90\x03\x12\x1a\n" +
-	"\x15ACTION_TYPE_DIRECTORY\x10\x91\x03\x12\x15\n" +
-	"\x10ACTION_TYPE_USER\x10\xd8\x04\x12\x16\n" +
-	"\x11ACTION_TYPE_GROUP\x10\xd9\x04\x12\x14\n" +
-	"\x0fACTION_TYPE_SSH\x10\xbc\x05\x12\x15\n" +
-	"\x10ACTION_TYPE_SSHD\x10\xbd\x05\x12\x1d\n" +
-	"\x18ACTION_TYPE_ADMIN_POLICY\x10\xa0\x06\x12\x14\n" +
-	"\x0fACTION_TYPE_LPS\x10\x84\a\x12\x1b\n" +
-	"\x16ACTION_TYPE_ENCRYPTION\x10\xe8\a\x12\x15\n" +
-	"\x10ACTION_TYPE_WIFI\x10\xcc\b\x12\x1d\n" +
-	"\x18ACTION_TYPE_AGENT_UPDATE\x10\xb0\t*\x98\x01\n" +
-	"\x10ServiceUnitState\x12\"\n" +
-	"\x1eSERVICE_UNIT_STATE_UNSPECIFIED\x10\x00\x12\x1e\n" +
-	"\x1aSERVICE_UNIT_STATE_STARTED\x10\x01\x12\x1e\n" +
-	"\x1aSERVICE_UNIT_STATE_STOPPED\x10\x02\x12 \n" +
-	"\x1cSERVICE_UNIT_STATE_RESTARTED\x10\x03*\xa8\x01\n" +
-	"\x14ZypperRepositoryType\x12&\n" +
-	"\"ZYPPER_REPOSITORY_TYPE_UNSPECIFIED\x10\x00\x12!\n" +
-	"\x1dZYPPER_REPOSITORY_TYPE_RPM_MD\x10\x01\x12 \n" +
-	"\x1cZYPPER_REPOSITORY_TYPE_YAST2\x10\x02\x12#\n" +
-	"\x1fZYPPER_REPOSITORY_TYPE_PLAINDIR\x10\x03*\xed\x01\n" +
-	"\x10AdminAccessLevel\x12\"\n" +
-	"\x1eADMIN_ACCESS_LEVEL_UNSPECIFIED\x10\x00\x12\x1b\n" +
-	"\x17ADMIN_ACCESS_LEVEL_FULL\x10\x01\x12\x1e\n" +
-	"\x1aADMIN_ACCESS_LEVEL_LIMITED\x10\x02\x12\x1d\n" +
-	"\x19ADMIN_ACCESS_LEVEL_CUSTOM\x10\x03\x12-\n" +
-	")ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_LIMITED\x10\x04\x12*\n" +
-	"&ADMIN_ACCESS_LEVEL_TERMINAL_ADMIN_FULL\x10\x05*J\n" +
-	"\x10PrivilegeBackend\x12\x1a\n" +
-	"\x16PRIVILEGE_BACKEND_SUDO\x10\x00\x12\x1a\n" +
-	"\x16PRIVILEGE_BACKEND_DOAS\x10\x01*\x8f\x01\n" +
-	"\x15LpsPasswordComplexity\x12'\n" +
-	"#LPS_PASSWORD_COMPLEXITY_UNSPECIFIED\x10\x00\x12(\n" +
-	"$LPS_PASSWORD_COMPLEXITY_ALPHANUMERIC\x10\x01\x12#\n" +
-	"\x1fLPS_PASSWORD_COMPLEXITY_COMPLEX\x10\x02*\xa9\x01\n" +
-	"\x1cEncryptionDeviceBoundKeyType\x12)\n" +
-	"%ENCRYPTION_DEVICE_BOUND_KEY_TYPE_NONE\x10\x00\x12(\n" +
-	"$ENCRYPTION_DEVICE_BOUND_KEY_TYPE_TPM\x10\x01\x124\n" +
-	"0ENCRYPTION_DEVICE_BOUND_KEY_TYPE_USER_PASSPHRASE\x10\x02*b\n" +
-	"\fWifiAuthType\x12\x1e\n" +
-	"\x1aWIFI_AUTH_TYPE_UNSPECIFIED\x10\x00\x12\x16\n" +
-	"\x12WIFI_AUTH_TYPE_PSK\x10\x01\x12\x1a\n" +
-	"\x16WIFI_AUTH_TYPE_EAP_TLS\x10\x02BGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
+	"\x12ACTION_TYPE_UPDATE\x10\x02\x12\x15\n" +
+	"\x11ACTION_TYPE_SHELL\x10\x03BGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
 
 var (
 	file_cadestro_v1_actions_proto_rawDescOnce sync.Once
@@ -3268,110 +638,48 @@ func file_cadestro_v1_actions_proto_rawDescGZIP() []byte {
 	return file_cadestro_v1_actions_proto_rawDescData
 }
 
-var file_cadestro_v1_actions_proto_enumTypes = make([]protoimpl.EnumInfo, 8)
-var file_cadestro_v1_actions_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
+var file_cadestro_v1_actions_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_cadestro_v1_actions_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_cadestro_v1_actions_proto_goTypes = []any{
-	(ActionType)(0),                   // 0: cadestro.v1.ActionType
-	(ServiceUnitState)(0),             // 1: cadestro.v1.ServiceUnitState
-	(ZypperRepositoryType)(0),         // 2: cadestro.v1.ZypperRepositoryType
-	(AdminAccessLevel)(0),             // 3: cadestro.v1.AdminAccessLevel
-	(PrivilegeBackend)(0),             // 4: cadestro.v1.PrivilegeBackend
-	(LpsPasswordComplexity)(0),        // 5: cadestro.v1.LpsPasswordComplexity
-	(EncryptionDeviceBoundKeyType)(0), // 6: cadestro.v1.EncryptionDeviceBoundKeyType
-	(WifiAuthType)(0),                 // 7: cadestro.v1.WifiAuthType
-	(*Action)(nil),                    // 8: cadestro.v1.Action
-	(*ActionSchedule)(nil),            // 9: cadestro.v1.ActionSchedule
-	(*PackageParams)(nil),             // 10: cadestro.v1.PackageParams
-	(*AppInstallParams)(nil),          // 11: cadestro.v1.AppInstallParams
-	(*ShellParams)(nil),               // 12: cadestro.v1.ShellParams
-	(*ServiceParams)(nil),             // 13: cadestro.v1.ServiceParams
-	(*FileParams)(nil),                // 14: cadestro.v1.FileParams
-	(*DirectoryParams)(nil),           // 15: cadestro.v1.DirectoryParams
-	(*UpdateParams)(nil),              // 16: cadestro.v1.UpdateParams
-	(*FlatpakParams)(nil),             // 17: cadestro.v1.FlatpakParams
-	(*RepositoryParams)(nil),          // 18: cadestro.v1.RepositoryParams
-	(*AptRepository)(nil),             // 19: cadestro.v1.AptRepository
-	(*DnfRepository)(nil),             // 20: cadestro.v1.DnfRepository
-	(*PacmanRepository)(nil),          // 21: cadestro.v1.PacmanRepository
-	(*ZypperRepository)(nil),          // 22: cadestro.v1.ZypperRepository
-	(*UserParams)(nil),                // 23: cadestro.v1.UserParams
-	(*GroupParams)(nil),               // 24: cadestro.v1.GroupParams
-	(*SshParams)(nil),                 // 25: cadestro.v1.SshParams
-	(*SshdDirective)(nil),             // 26: cadestro.v1.SshdDirective
-	(*SshdParams)(nil),                // 27: cadestro.v1.SshdParams
-	(*AdminPolicyParams)(nil),         // 28: cadestro.v1.AdminPolicyParams
-	(*LpsParams)(nil),                 // 29: cadestro.v1.LpsParams
-	(*EncryptionParams)(nil),          // 30: cadestro.v1.EncryptionParams
-	(*WifiParams)(nil),                // 31: cadestro.v1.WifiParams
-	(*ActionResult)(nil),              // 32: cadestro.v1.ActionResult
-	(*AgentUpdateArch)(nil),           // 33: cadestro.v1.AgentUpdateArch
-	(*AgentUpdateParams)(nil),         // 34: cadestro.v1.AgentUpdateParams
-	nil,                               // 35: cadestro.v1.ShellParams.EnvironmentEntry
-	nil,                               // 36: cadestro.v1.ActionResult.MetadataEntry
-	(*ActionId)(nil),                  // 37: cadestro.v1.ActionId
-	(DesiredState)(0),                 // 38: cadestro.v1.DesiredState
-	(*FlatpakAppId)(nil),              // 39: cadestro.v1.FlatpakAppId
-	(ExecutionStatus)(0),              // 40: cadestro.v1.ExecutionStatus
-	(*CommandOutput)(nil),             // 41: cadestro.v1.CommandOutput
-	(*timestamppb.Timestamp)(nil),     // 42: google.protobuf.Timestamp
-	(*durationpb.Duration)(nil),       // 43: google.protobuf.Duration
-	(*RunId)(nil),                     // 44: cadestro.v1.RunId
-	(*OccurrenceId)(nil),              // 45: cadestro.v1.OccurrenceId
+	(ActionType)(0),               // 0: cadestro.v1.ActionType
+	(*Action)(nil),                // 1: cadestro.v1.Action
+	(*ActionSchedule)(nil),        // 2: cadestro.v1.ActionSchedule
+	(*PackageParams)(nil),         // 3: cadestro.v1.PackageParams
+	(*UpdateParams)(nil),          // 4: cadestro.v1.UpdateParams
+	(*ShellParams)(nil),           // 5: cadestro.v1.ShellParams
+	(*ActionResult)(nil),          // 6: cadestro.v1.ActionResult
+	nil,                           // 7: cadestro.v1.ShellParams.EnvironmentEntry
+	(*ActionId)(nil),              // 8: cadestro.v1.ActionId
+	(DesiredState)(0),             // 9: cadestro.v1.DesiredState
+	(ExecutionStatus)(0),          // 10: cadestro.v1.ExecutionStatus
+	(*CommandOutput)(nil),         // 11: cadestro.v1.CommandOutput
+	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
+	(*durationpb.Duration)(nil),   // 13: google.protobuf.Duration
+	(*RunId)(nil),                 // 14: cadestro.v1.RunId
+	(*OccurrenceId)(nil),          // 15: cadestro.v1.OccurrenceId
 }
 var file_cadestro_v1_actions_proto_depIdxs = []int32{
-	37, // 0: cadestro.v1.Action.id:type_name -> cadestro.v1.ActionId
+	8,  // 0: cadestro.v1.Action.id:type_name -> cadestro.v1.ActionId
 	0,  // 1: cadestro.v1.Action.type:type_name -> cadestro.v1.ActionType
-	38, // 2: cadestro.v1.Action.desired_state:type_name -> cadestro.v1.DesiredState
-	9,  // 3: cadestro.v1.Action.schedule:type_name -> cadestro.v1.ActionSchedule
-	10, // 4: cadestro.v1.Action.package:type_name -> cadestro.v1.PackageParams
-	11, // 5: cadestro.v1.Action.app:type_name -> cadestro.v1.AppInstallParams
-	12, // 6: cadestro.v1.Action.shell:type_name -> cadestro.v1.ShellParams
-	13, // 7: cadestro.v1.Action.service:type_name -> cadestro.v1.ServiceParams
-	14, // 8: cadestro.v1.Action.file:type_name -> cadestro.v1.FileParams
-	16, // 9: cadestro.v1.Action.update:type_name -> cadestro.v1.UpdateParams
-	18, // 10: cadestro.v1.Action.repository:type_name -> cadestro.v1.RepositoryParams
-	17, // 11: cadestro.v1.Action.flatpak:type_name -> cadestro.v1.FlatpakParams
-	15, // 12: cadestro.v1.Action.directory:type_name -> cadestro.v1.DirectoryParams
-	23, // 13: cadestro.v1.Action.user:type_name -> cadestro.v1.UserParams
-	25, // 14: cadestro.v1.Action.ssh:type_name -> cadestro.v1.SshParams
-	27, // 15: cadestro.v1.Action.sshd:type_name -> cadestro.v1.SshdParams
-	28, // 16: cadestro.v1.Action.admin_policy:type_name -> cadestro.v1.AdminPolicyParams
-	29, // 17: cadestro.v1.Action.lps:type_name -> cadestro.v1.LpsParams
-	24, // 18: cadestro.v1.Action.group:type_name -> cadestro.v1.GroupParams
-	30, // 19: cadestro.v1.Action.encryption:type_name -> cadestro.v1.EncryptionParams
-	31, // 20: cadestro.v1.Action.wifi:type_name -> cadestro.v1.WifiParams
-	34, // 21: cadestro.v1.Action.agent_update:type_name -> cadestro.v1.AgentUpdateParams
-	35, // 22: cadestro.v1.ShellParams.environment:type_name -> cadestro.v1.ShellParams.EnvironmentEntry
-	1,  // 23: cadestro.v1.ServiceParams.desired_state:type_name -> cadestro.v1.ServiceUnitState
-	39, // 24: cadestro.v1.FlatpakParams.app_id:type_name -> cadestro.v1.FlatpakAppId
-	19, // 25: cadestro.v1.RepositoryParams.apt:type_name -> cadestro.v1.AptRepository
-	20, // 26: cadestro.v1.RepositoryParams.dnf:type_name -> cadestro.v1.DnfRepository
-	21, // 27: cadestro.v1.RepositoryParams.pacman:type_name -> cadestro.v1.PacmanRepository
-	22, // 28: cadestro.v1.RepositoryParams.zypper:type_name -> cadestro.v1.ZypperRepository
-	2,  // 29: cadestro.v1.ZypperRepository.type:type_name -> cadestro.v1.ZypperRepositoryType
-	26, // 30: cadestro.v1.SshdParams.directives:type_name -> cadestro.v1.SshdDirective
-	3,  // 31: cadestro.v1.AdminPolicyParams.access_level:type_name -> cadestro.v1.AdminAccessLevel
-	4,  // 32: cadestro.v1.AdminPolicyParams.backend:type_name -> cadestro.v1.PrivilegeBackend
-	5,  // 33: cadestro.v1.LpsParams.complexity:type_name -> cadestro.v1.LpsPasswordComplexity
-	6,  // 34: cadestro.v1.EncryptionParams.device_bound_key_type:type_name -> cadestro.v1.EncryptionDeviceBoundKeyType
-	5,  // 35: cadestro.v1.EncryptionParams.user_passphrase_complexity:type_name -> cadestro.v1.LpsPasswordComplexity
-	7,  // 36: cadestro.v1.WifiParams.auth_type:type_name -> cadestro.v1.WifiAuthType
-	37, // 37: cadestro.v1.ActionResult.action_id:type_name -> cadestro.v1.ActionId
-	40, // 38: cadestro.v1.ActionResult.status:type_name -> cadestro.v1.ExecutionStatus
-	41, // 39: cadestro.v1.ActionResult.output:type_name -> cadestro.v1.CommandOutput
-	42, // 40: cadestro.v1.ActionResult.completed_at:type_name -> google.protobuf.Timestamp
-	43, // 41: cadestro.v1.ActionResult.duration:type_name -> google.protobuf.Duration
-	36, // 42: cadestro.v1.ActionResult.metadata:type_name -> cadestro.v1.ActionResult.MetadataEntry
-	41, // 43: cadestro.v1.ActionResult.detection_output:type_name -> cadestro.v1.CommandOutput
-	44, // 44: cadestro.v1.ActionResult.run_id:type_name -> cadestro.v1.RunId
-	45, // 45: cadestro.v1.ActionResult.occurrence_id:type_name -> cadestro.v1.OccurrenceId
-	33, // 46: cadestro.v1.AgentUpdateParams.amd64:type_name -> cadestro.v1.AgentUpdateArch
-	33, // 47: cadestro.v1.AgentUpdateParams.arm64:type_name -> cadestro.v1.AgentUpdateArch
-	48, // [48:48] is the sub-list for method output_type
-	48, // [48:48] is the sub-list for method input_type
-	48, // [48:48] is the sub-list for extension type_name
-	48, // [48:48] is the sub-list for extension extendee
-	0,  // [0:48] is the sub-list for field type_name
+	9,  // 2: cadestro.v1.Action.desired_state:type_name -> cadestro.v1.DesiredState
+	2,  // 3: cadestro.v1.Action.schedule:type_name -> cadestro.v1.ActionSchedule
+	3,  // 4: cadestro.v1.Action.package:type_name -> cadestro.v1.PackageParams
+	4,  // 5: cadestro.v1.Action.update:type_name -> cadestro.v1.UpdateParams
+	5,  // 6: cadestro.v1.Action.shell:type_name -> cadestro.v1.ShellParams
+	7,  // 7: cadestro.v1.ShellParams.environment:type_name -> cadestro.v1.ShellParams.EnvironmentEntry
+	8,  // 8: cadestro.v1.ActionResult.action_id:type_name -> cadestro.v1.ActionId
+	10, // 9: cadestro.v1.ActionResult.status:type_name -> cadestro.v1.ExecutionStatus
+	11, // 10: cadestro.v1.ActionResult.output:type_name -> cadestro.v1.CommandOutput
+	12, // 11: cadestro.v1.ActionResult.completed_at:type_name -> google.protobuf.Timestamp
+	13, // 12: cadestro.v1.ActionResult.duration:type_name -> google.protobuf.Duration
+	11, // 13: cadestro.v1.ActionResult.detection_output:type_name -> cadestro.v1.CommandOutput
+	14, // 14: cadestro.v1.ActionResult.run_id:type_name -> cadestro.v1.RunId
+	15, // 15: cadestro.v1.ActionResult.occurrence_id:type_name -> cadestro.v1.OccurrenceId
+	16, // [16:16] is the sub-list for method output_type
+	16, // [16:16] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_actions_proto_init() }
@@ -3382,31 +690,16 @@ func file_cadestro_v1_actions_proto_init() {
 	file_cadestro_v1_common_proto_init()
 	file_cadestro_v1_actions_proto_msgTypes[0].OneofWrappers = []any{
 		(*Action_Package)(nil),
-		(*Action_App)(nil),
-		(*Action_Shell)(nil),
-		(*Action_Service)(nil),
-		(*Action_File)(nil),
 		(*Action_Update)(nil),
-		(*Action_Repository)(nil),
-		(*Action_Flatpak)(nil),
-		(*Action_Directory)(nil),
-		(*Action_User)(nil),
-		(*Action_Ssh)(nil),
-		(*Action_Sshd)(nil),
-		(*Action_AdminPolicy)(nil),
-		(*Action_Lps)(nil),
-		(*Action_Group)(nil),
-		(*Action_Encryption)(nil),
-		(*Action_Wifi)(nil),
-		(*Action_AgentUpdate)(nil),
+		(*Action_Shell)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cadestro_v1_actions_proto_rawDesc), len(file_cadestro_v1_actions_proto_rawDesc)),
-			NumEnums:      8,
-			NumMessages:   29,
+			NumEnums:      1,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

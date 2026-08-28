@@ -6,613 +6,142 @@ package generated
 
 import (
 	"time"
-
-	sqlitetype "github.com/manchtools/cadestro/server/internal/store/sqlitetype"
 )
 
 type Action struct {
-	ID              string          `json:"id"`
-	Name            string          `json:"name"`
-	Description     *string         `json:"description"`
-	ActionType      int32           `json:"action_type"`
-	DesiredState    int32           `json:"desired_state"`
-	Params          sqlitetype.JSON `json:"params"`
-	ParamsCanonical []byte          `json:"params_canonical"`
-	TimeoutSeconds  int32           `json:"timeout_seconds"`
-	Schedule        sqlitetype.JSON `json:"schedule"`
-	IsSystem        bool            `json:"is_system"`
-	CreatedAt       *time.Time      `json:"created_at"`
-	CreatedBy       string          `json:"created_by"`
-	UpdatedAt       *time.Time      `json:"updated_at"`
-	IsDeleted       bool            `json:"is_deleted"`
-}
-
-type ActionSet struct {
-	ID          string          `json:"id"`
-	Name        string          `json:"name"`
-	Description string          `json:"description"`
-	Schedule    sqlitetype.JSON `json:"schedule"`
-	OnFailure   int32           `json:"on_failure"`
-	CreatedAt   *time.Time      `json:"created_at"`
-	CreatedBy   string          `json:"created_by"`
-	UpdatedAt   *time.Time      `json:"updated_at"`
-	IsDeleted   bool            `json:"is_deleted"`
-}
-
-type ActionSetMember struct {
-	SetID     string     `json:"set_id"`
-	ActionID  string     `json:"action_id"`
-	SortOrder int32      `json:"sort_order"`
-	AddedAt   *time.Time `json:"added_at"`
-}
-
-type ApiToken struct {
-	ID        string     `json:"id"`
-	UserID    string     `json:"user_id"`
-	Name      string     `json:"name"`
-	ExpiresAt time.Time  `json:"expires_at"`
-	CreatedAt time.Time  `json:"created_at"`
-	RevokedAt *time.Time `json:"revoked_at"`
+	ID                    string    `json:"id"`
+	Name                  string    `json:"name"`
+	Description           string    `json:"description"`
+	Type                  int64     `json:"type"`
+	DesiredState          int64     `json:"desired_state"`
+	TimeoutSeconds        int64     `json:"timeout_seconds"`
+	IntervalHours         int64     `json:"interval_hours"`
+	RunOnAssign           bool      `json:"run_on_assign"`
+	SkipIfUnchanged       bool      `json:"skip_if_unchanged"`
+	PackageName           string    `json:"package_name"`
+	PackageVersion        string    `json:"package_version"`
+	ShellScript           string    `json:"shell_script"`
+	ShellInterpreter      string    `json:"shell_interpreter"`
+	ShellWorkingDirectory string    `json:"shell_working_directory"`
+	ShellEnvironmentJson  string    `json:"shell_environment_json"`
+	ShellDetectionScript  string    `json:"shell_detection_script"`
+	ShellIsCompliance     bool      `json:"shell_is_compliance"`
+	CreatedAt             time.Time `json:"created_at"`
+	UpdatedAt             time.Time `json:"updated_at"`
 }
 
 type Assignment struct {
-	ID         string     `json:"id"`
-	SourceType string     `json:"source_type"`
-	SourceID   string     `json:"source_id"`
-	TargetType string     `json:"target_type"`
-	TargetID   string     `json:"target_id"`
-	SortOrder  int32      `json:"sort_order"`
-	Mode       int32      `json:"mode"`
-	CreatedAt  *time.Time `json:"created_at"`
-	CreatedBy  string     `json:"created_by"`
-	IsDeleted  bool       `json:"is_deleted"`
+	ID         string    `json:"id"`
+	ActionID   string    `json:"action_id"`
+	TargetType int64     `json:"target_type"`
+	TargetID   string    `json:"target_id"`
+	CreatedAt  time.Time `json:"created_at"`
 }
 
-type AuditEffect struct {
-	EffectID            string                `json:"effect_id"`
-	OperationID         string                `json:"operation_id"`
-	Stream              string                `json:"stream"`
-	ChainSeq            int64                 `json:"chain_seq"`
-	EffectSeq           int64                 `json:"effect_seq"`
-	ResourceType        string                `json:"resource_type"`
-	ResourceID          string                `json:"resource_id"`
-	Action              string                `json:"action"`
-	Outcome             string                `json:"outcome"`
-	ChangedFields       sqlitetype.StringList `json:"changed_fields"`
-	BeforeRef           *string               `json:"before_ref"`
-	AfterRef            *string               `json:"after_ref"`
-	BeforeFlag          *bool                 `json:"before_flag"`
-	AfterFlag           *bool                 `json:"after_flag"`
-	BeforeCount         *int64                `json:"before_count"`
-	AfterCount          *int64                `json:"after_count"`
-	EvidenceKind        string                `json:"evidence_kind"`
-	EvidenceFingerprint string                `json:"evidence_fingerprint"`
-	SealedDetail        []byte                `json:"sealed_detail"`
-	SealedDetailSubject *string               `json:"sealed_detail_subject"`
-	OccurredAt          time.Time             `json:"occurred_at"`
-}
-
-type AuditEventRow struct {
-	ID                   string                `json:"id"`
-	ChainSeq             int64                 `json:"chain_seq"`
-	StreamType           string                `json:"stream_type"`
-	StreamID             string                `json:"stream_id"`
-	EventType            string                `json:"event_type"`
-	OperationID          string                `json:"operation_id"`
-	OperationClass       string                `json:"operation_class"`
-	ActorType            string                `json:"actor_type"`
-	ActorID              string                `json:"actor_id"`
-	ActorFingerprint     string                `json:"actor_fingerprint"`
-	Origin               string                `json:"origin"`
-	OriginFingerprint    string                `json:"origin_fingerprint"`
-	RequestDescriptor    string                `json:"request_descriptor"`
-	AuthorizationOutcome string                `json:"authorization_outcome"`
-	AuthorizationDetail  string                `json:"authorization_detail"`
-	Result               string                `json:"result"`
-	ResultCode           string                `json:"result_code"`
-	EffectOutcome        string                `json:"effect_outcome"`
-	ChangedFields        sqlitetype.StringList `json:"changed_fields"`
-	BeforeRef            *string               `json:"before_ref"`
-	AfterRef             *string               `json:"after_ref"`
-	BeforeFlag           *bool                 `json:"before_flag"`
-	AfterFlag            *bool                 `json:"after_flag"`
-	BeforeCount          *int64                `json:"before_count"`
-	AfterCount           *int64                `json:"after_count"`
-	EvidenceKind         string                `json:"evidence_kind"`
-	EvidenceFingerprint  string                `json:"evidence_fingerprint"`
-	OccurredAt           time.Time             `json:"occurred_at"`
-}
-
-type AuditOperation struct {
-	OperationID          string    `json:"operation_id"`
-	Stream               string    `json:"stream"`
-	ChainSeq             int64     `json:"chain_seq"`
-	OperationClass       string    `json:"operation_class"`
-	ActorType            string    `json:"actor_type"`
-	ActorID              string    `json:"actor_id"`
-	ActorFingerprint     string    `json:"actor_fingerprint"`
-	Origin               string    `json:"origin"`
-	OriginFingerprint    string    `json:"origin_fingerprint"`
-	RequestDescriptor    string    `json:"request_descriptor"`
-	AuthorizationOutcome string    `json:"authorization_outcome"`
-	AuthorizationDetail  string    `json:"authorization_detail"`
-	Result               string    `json:"result"`
-	ResultCode           string    `json:"result_code"`
-	OccurredAt           time.Time `json:"occurred_at"`
-	SealedDetail         []byte    `json:"sealed_detail"`
-	SealedDetailSubject  *string   `json:"sealed_detail_subject"`
+type AuditEvent struct {
+	ID         string    `json:"id"`
+	EventType  string    `json:"event_type"`
+	StreamType string    `json:"stream_type"`
+	StreamID   string    `json:"stream_id"`
+	ActorType  string    `json:"actor_type"`
+	ActorID    string    `json:"actor_id"`
+	OccurredAt time.Time `json:"occurred_at"`
 }
 
 type AuthState struct {
 	State        string    `json:"state"`
 	ProviderID   string    `json:"provider_id"`
-	FlowKind     string    `json:"flow_kind"`
 	Nonce        string    `json:"nonce"`
 	CodeVerifier string    `json:"code_verifier"`
-	RedirectUri  string    `json:"redirect_uri"`
-	CreatedAt    time.Time `json:"created_at"`
+	RedirectUrl  string    `json:"redirect_url"`
 	ExpiresAt    time.Time `json:"expires_at"`
 }
 
-type CompliancePolicy struct {
-	ID          string     `json:"id"`
-	Name        string     `json:"name"`
-	Description string     `json:"description"`
-	RuleCount   int64      `json:"rule_count"`
-	CreatedAt   *time.Time `json:"created_at"`
-	CreatedBy   string     `json:"created_by"`
-	IsDeleted   bool       `json:"is_deleted"`
-}
-
-type CompliancePolicyEvaluation struct {
-	DeviceID      string     `json:"device_id"`
-	PolicyID      string     `json:"policy_id"`
-	ActionID      string     `json:"action_id"`
-	Compliant     bool       `json:"compliant"`
-	FirstFailedAt *time.Time `json:"first_failed_at"`
-	Status        int32      `json:"status"`
-	CheckedAt     *time.Time `json:"checked_at"`
-}
-
-type CompliancePolicyRule struct {
-	PolicyID         string     `json:"policy_id"`
-	ActionID         string     `json:"action_id"`
-	ActionName       string     `json:"action_name"`
-	GracePeriodHours int32      `json:"grace_period_hours"`
-	AddedAt          *time.Time `json:"added_at"`
-}
-
-type ComplianceResult struct {
-	DeviceID        string          `json:"device_id"`
-	ActionID        string          `json:"action_id"`
-	ActionName      string          `json:"action_name"`
-	Compliant       bool            `json:"compliant"`
-	DetectionOutput sqlitetype.JSON `json:"detection_output"`
-	CheckedAt       time.Time       `json:"checked_at"`
-}
-
-type Definition struct {
-	ID          string          `json:"id"`
-	Name        string          `json:"name"`
-	Description string          `json:"description"`
-	MemberCount int64           `json:"member_count"`
-	Schedule    sqlitetype.JSON `json:"schedule"`
-	CreatedAt   *time.Time      `json:"created_at"`
-	CreatedBy   string          `json:"created_by"`
-	UpdatedAt   *time.Time      `json:"updated_at"`
-	IsDeleted   bool            `json:"is_deleted"`
-}
-
-type DefinitionMember struct {
-	DefinitionID string     `json:"definition_id"`
-	ActionSetID  string     `json:"action_set_id"`
-	SortOrder    int32      `json:"sort_order"`
-	AddedAt      *time.Time `json:"added_at"`
-}
-
 type Device struct {
-	ID                          string     `json:"id"`
-	Hostname                    string     `json:"hostname"`
-	AgentVersion                string     `json:"agent_version"`
-	EnrollmentIdentityPublicKey []byte     `json:"enrollment_identity_public_key"`
-	CertificatePem              []byte     `json:"certificate_pem"`
-	ActiveCertSerial            *string    `json:"active_cert_serial"`
-	PendingCertificatePem       []byte     `json:"pending_certificate_pem"`
-	PendingCertSerial           *string    `json:"pending_cert_serial"`
-	RegisteredAt                *time.Time `json:"registered_at"`
-	LastSeenAt                  *time.Time `json:"last_seen_at"`
-	RegistrationTokenID         *string    `json:"registration_token_id"`
-	IsDeleted                   bool       `json:"is_deleted"`
-	SyncIntervalMinutes         int32      `json:"sync_interval_minutes"`
-	InventoryIntervalMinutes    int32      `json:"inventory_interval_minutes"`
-	ComplianceStatus            int32      `json:"compliance_status"`
-	ComplianceCheckedAt         *time.Time `json:"compliance_checked_at"`
-	ComplianceTotal             int32      `json:"compliance_total"`
-	CompliancePassing           int32      `json:"compliance_passing"`
-}
-
-type DeviceAssignedGroup struct {
-	DeviceID   string    `json:"device_id"`
-	GroupID    string    `json:"group_id"`
-	AssignedAt time.Time `json:"assigned_at"`
-	AssignedBy string    `json:"assigned_by"`
-}
-
-type DeviceAssignedUser struct {
-	DeviceID   string    `json:"device_id"`
-	UserID     string    `json:"user_id"`
-	AssignedAt time.Time `json:"assigned_at"`
-	AssignedBy string    `json:"assigned_by"`
+	ID                    string     `json:"id"`
+	Hostname              string     `json:"hostname"`
+	AgentVersion          string     `json:"agent_version"`
+	IdentityPublicKey     []byte     `json:"identity_public_key"`
+	ActiveCertificatePem  []byte     `json:"active_certificate_pem"`
+	ActiveCertSerial      string     `json:"active_cert_serial"`
+	CertExpiresAt         time.Time  `json:"cert_expires_at"`
+	PendingCertificatePem []byte     `json:"pending_certificate_pem"`
+	PendingCertSerial     *string    `json:"pending_cert_serial"`
+	PendingCertExpiresAt  *time.Time `json:"pending_cert_expires_at"`
+	RegisteredAt          time.Time  `json:"registered_at"`
+	LastSeenAt            *time.Time `json:"last_seen_at"`
 }
 
 type DeviceGroup struct {
-	ID                       string          `json:"id"`
-	Name                     string          `json:"name"`
-	Description              string          `json:"description"`
-	MemberCount              int64           `json:"member_count"`
-	CreatedAt                *time.Time      `json:"created_at"`
-	CreatedBy                string          `json:"created_by"`
-	IsDeleted                bool            `json:"is_deleted"`
-	DynamicQuery             *string         `json:"dynamic_query"`
-	SyncIntervalMinutes      int32           `json:"sync_interval_minutes"`
-	InventoryIntervalMinutes int32           `json:"inventory_interval_minutes"`
-	MaintenanceWindow        sqlitetype.JSON `json:"maintenance_window"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type DeviceGroupMember struct {
-	GroupID  string     `json:"group_id"`
-	DeviceID string     `json:"device_id"`
-	AddedAt  *time.Time `json:"added_at"`
-}
-
-type DeviceInventory struct {
-	DeviceID    string          `json:"device_id"`
-	TableName   string          `json:"table_name"`
-	Rows        sqlitetype.JSON `json:"rows"`
-	CollectedAt time.Time       `json:"collected_at"`
-}
-
-type DeviceLabel struct {
+	GroupID  string `json:"group_id"`
 	DeviceID string `json:"device_id"`
-	Key      string `json:"key"`
-	Value    string `json:"value"`
 }
 
-type DeviceSecret struct {
-	ID         string    `json:"id"`
-	DeviceID   string    `json:"device_id"`
-	Kind       string    `json:"kind"`
-	Subject    string    `json:"subject"`
-	Version    int64     `json:"version"`
-	Ciphertext string    `json:"ciphertext"`
-	CreatedAt  time.Time `json:"created_at"`
+type ExecutionResult struct {
+	RunID             string    `json:"run_id"`
+	DeviceID          string    `json:"device_id"`
+	ActionID          string    `json:"action_id"`
+	Status            int64     `json:"status"`
+	Error             string    `json:"error"`
+	OutputExitCode    int64     `json:"output_exit_code"`
+	OutputStdout      string    `json:"output_stdout"`
+	OutputStderr      string    `json:"output_stderr"`
+	CompletedAt       time.Time `json:"completed_at"`
+	Compliant         bool      `json:"compliant"`
+	DetectionExitCode int64     `json:"detection_exit_code"`
+	DetectionStdout   string    `json:"detection_stdout"`
+	DetectionStderr   string    `json:"detection_stderr"`
+	IsCompliance      bool      `json:"is_compliance"`
 }
 
 type IdentityLink struct {
-	ID            string     `json:"id"`
-	UserID        string     `json:"user_id"`
-	ProviderID    string     `json:"provider_id"`
-	ExternalID    string     `json:"external_id"`
-	ExternalEmail string     `json:"external_email"`
-	ExternalName  string     `json:"external_name"`
-	LinkedAt      time.Time  `json:"linked_at"`
-	LastLoginAt   *time.Time `json:"last_login_at"`
+	ProviderID string `json:"provider_id"`
+	Subject    string `json:"subject"`
+	UserID     string `json:"user_id"`
 }
 
 type IdentityProvider struct {
-	ID                    string                `json:"id"`
-	Name                  string                `json:"name"`
-	Slug                  string                `json:"slug"`
-	ProviderType          string                `json:"provider_type"`
-	Enabled               bool                  `json:"enabled"`
-	ClientID              string                `json:"client_id"`
-	ClientSecretEncrypted string                `json:"client_secret_encrypted"`
-	IssuerUrl             string                `json:"issuer_url"`
-	AuthorizationUrl      string                `json:"authorization_url"`
-	TokenUrl              string                `json:"token_url"`
-	UserinfoUrl           string                `json:"userinfo_url"`
-	Scopes                sqlitetype.StringList `json:"scopes"`
-	AutoCreateUsers       bool                  `json:"auto_create_users"`
-	AutoLinkByEmail       bool                  `json:"auto_link_by_email"`
-	TrustEmailAssertions  bool                  `json:"trust_email_assertions"`
-	DefaultRoleID         string                `json:"default_role_id"`
-	AttributeMapping      sqlitetype.JSON       `json:"attribute_mapping"`
-	GroupClaim            string                `json:"group_claim"`
-	GroupMapping          sqlitetype.JSON       `json:"group_mapping"`
-	ScimEnabled           bool                  `json:"scim_enabled"`
-	ScimTokenHash         string                `json:"scim_token_hash"`
-	CreatedAt             time.Time             `json:"created_at"`
-	CreatedBy             string                `json:"created_by"`
-	UpdatedAt             time.Time             `json:"updated_at"`
-	IsDeleted             bool                  `json:"is_deleted"`
+	ID           string    `json:"id"`
+	Name         string    `json:"name"`
+	Slug         string    `json:"slug"`
+	Enabled      bool      `json:"enabled"`
+	ClientID     string    `json:"client_id"`
+	ClientSecret string    `json:"client_secret"`
+	IssuerUrl    string    `json:"issuer_url"`
+	ScopesJson   string    `json:"scopes_json"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
-type Job struct {
-	JobID        string          `json:"job_id"`
-	Kind         string          `json:"kind"`
-	Payload      sqlitetype.JSON `json:"payload"`
-	State        string          `json:"state"`
-	DueAt        time.Time       `json:"due_at"`
-	ClaimedAt    *time.Time      `json:"claimed_at"`
-	ClaimedUntil *time.Time      `json:"claimed_until"`
-	ClaimedBy    string          `json:"claimed_by"`
-	AttemptCount int32           `json:"attempt_count"`
-	MaxAttempts  int32           `json:"max_attempts"`
-	ResultCode   string          `json:"result_code"`
-	DedupeKey    *string         `json:"dedupe_key"`
-	CreatedAt    time.Time       `json:"created_at"`
-	UpdatedAt    time.Time       `json:"updated_at"`
-	TerminalAt   *time.Time      `json:"terminal_at"`
-}
-
-type LinuxUidSequence struct {
-	ID        int64 `json:"id"`
-	NextValue int64 `json:"next_value"`
-}
-
-type LogQueryResult struct {
-	QueryID     string     `json:"query_id"`
-	DeviceID    string     `json:"device_id"`
-	Completed   bool       `json:"completed"`
-	Success     bool       `json:"success"`
-	Error       string     `json:"error"`
-	Logs        string     `json:"logs"`
-	CreatedAt   time.Time  `json:"created_at"`
-	CompletedAt *time.Time `json:"completed_at"`
-}
-
-type LpsPassword struct {
-	ID             string    `json:"id"`
-	Username       string    `json:"username"`
-	RotatedAt      time.Time `json:"rotated_at"`
-	RotationReason string    `json:"rotation_reason"`
-	IsCurrent      bool      `json:"is_current"`
-	CreatedAt      time.Time `json:"created_at"`
-}
-
-type LuksKey struct {
-	ID               string     `json:"id"`
-	DevicePath       string     `json:"device_path"`
-	RotatedAt        time.Time  `json:"rotated_at"`
-	RotationReason   string     `json:"rotation_reason"`
-	IsCurrent        bool       `json:"is_current"`
-	CreatedAt        time.Time  `json:"created_at"`
-	RevocationStatus *string    `json:"revocation_status"`
-	RevocationError  *string    `json:"revocation_error"`
-	RevocationAt     *time.Time `json:"revocation_at"`
-}
-
-type LuksToken struct {
-	ID         string    `json:"id"`
-	DeviceID   string    `json:"device_id"`
-	ActionID   string    `json:"action_id"`
-	Token      string    `json:"token"`
-	MinLength  int32     `json:"min_length"`
-	Complexity int32     `json:"complexity"`
-	CreatedAt  time.Time `json:"created_at"`
-	ExpiresAt  time.Time `json:"expires_at"`
-	Used       bool      `json:"used"`
-}
-
-type OsqueryResult struct {
-	QueryID     string          `json:"query_id"`
-	DeviceID    string          `json:"device_id"`
-	TableName   string          `json:"table_name"`
-	Completed   bool            `json:"completed"`
-	Success     bool            `json:"success"`
-	Error       string          `json:"error"`
-	Rows        sqlitetype.JSON `json:"rows"`
-	CreatedAt   time.Time       `json:"created_at"`
-	CompletedAt *time.Time      `json:"completed_at"`
-}
-
-type PolicyActionResult struct {
-	RunID        string          `json:"run_id"`
-	OccurrenceID string          `json:"occurrence_id"`
-	DeviceID     string          `json:"device_id"`
-	ActionID     string          `json:"action_id"`
-	ResultHash   string          `json:"result_hash"`
-	Payload      sqlitetype.JSON `json:"payload"`
-	CreatedAt    time.Time       `json:"created_at"`
-}
-
-type PolicyManifestResult struct {
-	RunID      string    `json:"run_id"`
-	DeviceID   string    `json:"device_id"`
-	ManifestID string    `json:"manifest_id"`
-	State      string    `json:"state"`
-	ResultCode string    `json:"result_code"`
-	CreatedAt  time.Time `json:"created_at"`
+type RegistrationToken struct {
+	ID          string    `json:"id"`
+	ValueHash   string    `json:"value_hash"`
+	Name        string    `json:"name"`
+	MaxUses     int64     `json:"max_uses"`
+	CurrentUses int64     `json:"current_uses"`
+	ExpiresAt   time.Time `json:"expires_at"`
+	CreatedAt   time.Time `json:"created_at"`
+	Disabled    bool      `json:"disabled"`
 }
 
 type RevokedToken struct {
-	Jti       string    `json:"jti"`
-	RevokedAt time.Time `json:"revoked_at"`
+	ID        string    `json:"id"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
-type Role struct {
-	ID          string                `json:"id"`
-	Name        string                `json:"name"`
-	Description string                `json:"description"`
-	Permissions sqlitetype.StringList `json:"permissions"`
-	IsSystem    bool                  `json:"is_system"`
-	CreatedAt   time.Time             `json:"created_at"`
-	CreatedBy   string                `json:"created_by"`
-	UpdatedAt   *time.Time            `json:"updated_at"`
-	IsDeleted   bool                  `json:"is_deleted"`
-}
-
-type ScimGroupMapping struct {
-	ID              string    `json:"id"`
-	ProviderID      string    `json:"provider_id"`
-	ScimGroupID     string    `json:"scim_group_id"`
-	ScimDisplayName string    `json:"scim_display_name"`
-	UserGroupID     string    `json:"user_group_id"`
-	CreatedAt       time.Time `json:"created_at"`
-}
-
-type SearchDocument struct {
-	Rowid       int64           `json:"rowid"`
-	Scope       string          `json:"scope"`
-	EntityID    string          `json:"entity_id"`
-	PrimaryText string          `json:"primary_text"`
-	Description string          `json:"description"`
-	RelatedText string          `json:"related_text"`
-	SortText    string          `json:"sort_text"`
-	MemberCount int64           `json:"member_count"`
-	Fields      sqlitetype.JSON `json:"fields"`
-}
-
-type SearchFt struct {
-	PrimaryText string `json:"primary_text"`
-	Description string `json:"description"`
-	RelatedText string `json:"related_text"`
-}
-
-type SearchTrigram struct {
-	PrimaryText string `json:"primary_text"`
-	Description string `json:"description"`
-	RelatedText string `json:"related_text"`
-}
-
-type SecurityAlert struct {
-	AlertID        string     `json:"alert_id"`
-	DeviceID       string     `json:"device_id"`
-	AlertType      string     `json:"alert_type"`
-	Message        string     `json:"message"`
-	Details        *string    `json:"details"`
-	RaisedAt       time.Time  `json:"raised_at"`
-	Acknowledged   bool       `json:"acknowledged"`
-	AcknowledgedAt *time.Time `json:"acknowledged_at"`
-	AcknowledgedBy *string    `json:"acknowledged_by"`
-	CreatedAt      time.Time  `json:"created_at"`
-}
-
-type ServerSetting struct {
-	ID                      string    `json:"id"`
-	UserProvisioningEnabled bool      `json:"user_provisioning_enabled"`
-	SshAccessForAll         bool      `json:"ssh_access_for_all"`
-	UpdatedAt               time.Time `json:"updated_at"`
-}
-
-type TerminalSession struct {
-	SessionID      string     `json:"session_id"`
-	DeviceID       string     `json:"device_id"`
-	UserID         string     `json:"user_id"`
-	TtyUser        string     `json:"tty_user"`
-	StartedAt      time.Time  `json:"started_at"`
-	StoppedAt      *time.Time `json:"stopped_at"`
-	ExitReason     *string    `json:"exit_reason"`
-	ExitCode       int32      `json:"exit_code"`
-	TerminatedBy   *string    `json:"terminated_by"`
-	Input          []byte     `json:"input"`
-	InputTruncated bool       `json:"input_truncated"`
-	LastSequence   int32      `json:"last_sequence"`
-	ChunkCount     int32      `json:"chunk_count"`
-	Cols           int32      `json:"cols"`
-	Rows           int32      `json:"rows"`
-}
-
-type Token struct {
-	ID        string     `json:"id"`
-	ValueHash string     `json:"value_hash"`
-	Name      string     `json:"name"`
-	MaxUses   int32      `json:"max_uses"`
-	ExpiresAt time.Time  `json:"expires_at"`
-	CreatedAt *time.Time `json:"created_at"`
-	CreatedBy string     `json:"created_by"`
-	Disabled  bool       `json:"disabled"`
-	IsDeleted bool       `json:"is_deleted"`
-}
-
 type User struct {
-	ID                      string     `json:"id"`
-	Email                   string     `json:"email"`
-	ProvisioningSource      string     `json:"provisioning_source"`
-	CreatedAt               *time.Time `json:"created_at"`
-	UpdatedAt               *time.Time `json:"updated_at"`
-	LastLoginAt             *time.Time `json:"last_login_at"`
-	Disabled                bool       `json:"disabled"`
-	IsDeleted               bool       `json:"is_deleted"`
-	SessionVersion          int32      `json:"session_version"`
-	DisplayName             string     `json:"display_name"`
-	GivenName               string     `json:"given_name"`
-	FamilyName              string     `json:"family_name"`
-	PreferredUsername       string     `json:"preferred_username"`
-	Picture                 string     `json:"picture"`
-	Locale                  string     `json:"locale"`
-	LinuxUsername           string     `json:"linux_username"`
-	LinuxUid                int32      `json:"linux_uid"`
-	SshAccessEnabled        bool       `json:"ssh_access_enabled"`
-	SshAllowPubkey          bool       `json:"ssh_allow_pubkey"`
-	SshAllowPassword        bool       `json:"ssh_allow_password"`
-	SystemUserActionID      string     `json:"system_user_action_id"`
-	SystemSshActionID       string     `json:"system_ssh_action_id"`
-	SystemTtyActionID       string     `json:"system_tty_action_id"`
-	UserProvisioningEnabled bool       `json:"user_provisioning_enabled"`
-}
-
-type UserEncryptionKey struct {
-	UserID     string    `json:"user_id"`
-	WrappedDek string    `json:"wrapped_dek"`
-	CreatedAt  time.Time `json:"created_at"`
-}
-
-type UserGroup struct {
-	ID                string          `json:"id"`
-	Name              string          `json:"name"`
-	Description       string          `json:"description"`
-	MemberCount       int64           `json:"member_count"`
-	CreatedAt         time.Time       `json:"created_at"`
-	CreatedBy         string          `json:"created_by"`
-	UpdatedAt         time.Time       `json:"updated_at"`
-	IsDeleted         bool            `json:"is_deleted"`
-	DynamicQuery      *string         `json:"dynamic_query"`
-	MaintenanceWindow sqlitetype.JSON `json:"maintenance_window"`
-}
-
-type UserGroupMember struct {
-	GroupID string    `json:"group_id"`
-	UserID  string    `json:"user_id"`
-	AddedAt time.Time `json:"added_at"`
-	AddedBy string    `json:"added_by"`
-}
-
-type UserGroupRole struct {
-	GrantID    string    `json:"grant_id"`
-	GroupID    string    `json:"group_id"`
-	RoleID     string    `json:"role_id"`
-	AssignedAt time.Time `json:"assigned_at"`
-	AssignedBy string    `json:"assigned_by"`
-	ScopeKind  *string   `json:"scope_kind"`
-	ScopeID    *string   `json:"scope_id"`
-}
-
-type UserRole struct {
-	GrantID    string    `json:"grant_id"`
-	UserID     string    `json:"user_id"`
-	RoleID     string    `json:"role_id"`
-	AssignedAt time.Time `json:"assigned_at"`
-	AssignedBy string    `json:"assigned_by"`
-	ScopeKind  *string   `json:"scope_kind"`
-	ScopeID    *string   `json:"scope_id"`
-}
-
-type UserSelection struct {
-	ID         string    `json:"id"`
-	DeviceID   string    `json:"device_id"`
-	SourceType string    `json:"source_type"`
-	SourceID   string    `json:"source_id"`
-	Selected   bool      `json:"selected"`
-	UpdatedAt  time.Time `json:"updated_at"`
-	CreatedBy  string    `json:"created_by"`
-}
-
-type UserSshKey struct {
-	UserID    string    `json:"user_id"`
-	KeyID     string    `json:"key_id"`
-	PublicKey *string   `json:"public_key"`
-	Comment   *string   `json:"comment"`
-	AddedAt   time.Time `json:"added_at"`
+	ID             string    `json:"id"`
+	Email          string    `json:"email"`
+	DisplayName    string    `json:"display_name"`
+	Picture        string    `json:"picture"`
+	SessionVersion int64     `json:"session_version"`
+	CreatedAt      time.Time `json:"created_at"`
+	LastLoginAt    time.Time `json:"last_login_at"`
 }

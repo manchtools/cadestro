@@ -61,29 +61,6 @@ func TestInstallLocal_GoldenArgv(t *testing.T) {
 		}
 	})
 
-	t.Run("flatpak installs a bundle, system scope escalated", func(t *testing.T) {
-		m, f := flatpakM(t)
-		ok(f, "")
-		if _, err := m.InstallLocal(ctx, "/opt/app.flatpak", InstallLocalOptions{}); err != nil {
-			t.Fatal(err)
-		}
-		c := f.Calls()[0]
-		if argv(c) != "flatpak install -y --noninteractive --system /opt/app.flatpak" || !c.Escalate {
-			t.Errorf("argv = %q (escalate=%v)", argv(c), c.Escalate)
-		}
-	})
-
-	t.Run("flatpak user scope is unescalated", func(t *testing.T) {
-		m, f := flatpakM(t, true)
-		ok(f, "")
-		if _, err := m.InstallLocal(ctx, "/opt/app.flatpak", InstallLocalOptions{}); err != nil {
-			t.Fatal(err)
-		}
-		c := f.Calls()[0]
-		if argv(c) != "flatpak install -y --noninteractive --user /opt/app.flatpak" || c.Escalate {
-			t.Errorf("argv = %q (escalate=%v), want --user unescalated", argv(c), c.Escalate)
-		}
-	})
 }
 
 func TestInstallLocal_AllowDowngrade(t *testing.T) {
@@ -133,16 +110,6 @@ func TestInstallLocal_AllowDowngrade(t *testing.T) {
 		}
 	})
 
-	t.Run("flatpak ignores AllowDowngrade", func(t *testing.T) {
-		m, f := flatpakM(t)
-		ok(f, "")
-		if _, err := m.InstallLocal(ctx, "/opt/app.flatpak", InstallLocalOptions{AllowDowngrade: true}); err != nil {
-			t.Fatal(err)
-		}
-		if a := argv(f.Calls()[0]); a != "flatpak install -y --noninteractive --system /opt/app.flatpak" {
-			t.Errorf("argv = %q, want the unchanged bundle-install form", a)
-		}
-	})
 }
 
 func TestInstallLocal_AllowUnsigned(t *testing.T) {
@@ -194,17 +161,6 @@ func TestInstallLocal_AllowUnsigned(t *testing.T) {
 		}
 		if a := argv(f.Calls()[0]); a != "pacman -U --noconfirm /opt/app.pkg.tar.zst" {
 			t.Errorf("argv = %q, want the unchanged -U form", a)
-		}
-	})
-
-	t.Run("flatpak is a no-op", func(t *testing.T) {
-		m, f := flatpakM(t)
-		ok(f, "")
-		if _, err := m.InstallLocal(ctx, "/opt/app.flatpak", InstallLocalOptions{AllowUnsigned: true}); err != nil {
-			t.Fatal(err)
-		}
-		if a := argv(f.Calls()[0]); a != "flatpak install -y --noninteractive --system /opt/app.flatpak" {
-			t.Errorf("argv = %q, want the unchanged bundle-install form", a)
 		}
 	})
 
@@ -293,7 +249,7 @@ func TestValidateLocalPackagePath(t *testing.T) {
 	good := []string{
 		"/opt/app.deb",
 		"/var/cache/pm/app.rpm",
-		"/opt/My Apps/app.flatpak",
+		"/opt/My Apps/app.deb",
 		"/tmp/123.pkg.tar.zst",
 	}
 	for _, p := range good {

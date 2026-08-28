@@ -38,8 +38,8 @@ that can't escalate fails fast instead of hanging.
 <!-- docref: begin src=sys/exec/runner.go#Runner:7679445f -->
 A non-zero exit code is **not** automatically an error. The Runner reports the
 exit code in its result and leaves the judgement to the capability layer,
-because some non-zero codes are meaningful answers (a `cryptsetup` probe
-returning "not a LUKS device", for example). A non-nil error from `Run` means
+because some non-zero codes are meaningful answers, such as a package query
+reporting that a package is absent. A non-nil error from `Run` means
 the command *could not be executed* — binary not found, blocked env var,
 cancelled context — or escalation failed. When a capability does decide a
 command failed, it wraps the details in a typed error:

@@ -7,7 +7,6 @@ require (
 	buf.build/go/protovalidate v1.3.0
 	connectrpc.com/connect v1.20.0
 	github.com/oklog/ulid/v2 v2.1.2
-	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.58.0
 	google.golang.org/protobuf v1.36.12
 )
@@ -26,5 +25,4 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20250811230008-5f3141c8851a // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250811230008-5f3141c8851a // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

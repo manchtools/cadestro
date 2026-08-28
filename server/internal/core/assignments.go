@@ -1,0 +1,205 @@
+package core
+
+import (
+	"context"
+	"errors"
+
+	"connectrpc.com/connect"
+	"github.com/oklog/ulid/v2"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/server/internal/store"
+	db "github.com/manchtools/cadestro/server/internal/store/generated"
+)
+
+func assignmentProto(assignment *db.ListAssignmentsRow) *cadestrov1.Assignment {
+	return &cadestrov1.Assignment{
+		Id: &cadestrov1.AssignmentId{Value: assignment.ID}, ActionId: &cadestrov1.ActionId{Value: assignment.ActionID},
+		ActionName: assignment.ActionName, TargetType: cadestrov1.AssignmentTargetType(assignment.TargetType),
+		TargetId: &cadestrov1.AssignmentTargetId{Value: assignment.TargetID}, TargetName: assignment.TargetName,
+		CreatedAt: timestamppb.New(assignment.CreatedAt),
+	}
+}
+
+func (service *Service) assignmentTargetName(ctx context.Context, targetType cadestrov1.AssignmentTargetType, targetID string) (string, error) {
+	switch targetType {
+	case cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE:
+		device, err := service.store.Queries().GetDevice(ctx, targetID)
+		if err != nil {
+			if store.IsNotFound(err) {
+				return "", rpcNotFound("device")
+			}
+			return "", service.internal("get assignment device", err)
+		}
+		return device.Hostname, nil
+	case cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP:
+		group, err := service.store.Queries().GetDeviceGroup(ctx, targetID)
+		if err != nil {
+			if store.IsNotFound(err) {
+				return "", rpcNotFound("device group")
+			}
+			return "", service.internal("get assignment device group", err)
+		}
+		return group.Name, nil
+	default:
+		return "", connect.NewError(connect.CodeInvalidArgument, errors.New("unsupported assignment target type"))
+	}
+}
+
+func (service *Service) CreateAssignment(ctx context.Context, request *connect.Request[cadestrov1.CreateAssignmentRequest]) (*connect.Response[cadestrov1.CreateAssignmentResponse], error) {
+	actionID := request.Msg.GetActionId().GetValue()
+	action, err := service.store.Queries().GetAction(ctx, actionID)
+	if err != nil {
+		if store.IsNotFound(err) {
+			return nil, rpcNotFound("action")
+		}
+		return nil, service.internal("get assignment action", err)
+	}
+	targetID := request.Msg.GetTargetId().GetValue()
+	targetName, err := service.assignmentTargetName(ctx, request.Msg.GetTargetType(), targetID)
+	if err != nil {
+		return nil, err
+	}
+	assignment, err := service.store.Queries().CreateAssignment(ctx, db.CreateAssignmentParams{
+		ID: ulid.Make().String(), ActionID: actionID, TargetType: int64(request.Msg.GetTargetType()), TargetID: targetID, CreatedAt: service.now().UTC(),
+	})
+	if err != nil {
+		if store.IsConflict(err) {
+			return nil, rpcConflict("assignment")
+		}
+		return nil, service.internal("create assignment", err)
+	}
+	if err := service.audit(ctx, "assignment.created", "assignment", assignment.ID, "user", ""); err != nil {
+		return nil, service.internal("audit assignment creation", err)
+	}
+	mapped := assignmentProto(&db.ListAssignmentsRow{
+		ID: assignment.ID, ActionID: assignment.ActionID, TargetType: assignment.TargetType, TargetID: assignment.TargetID,
+		CreatedAt: assignment.CreatedAt, ActionName: action.Name, TargetName: targetName,
+	})
+	return connect.NewResponse(&cadestrov1.CreateAssignmentResponse{Assignment: mapped}), nil
+}
+
+func (service *Service) DeleteAssignment(ctx context.Context, request *connect.Request[cadestrov1.DeleteAssignmentRequest]) (*connect.Response[cadestrov1.DeleteAssignmentResponse], error) {
+	id := request.Msg.GetId().GetValue()
+	rows, err := service.store.Queries().DeleteAssignment(ctx, id)
+	if err != nil {
+		return nil, service.internal("delete assignment", err)
+	}
+	if rows == 0 {
+		return nil, rpcNotFound("assignment")
+	}
+	if err := service.audit(ctx, "assignment.deleted", "assignment", id, "user", ""); err != nil {
+		return nil, service.internal("audit assignment deletion", err)
+	}
+	return connect.NewResponse(&cadestrov1.DeleteAssignmentResponse{}), nil
+}
+
+func (service *Service) ListAssignments(ctx context.Context, request *connect.Request[cadestrov1.ListAssignmentsRequest]) (*connect.Response[cadestrov1.ListAssignmentsResponse], error) {
+	assignments, err := service.store.Queries().ListAssignments(ctx, db.ListAssignmentsParams{
+		ActionFilter: request.Msg.GetActionId().GetValue(), TargetTypeFilter: int64(request.Msg.GetTargetType()), TargetFilter: request.Msg.GetTargetId().GetValue(),
+	})
+	if err != nil {
+		return nil, service.internal("list assignments", err)
+	}
+	response := &cadestrov1.ListAssignmentsResponse{}
+	for _, assignment := range assignments {
+		response.Assignments = append(response.Assignments, assignmentProto(assignment))
+	}
+	return connect.NewResponse(response), nil
+}
+
+func (service *Service) GetDeviceAssignments(ctx context.Context, request *connect.Request[cadestrov1.GetDeviceAssignmentsRequest]) (*connect.Response[cadestrov1.GetDeviceAssignmentsResponse], error) {
+	deviceID := request.Msg.GetDeviceId().GetValue()
+	if _, err := service.store.Queries().GetDevice(ctx, deviceID); err != nil {
+		if store.IsNotFound(err) {
+			return nil, rpcNotFound("device")
+		}
+		return nil, service.internal("get assignment device", err)
+	}
+	actions, err := service.store.Queries().ListActionsForDevice(ctx, db.ListActionsForDeviceParams{DeviceID: deviceID, TargetID: deviceID})
+	if err != nil {
+		return nil, service.internal("list device actions", err)
+	}
+	response := &cadestrov1.GetDeviceAssignmentsResponse{}
+	for _, action := range actions {
+		mapped, err := actionProto(action)
+		if err != nil {
+			return nil, service.internal("map assigned action", err)
+		}
+		response.Actions = append(response.Actions, mapped)
+	}
+	return connect.NewResponse(response), nil
+}
+
+func commandOutput(exitCode int64, stdout, stderr string) *cadestrov1.CommandOutput {
+	return &cadestrov1.CommandOutput{ExitCode: int32(exitCode), Stdout: stdout, Stderr: stderr}
+}
+
+func (service *Service) GetDeviceCompliance(ctx context.Context, request *connect.Request[cadestrov1.GetDeviceComplianceRequest]) (*connect.Response[cadestrov1.GetDeviceComplianceResponse], error) {
+	deviceID := request.Msg.GetDeviceId().GetValue()
+	if _, err := service.store.Queries().GetDevice(ctx, deviceID); err != nil {
+		if store.IsNotFound(err) {
+			return nil, rpcNotFound("device")
+		}
+		return nil, service.internal("get compliance device", err)
+	}
+	checks, err := service.store.Queries().ListComplianceResults(ctx, deviceID)
+	if err != nil {
+		return nil, service.internal("list compliance results", err)
+	}
+	response := &cadestrov1.GetDeviceComplianceResponse{Status: cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_UNSPECIFIED}
+	compliant := len(checks) > 0
+	for _, check := range checks {
+		compliant = compliant && check.Compliant
+		response.Checks = append(response.Checks, &cadestrov1.ComplianceCheckResult{
+			ActionId: &cadestrov1.ActionId{Value: check.ActionID}, ActionName: check.ActionName, Compliant: check.Compliant,
+			DetectionOutput: commandOutput(check.DetectionExitCode, check.DetectionStdout, check.DetectionStderr), CheckedAt: timestamppb.New(check.CompletedAt),
+		})
+	}
+	if len(checks) > 0 {
+		response.Status = cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT
+		if compliant {
+			response.Status = cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_COMPLIANT
+		}
+	}
+	return connect.NewResponse(response), nil
+}
+
+func (service *Service) ListExecutionResults(ctx context.Context, request *connect.Request[cadestrov1.ListExecutionResultsRequest]) (*connect.Response[cadestrov1.ListExecutionResultsResponse], error) {
+	results, err := service.store.Queries().ListExecutionResults(ctx, db.ListExecutionResultsParams{DeviceID: request.Msg.GetDeviceId().GetValue(), Limit: pageSize(request.Msg.GetPageSize())})
+	if err != nil {
+		return nil, service.internal("list execution results", err)
+	}
+	response := &cadestrov1.ListExecutionResultsResponse{}
+	for _, result := range results {
+		response.Results = append(response.Results, &cadestrov1.ExecutionResult{
+			RunId: &cadestrov1.RunId{Value: result.RunID}, ActionId: &cadestrov1.ActionId{Value: result.ActionID}, ActionName: result.ActionName,
+			Status: cadestrov1.ExecutionStatus(result.Status), Error: result.Error,
+			Output: commandOutput(result.OutputExitCode, result.OutputStdout, result.OutputStderr), CompletedAt: timestamppb.New(result.CompletedAt),
+			Compliant: result.Compliant, DetectionOutput: commandOutput(result.DetectionExitCode, result.DetectionStdout, result.DetectionStderr),
+		})
+	}
+	return connect.NewResponse(response), nil
+}
+
+func (service *Service) ListAuditEvents(ctx context.Context, request *connect.Request[cadestrov1.ListAuditEventsRequest]) (*connect.Response[cadestrov1.ListAuditEventsResponse], error) {
+	before := request.Msg.GetPageToken()
+	if before == "" {
+		before = "~"
+	}
+	limit := pageSize(request.Msg.GetPageSize())
+	events, err := service.store.Queries().ListAuditEvents(ctx, db.ListAuditEventsParams{ID: before, Limit: limit})
+	if err != nil {
+		return nil, service.internal("list audit events", err)
+	}
+	response := &cadestrov1.ListAuditEventsResponse{NextPageToken: nextPageToken(events, limit, func(event *db.AuditEvent) string { return event.ID })}
+	for _, event := range events {
+		response.Events = append(response.Events, &cadestrov1.AuditEvent{
+			Id: &cadestrov1.AuditEventId{Value: event.ID}, EventType: event.EventType, StreamType: event.StreamType,
+			StreamId: &cadestrov1.AuditStreamId{Value: event.StreamID}, ActorType: event.ActorType,
+			ActorId: &cadestrov1.AuditActorId{Value: event.ActorID}, OccurredAt: timestamppb.New(event.OccurredAt),
+		})
+	}
+	return connect.NewResponse(response), nil
+}

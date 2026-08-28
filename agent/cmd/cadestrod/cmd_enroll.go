@@ -146,7 +146,7 @@ func runEnroll(args []string) {
 }
 
 func registrationURIRefusedByHandler(uri string) bool {
-	return strings.HasPrefix(uri, "cadestro://") && !strings.HasPrefix(uri, "cadestro://luks/")
+	return strings.HasPrefix(uri, "cadestro://")
 }
 
 type registrationURI struct {

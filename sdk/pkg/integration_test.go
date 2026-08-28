@@ -120,30 +120,3 @@ func TestIntegration_Dnf(t *testing.T)    { readIntegration(t, realManager(t, Dn
 func TestIntegration_Dnf5(t *testing.T)   { readIntegration(t, realManager(t, Dnf5), "bash") }
 func TestIntegration_Pacman(t *testing.T) { readIntegration(t, realManager(t, Pacman), "bash") }
 func TestIntegration_Zypper(t *testing.T) { readIntegration(t, realManager(t, Zypper), "bash") }
-
-func TestIntegration_Flatpak(t *testing.T) {
-	if testing.Short() {
-		t.Skip("-short: skipping real Flatpak integration")
-	}
-	if !FlatpakAvailable() {
-		t.Skip("flatpak not available on this host")
-	}
-	r, err := exec.NewRunner(exec.Direct)
-	if err != nil {
-		t.Fatalf("NewRunner: %v", err)
-	}
-	m, err := NewFlatpak(r)
-	if err != nil {
-		t.Fatalf("NewFlatpak: %v", err)
-	}
-	ctx := context.Background()
-	if _, err := m.Version(ctx); err != nil {
-		t.Errorf("Version: %v", err)
-	}
-	if _, err := m.List(ctx); err != nil {
-		t.Errorf("List: %v", err)
-	}
-	if _, err := m.ListRemotes(ctx); err != nil {
-		t.Errorf("ListRemotes: %v", err)
-	}
-}

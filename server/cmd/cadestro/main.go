@@ -2,184 +2,98 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
+	"connectrpc.com/connect"
+	connectvalidate "connectrpc.com/validate"
+
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
+	"github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/cadestro/sdk/logging"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/ca"
-	"github.com/manchtools/cadestro/server/internal/controlruntime"
-	"github.com/manchtools/cadestro/server/internal/crypto"
-	"github.com/manchtools/cadestro/server/internal/jobs"
-	"github.com/manchtools/cadestro/server/internal/maintenance"
+	"github.com/manchtools/cadestro/server/internal/core"
+	servercrypto "github.com/manchtools/cadestro/server/internal/crypto"
+	"github.com/manchtools/cadestro/server/internal/middleware"
 	"github.com/manchtools/cadestro/server/internal/store"
-	"github.com/manchtools/cadestro/server/internal/webhook"
 )
 
 var version = "dev"
 
 func main() {
-	command, err := parseCommand(os.Args[1:])
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "cadestro:", err)
-		os.Exit(2)
-	}
-	cfg, err := loadConfig()
+	config, err := loadConfig()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "cadestro: invalid configuration:", err)
 		os.Exit(2)
 	}
-	if command == "bootstrap-admin" {
-		os.Exit(runBootstrapAdmin(context.Background(), cfg, false))
-	}
-	if command == "bootstrap-admin-token" {
-		os.Exit(runBootstrapAdmin(context.Background(), cfg, true))
-	}
-	if command == "backup-status" {
-		os.Exit(runBackupStatus(os.Stdout, os.Stderr, cfg, time.Now))
-	}
-
-	logger := logging.SetupLogger(cfg.LogLevel, cfg.LogFormat, os.Stderr)
+	logger := logging.SetupLogger(config.LogLevel, config.LogFormat, os.Stderr)
 	slog.SetDefault(logger)
-	if err := run(cfg, logger); err != nil {
+	if err := run(config, logger); err != nil {
 		logger.Error("control stopped", "error", err)
 		os.Exit(1)
 	}
 }
 
-func parseCommand(args []string) (string, error) {
-	if len(args) > 0 {
-		switch args[0] {
-		case "bootstrap-admin", "backup-status":
-			if args[0] == "bootstrap-admin" && len(args) == 3 && args[1] == "--output" && args[2] == "token" {
-				return "bootstrap-admin-token", nil
-			}
-			if len(args) > 1 {
-				return "", fmt.Errorf("unexpected arguments: %s", strings.Join(args[1:], " "))
-			}
-			return args[0], nil
-		default:
-			return "", fmt.Errorf("unexpected arguments: %s (accepted commands: bootstrap-admin, backup-status)",
-				strings.Join(args, " "))
-		}
-	}
-	return "serve", nil
-}
-
-func run(cfg *Config, logger *slog.Logger) error {
+func run(config *Config, logger *slog.Logger) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
-	st, err := store.New(ctx, cfg.DatabasePath)
+	storage, err := store.New(ctx, config.DatabasePath)
 	if err != nil {
 		return fmt.Errorf("open database: %w", err)
 	}
-	defer st.Close()
-	st.SetLogger(logger)
-
-	certificateAuthority, err := ca.New(cfg.CACertFile, cfg.CAKeyFile, cfg.CertificateValidity)
+	defer storage.Close()
+	certificateAuthority, err := ca.New(config.CACertFile, config.CAKeyFile, config.CertificateValidity)
 	if err != nil {
 		return fmt.Errorf("load certificate authority: %w", err)
 	}
-	jwt, err := auth.NewJWTManager(auth.JWTConfig{PrivateKey: cfg.SessionSigningKey})
+	jwt, err := auth.NewJWTManager(auth.JWTConfig{PrivateKey: config.SessionSigningKey})
 	if err != nil {
 		return fmt.Errorf("load session signer: %w", err)
 	}
-	atRest, err := crypto.NewEncryptor(cfg.EncryptionKey)
+	encryptor, err := servercrypto.NewEncryptor(config.EncryptionKey)
 	if err != nil {
 		return fmt.Errorf("load at-rest encryption key: %w", err)
 	}
-	if atRest == nil {
-		return errors.New("load at-rest encryption key: key is required")
-	}
-	if err := auth.ReconcileSystemRoles(ctx, st, time.Now(), logger); err != nil {
-		return fmt.Errorf("reconcile system roles: %w", err)
-	}
-	notifier, err := webhook.New(cfg.WebhookURL)
+	fingerprint, err := crypto.CAFingerprintFromPEM(certificateAuthority.CACertPEM())
 	if err != nil {
-		return fmt.Errorf("open webhook: %w", err)
+		return fmt.Errorf("fingerprint certificate authority: %w", err)
 	}
-	maintenanceService := maintenance.New(maintenance.Config{
-		Store:    st,
-		Notifier: notifier, BackupPath: cfg.BackupPath, BackupMaxLag: cfg.BackupMaxLag,
+	service := core.New(core.Config{
+		Store: storage, CA: certificateAuthority, JWT: jwt, Encryptor: encryptor, Logger: logger,
+		PublicBaseURL: config.PublicBaseURL, AgentURL: config.AgentURL, CAFingerprint: fingerprint,
+		Version: version, HeartbeatInterval: config.HeartbeatInterval,
 	})
-	if err := maintenanceService.EnsureScheduled(ctx); err != nil {
-		return fmt.Errorf("schedule maintenance: %w", err)
+	if err := service.EnsureBootstrapProvider(ctx, core.BootstrapProvider{
+		Name: config.BootstrapOIDCName, Slug: config.BootstrapOIDCSlug, ClientID: config.BootstrapOIDCClientID,
+		ClientSecret: config.BootstrapOIDCSecret, IssuerURL: config.BootstrapOIDCIssuer, Scopes: config.BootstrapOIDCScopes,
+	}); err != nil {
+		return fmt.Errorf("bootstrap identity provider: %w", err)
 	}
-	jobState := jobs.New(jobs.Config{
-		Store: st, LeaseDuration: 2 * time.Minute, RetryDelay: 30 * time.Second,
-	})
-	jobRunner := jobs.NewRunner(jobs.RunnerConfig{
-		Store: st, State: jobState, Handlers: maintenanceService.Handlers(),
-		Recurring: maintenanceService.Recurring(), Logger: logger,
-	})
-	runtime := controlruntime.New(controlruntime.Config{
-		Store: st, CA: certificateAuthority, JWT: jwt, AtRest: atRest,
-		Logger: logger, Version: version,
-		PublicBaseURL: cfg.PublicBaseURL, AgentURL: cfg.AgentURL, TerminalURL: cfg.TerminalURL,
-		CORSOrigins: cfg.CORSOrigins, CORSAllowAll: cfg.CORSAllowAll,
-		TerminalOriginPatterns: cfg.TerminalOrigins, TrustedProxies: cfg.TrustedProxies,
-		HeartbeatInterval: cfg.HeartbeatInterval,
-		Readiness: func(ctx context.Context) error {
-			return checkReadiness(ctx, st, cfg.ArtifactPath, cfg.BackupPath, cfg.BackupMaxLag)
-		},
-	})
-	defer runtime.Close()
-	publicServer, err := buildPublicServer(cfg, runtime.PublicHandler)
+	publicServer, agentServer, err := buildServers(config, service, jwt, logger, certificateAuthority)
 	if err != nil {
 		return err
 	}
-	agentServer, err := buildAgentServer(cfg, certificateAuthority, runtime.AgentHandler)
-	if err != nil {
-		return err
-	}
-
-	errorsCh := make(chan error, 4)
-	go func() {
-		if err := runtime.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
-			errorsCh <- fmt.Errorf("control runtime: %w", err)
-		}
-	}()
-	go func() {
-		if err := jobRunner.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
-			errorsCh <- fmt.Errorf("job runner: %w", err)
-		}
-	}()
-	go func() {
-		logger.Info("public listener ready", "address", cfg.PublicListen)
-		var err error
-		if publicServer.TLSConfig == nil {
-			err = publicServer.ListenAndServe()
-		} else {
-			err = publicServer.ListenAndServeTLS("", "")
-		}
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			errorsCh <- fmt.Errorf("public listener: %w", err)
-		}
-	}()
-	go func() {
-		logger.Info("agent mTLS listener ready", "address", cfg.AgentListen)
-		if err := serveAgent(agentServer, cfg.AgentProxySources); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			errorsCh <- fmt.Errorf("agent listener: %w", err)
-		}
-	}()
-
+	errorsChannel := make(chan error, 2)
+	go serve(publicServer, "public", logger, errorsChannel)
+	go serve(agentServer, "agent", logger, errorsChannel)
 	var serveErr error
 	select {
 	case <-ctx.Done():
-	case serveErr = <-errorsCh:
+	case serveErr = <-errorsChannel:
 		cancel()
 	}
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	shutdownContext, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
-	publicErr := publicServer.Shutdown(shutdownCtx)
-	agentErr := agentServer.Shutdown(shutdownCtx)
+	publicErr := publicServer.Shutdown(shutdownContext)
+	agentErr := agentServer.Shutdown(shutdownContext)
 	if serveErr != nil {
 		return serveErr
 	}
@@ -190,4 +104,61 @@ func run(cfg *Config, logger *slog.Logger) error {
 		return fmt.Errorf("shut down agent listener: %w", agentErr)
 	}
 	return nil
+}
+
+func buildServers(config *Config, service *core.Service, jwt *auth.JWTManager, logger *slog.Logger, certificateAuthority *ca.CA) (*http.Server, *http.Server, error) {
+	if _, err := readPrivateFile(config.PublicTLSKeyFile); err != nil {
+		return nil, nil, fmt.Errorf("public TLS key: %w", err)
+	}
+	publicCertificate, err := tls.LoadX509KeyPair(config.PublicTLSCertFile, config.PublicTLSKeyFile)
+	if err != nil {
+		return nil, nil, fmt.Errorf("load public TLS certificate: %w", err)
+	}
+	if _, err := readPrivateFile(config.AgentTLSKeyFile); err != nil {
+		return nil, nil, fmt.Errorf("agent TLS key: %w", err)
+	}
+	agentCertificate, err := tls.LoadX509KeyPair(config.AgentTLSCertFile, config.AgentTLSKeyFile)
+	if err != nil {
+		return nil, nil, fmt.Errorf("load agent TLS certificate: %w", err)
+	}
+	validator := connectvalidate.NewInterceptor()
+	authenticator := auth.NewInterceptor(jwt, service.LookupUser)
+	publicMux := http.NewServeMux()
+	publicPath, publicHandler := cadestrov1connect.NewControlServiceHandler(service, connect.WithInterceptors(validator, connect.UnaryInterceptorFunc(authenticator.WrapUnary)))
+	publicMux.Handle(publicPath, publicHandler)
+	publicMux.HandleFunc("/health", health)
+	publicMux.HandleFunc("/ready", health)
+	publicRoot := middleware.RequestID(middleware.SecurityHeaders(middleware.CORS(config.CORSOrigins, false, logger)(publicMux)))
+	agentMux := http.NewServeMux()
+	agentPath, agentHandler := cadestrov1connect.NewAgentServiceHandler(service, connect.WithInterceptors(validator))
+	agentMux.Handle(agentPath, agentHandler)
+	agentMux.Handle(cadestrov1connect.ControlServiceRenewCertificateProcedure, connect.NewUnaryHandler(cadestrov1connect.ControlServiceRenewCertificateProcedure, service.RenewCertificate, connect.WithInterceptors(validator)))
+	agentMux.HandleFunc("/health", health)
+	agentMux.HandleFunc("/ready", health)
+	agentRoot := core.AgentMiddleware(agentMux)
+	publicServer := &http.Server{
+		Addr: config.PublicListen, Handler: publicRoot, ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 120 * time.Second,
+		MaxHeaderBytes: 1 << 20, TLSConfig: &tls.Config{Certificates: []tls.Certificate{publicCertificate}, MinVersion: tls.VersionTLS13},
+	}
+	agentServer := &http.Server{
+		Addr: config.AgentListen, Handler: agentRoot, ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 120 * time.Second,
+		MaxHeaderBytes: 1 << 20, TLSConfig: &tls.Config{
+			Certificates: []tls.Certificate{agentCertificate}, ClientAuth: tls.RequireAndVerifyClientCert,
+			ClientCAs: certificateAuthority.TrustPool(), MinVersion: tls.VersionTLS13,
+		},
+	}
+	return publicServer, agentServer, nil
+}
+
+func serve(server *http.Server, name string, logger *slog.Logger, errorsChannel chan<- error) {
+	logger.Info(name+" listener ready", "address", server.Addr)
+	if err := server.ListenAndServeTLS("", ""); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		errorsChannel <- fmt.Errorf("%s listener: %w", name, err)
+	}
+}
+
+func health(response http.ResponseWriter, _ *http.Request) {
+	response.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	response.WriteHeader(http.StatusOK)
+	_, _ = response.Write([]byte("ok\n"))
 }

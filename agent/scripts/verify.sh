@@ -8,6 +8,9 @@ export GOWORK=off
 echo "== sqlc drift"
 make sqlc-check
 
+echo "== shell syntax"
+bash -n install.sh
+
 echo "== gofmt"
 
 unfmt=$(gofmt -l .)

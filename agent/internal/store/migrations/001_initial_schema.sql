@@ -47,36 +47,8 @@ CREATE TABLE result_outbox (
 
 CREATE INDEX idx_result_outbox_pending ON result_outbox(sequence) WHERE synced = FALSE;
 
-CREATE TABLE luks_state (
-    action_id TEXT PRIMARY KEY,
-    device_path TEXT NOT NULL DEFAULT '',
-    ownership_taken BOOLEAN NOT NULL DEFAULT FALSE,
-    device_key_type TEXT NOT NULL DEFAULT 'none',
-    last_rotated_at TEXT NOT NULL DEFAULT ''
-);
-
-CREATE TABLE luks_user_passphrase_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    action_id TEXT NOT NULL,
-    passphrase_hash TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE INDEX idx_luks_passphrase_history_action ON luks_user_passphrase_history(action_id);
-
-CREATE TABLE lps_state (
-    action_id TEXT NOT NULL,
-    username TEXT NOT NULL,
-    last_rotated_at TEXT NOT NULL DEFAULT '',
-    password_hash TEXT NOT NULL DEFAULT '',
-    PRIMARY KEY (action_id, username)
-);
-
 -- +goose Down
 
-DROP TABLE lps_state;
-DROP TABLE luks_user_passphrase_history;
-DROP TABLE luks_state;
 DROP TABLE result_outbox;
 DROP TABLE scheduled_work_occurrences;
 DROP TABLE scheduled_work;

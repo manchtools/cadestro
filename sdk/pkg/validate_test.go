@@ -131,42 +131,6 @@ func TestValidateRpmPackageName_RejectsOptionInjection(t *testing.T) {
 	}
 }
 
-func TestValidateRepoBaseURL_Accepts(t *testing.T) {
-	cases := []string{
-		"https://dnf.example.com/fedora/$releasever",
-		"https://arch.example.com/os/$arch",
-		"https://mirror.example.com/repo/$basearch/os",
-	}
-	for _, u := range cases {
-		t.Run(u, func(t *testing.T) {
-			if err := ValidateRepoBaseURL(u); err != nil {
-				t.Errorf("legitimate base URL rejected: %v", err)
-			}
-		})
-	}
-}
-
-func TestValidateRepoBaseURL_Rejects(t *testing.T) {
-	cases := []string{
-		"",
-		"http://mirror/repo",
-		"ftp://x/repo",
-		"file:///etc",
-		"-o/tmp/x",
-		"https://a\nb",
-		"https://",
-		"https://[::1",
-		"not-a-url",
-	}
-	for _, u := range cases {
-		t.Run(u, func(t *testing.T) {
-			if err := ValidateRepoBaseURL(u); err == nil {
-				t.Errorf("expected rejection of %q", u)
-			}
-		})
-	}
-}
-
 func TestValidateGpgKeyRef_Accepts(t *testing.T) {
 	cases := []string{
 		"https://dnf.example.com/RPM-GPG-KEY",
@@ -202,35 +166,6 @@ func TestValidateGpgKeyRef_Rejects(t *testing.T) {
 		t.Run(ref, func(t *testing.T) {
 			if err := ValidateGpgKeyRef(ref); err == nil {
 				t.Errorf("expected rejection of %q", ref)
-			}
-		})
-	}
-}
-
-func TestValidateRemoteName_Accepts(t *testing.T) {
-	cases := []string{"flathub", "fedora", "gnome-nightly", "flathub-beta"}
-	for _, n := range cases {
-		t.Run(n, func(t *testing.T) {
-			if err := ValidateRemoteName(n); err != nil {
-				t.Errorf("legitimate remote name rejected: %v", err)
-			}
-		})
-	}
-}
-
-func TestValidateRemoteName_Rejects(t *testing.T) {
-	cases := []string{
-		"",
-		"--from=evil",
-		"-x",
-		"a b",
-		"re\nmote",
-		"a/b",
-	}
-	for _, n := range cases {
-		t.Run(n, func(t *testing.T) {
-			if err := ValidateRemoteName(n); err == nil {
-				t.Errorf("expected rejection of %q", n)
 			}
 		})
 	}

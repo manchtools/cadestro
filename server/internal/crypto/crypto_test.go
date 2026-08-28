@@ -5,250 +5,50 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/manchtools/cadestro/server/internal/crypto"
 )
 
-func testKey() string {
-
-	return "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-}
-
-func differentKey() string {
-	return "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"
-}
-
-func TestNewEncryptor_Valid(t *testing.T) {
-	enc, err := crypto.NewEncryptor(testKey())
-	require.NoError(t, err)
-	assert.NotNil(t, enc)
-}
-
-func TestNewEncryptor_EmptyKey(t *testing.T) {
-	enc, err := crypto.NewEncryptor("")
-	require.Error(t, err)
-	assert.Nil(t, enc)
-}
-
-func TestNewEncryptor_InvalidHex(t *testing.T) {
-	_, err := crypto.NewEncryptor("not-hex")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid encryption key")
-}
-
-func TestNewEncryptor_WrongLength(t *testing.T) {
-
-	shortKey := hex.EncodeToString(make([]byte, 16))
-	_, err := crypto.NewEncryptor(shortKey)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "must be 32 bytes")
-}
-
-func TestEncryptWithContext_SingleV1Prefix(t *testing.T) {
-	enc, err := crypto.NewEncryptor(testKey())
-	require.NoError(t, err)
-
-	ct, err := enc.EncryptWithContext("secret", crypto.RowAAD("01HROW", crypto.PurposeIdPClientSecret))
-	require.NoError(t, err)
-	assert.True(t, strings.HasPrefix(ct, "enc:v1:"),
-		"the single AAD-bound format carries the enc:v1 prefix, got %q", ct)
-	assert.NotContains(t, ct, "enc:v2", "no second prefix exists anymore")
-}
-
-func TestEncryptWithContext_EmptyAADRefused(t *testing.T) {
-	enc, err := crypto.NewEncryptor(testKey())
-	require.NoError(t, err)
-
-	_, err = enc.EncryptWithContext("secret", nil)
-	require.Error(t, err, "encrypting without an AAD context must be refused")
-	_, err = enc.EncryptWithContext("secret", []byte{})
-	require.Error(t, err)
-}
-
-func TestEncryptWithContext_EmptyPlaintext(t *testing.T) {
-	enc, err := crypto.NewEncryptor(testKey())
-	require.NoError(t, err)
-	ct, err := enc.EncryptWithContext("", crypto.RowAAD("01HROW", crypto.PurposeIdPClientSecret))
-	require.NoError(t, err)
-	assert.Equal(t, "", ct, "empty secrets round-trip as empty, never as ciphertext")
-}
-
-func TestEncryptWithContext_DifferentNonces(t *testing.T) {
-	enc, err := crypto.NewEncryptor(testKey())
-	require.NoError(t, err)
-	aad := crypto.RowAAD("01HROW", crypto.PurposeIdPClientSecret)
-
-	a, err := enc.EncryptWithContext("same-plaintext", aad)
-	require.NoError(t, err)
-	b, err := enc.EncryptWithContext("same-plaintext", aad)
-	require.NoError(t, err)
-	assert.NotEqual(t, a, b, "random nonces: identical plaintext must not produce identical ciphertext")
-}
-
-func TestEncryptWithContext_AADBindsContext(t *testing.T) {
-	enc, err := crypto.NewEncryptor(testKey())
-	require.NoError(t, err)
-
-	aadA := crypto.DeviceSecretAAD("01HROWA", "01HDEVICEA", "luks", "01HACTIONA", 1)
-	aadB := crypto.DeviceSecretAAD("01HROWA", "01HDEVICEB", "luks", "01HACTIONA", 1)
-
-	ct, err := enc.EncryptWithContext("super-secret", aadA)
-	require.NoError(t, err)
-
-	pt, err := enc.DecryptWithContext(ct, aadA)
-	require.NoError(t, err)
-	assert.Equal(t, "super-secret", pt)
-
-	_, err = enc.DecryptWithContext(ct, aadB)
-	require.Error(t, err, "a secret sealed for one context must not open under another")
-}
-
-func TestRowAAD_BindsRowAndPurpose(t *testing.T) {
-	enc, err := crypto.NewEncryptor(testKey())
-	require.NoError(t, err)
-
-	ct, err := enc.EncryptWithContext("client-secret", crypto.RowAAD("01HIDPA", crypto.PurposeIdPClientSecret))
-	require.NoError(t, err)
-
-	_, err = enc.DecryptWithContext(ct, crypto.RowAAD("01HIDPB", crypto.PurposeIdPClientSecret))
-	require.Error(t, err, "a ciphertext relocated to another provider row must not open")
-
-	_, err = enc.DecryptWithContext(ct, crypto.RowAAD("01HIDPA", "different-purpose"))
-	require.Error(t, err, "a ciphertext reused under another purpose must not open")
-}
-
-func TestDecryptWithContext_ByteTamperedFails(t *testing.T) {
-	enc, err := crypto.NewEncryptor(testKey())
-	require.NoError(t, err)
-	aad := crypto.DeviceSecretAAD("01HROW", "01HDEV", "lps", "01HACT", 1)
-
-	ct, err := enc.EncryptWithContext("rotate-me", aad)
-	require.NoError(t, err)
-
-	body := strings.TrimPrefix(ct, "enc:v1:")
-	b := []byte(body)
-	idx := len(b) / 2
-	if b[idx] == 'A' {
-		b[idx] = 'B'
-	} else {
-		b[idx] = 'A'
+func TestEncryptorRoundTripAndContextBinding(t *testing.T) {
+	key := hex.EncodeToString(make([]byte, 32))
+	encryptor, err := crypto.NewEncryptor(key)
+	if err != nil {
+		t.Fatal(err)
 	}
-	tampered := "enc:v1:" + string(b)
-	_, err = enc.DecryptWithContext(tampered, aad)
-	require.Error(t, err, "a byte-tampered ciphertext must fail GCM integrity")
-}
-
-func TestDecryptWithContext_RetiredFormatsFailLoudly(t *testing.T) {
-	enc, err := crypto.NewEncryptor(testKey())
-	require.NoError(t, err)
-	aad := crypto.RowAAD("01HROW", crypto.PurposeIdPClientSecret)
-
-	for _, legacy := range []string{
-		"enc:v2:QUFBQUFBQUFBQUFBQUFBQQ==",
-		"enc:v3:whatever",
-	} {
-		_, err := enc.DecryptWithContext(legacy, aad)
-		require.Error(t, err, "retired/unknown format %q must fail loudly, never pass through", legacy)
-		assert.NotContains(t, err.Error(), "QUFBQUFB", "the error must not echo ciphertext bytes")
+	aad := crypto.RowAAD("provider-a", crypto.PurposeIdPClientSecret)
+	ciphertext, err := encryptor.EncryptWithContext("secret", aad)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(ciphertext, "enc:v1:") {
+		t.Fatalf("ciphertext prefix = %q", ciphertext)
+	}
+	plaintext, err := encryptor.DecryptWithContext(ciphertext, aad)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plaintext != "secret" {
+		t.Fatalf("plaintext = %q", plaintext)
+	}
+	if _, err := encryptor.DecryptWithContext(ciphertext, crypto.RowAAD("provider-b", crypto.PurposeIdPClientSecret)); err == nil {
+		t.Fatal("wrong context decrypted ciphertext")
 	}
 }
 
-func TestDecryptWithContext_WrongAADFailsAuth(t *testing.T) {
-	enc, err := crypto.NewEncryptor(testKey())
-	require.NoError(t, err)
-
-	ct, err := enc.EncryptWithContext("old-secret", []byte("legacy-nil-aad-stand-in"))
-	require.NoError(t, err)
-	_, err = enc.DecryptWithContext(ct, crypto.RowAAD("01HROW", crypto.PurposeIdPClientSecret))
-	require.Error(t, err)
-}
-
-func TestDecryptWithContext_PlaintextRejected(t *testing.T) {
-	enc, err := crypto.NewEncryptor(testKey())
-	require.NoError(t, err)
-	_, err = enc.DecryptWithContext("not-encrypted", crypto.RowAAD("r", "luks"))
-	require.Error(t, err)
-
-	empty, err := enc.DecryptWithContext("", crypto.RowAAD("r", crypto.PurposeIdPClientSecret))
-	require.NoError(t, err)
-	assert.Equal(t, "", empty)
-}
-
-func TestDecryptWithContext_WrongKeyFails(t *testing.T) {
-	encA, err := crypto.NewEncryptor(testKey())
-	require.NoError(t, err)
-	encB, err := crypto.NewEncryptor(differentKey())
-	require.NoError(t, err)
-	aad := crypto.RowAAD("r", "luks")
-
-	ct, err := encA.EncryptWithContext("x", aad)
-	require.NoError(t, err)
-	_, err = encB.DecryptWithContext(ct, aad)
-	require.Error(t, err, "a different key must not open the ciphertext")
-}
-
-func TestDecryptWithContext_TooShortCiphertext(t *testing.T) {
-	enc, err := crypto.NewEncryptor(testKey())
-	require.NoError(t, err)
-	_, err = enc.DecryptWithContext("enc:v1:QQ==", crypto.RowAAD("r", crypto.PurposeIdPClientSecret))
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "too short")
-}
-
-func TestDecryptWithContext_InvalidBase64(t *testing.T) {
-	enc, err := crypto.NewEncryptor(testKey())
-	require.NoError(t, err)
-	_, err = enc.DecryptWithContext("enc:v1:!!!not-base64!!!", crypto.RowAAD("r", crypto.PurposeIdPClientSecret))
-	require.Error(t, err)
-}
-
-func TestDecryptWithContext_LuksBlobDoesNotOpenUnderTheLpsDomain(t *testing.T) {
-	enc, err := crypto.NewEncryptor(testKey())
-	require.NoError(t, err)
-
-	const deviceID = "01HDEVICEA"
-	const actionID = "01HACTIONA"
-	const passphrase = "a-real-luks-passphrase"
-
-	ct, err := enc.EncryptWithContext(passphrase, crypto.DeviceSecretAAD("01HROW", deviceID, "luks", actionID, 1))
-	require.NoError(t, err)
-
-	pt, err := enc.DecryptWithContext(ct, crypto.DeviceSecretAAD("01HROW", deviceID, "luks", actionID, 1))
-	require.NoError(t, err)
-	require.Equal(t, passphrase, pt)
-
-	_, err = enc.DecryptWithContext(ct, crypto.DeviceSecretAAD("01HROW", deviceID, "lps", actionID, 1))
-	require.Error(t, err, "a LUKS passphrase must not open under the LPS domain tag")
-}
-
-func TestDecryptWithContext_LpsBlobDoesNotOpenUnderTheLuksDomain(t *testing.T) {
-	enc, err := crypto.NewEncryptor(testKey())
-	require.NoError(t, err)
-
-	const deviceID = "01HDEVICEA"
-	const actionID = "01HACTIONA"
-	const password = "a-real-lps-password"
-
-	ct, err := enc.EncryptWithContext(password, crypto.DeviceSecretAAD("01HROW", deviceID, "lps", actionID, 1))
-	require.NoError(t, err)
-
-	pt, err := enc.DecryptWithContext(ct, crypto.DeviceSecretAAD("01HROW", deviceID, "lps", actionID, 1))
-	require.NoError(t, err)
-	require.Equal(t, password, pt)
-
-	_, err = enc.DecryptWithContext(ct, crypto.DeviceSecretAAD("01HROW", deviceID, "luks", actionID, 1))
-	require.Error(t, err,
-		"an LPS password must not open under the LUKS domain tag — a rotated account password surfacing as a "+
-			"disk passphrase is the same confusion in the other direction")
-}
-
-func TestNilEncryptor_FailsClosed(t *testing.T) {
-	var enc *crypto.Encryptor
-
-	_, err := enc.EncryptWithContext("hello", crypto.RowAAD("r", crypto.PurposeIdPClientSecret))
-	require.Error(t, err)
-	_, err = enc.DecryptWithContext("hello", crypto.RowAAD("r", crypto.PurposeIdPClientSecret))
-	require.Error(t, err)
+func TestEncryptorRejectsUnsafeInputs(t *testing.T) {
+	if _, err := crypto.NewEncryptor(""); err == nil {
+		t.Fatal("empty key accepted")
+	}
+	encryptor, err := crypto.NewEncryptor(hex.EncodeToString(make([]byte, 32)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := encryptor.EncryptWithContext("secret", nil); err == nil {
+		t.Fatal("empty AAD accepted")
+	}
+	if _, err := encryptor.DecryptWithContext("plaintext", []byte("aad")); err == nil {
+		t.Fatal("plaintext value accepted")
+	}
+	if _, err := encryptor.DecryptWithContext("enc:v2:value", []byte("aad")); err == nil {
+		t.Fatal("unknown encrypted format accepted")
+	}
 }

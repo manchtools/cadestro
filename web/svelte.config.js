@@ -1,38 +1,18 @@
 import adapter from 'svelte-adapter-bun';
 
-const marketplaceOrigin = (() => {
-	const raw = process.env.PUBLIC_MARKETPLACE_URL || 'https://marketplace.cadestro.manchtools.com';
-	try {
-		return new URL(raw).origin;
-	} catch {
-		return '';
-	}
-})();
-
-const config = {
+export default {
 	kit: {
 		adapter: adapter(),
+		alias: { $contract: '../contract/gen/ts' },
 		csp: {
 			directives: {
 				'default-src': ['self'],
-
-				'script-src': ['self', 'unsafe-inline'],
+				'script-src': ['self'],
 				'style-src': ['self', 'unsafe-inline'],
-				'connect-src': ['self', 'https:', 'wss:'],
+				'connect-src': ['self', 'https:'],
 				'img-src': ['self', 'data:'],
-				'font-src': ['self'],
-				'frame-src': marketplaceOrigin ? ['self', marketplaceOrigin] : ['self'],
 				'frame-ancestors': ['none']
 			}
-		},
-		paths: {
-			base: process.env.BASE_PATH || ''
-		},
-		alias: {
-			$contract: '../contract/gen/ts',
-			$contractClient: '../contract/ts'
 		}
 	}
 };
-
-export default config;

@@ -4,7 +4,6 @@ package cadestro.v1;
 
 import "buf/validate/validate.proto";
 import "cadestro/v1/actions.proto";
-import "cadestro/v1/agent.proto";
 import "cadestro/v1/common.proto";
 import "cadestro/v1/validate_ext.proto";
 import "google/protobuf/timestamp.proto";
@@ -26,17 +25,13 @@ message RegisterRequest {
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 32
   ];
-
   bytes csr = 4 [(buf.validate.field).required = true];
 }
 
 message RegisterResponse {
   DeviceId device_id = 1 [(buf.validate.field).required = true];
-
   bytes ca_cert = 2 [(buf.validate.field).required = true];
-
   bytes certificate = 3 [(buf.validate.field).required = true];
-
   string control_url = 4 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.uri = true
@@ -48,9 +43,8 @@ message RenewCertificateRequest {
 }
 
 message RenewCertificateResponse {
-  bytes certificate = 1;
-
-  google.protobuf.Timestamp not_after = 2;
+  bytes certificate = 1 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp not_after = 2 [(buf.validate.field).required = true];
 }
 
 message RefreshTokenRequest {
@@ -58,9 +52,9 @@ message RefreshTokenRequest {
 }
 
 message RefreshTokenResponse {
-  string access_token = 1;
-  google.protobuf.Timestamp expires_at = 2;
-  string refresh_token = 3;
+  string access_token = 1 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp expires_at = 2 [(buf.validate.field).required = true];
+  string refresh_token = 3 [(buf.validate.field).required = true];
 }
 
 message LogoutRequest {
@@ -69,221 +63,160 @@ message LogoutRequest {
 
 message LogoutResponse {}
 
+message User {
+  UserId id = 1 [(buf.validate.field).required = true];
+  string email = 2 [(buf.validate.field).string.email = true];
+  string display_name = 3;
+  string picture = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp last_login_at = 6;
+}
+
 message GetCurrentUserRequest {}
 
 message GetCurrentUserResponse {
-  User user = 1;
+  User user = 1 [(buf.validate.field).required = true];
 }
 
-message User {
-  UserId id = 1;
-  string email = 2;
-  google.protobuf.Timestamp created_at = 3;
-  google.protobuf.Timestamp last_login_at = 4;
-  bool disabled = 5;
-  repeated IdentityLink identity_links = 6;
-
-  string display_name = 7;
-  string given_name = 8;
-  string family_name = 9;
-  string preferred_username = 10;
-  string picture = 11;
-  string locale = 12;
-
-  string linux_username = 13;
-  int32 linux_uid = 14;
-
-  repeated SshPublicKey ssh_public_keys = 15;
-  bool ssh_access_enabled = 16;
-  bool ssh_allow_pubkey = 17;
-  bool ssh_allow_password = 18;
-  bool user_provisioning_enabled = 19;
-  repeated InheritedRole inherited_roles = 20;
-
-  repeated RoleGrant role_grants = 21;
+message AuthMethodProvider {
+  string slug = 1;
+  string name = 2;
 }
 
-message InheritedRole {
-  RoleId role_id = 1;
-  string role_name = 2;
-  UserGroupId group_id = 3;
-  string group_name = 4;
+message ListAuthMethodsRequest {}
+
+message ListAuthMethodsResponse {
+  repeated AuthMethodProvider providers = 1;
 }
 
-message SshPublicKey {
-  SshKeyId id = 1;
-  string public_key = 2;
-  string comment = 3;
-  google.protobuf.Timestamp added_at = 4;
+message GetSSOLoginURLRequest {
+  string slug = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64
+  ];
+  string redirect_url = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uri = true
+  ];
 }
 
-message Role {
-  RoleId id = 1;
+message GetSSOLoginURLResponse {
+  string login_url = 1 [(buf.validate.field).required = true];
+}
+
+message SSOCallbackRequest {
+  string slug = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64
+  ];
+  string code = 2 [(buf.validate.field).required = true];
+  string state = 3 [(buf.validate.field).required = true];
+}
+
+message SSOCallbackResponse {
+  string access_token = 1 [(buf.validate.field).required = true];
+  string refresh_token = 2 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp expires_at = 3 [(buf.validate.field).required = true];
+  User user = 4 [(buf.validate.field).required = true];
+}
+
+message IdentityProvider {
+  IdentityProviderId id = 1 [(buf.validate.field).required = true];
+  string name = 2;
+  string slug = 3;
+  bool enabled = 4;
+  OidcClientId client_id = 5;
+  string issuer_url = 6;
+  repeated string scopes = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+message CreateIdentityProviderRequest {
+  string name = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64
+  ];
+  string slug = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 64,
+    (buf.validate.field).string.pattern = "^[a-zA-Z0-9]+$"
+  ];
+  OidcClientId client_id = 3 [(buf.validate.field).required = true];
+  string client_secret = 4 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.max_len = 4096
+  ];
+  string issuer_url = 5 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.uri = true
+  ];
+  repeated string scopes = 6 [(buf.validate.field).repeated.items.string.max_len = 255];
+}
+
+message CreateIdentityProviderResponse {
+  IdentityProvider provider = 1 [(buf.validate.field).required = true];
+}
+
+message GetIdentityProviderRequest {
+  IdentityProviderId id = 1 [(buf.validate.field).required = true];
+}
+
+message GetIdentityProviderResponse {
+  IdentityProvider provider = 1 [(buf.validate.field).required = true];
+}
+
+message ListIdentityProvidersRequest {}
+
+message ListIdentityProvidersResponse {
+  repeated IdentityProvider providers = 1;
+}
+
+message UpdateIdentityProviderRequest {
+  IdentityProviderId id = 1 [(buf.validate.field).required = true];
   string name = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 64
   ];
-  string description = 3;
-  repeated string permissions = 4;
-  google.protobuf.Timestamp created_at = 5;
-  bool is_system = 6;
-}
-
-message RoleGrant {
-  Role role = 1;
-  RoleGrantScopeKind scope_kind = 2;
-  ScopeId scope_id = 3;
-  string scope_name = 4;
-}
-
-message PermissionInfo {
-  string key = 1;
-  string group = 2;
-  string description = 3;
-
-  PermissionTargetKind target_kind = 4;
-}
-
-message EraseJITUserRequest {
-  UserId id = 1 [(buf.validate.field).required = true];
-}
-
-message EraseJITUserResponse {}
-
-message GetUserRequest {
-  UserId id = 1 [(buf.validate.field).required = true];
-}
-
-message GetUserResponse {
-  User user = 1;
-}
-
-message ListUsersRequest {
-  int32 page_size = 1 [
-    (buf.validate.field).int32.gte = 1,
-    (buf.validate.field).int32.lte = 100,
+  bool enabled = 3;
+  OidcClientId client_id = 4 [(buf.validate.field).required = true];
+  string client_secret = 5 [
+    (buf.validate.field).string.max_len = 4096,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-}
-
-message ListUsersResponse {
-  repeated User users = 1;
-  string next_page_token = 2;
-  int32 total_count = 3;
-}
-
-message UpdateUserEmailRequest {
-  UserId id = 1 [(buf.validate.field).required = true];
-  string email = 2 [
+  string issuer_url = 6 [
     (buf.validate.field).required = true,
-    (buf.validate.field).string.email = true
+    (buf.validate.field).string.uri = true
   ];
+  repeated string scopes = 7 [(buf.validate.field).repeated.items.string.max_len = 255];
 }
 
-message SetUserDisabledRequest {
-  UserId id = 1 [(buf.validate.field).required = true];
-  bool disabled = 2;
+message UpdateIdentityProviderResponse {
+  IdentityProvider provider = 1 [(buf.validate.field).required = true];
 }
 
-message UpdateUserResponse {
-  User user = 1;
+message DeleteIdentityProviderRequest {
+  IdentityProviderId id = 1 [(buf.validate.field).required = true];
 }
 
-message UpdateUserProfileRequest {
-  UserId id = 1 [(buf.validate.field).required = true];
-  string display_name = 2 [
-    (buf.validate.field).string.max_len = 255,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string given_name = 3 [
-    (buf.validate.field).string.max_len = 255,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string family_name = 4 [
-    (buf.validate.field).string.max_len = 255,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string preferred_username = 5 [
-    (buf.validate.field).string.max_len = 64,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string picture = 6 [
-    (buf.validate.field).string.max_len = 2048,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string locale = 7 [
-    (buf.validate.field).string.max_len = 10,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message AddUserSshKeyRequest {
-  UserId user_id = 1 [(buf.validate.field).required = true];
-  string public_key = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 8192
-  ];
-  string comment = 3 [
-    (buf.validate.field).string.max_len = 256,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message AddUserSshKeyResponse {
-  SshPublicKey key = 1;
-}
-
-message RemoveUserSshKeyRequest {
-  UserId user_id = 1 [(buf.validate.field).required = true];
-  SshKeyId key_id = 2 [(buf.validate.field).required = true];
-}
-
-message RemoveUserSshKeyResponse {}
-
-message UpdateUserSshSettingsRequest {
-  UserId user_id = 1 [(buf.validate.field).required = true];
-  bool ssh_access_enabled = 2;
-  bool ssh_allow_pubkey = 3;
-  bool ssh_allow_password = 4;
-}
-
-message UpdateUserLinuxUsernameRequest {
-  UserId user_id = 1 [(buf.validate.field).required = true];
-  string linux_username = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 32
-  ];
-}
+message DeleteIdentityProviderResponse {}
 
 message Device {
-  DeviceId id = 1;
+  DeviceId id = 1 [(buf.validate.field).required = true];
   string hostname = 2;
   string agent_version = 3;
-
   DeviceStatus status = 4;
   google.protobuf.Timestamp registered_at = 5;
   google.protobuf.Timestamp last_seen_at = 6;
   google.protobuf.Timestamp cert_expires_at = 7;
-  map<string, string> labels = 8;
-  repeated UserId assigned_user_ids = 9;
-  repeated UserGroupId assigned_group_ids = 10;
-
-  int32 sync_interval_minutes = 11;
-
-  ComplianceStatus compliance_status = 12;
-  google.protobuf.Timestamp compliance_checked_at = 13;
-  int32 compliance_total = 14;
-  int32 compliance_passing = 15;
-
-  google.protobuf.Timestamp last_inventory_at = 16;
-
-  bool inventory_overdue = 17;
-
-  int32 inventory_interval_minutes = 18;
+  ComplianceStatus compliance_status = 8;
+  int32 compliance_total = 9;
+  int32 compliance_passing = 10;
 }
 
 message ListDevicesRequest {
@@ -293,16 +226,10 @@ message ListDevicesRequest {
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
   string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-
   DeviceStatus status_filter = 3 [
     (buf.validate.field).enum.defined_only = true,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  map<string, string> label_filter = 4 [
-    (buf.validate.field).map.keys.string.max_len = 64,
-    (buf.validate.field).map.values.string.max_len = 1024
-  ];
-  bool my_devices_only = 5;
 }
 
 message ListDevicesResponse {
@@ -316,33 +243,7 @@ message GetDeviceRequest {
 }
 
 message GetDeviceResponse {
-  Device device = 1;
-}
-
-message SetDeviceLabelRequest {
-  DeviceId id = 1 [(buf.validate.field).required = true];
-  string key = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64
-  ];
-  string value = 3 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.max_len = 256
-  ];
-}
-
-message RemoveDeviceLabelRequest {
-  DeviceId id = 1 [(buf.validate.field).required = true];
-  string key = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64
-  ];
-}
-
-message UpdateDeviceResponse {
-  Device device = 1;
+  Device device = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteDeviceRequest {
@@ -351,76 +252,15 @@ message DeleteDeviceRequest {
 
 message DeleteDeviceResponse {}
 
-message AssignDeviceRequest {
-  DeviceId device_id = 1 [(buf.validate.field).required = true];
-  UserId user_id = 2;
-  UserGroupId group_id = 3;
-  repeated UserId user_ids = 4 [
-    (buf.validate.field).repeated.max_items = 256,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  repeated UserGroupId group_ids = 5 [
-    (buf.validate.field).repeated.max_items = 256,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message AssignDeviceResponse {
-  Device device = 1;
-}
-
-message UnassignDeviceRequest {
-  DeviceId device_id = 1 [(buf.validate.field).required = true];
-  UserId user_id = 2;
-  UserGroupId group_id = 3;
-}
-
-message UnassignDeviceResponse {
-  Device device = 1;
-}
-
-message DeviceAssignee {
-  GroupId id = 1;
-
-  AssignmentTargetType type = 2;
-  string name = 3;
-}
-
-message ListDeviceAssigneesRequest {
-  DeviceId device_id = 1 [(buf.validate.field).required = true];
-}
-
-message ListDeviceAssigneesResponse {
-  repeated DeviceAssignee assignees = 1;
-}
-
-message SetDeviceSyncIntervalRequest {
-  DeviceId id = 1 [(buf.validate.field).required = true];
-  int32 sync_interval_minutes = 2 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 1440
-  ];
-}
-
-message SetDeviceInventoryIntervalRequest {
-  DeviceId id = 1 [(buf.validate.field).required = true];
-  int32 inventory_interval_minutes = 2 [
-    (buf.validate.field).int32.gte = 120,
-    (buf.validate.field).int32.lte = 10080,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
 message RegistrationToken {
-  RegistrationTokenId id = 1;
+  RegistrationTokenId id = 1 [(buf.validate.field).required = true];
   string value = 2;
   string name = 3;
   int32 max_uses = 4;
   int32 current_uses = 5;
   google.protobuf.Timestamp expires_at = 6;
   google.protobuf.Timestamp created_at = 7;
-  string created_by = 8;
-  bool disabled = 9;
+  bool disabled = 8;
 }
 
 message CreateTokenRequest {
@@ -433,13 +273,11 @@ message CreateTokenRequest {
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-
   google.protobuf.Timestamp expires_at = 3 [(buf.validate.field).required = true];
 }
 
 message CreateTokenResponse {
-  RegistrationToken token = 1;
-
+  RegistrationToken token = 1 [(buf.validate.field).required = true];
   string ca_fingerprint_pin = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.len = 64,
@@ -478,7 +316,7 @@ message SetTokenDisabledRequest {
 }
 
 message UpdateTokenResponse {
-  RegistrationToken token = 1;
+  RegistrationToken token = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteTokenRequest {
@@ -487,79 +325,21 @@ message DeleteTokenRequest {
 
 message DeleteTokenResponse {}
 
-message ApiToken {
-  ApiTokenId id = 1;
-  string name = 2;
-  google.protobuf.Timestamp expires_at = 3;
-  google.protobuf.Timestamp created_at = 4;
-  google.protobuf.Timestamp revoked_at = 5;
-}
-
-message CreateApiTokenRequest {
-  string name = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 128
-  ];
-  google.protobuf.Timestamp expires_at = 2 [(buf.validate.field).required = true];
-}
-
-message CreateApiTokenResponse {
-  ApiToken token = 1 [(buf.validate.field).required = true];
-  string value = 2 [(buf.validate.field).required = true];
-}
-
-message ListApiTokensRequest {
-  int32 page_size = 1 [
-    (buf.validate.field).int32.gte = 1,
-    (buf.validate.field).int32.lte = 100,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-}
-
-message ListApiTokensResponse {
-  repeated ApiToken tokens = 1;
-  string next_page_token = 2;
-  int32 total_count = 3;
-}
-
-message RevokeApiTokenRequest {
-  ApiTokenId id = 1 [(buf.validate.field).required = true];
-}
-
-message RevokeApiTokenResponse {}
-
 message ManagedAction {
-  ActionId id = 1;
+  ActionId id = 1 [(buf.validate.field).required = true];
   string name = 2;
   string description = 3;
   ActionType type = 4;
   DesiredState desired_state = 5;
   int32 timeout_seconds = 6;
-  google.protobuf.Timestamp created_at = 7;
-  string created_by = 8;
-  ActionSchedule schedule = 9;
-  google.protobuf.Timestamp updated_at = 10;
+  ActionSchedule schedule = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+
   oneof params {
-    PackageParams package = 11;
-    AppInstallParams app = 12;
-    ShellParams shell = 13;
-    ServiceParams service = 14;
-    FileParams file = 15;
-    UpdateParams update = 16;
-    RepositoryParams repository = 17;
-    FlatpakParams flatpak = 18;
-    DirectoryParams directory = 19;
-    UserParams user = 20;
-    SshParams ssh = 21;
-    SshdParams sshd = 22;
-    AdminPolicyParams admin_policy = 23;
-    LpsParams lps = 24;
-    GroupParams group = 25;
-    ManagedEncryptionParams encryption = 26;
-    ManagedWifiParams wifi = 27;
-    AgentUpdateParams agent_update = 28;
+    PackageParams package = 10;
+    UpdateParams update = 11;
+    ShellParams shell = 12;
   }
 }
 
@@ -574,7 +354,7 @@ message CreateActionRequest {
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
   ActionType type = 3 [(buf.validate.field).required = true];
-  DesiredState desired_state = 4;
+  DesiredState desired_state = 4 [(buf.validate.field).required = true];
   int32 timeout_seconds = 5 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).int32.lte = 3600,
@@ -584,28 +364,13 @@ message CreateActionRequest {
 
   oneof params {
     PackageParams package = 7;
-    AppInstallParams app = 8;
+    UpdateParams update = 8;
     ShellParams shell = 9;
-    ServiceParams service = 10;
-    FileParams file = 11;
-    UpdateParams update = 12;
-    RepositoryParams repository = 13;
-    FlatpakParams flatpak = 14;
-    DirectoryParams directory = 15;
-    UserParams user = 16;
-    SshParams ssh = 17;
-    SshdParams sshd = 18;
-    AdminPolicyParams admin_policy = 19;
-    LpsParams lps = 20;
-    GroupParams group = 21;
-    EncryptionAuthoringParams encryption = 22;
-    WifiAuthoringParams wifi = 23;
-    AgentUpdateParams agent_update = 24;
   }
 }
 
 message CreateActionResponse {
-  ManagedAction action = 1;
+  ManagedAction action = 1 [(buf.validate.field).required = true];
 }
 
 message GetActionRequest {
@@ -613,18 +378,20 @@ message GetActionRequest {
 }
 
 message GetActionResponse {
-  ManagedAction action = 1;
+  ManagedAction action = 1 [(buf.validate.field).required = true];
 }
 
 message ListActionsRequest {
   int32 page_size = 1 [
-    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.gte = 1,
     (buf.validate.field).int32.lte = 100,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
   string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-  ActionType type_filter = 3;
-  bool unassigned_only = 4;
+  ActionType type_filter = 3 [
+    (buf.validate.field).enum.defined_only = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message ListActionsResponse {
@@ -652,7 +419,7 @@ message UpdateActionDescriptionRequest {
 
 message UpdateActionParamsRequest {
   ActionId id = 1 [(buf.validate.field).required = true];
-  DesiredState desired_state = 2;
+  DesiredState desired_state = 2 [(buf.validate.field).required = true];
   int32 timeout_seconds = 3 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).int32.lte = 3600,
@@ -662,28 +429,13 @@ message UpdateActionParamsRequest {
 
   oneof params {
     PackageParams package = 5;
-    AppInstallParams app = 6;
+    UpdateParams update = 6;
     ShellParams shell = 7;
-    ServiceParams service = 8;
-    FileParams file = 9;
-    UpdateParams update = 10;
-    RepositoryParams repository = 11;
-    FlatpakParams flatpak = 12;
-    DirectoryParams directory = 13;
-    UserParams user = 14;
-    SshParams ssh = 15;
-    SshdParams sshd = 16;
-    AdminPolicyParams admin_policy = 17;
-    LpsParams lps = 18;
-    GroupParams group = 19;
-    EncryptionAuthoringParams encryption = 20;
-    WifiAuthoringParams wifi = 21;
-    AgentUpdateParams agent_update = 22;
   }
 }
 
 message UpdateActionResponse {
-  ManagedAction action = 1;
+  ManagedAction action = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteActionRequest {
@@ -692,286 +444,19 @@ message DeleteActionRequest {
 
 message DeleteActionResponse {}
 
-message ActionSet {
-  ActionSetId id = 1;
-  string name = 2;
-  string description = 3;
-  int32 member_count = 4;
-  google.protobuf.Timestamp created_at = 5;
-  string created_by = 6;
-  google.protobuf.Timestamp updated_at = 7;
-
-  ActionSchedule schedule = 8 [(buf.validate.field).required = true];
-
-  OnFailure on_failure = 9;
-}
-
-message ActionSetMember {
-  ActionId action_id = 1 [(buf.validate.field).required = true];
-
-  int32 sort_order = 2 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string action_name = 3;
-  ActionType action_type = 4;
-}
-
-message CreateActionSetRequest {
-  string name = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 255
-  ];
-  string description = 2 [
-    (buf.validate.field).string.max_len = 1024,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  ActionSchedule schedule = 3 [(buf.validate.field).required = true];
-
-  OnFailure on_failure = 4;
-}
-
-message CreateActionSetResponse {
-  ActionSet set = 1;
-}
-
-message GetActionSetRequest {
-  ActionSetId id = 1 [(buf.validate.field).required = true];
-}
-
-message GetActionSetResponse {
-  ActionSet set = 1;
-  repeated ActionSetMember members = 2;
-}
-
-message ListActionSetsRequest {
-  int32 page_size = 1 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 100,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-  bool unassigned_only = 3;
-}
-
-message ListActionSetsResponse {
-  repeated ActionSet sets = 1;
-  string next_page_token = 2;
-  int32 total_count = 3;
-}
-
-message RenameActionSetRequest {
-  ActionSetId id = 1 [(buf.validate.field).required = true];
-  string name = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 255
-  ];
-}
-
-message UpdateActionSetDescriptionRequest {
-  ActionSetId id = 1 [(buf.validate.field).required = true];
-  string description = 2 [
-    (buf.validate.field).string.max_len = 1024,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message UpdateActionSetScheduleRequest {
-  ActionSetId id = 1 [(buf.validate.field).required = true];
-
-  ActionSchedule schedule = 2 [(buf.validate.field).required = true];
-
-  OnFailure on_failure = 3;
-}
-
-message UpdateActionSetResponse {
-  ActionSet set = 1;
-}
-
-message DeleteActionSetRequest {
-  ActionSetId id = 1 [(buf.validate.field).required = true];
-}
-
-message DeleteActionSetResponse {}
-
-message AddActionToSetRequest {
-  ActionSetId set_id = 1 [(buf.validate.field).required = true];
-  ActionId action_id = 2 [(buf.validate.field).required = true];
-  int32 sort_order = 3 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message AddActionToSetResponse {
-  ActionSet set = 1;
-}
-
-message RemoveActionFromSetRequest {
-  ActionSetId set_id = 1 [(buf.validate.field).required = true];
-  ActionId action_id = 2 [(buf.validate.field).required = true];
-}
-
-message RemoveActionFromSetResponse {
-  ActionSet set = 1;
-}
-
-message ReorderActionInSetRequest {
-  ActionSetId set_id = 1 [(buf.validate.field).required = true];
-  ActionId action_id = 2 [(buf.validate.field).required = true];
-  int32 new_order = 3 [(buf.validate.field).int32.gte = 0];
-}
-
-message ReorderActionInSetResponse {
-  ActionSet set = 1;
-}
-
-message Definition {
-  DefinitionId id = 1;
-  string name = 2;
-  string description = 3;
-  int32 member_count = 4;
-  google.protobuf.Timestamp created_at = 5;
-  string created_by = 6;
-  google.protobuf.Timestamp updated_at = 7;
-
-  ActionSchedule schedule = 8 [(buf.validate.field).required = true];
-}
-
-message DefinitionMember {
-  ActionSetId action_set_id = 1 [(buf.validate.field).required = true];
-
-  int32 sort_order = 2 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string action_set_name = 3;
-}
-
-message CreateDefinitionRequest {
-  string name = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 255
-  ];
-  string description = 2 [
-    (buf.validate.field).string.max_len = 1024,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  ActionSchedule schedule = 3 [(buf.validate.field).required = true];
-}
-
-message CreateDefinitionResponse {
-  Definition definition = 1;
-}
-
-message GetDefinitionRequest {
-  DefinitionId id = 1 [(buf.validate.field).required = true];
-}
-
-message GetDefinitionResponse {
-  Definition definition = 1;
-  repeated DefinitionMember members = 2;
-}
-
-message ListDefinitionsRequest {
-  int32 page_size = 1 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 100,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-}
-
-message ListDefinitionsResponse {
-  repeated Definition definitions = 1;
-  string next_page_token = 2;
-  int32 total_count = 3;
-}
-
-message RenameDefinitionRequest {
-  DefinitionId id = 1 [(buf.validate.field).required = true];
-  string name = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 255
-  ];
-}
-
-message UpdateDefinitionDescriptionRequest {
-  DefinitionId id = 1 [(buf.validate.field).required = true];
-  string description = 2 [
-    (buf.validate.field).string.max_len = 1024,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message UpdateDefinitionScheduleRequest {
-  DefinitionId id = 1 [(buf.validate.field).required = true];
-
-  ActionSchedule schedule = 2 [(buf.validate.field).required = true];
-}
-
-message UpdateDefinitionResponse {
-  Definition definition = 1;
-}
-
-message DeleteDefinitionRequest {
-  DefinitionId id = 1 [(buf.validate.field).required = true];
-}
-
-message DeleteDefinitionResponse {}
-
-message AddActionSetToDefinitionRequest {
-  DefinitionId definition_id = 1 [(buf.validate.field).required = true];
-  ActionSetId action_set_id = 2 [(buf.validate.field).required = true];
-  int32 sort_order = 3 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message AddActionSetToDefinitionResponse {
-  Definition definition = 1;
-}
-
-message RemoveActionSetFromDefinitionRequest {
-  DefinitionId definition_id = 1 [(buf.validate.field).required = true];
-  ActionSetId action_set_id = 2 [(buf.validate.field).required = true];
-}
-
-message RemoveActionSetFromDefinitionResponse {
-  Definition definition = 1;
-}
-
-message ReorderActionSetInDefinitionRequest {
-  DefinitionId definition_id = 1 [(buf.validate.field).required = true];
-  ActionSetId action_set_id = 2 [(buf.validate.field).required = true];
-  int32 new_order = 3 [(buf.validate.field).int32.gte = 0];
-}
-
-message ReorderActionSetInDefinitionResponse {
-  Definition definition = 1;
-}
-
 message DeviceGroup {
-  DeviceGroupId id = 1;
+  DeviceGroupId id = 1 [(buf.validate.field).required = true];
   string name = 2;
   string description = 3;
   int32 member_count = 4;
   google.protobuf.Timestamp created_at = 5;
-  string created_by = 6;
-  optional string dynamic_query = 7;
+}
 
-  int32 sync_interval_minutes = 8;
-
-  MaintenanceWindow maintenance_window = 9;
-
-  int32 inventory_interval_minutes = 10;
+message DeviceGroupMember {
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
+  string hostname = 2;
+  string agent_version = 3;
+  google.protobuf.Timestamp last_seen_at = 4;
 }
 
 message CreateDeviceGroupRequest {
@@ -984,15 +469,10 @@ message CreateDeviceGroupRequest {
     (buf.validate.field).string.max_len = 1024,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-
-  optional string dynamic_query = 3 [
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 4096
-  ];
 }
 
 message CreateDeviceGroupResponse {
-  DeviceGroup group = 1;
+  DeviceGroup group = 1 [(buf.validate.field).required = true];
 }
 
 message GetDeviceGroupRequest {
@@ -1000,21 +480,13 @@ message GetDeviceGroupRequest {
 }
 
 message GetDeviceGroupResponse {
-  DeviceGroup group = 1;
-  repeated DeviceId device_ids = 2;
-  repeated DeviceGroupMember devices = 3;
-}
-
-message DeviceGroupMember {
-  DeviceId device_id = 1;
-  string hostname = 2;
-  string agent_version = 3;
-  google.protobuf.Timestamp last_seen_at = 4;
+  DeviceGroup group = 1 [(buf.validate.field).required = true];
+  repeated DeviceGroupMember devices = 2;
 }
 
 message ListDeviceGroupsRequest {
   int32 page_size = 1 [
-    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.gte = 1,
     (buf.validate.field).int32.lte = 100,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
@@ -1053,7 +525,7 @@ message UpdateDeviceGroupDescriptionRequest {
 }
 
 message UpdateDeviceGroupResponse {
-  DeviceGroup group = 1;
+  DeviceGroup group = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteDeviceGroupRequest {
@@ -1064,15 +536,11 @@ message DeleteDeviceGroupResponse {}
 
 message AddDeviceToGroupRequest {
   DeviceGroupId group_id = 1 [(buf.validate.field).required = true];
-  DeviceId device_id = 2;
-  repeated DeviceId device_ids = 3 [
-    (buf.validate.field).repeated.max_items = 256,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
+  DeviceId device_id = 2 [(buf.validate.field).required = true];
 }
 
 message AddDeviceToGroupResponse {
-  DeviceGroup group = 1;
+  DeviceGroup group = 1 [(buf.validate.field).required = true];
 }
 
 message RemoveDeviceFromGroupRequest {
@@ -1081,107 +549,35 @@ message RemoveDeviceFromGroupRequest {
 }
 
 message RemoveDeviceFromGroupResponse {
-  DeviceGroup group = 1;
-}
-
-message UpdateDeviceGroupQueryRequest {
-  DeviceGroupId id = 1 [(buf.validate.field).required = true];
-
-  optional string dynamic_query = 2 [
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 4096
-  ];
-}
-
-message UpdateDeviceGroupQueryResponse {
-  DeviceGroup group = 1;
-}
-
-message ValidateDynamicQueryRequest {
-  string query = 1 [(buf.validate.field).string.max_len = 4096];
-}
-
-message ValidateDynamicQueryResponse {
-  bool valid = 1;
-  string error = 2;
-  int32 matching_device_count = 3;
-}
-
-message EvaluateDynamicGroupRequest {
-  DeviceGroupId id = 1 [(buf.validate.field).required = true];
-}
-
-message EvaluateDynamicGroupResponse {
-  DeviceGroup group = 1;
-  int32 devices_added = 2;
-  int32 devices_removed = 3;
-}
-
-message SetDeviceGroupSyncIntervalRequest {
-  DeviceGroupId id = 1 [(buf.validate.field).required = true];
-  int32 sync_interval_minutes = 2 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 1440
-  ];
-}
-
-message SetDeviceGroupInventoryIntervalRequest {
-  DeviceGroupId id = 1 [(buf.validate.field).required = true];
-  int32 inventory_interval_minutes = 2 [
-    (buf.validate.field).int32.gte = 120,
-    (buf.validate.field).int32.lte = 10080,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message SetDeviceGroupMaintenanceWindowRequest {
-  DeviceGroupId id = 1 [(buf.validate.field).required = true];
-  MaintenanceWindow maintenance_window = 2;
+  DeviceGroup group = 1 [(buf.validate.field).required = true];
 }
 
 message Assignment {
-  AssignmentId id = 1;
-  AssignmentSourceType source_type = 2;
-  AssignmentSourceId source_id = 3;
-  AssignmentTargetType target_type = 4;
-  AssignmentTargetId target_id = 5;
-  google.protobuf.Timestamp created_at = 6;
-  string created_by = 7;
-  AssignmentMode mode = 8;
-  string source_name = 9;
-  string target_name = 10;
+  AssignmentId id = 1 [(buf.validate.field).required = true];
+  ActionId action_id = 2 [(buf.validate.field).required = true];
+  string action_name = 3;
+  AssignmentTargetType target_type = 4 [(buf.validate.field).required = true];
+  AssignmentTargetId target_id = 5 [(buf.validate.field).required = true];
+  string target_name = 6;
+  google.protobuf.Timestamp created_at = 7;
 }
 
 message CreateAssignmentRequest {
-  AssignmentSourceType source_type = 1 [
+  ActionId action_id = 1 [(buf.validate.field).required = true];
+  AssignmentTargetType target_type = 2 [
     (buf.validate.field).enum = {
       in: [
         1,
-        2,
-        3,
-        4
+        2
       ]
     },
     (buf.validate.field).required = true
   ];
-  AssignmentSourceId source_id = 2 [(buf.validate.field).required = true];
-  AssignmentTargetType target_type = 3 [
-    (buf.validate.field).enum = {
-      in: [
-        1,
-        2,
-        3,
-        4
-      ]
-    },
-    (buf.validate.field).required = true
-  ];
-  AssignmentTargetId target_id = 4 [(buf.validate.field).required = true];
-  AssignmentMode mode = 5;
+  AssignmentTargetId target_id = 3 [(buf.validate.field).required = true];
 }
 
 message CreateAssignmentResponse {
-  Assignment assignment = 1;
+  Assignment assignment = 1 [(buf.validate.field).required = true];
 }
 
 message DeleteAssignmentRequest {
@@ -1191,76 +587,16 @@ message DeleteAssignmentRequest {
 message DeleteAssignmentResponse {}
 
 message ListAssignmentsRequest {
-  AssignmentSourceType source_type = 1 [
+  ActionId action_id = 1;
+  AssignmentTargetType target_type = 2 [
     (buf.validate.field).enum.defined_only = true,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  AssignmentSourceId source_id = 2;
-
-  AssignmentTargetType target_type = 3 [
-    (buf.validate.field).enum.defined_only = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  AssignmentTargetId target_id = 4;
-  int32 page_size = 5 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 100,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string page_token = 6 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
+  AssignmentTargetId target_id = 3;
 }
 
 message ListAssignmentsResponse {
   repeated Assignment assignments = 1;
-  string next_page_token = 2;
-  int32 total_count = 3;
-}
-
-message UserSelection {
-  UserSelectionId id = 1;
-  DeviceId device_id = 2;
-  AssignmentSourceType source_type = 3;
-  AssignmentSourceId source_id = 4;
-  bool selected = 5;
-  google.protobuf.Timestamp updated_at = 6;
-}
-
-message SetUserSelectionRequest {
-  DeviceId device_id = 1 [(buf.validate.field).required = true];
-  AssignmentSourceType source_type = 2 [
-    (buf.validate.field).enum = {
-      in: [
-        1,
-        2,
-        3,
-        4
-      ]
-    },
-    (buf.validate.field).required = true
-  ];
-  AssignmentSourceId source_id = 3 [(buf.validate.field).required = true];
-  bool selected = 4;
-}
-
-message SetUserSelectionResponse {
-  UserSelection selection = 1;
-}
-
-message ListAvailableActionsRequest {
-  DeviceId device_id = 1 [(buf.validate.field).required = true];
-}
-
-message AvailableItem {
-  AssignmentSourceType source_type = 1;
-  AssignmentSourceId source_id = 2;
-  string source_name = 3;
-  string source_description = 4;
-  bool selected = 5;
-  repeated ManagedAction actions = 6;
-}
-
-message ListAvailableActionsResponse {
-  repeated AvailableItem items = 1;
 }
 
 message GetDeviceAssignmentsRequest {
@@ -1269,42 +605,58 @@ message GetDeviceAssignmentsRequest {
 
 message GetDeviceAssignmentsResponse {
   repeated ManagedAction actions = 1;
-  repeated ActionSet action_sets = 2;
-  repeated Definition definitions = 3;
-  repeated CompliancePolicy compliance_policies = 4;
-  repeated GetActionSetResponse action_set_details = 5;
-  repeated GetDefinitionResponse definition_details = 6;
 }
 
-message GetUserAssignmentsRequest {
-  UserId user_id = 1 [(buf.validate.field).required = true];
+message ComplianceCheckResult {
+  ActionId action_id = 1 [(buf.validate.field).required = true];
+  string action_name = 2;
+  bool compliant = 3;
+  CommandOutput detection_output = 4;
+  google.protobuf.Timestamp checked_at = 5;
 }
 
-message GetUserAssignmentsResponse {
-  repeated Assignment assignments = 1;
-}
-
-message SyncDeviceRequest {
+message GetDeviceComplianceRequest {
   DeviceId device_id = 1 [(buf.validate.field).required = true];
 }
 
-message SyncDeviceResponse {}
-
-message RebootDeviceRequest {
-  DeviceId device_id = 1 [(buf.validate.field).required = true];
+message GetDeviceComplianceResponse {
+  ComplianceStatus status = 1;
+  repeated ComplianceCheckResult checks = 2;
 }
 
-message RebootDeviceResponse {}
+message ExecutionResult {
+  RunId run_id = 1 [(buf.validate.field).required = true];
+  ActionId action_id = 2 [(buf.validate.field).required = true];
+  string action_name = 3;
+  ExecutionStatus status = 4;
+  string error = 5;
+  CommandOutput output = 6;
+  google.protobuf.Timestamp completed_at = 7;
+  bool compliant = 8;
+  CommandOutput detection_output = 9;
+}
+
+message ListExecutionResultsRequest {
+  DeviceId device_id = 1 [(buf.validate.field).required = true];
+  int32 page_size = 2 [
+    (buf.validate.field).int32.gte = 1,
+    (buf.validate.field).int32.lte = 100,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+}
+
+message ListExecutionResultsResponse {
+  repeated ExecutionResult results = 1;
+}
 
 message AuditEvent {
-  AuditEventId id = 1;
+  AuditEventId id = 1 [(buf.validate.field).required = true];
   string event_type = 2;
   string stream_type = 3;
   AuditStreamId stream_id = 4;
   string actor_type = 5;
   AuditActorId actor_id = 6;
-  string data = 7;
-  google.protobuf.Timestamp occurred_at = 8;
+  google.protobuf.Timestamp occurred_at = 7;
 }
 
 message ListAuditEventsRequest {
@@ -1317,1045 +669,17 @@ message ListAuditEventsRequest {
     (buf.validate.field).string.max_len = 32,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  AuditActorId actor_id = 3;
-  string stream_type = 4 [
-    (buf.validate.field).string.max_len = 64,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string event_type = 5 [
-    (buf.validate.field).string.max_len = 128,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
 }
 
 message ListAuditEventsResponse {
   repeated AuditEvent events = 1;
   string next_page_token = 2;
-  int32 total_count = 3;
-}
-
-message ExportAuditEventsRequest {
-  string format = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string = {
-      in: [
-        "csv",
-        "json"
-      ]
-    }
-  ];
-  AuditActorId actor_id = 2;
-
-  repeated string stream_types = 3 [
-    (buf.validate.field).repeated.max_items = 64,
-    (buf.validate.field).repeated.items.string.min_len = 1,
-    (buf.validate.field).repeated.items.string.max_len = 64,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  string event_type = 4 [
-    (buf.validate.field).string.max_len = 128,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  google.protobuf.Timestamp occurred_from = 5;
-  google.protobuf.Timestamp occurred_to = 6;
-
-  string page_token = 7 [
-    (buf.validate.field).string.max_len = 32,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message ExportAuditEventsResponse {
-  bytes chunk = 1;
-
-  string next_page_token = 2;
-}
-
-message LpsPassword {
-  LpsPasswordId id = 1;
-  DeviceId device_id = 2;
-  string device_hostname = 3;
-  ActionId action_id = 4;
-  string action_name = 5;
-  string username = 6;
-  google.protobuf.Timestamp rotated_at = 7;
-  RotationReason rotation_reason = 8;
-}
-
-message ListLpsPasswordsRequest {
-  DeviceId device_id = 1 [(buf.validate.field).required = true];
-}
-
-message ListLpsPasswordsResponse {
-  repeated LpsPassword current = 1;
-
-  repeated LpsPassword history = 2;
-}
-
-message RevealLpsPasswordRequest {
-  LpsPasswordId id = 1 [(buf.validate.field).required = true];
-}
-
-message RevealLpsPasswordResponse {
-  string password = 1;
-}
-
-message LuksKey {
-  LuksKeyId id = 1;
-  DeviceId device_id = 2;
-  string device_hostname = 3;
-  ActionId action_id = 4;
-  string action_name = 5;
-  string device_path = 6;
-  google.protobuf.Timestamp rotated_at = 7;
-  RotationReason rotation_reason = 8;
-  LuksRevocationStatus revocation_status = 9;
-
-  string revocation_error = 10;
-
-  google.protobuf.Timestamp revocation_at = 11;
-}
-
-message ListLuksKeysRequest {
-  DeviceId device_id = 1 [(buf.validate.field).required = true];
-}
-
-message ListLuksKeysResponse {
-  repeated LuksKey current = 1;
-
-  repeated LuksKey history = 2;
-}
-
-message RevealLuksKeyRequest {
-  LuksKeyId id = 1 [(buf.validate.field).required = true];
-}
-
-message RevealLuksKeyResponse {
-  string passphrase = 1;
-}
-
-message CreateLuksTokenRequest {
-  DeviceId device_id = 1 [(buf.validate.field).required = true];
-  ActionId action_id = 2 [(buf.validate.field).required = true];
-}
-
-message CreateLuksTokenResponse {
-  string token = 1;
-
-  string uri = 2;
-
-  string cli_command = 3;
-}
-
-message RevokeLuksDeviceKeyRequest {
-  DeviceId device_id = 1 [(buf.validate.field).required = true];
-  ActionId action_id = 2 [(buf.validate.field).required = true];
-}
-
-message RevokeLuksDeviceKeyResponse {}
-
-message DispatchOSQueryRequest {
-  option (buf.validate.message).cel = {
-    id: "dispatch_osquery_request.table_required_without_raw_sql"
-    message: "table is required unless raw_sql is set"
-    expression: "this.table != '' || this.raw_sql != ''"
-  };
-
-  DeviceId device_id = 1 [(buf.validate.field).required = true];
-  string table = 2 [
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  repeated string columns = 3 [(buf.validate.field).repeated.items.string.max_len = 64];
-  int32 limit = 4 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 10000,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  string raw_sql = 5 [
-    (buf.validate.field).string.max_len = 4096,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message DispatchOSQueryResponse {
-  QueryId query_id = 1;
-}
-
-message GetOSQueryResultRequest {
-  QueryId query_id = 1 [(buf.validate.field).required = true];
-}
-
-message GetOSQueryResultResponse {
-  QueryId query_id = 1;
-  bool completed = 2;
-  bool success = 3;
-  string error = 4;
-  repeated OSQueryRow rows = 5;
-}
-
-message GetDeviceInventoryRequest {
-  DeviceId device_id = 1 [(buf.validate.field).required = true];
-
-  repeated string table_names = 2 [(buf.validate.field).repeated.items.string.max_len = 128];
-}
-
-message InventoryTableResult {
-  string table_name = 1;
-  repeated OSQueryRow rows = 2;
-  google.protobuf.Timestamp collected_at = 3;
-}
-
-message GetDeviceInventoryResponse {
-  repeated InventoryTableResult tables = 1;
-}
-
-message RefreshDeviceInventoryRequest {
-  DeviceId device_id = 1 [(buf.validate.field).required = true];
-}
-
-message RefreshDeviceInventoryResponse {}
-
-message QueryDeviceLogsRequest {
-  DeviceId device_id = 1 [(buf.validate.field).required = true];
-  int32 lines = 2 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 10000,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string unit = 3 [
-    (buf.validate.field).string.max_len = 256,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string since = 4 [
-    (buf.validate.field).string.max_len = 64,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string until = 5 [
-    (buf.validate.field).string.max_len = 64,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string priority = 6 [
-    (buf.validate.field).string.max_len = 32,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string grep = 7 [
-    (buf.validate.field).string.max_len = 256,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  bool kernel = 8;
-}
-
-message QueryDeviceLogsResponse {
-  QueryId query_id = 1;
-}
-
-message GetDeviceLogResultRequest {
-  QueryId query_id = 1 [(buf.validate.field).required = true];
-}
-
-message GetDeviceLogResultResponse {
-  QueryId query_id = 1;
-  bool completed = 2;
-  bool success = 3;
-  string error = 4;
-  string logs = 5;
-}
-
-message CreateRoleRequest {
-  string name = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64
-  ];
-  string description = 2 [
-    (buf.validate.field).string.max_len = 1024,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  repeated string permissions = 3 [(buf.validate.field).repeated.max_items = 256];
-}
-
-message CreateRoleResponse {
-  Role role = 1;
-}
-
-message GetRoleRequest {
-  RoleId id = 1 [(buf.validate.field).required = true];
-}
-
-message GetRoleResponse {
-  Role role = 1;
-  int32 user_count = 2;
-}
-
-message ListRolesRequest {
-  int32 page_size = 1 [
-    (buf.validate.field).int32.gte = 1,
-    (buf.validate.field).int32.lte = 100,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-}
-
-message ListRolesResponse {
-  repeated Role roles = 1;
-  string next_page_token = 2;
-  int32 total_count = 3;
-}
-
-message UpdateRoleRequest {
-  RoleId role_id = 1 [(buf.validate.field).required = true];
-  string name = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64
-  ];
-  string description = 3 [
-    (buf.validate.field).string.max_len = 1024,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  repeated string permissions = 4 [
-    (buf.validate.field).repeated.min_items = 1,
-    (buf.validate.field).required = true
-  ];
-}
-
-message UpdateRoleResponse {
-  Role role = 1;
-}
-
-message DeleteRoleRequest {
-  RoleId id = 1 [(buf.validate.field).required = true];
-}
-
-message DeleteRoleResponse {}
-
-message AssignRoleToUserRequest {
-  UserId user_id = 1 [(buf.validate.field).required = true];
-  RoleId role_id = 2;
-  repeated RoleId role_ids = 3 [
-    (buf.validate.field).repeated.max_items = 256,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  RoleGrantScopeKind scope_kind = 4;
-  ScopeId scope_id = 5;
-}
-
-message AssignRoleToUserResponse {}
-
-message RevokeRoleFromUserRequest {
-  UserId user_id = 1 [(buf.validate.field).required = true];
-  RoleId role_id = 2 [(buf.validate.field).required = true];
-
-  RoleGrantScopeKind scope_kind = 3;
-  ScopeId scope_id = 4;
-}
-
-message RevokeRoleFromUserResponse {}
-
-message ListPermissionsRequest {}
-
-message ListPermissionsResponse {
-  repeated PermissionInfo permissions = 1;
-}
-
-message UserGroup {
-  UserGroupId id = 1;
-  string name = 2;
-  string description = 3;
-  int32 member_count = 4;
-  google.protobuf.Timestamp created_at = 5;
-  optional string dynamic_query = 6;
-  bool is_scim_managed = 7;
-
-  MaintenanceWindow maintenance_window = 8;
-
-  repeated RoleGrant role_grants = 9;
-}
-
-message UserGroupMember {
-  UserId user_id = 1;
-  string email = 2;
-  google.protobuf.Timestamp added_at = 3;
-}
-
-message CreateUserGroupRequest {
-  string name = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64
-  ];
-  string description = 2 [
-    (buf.validate.field).string.max_len = 1024,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  optional string dynamic_query = 3 [
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 4096
-  ];
-}
-
-message CreateUserGroupResponse {
-  UserGroup group = 1;
-}
-
-message GetUserGroupRequest {
-  UserGroupId id = 1 [(buf.validate.field).required = true];
-}
-
-message GetUserGroupResponse {
-  UserGroup group = 1;
-  repeated UserGroupMember members = 2;
-}
-
-message ListUserGroupsRequest {
-  int32 page_size = 1 [
-    (buf.validate.field).int32.gte = 1,
-    (buf.validate.field).int32.lte = 100,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-}
-
-message ListUserGroupsResponse {
-  repeated UserGroup groups = 1;
-  string next_page_token = 2;
-  int32 total_count = 3;
-}
-
-message UpdateUserGroupRequest {
-  UserGroupId group_id = 1 [(buf.validate.field).required = true];
-  string name = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64
-  ];
-  string description = 3 [
-    (buf.validate.field).string.max_len = 1024,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message UpdateUserGroupResponse {
-  UserGroup group = 1;
-}
-
-message DeleteUserGroupRequest {
-  UserGroupId id = 1 [(buf.validate.field).required = true];
-}
-
-message DeleteUserGroupResponse {}
-
-message AddUserToGroupRequest {
-  UserGroupId group_id = 1 [(buf.validate.field).required = true];
-  UserId user_id = 2;
-  repeated UserId user_ids = 3 [
-    (buf.validate.field).repeated.max_items = 256,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message AddUserToGroupResponse {}
-
-message RemoveUserFromGroupRequest {
-  UserGroupId group_id = 1 [(buf.validate.field).required = true];
-  UserId user_id = 2 [(buf.validate.field).required = true];
-}
-
-message RemoveUserFromGroupResponse {}
-
-message AssignRoleToUserGroupRequest {
-  UserGroupId group_id = 1 [(buf.validate.field).required = true];
-  RoleId role_id = 2;
-  repeated RoleId role_ids = 3 [
-    (buf.validate.field).repeated.max_items = 256,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  RoleGrantScopeKind scope_kind = 4;
-  ScopeId scope_id = 5;
-}
-
-message AssignRoleToUserGroupResponse {}
-
-message RevokeRoleFromUserGroupRequest {
-  UserGroupId group_id = 1 [(buf.validate.field).required = true];
-  RoleId role_id = 2 [(buf.validate.field).required = true];
-
-  RoleGrantScopeKind scope_kind = 3;
-  ScopeId scope_id = 4;
-}
-
-message RevokeRoleFromUserGroupResponse {}
-
-message ListUserGroupsForUserRequest {
-  UserId user_id = 1 [(buf.validate.field).required = true];
-}
-
-message ListUserGroupsForUserResponse {
-  repeated UserGroup groups = 1;
-}
-
-message UpdateUserGroupQueryRequest {
-  UserGroupId id = 1 [(buf.validate.field).required = true];
-  optional string dynamic_query = 2 [
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 4096
-  ];
-}
-
-message UpdateUserGroupQueryResponse {
-  UserGroup group = 1;
-}
-
-message ValidateUserGroupQueryRequest {
-  string query = 1 [(buf.validate.field).string.max_len = 4096];
-}
-
-message ValidateUserGroupQueryResponse {
-  bool valid = 1;
-  string error = 2;
-  int32 matching_user_count = 3;
-}
-
-message EvaluateDynamicUserGroupRequest {
-  UserGroupId id = 1 [(buf.validate.field).required = true];
-}
-
-message EvaluateDynamicUserGroupResponse {
-  UserGroup group = 1;
-  int32 users_added = 2;
-  int32 users_removed = 3;
-}
-
-message SetUserGroupMaintenanceWindowRequest {
-  UserGroupId id = 1 [(buf.validate.field).required = true];
-  MaintenanceWindow maintenance_window = 2;
-}
-
-message IdentityProvider {
-  IdentityProviderId id = 1;
-  string name = 2;
-  string slug = 3;
-  IdentityProviderType provider_type = 4;
-  bool enabled = 5;
-  OidcClientId client_id = 6;
-
-  string issuer_url = 7;
-  string authorization_url = 8;
-  string token_url = 9;
-  string userinfo_url = 10;
-  repeated string scopes = 11;
-  bool auto_create_users = 12;
-  bool auto_link_by_email = 13;
-  RoleId default_role_id = 14;
-  string group_claim = 15;
-  map<string, string> group_mapping = 16;
-  google.protobuf.Timestamp created_at = 17;
-  google.protobuf.Timestamp updated_at = 18;
-  bool scim_enabled = 19;
-  string scim_endpoint_url = 20;
-
-  bool trust_email_assertions = 21;
-}
-
-message IdentityLink {
-  IdentityLinkId id = 1;
-  UserId user_id = 2;
-  IdentityProviderId provider_id = 3;
-  string provider_name = 4;
-  string provider_slug = 5;
-  ExternalIdentityId external_id = 6;
-  string external_email = 7;
-  string external_name = 8;
-  google.protobuf.Timestamp linked_at = 9;
-  google.protobuf.Timestamp last_login_at = 10;
-}
-
-message CreateIdentityProviderRequest {
-  string name = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64
-  ];
-  string slug = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64,
-    (buf.validate.field).string.pattern = "^[a-zA-Z0-9]+$"
-  ];
-  IdentityProviderType provider_type = 3 [
-    (buf.validate.field).enum.const = 1,
-    (buf.validate.field).required = true
-  ];
-  OidcClientId client_id = 4;
-  string client_secret = 5 [
-    (buf.validate.field).string.max_len = 4096,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string issuer_url = 6 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.uri = true
-  ];
-  string authorization_url = 7 [
-    (buf.validate.field).string.uri = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string token_url = 8 [
-    (buf.validate.field).string.uri = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string userinfo_url = 9 [
-    (buf.validate.field).string.uri = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  repeated string scopes = 10 [(buf.validate.field).repeated.items.string.max_len = 255];
-  bool auto_create_users = 11;
-  bool auto_link_by_email = 12;
-  RoleId default_role_id = 13;
-  string group_claim = 14 [
-    (buf.validate.field).string.max_len = 255,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  map<string, string> group_mapping = 15 [
-    (buf.validate.field).map.keys.string.max_len = 255,
-    (buf.validate.field).map.values.string.max_len = 255
-  ];
-
-  bool trust_email_assertions = 16;
-}
-
-message CreateIdentityProviderResponse {
-  IdentityProvider provider = 1;
-}
-
-message GetIdentityProviderRequest {
-  IdentityProviderId id = 1 [(buf.validate.field).required = true];
-}
-
-message GetIdentityProviderResponse {
-  IdentityProvider provider = 1;
-}
-
-message ListIdentityProvidersRequest {
-  int32 page_size = 1 [
-    (buf.validate.field).int32.gte = 1,
-    (buf.validate.field).int32.lte = 100,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-}
-
-message ListIdentityProvidersResponse {
-  repeated IdentityProvider providers = 1;
-  string next_page_token = 2;
-  int32 total_count = 3;
-}
-
-message UpdateIdentityProviderRequest {
-  IdentityProviderId id = 1 [(buf.validate.field).required = true];
-  string name = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64
-  ];
-  bool enabled = 3;
-  OidcClientId client_id = 4;
-
-  string client_secret = 5 [
-    (buf.validate.field).string.max_len = 4096,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string issuer_url = 6 [
-    (buf.validate.field).string.uri = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string authorization_url = 7 [
-    (buf.validate.field).string.uri = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string token_url = 8 [
-    (buf.validate.field).string.uri = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string userinfo_url = 9 [
-    (buf.validate.field).string.uri = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  repeated string scopes = 10 [(buf.validate.field).repeated.items.string.max_len = 255];
-  bool auto_create_users = 11;
-  bool auto_link_by_email = 12;
-  RoleId default_role_id = 13;
-  string group_claim = 14 [
-    (buf.validate.field).string.max_len = 255,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  map<string, string> group_mapping = 15 [
-    (buf.validate.field).map.keys.string.max_len = 255,
-    (buf.validate.field).map.values.string.max_len = 255
-  ];
-
-  bool trust_email_assertions = 16;
-}
-
-message UpdateIdentityProviderResponse {
-  IdentityProvider provider = 1;
-}
-
-message DeleteIdentityProviderRequest {
-  IdentityProviderId id = 1 [(buf.validate.field).required = true];
-}
-
-message DeleteIdentityProviderResponse {}
-
-message AuthMethodProvider {
-  string slug = 1;
-  string name = 2;
-  IdentityProviderType provider_type = 3;
-  bool browser_login = 4;
-}
-
-message ListAuthMethodsRequest {
-  string email = 1 [
-    (buf.validate.field).string.email = true,
-    (buf.validate.field).string.max_len = 254,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message ListAuthMethodsResponse {
-  repeated AuthMethodProvider providers = 1;
-}
-
-message GetSSOLoginURLRequest {
-  string slug = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64
-  ];
-  string redirect_url = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.uri = true
-  ];
-}
-
-message GetSSOLoginURLResponse {
-  string login_url = 1;
-}
-
-message SSOCallbackRequest {
-  string slug = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64
-  ];
-  string code = 2 [(buf.validate.field).required = true];
-  string state = 3 [(buf.validate.field).required = true];
-}
-
-message SSOCallbackResponse {
-  string access_token = 1;
-  string refresh_token = 2;
-  google.protobuf.Timestamp expires_at = 3;
-  User user = 4;
-}
-
-message ListIdentityLinksRequest {}
-
-message ListIdentityLinksResponse {
-  repeated IdentityLink links = 1;
-}
-
-message UnlinkIdentityRequest {
-  IdentityLinkId link_id = 1 [(buf.validate.field).required = true];
-}
-
-message UnlinkIdentityResponse {}
-
-message EnableSCIMRequest {
-  IdentityProviderId id = 1 [(buf.validate.field).required = true];
-}
-
-message EnableSCIMResponse {
-  string token = 1;
-  string endpoint_url = 2;
-}
-
-message DisableSCIMRequest {
-  IdentityProviderId id = 1 [(buf.validate.field).required = true];
-}
-
-message DisableSCIMResponse {}
-
-message RotateSCIMTokenRequest {
-  IdentityProviderId id = 1 [(buf.validate.field).required = true];
-}
-
-message RotateSCIMTokenResponse {
-  string token = 1;
-}
-
-message GetDeviceComplianceRequest {
-  DeviceId device_id = 1 [(buf.validate.field).required = true];
-}
-
-message GetDeviceComplianceResponse {
-  ComplianceStatus status = 1;
-  repeated ComplianceCheckResult checks = 2;
-}
-
-message ComplianceCheckResult {
-  ActionId action_id = 1;
-  string action_name = 2;
-  bool compliant = 3;
-  CommandOutput detection_output = 4;
-  google.protobuf.Timestamp checked_at = 5;
-}
-
-message CompliancePolicy {
-  CompliancePolicyId id = 1;
-  string name = 2;
-  string description = 3;
-  repeated CompliancePolicyRule rules = 4;
-  int32 rule_count = 5;
-  google.protobuf.Timestamp created_at = 6;
-  string created_by = 7;
-}
-
-message CompliancePolicyRule {
-  ActionId action_id = 1;
-  string action_name = 2;
-  int32 grace_period_hours = 3;
-}
-
-message CreateCompliancePolicyRequest {
-  string name = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 255
-  ];
-  string description = 2 [
-    (buf.validate.field).string.max_len = 1024,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message CreateCompliancePolicyResponse {
-  CompliancePolicy policy = 1;
-}
-
-message GetCompliancePolicyRequest {
-  CompliancePolicyId id = 1 [(buf.validate.field).required = true];
-}
-
-message GetCompliancePolicyResponse {
-  CompliancePolicy policy = 1;
-}
-
-message ListCompliancePoliciesRequest {
-  int32 page_size = 1 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 100,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-}
-
-message ListCompliancePoliciesResponse {
-  repeated CompliancePolicy policies = 1;
-  string next_page_token = 2;
-  int32 total_count = 3;
-}
-
-message RenameCompliancePolicyRequest {
-  CompliancePolicyId id = 1 [(buf.validate.field).required = true];
-  string name = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 255
-  ];
-}
-
-message UpdateCompliancePolicyDescriptionRequest {
-  CompliancePolicyId id = 1 [(buf.validate.field).required = true];
-  string description = 2 [
-    (buf.validate.field).string.max_len = 1024,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message UpdateCompliancePolicyResponse {
-  CompliancePolicy policy = 1;
-}
-
-message DeleteCompliancePolicyRequest {
-  CompliancePolicyId id = 1 [(buf.validate.field).required = true];
-}
-
-message DeleteCompliancePolicyResponse {}
-
-message AddCompliancePolicyRuleRequest {
-  CompliancePolicyId policy_id = 1 [(buf.validate.field).required = true];
-  ActionId action_id = 2 [(buf.validate.field).required = true];
-  int32 grace_period_hours = 3 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 8760,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message AddCompliancePolicyRuleResponse {
-  CompliancePolicy policy = 1;
-}
-
-message RemoveCompliancePolicyRuleRequest {
-  CompliancePolicyId policy_id = 1 [(buf.validate.field).required = true];
-  ActionId action_id = 2 [(buf.validate.field).required = true];
-}
-
-message RemoveCompliancePolicyRuleResponse {
-  CompliancePolicy policy = 1;
-}
-
-message UpdateCompliancePolicyRuleRequest {
-  CompliancePolicyId policy_id = 1 [(buf.validate.field).required = true];
-  ActionId action_id = 2 [(buf.validate.field).required = true];
-  int32 grace_period_hours = 3 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 8760,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message UpdateCompliancePolicyRuleResponse {
-  CompliancePolicy policy = 1;
-}
-
-message GetDeviceCompliancePolicyStatusRequest {
-  DeviceId device_id = 1 [(buf.validate.field).required = true];
-}
-
-message GetDeviceCompliancePolicyStatusResponse {
-  ComplianceStatus overall_status = 1;
-  repeated DevicePolicyEvaluation policies = 2;
-}
-
-message DevicePolicyEvaluation {
-  CompliancePolicyId policy_id = 1;
-  string policy_name = 2;
-  ComplianceStatus status = 3;
-  repeated DevicePolicyRuleEvaluation rules = 4;
-}
-
-message DevicePolicyRuleEvaluation {
-  ActionId action_id = 1;
-  string action_name = 2;
-  ComplianceStatus status = 3;
-  bool compliant = 4;
-  google.protobuf.Timestamp checked_at = 5;
-  google.protobuf.Timestamp first_failed_at = 6;
-  int32 grace_period_hours = 7;
-  google.protobuf.Timestamp grace_expires_at = 8;
-  CommandOutput detection_output = 9;
-}
-
-message SearchDateFilter {
-  string field = 1;
-  int64 start = 2;
-  int64 end = 3;
-}
-
-message SearchRequest {
-  string query = 1 [
-    (buf.validate.field).string.max_len = 1024,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  SearchScope scope = 2 [
-    (buf.validate.field).enum.defined_only = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  int32 page_size = 3 [
-    (buf.validate.field).int32.gte = 0,
-    (buf.validate.field).int32.lte = 200,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string page_token = 4 [
-    (buf.validate.field).string.max_len = 4096,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  repeated SearchDateFilter date_filters = 5;
-  map<string, string> tag_filters = 6 [
-    (buf.validate.field).map.keys.string.max_len = 64,
-    (buf.validate.field).map.values.string.max_len = 1024
-  ];
-
-  SortField sort_field = 7 [
-    (buf.validate.field).enum.defined_only = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  SortDirection sort_direction = 8 [
-    (buf.validate.field).enum.defined_only = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message SearchResult {
-  SearchResultId id = 1;
-  string name = 2;
-  string description = 3;
-  SearchScope scope = 4;
-  int32 member_count = 5;
-  map<string, string> fields = 6;
-}
-
-message SearchResponse {
-  repeated SearchResult results = 1;
-  string next_page_token = 2;
-  int32 total_count = 3;
-}
-
-message RebuildSearchIndexRequest {}
-message RebuildSearchIndexResponse {}
-
-message ServerSettings {
-  bool user_provisioning_enabled = 1;
-  bool ssh_access_for_all = 2;
-}
-
-message GetServerSettingsRequest {}
-message GetServerSettingsResponse {
-  ServerSettings settings = 1;
-}
-
-message UpdateServerSettingsRequest {
-  bool user_provisioning_enabled = 1;
-  bool ssh_access_for_all = 2;
-}
-message UpdateServerSettingsResponse {
-  ServerSettings settings = 1;
-}
-
-message SetUserProvisioningEnabledRequest {
-  UserId user_id = 1 [(buf.validate.field).required = true];
-  bool enabled = 2;
 }
 
 service ControlService {
-  rpc Register(RegisterRequest) returns (RegisterResponse);
-
-  rpc RenewCertificate(RenewCertificateRequest) returns (RenewCertificateResponse);
-
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
   rpc Logout(LogoutRequest) returns (LogoutResponse);
   rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse);
-
   rpc ListAuthMethods(ListAuthMethodsRequest) returns (ListAuthMethodsResponse);
   rpc GetSSOLoginURL(GetSSOLoginURLRequest) returns (GetSSOLoginURLResponse);
   rpc SSOCallback(SSOCallbackRequest) returns (SSOCallbackResponse);
@@ -2364,44 +688,16 @@ service ControlService {
   rpc ListIdentityProviders(ListIdentityProvidersRequest) returns (ListIdentityProvidersResponse);
   rpc UpdateIdentityProvider(UpdateIdentityProviderRequest) returns (UpdateIdentityProviderResponse);
   rpc DeleteIdentityProvider(DeleteIdentityProviderRequest) returns (DeleteIdentityProviderResponse);
-  rpc ListIdentityLinks(ListIdentityLinksRequest) returns (ListIdentityLinksResponse);
-  rpc UnlinkIdentity(UnlinkIdentityRequest) returns (UnlinkIdentityResponse);
-
-  rpc EnableSCIM(EnableSCIMRequest) returns (EnableSCIMResponse);
-  rpc DisableSCIM(DisableSCIMRequest) returns (DisableSCIMResponse);
-  rpc RotateSCIMToken(RotateSCIMTokenRequest) returns (RotateSCIMTokenResponse);
-
-  rpc EraseJITUser(EraseJITUserRequest) returns (EraseJITUserResponse);
-  rpc GetUser(GetUserRequest) returns (GetUserResponse);
-  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
-  rpc UpdateUserEmail(UpdateUserEmailRequest) returns (UpdateUserResponse);
-  rpc SetUserDisabled(SetUserDisabledRequest) returns (UpdateUserResponse);
-  rpc UpdateUserProfile(UpdateUserProfileRequest) returns (UpdateUserResponse);
-  rpc UpdateUserLinuxUsername(UpdateUserLinuxUsernameRequest) returns (UpdateUserResponse);
-  rpc AddUserSshKey(AddUserSshKeyRequest) returns (AddUserSshKeyResponse);
-  rpc RemoveUserSshKey(RemoveUserSshKeyRequest) returns (RemoveUserSshKeyResponse);
-  rpc UpdateUserSshSettings(UpdateUserSshSettingsRequest) returns (UpdateUserResponse);
-
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc RenewCertificate(RenewCertificateRequest) returns (RenewCertificateResponse);
   rpc ListDevices(ListDevicesRequest) returns (ListDevicesResponse);
   rpc GetDevice(GetDeviceRequest) returns (GetDeviceResponse);
-  rpc SetDeviceLabel(SetDeviceLabelRequest) returns (UpdateDeviceResponse);
-  rpc RemoveDeviceLabel(RemoveDeviceLabelRequest) returns (UpdateDeviceResponse);
-  rpc AssignDevice(AssignDeviceRequest) returns (AssignDeviceResponse);
-  rpc UnassignDevice(UnassignDeviceRequest) returns (UnassignDeviceResponse);
-  rpc ListDeviceAssignees(ListDeviceAssigneesRequest) returns (ListDeviceAssigneesResponse);
-  rpc SetDeviceSyncInterval(SetDeviceSyncIntervalRequest) returns (UpdateDeviceResponse);
-  rpc SetDeviceInventoryInterval(SetDeviceInventoryIntervalRequest) returns (UpdateDeviceResponse);
   rpc DeleteDevice(DeleteDeviceRequest) returns (DeleteDeviceResponse);
-
   rpc CreateToken(CreateTokenRequest) returns (CreateTokenResponse);
   rpc ListTokens(ListTokensRequest) returns (ListTokensResponse);
   rpc RenameToken(RenameTokenRequest) returns (UpdateTokenResponse);
   rpc SetTokenDisabled(SetTokenDisabledRequest) returns (UpdateTokenResponse);
   rpc DeleteToken(DeleteTokenRequest) returns (DeleteTokenResponse);
-  rpc CreateApiToken(CreateApiTokenRequest) returns (CreateApiTokenResponse);
-  rpc ListApiTokens(ListApiTokensRequest) returns (ListApiTokensResponse);
-  rpc RevokeApiToken(RevokeApiTokenRequest) returns (RevokeApiTokenResponse);
-
   rpc CreateAction(CreateActionRequest) returns (CreateActionResponse);
   rpc GetAction(GetActionRequest) returns (GetActionResponse);
   rpc ListActions(ListActionsRequest) returns (ListActionsResponse);
@@ -2409,298 +705,20 @@ service ControlService {
   rpc UpdateActionDescription(UpdateActionDescriptionRequest) returns (UpdateActionResponse);
   rpc UpdateActionParams(UpdateActionParamsRequest) returns (UpdateActionResponse);
   rpc DeleteAction(DeleteActionRequest) returns (DeleteActionResponse);
-
-  rpc CreateActionSet(CreateActionSetRequest) returns (CreateActionSetResponse);
-  rpc GetActionSet(GetActionSetRequest) returns (GetActionSetResponse);
-  rpc ListActionSets(ListActionSetsRequest) returns (ListActionSetsResponse);
-  rpc RenameActionSet(RenameActionSetRequest) returns (UpdateActionSetResponse);
-  rpc UpdateActionSetDescription(UpdateActionSetDescriptionRequest) returns (UpdateActionSetResponse);
-  rpc UpdateActionSetSchedule(UpdateActionSetScheduleRequest) returns (UpdateActionSetResponse);
-  rpc DeleteActionSet(DeleteActionSetRequest) returns (DeleteActionSetResponse);
-  rpc AddActionToSet(AddActionToSetRequest) returns (AddActionToSetResponse);
-  rpc RemoveActionFromSet(RemoveActionFromSetRequest) returns (RemoveActionFromSetResponse);
-  rpc ReorderActionInSet(ReorderActionInSetRequest) returns (ReorderActionInSetResponse);
-
-  rpc CreateDefinition(CreateDefinitionRequest) returns (CreateDefinitionResponse);
-  rpc GetDefinition(GetDefinitionRequest) returns (GetDefinitionResponse);
-  rpc ListDefinitions(ListDefinitionsRequest) returns (ListDefinitionsResponse);
-  rpc RenameDefinition(RenameDefinitionRequest) returns (UpdateDefinitionResponse);
-  rpc UpdateDefinitionDescription(UpdateDefinitionDescriptionRequest) returns (UpdateDefinitionResponse);
-  rpc UpdateDefinitionSchedule(UpdateDefinitionScheduleRequest) returns (UpdateDefinitionResponse);
-  rpc DeleteDefinition(DeleteDefinitionRequest) returns (DeleteDefinitionResponse);
-  rpc AddActionSetToDefinition(AddActionSetToDefinitionRequest) returns (AddActionSetToDefinitionResponse);
-  rpc RemoveActionSetFromDefinition(RemoveActionSetFromDefinitionRequest) returns (RemoveActionSetFromDefinitionResponse);
-  rpc ReorderActionSetInDefinition(ReorderActionSetInDefinitionRequest) returns (ReorderActionSetInDefinitionResponse);
-
   rpc CreateDeviceGroup(CreateDeviceGroupRequest) returns (CreateDeviceGroupResponse);
   rpc GetDeviceGroup(GetDeviceGroupRequest) returns (GetDeviceGroupResponse);
   rpc ListDeviceGroups(ListDeviceGroupsRequest) returns (ListDeviceGroupsResponse);
   rpc ListDeviceGroupsForDevice(ListDeviceGroupsForDeviceRequest) returns (ListDeviceGroupsForDeviceResponse);
   rpc RenameDeviceGroup(RenameDeviceGroupRequest) returns (UpdateDeviceGroupResponse);
   rpc UpdateDeviceGroupDescription(UpdateDeviceGroupDescriptionRequest) returns (UpdateDeviceGroupResponse);
-  rpc UpdateDeviceGroupQuery(UpdateDeviceGroupQueryRequest) returns (UpdateDeviceGroupQueryResponse);
   rpc DeleteDeviceGroup(DeleteDeviceGroupRequest) returns (DeleteDeviceGroupResponse);
   rpc AddDeviceToGroup(AddDeviceToGroupRequest) returns (AddDeviceToGroupResponse);
   rpc RemoveDeviceFromGroup(RemoveDeviceFromGroupRequest) returns (RemoveDeviceFromGroupResponse);
-  rpc ValidateDynamicQuery(ValidateDynamicQueryRequest) returns (ValidateDynamicQueryResponse);
-  rpc EvaluateDynamicGroup(EvaluateDynamicGroupRequest) returns (EvaluateDynamicGroupResponse);
-  rpc SetDeviceGroupSyncInterval(SetDeviceGroupSyncIntervalRequest) returns (UpdateDeviceGroupResponse);
-  rpc SetDeviceGroupInventoryInterval(SetDeviceGroupInventoryIntervalRequest) returns (UpdateDeviceGroupResponse);
-  rpc SetDeviceGroupMaintenanceWindow(SetDeviceGroupMaintenanceWindowRequest) returns (UpdateDeviceGroupResponse);
-
   rpc CreateAssignment(CreateAssignmentRequest) returns (CreateAssignmentResponse);
   rpc DeleteAssignment(DeleteAssignmentRequest) returns (DeleteAssignmentResponse);
   rpc ListAssignments(ListAssignmentsRequest) returns (ListAssignmentsResponse);
   rpc GetDeviceAssignments(GetDeviceAssignmentsRequest) returns (GetDeviceAssignmentsResponse);
-  rpc GetUserAssignments(GetUserAssignmentsRequest) returns (GetUserAssignmentsResponse);
-
-  rpc SetUserSelection(SetUserSelectionRequest) returns (SetUserSelectionResponse);
-  rpc ListAvailableActions(ListAvailableActionsRequest) returns (ListAvailableActionsResponse);
-
-  rpc SyncDevice(SyncDeviceRequest) returns (SyncDeviceResponse);
-  rpc RebootDevice(RebootDeviceRequest) returns (RebootDeviceResponse);
-
-  rpc ListAuditEvents(ListAuditEventsRequest) returns (ListAuditEventsResponse);
-  rpc ExportAuditEvents(ExportAuditEventsRequest) returns (ExportAuditEventsResponse);
-
-  rpc ListLpsPasswords(ListLpsPasswordsRequest) returns (ListLpsPasswordsResponse);
-  rpc RevealLpsPassword(RevealLpsPasswordRequest) returns (RevealLpsPasswordResponse);
-
-  rpc ListLuksKeys(ListLuksKeysRequest) returns (ListLuksKeysResponse);
-  rpc RevealLuksKey(RevealLuksKeyRequest) returns (RevealLuksKeyResponse);
-  rpc CreateLuksToken(CreateLuksTokenRequest) returns (CreateLuksTokenResponse);
-  rpc RevokeLuksDeviceKey(RevokeLuksDeviceKeyRequest) returns (RevokeLuksDeviceKeyResponse);
-
-  rpc DispatchOSQuery(DispatchOSQueryRequest) returns (DispatchOSQueryResponse);
-  rpc GetOSQueryResult(GetOSQueryResultRequest) returns (GetOSQueryResultResponse);
-  rpc GetDeviceInventory(GetDeviceInventoryRequest) returns (GetDeviceInventoryResponse);
-  rpc RefreshDeviceInventory(RefreshDeviceInventoryRequest) returns (RefreshDeviceInventoryResponse);
-
-  rpc QueryDeviceLogs(QueryDeviceLogsRequest) returns (QueryDeviceLogsResponse);
-  rpc GetDeviceLogResult(GetDeviceLogResultRequest) returns (GetDeviceLogResultResponse);
-
-  rpc CreateRole(CreateRoleRequest) returns (CreateRoleResponse);
-  rpc GetRole(GetRoleRequest) returns (GetRoleResponse);
-  rpc ListRoles(ListRolesRequest) returns (ListRolesResponse);
-  rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse);
-  rpc DeleteRole(DeleteRoleRequest) returns (DeleteRoleResponse);
-  rpc AssignRoleToUser(AssignRoleToUserRequest) returns (AssignRoleToUserResponse);
-  rpc RevokeRoleFromUser(RevokeRoleFromUserRequest) returns (RevokeRoleFromUserResponse);
-  rpc ListPermissions(ListPermissionsRequest) returns (ListPermissionsResponse);
-
-  rpc CreateUserGroup(CreateUserGroupRequest) returns (CreateUserGroupResponse);
-  rpc GetUserGroup(GetUserGroupRequest) returns (GetUserGroupResponse);
-  rpc ListUserGroups(ListUserGroupsRequest) returns (ListUserGroupsResponse);
-  rpc UpdateUserGroup(UpdateUserGroupRequest) returns (UpdateUserGroupResponse);
-  rpc DeleteUserGroup(DeleteUserGroupRequest) returns (DeleteUserGroupResponse);
-  rpc AddUserToGroup(AddUserToGroupRequest) returns (AddUserToGroupResponse);
-  rpc RemoveUserFromGroup(RemoveUserFromGroupRequest) returns (RemoveUserFromGroupResponse);
-  rpc AssignRoleToUserGroup(AssignRoleToUserGroupRequest) returns (AssignRoleToUserGroupResponse);
-  rpc RevokeRoleFromUserGroup(RevokeRoleFromUserGroupRequest) returns (RevokeRoleFromUserGroupResponse);
-  rpc ListUserGroupsForUser(ListUserGroupsForUserRequest) returns (ListUserGroupsForUserResponse);
-  rpc UpdateUserGroupQuery(UpdateUserGroupQueryRequest) returns (UpdateUserGroupQueryResponse);
-  rpc ValidateUserGroupQuery(ValidateUserGroupQueryRequest) returns (ValidateUserGroupQueryResponse);
-  rpc EvaluateDynamicUserGroup(EvaluateDynamicUserGroupRequest) returns (EvaluateDynamicUserGroupResponse);
-  rpc SetUserGroupMaintenanceWindow(SetUserGroupMaintenanceWindowRequest) returns (UpdateUserGroupResponse);
-
   rpc GetDeviceCompliance(GetDeviceComplianceRequest) returns (GetDeviceComplianceResponse);
-
-  rpc CreateCompliancePolicy(CreateCompliancePolicyRequest) returns (CreateCompliancePolicyResponse);
-  rpc GetCompliancePolicy(GetCompliancePolicyRequest) returns (GetCompliancePolicyResponse);
-  rpc ListCompliancePolicies(ListCompliancePoliciesRequest) returns (ListCompliancePoliciesResponse);
-  rpc RenameCompliancePolicy(RenameCompliancePolicyRequest) returns (UpdateCompliancePolicyResponse);
-  rpc UpdateCompliancePolicyDescription(UpdateCompliancePolicyDescriptionRequest) returns (UpdateCompliancePolicyResponse);
-  rpc DeleteCompliancePolicy(DeleteCompliancePolicyRequest) returns (DeleteCompliancePolicyResponse);
-  rpc AddCompliancePolicyRule(AddCompliancePolicyRuleRequest) returns (AddCompliancePolicyRuleResponse);
-  rpc RemoveCompliancePolicyRule(RemoveCompliancePolicyRuleRequest) returns (RemoveCompliancePolicyRuleResponse);
-  rpc UpdateCompliancePolicyRule(UpdateCompliancePolicyRuleRequest) returns (UpdateCompliancePolicyRuleResponse);
-  rpc GetDeviceCompliancePolicyStatus(GetDeviceCompliancePolicyStatusRequest) returns (GetDeviceCompliancePolicyStatusResponse);
-
-  rpc Search(SearchRequest) returns (SearchResponse);
-  rpc RebuildSearchIndex(RebuildSearchIndexRequest) returns (RebuildSearchIndexResponse);
-
-  rpc GetServerSettings(GetServerSettingsRequest) returns (GetServerSettingsResponse);
-  rpc UpdateServerSettings(UpdateServerSettingsRequest) returns (UpdateServerSettingsResponse);
-
-  rpc SetUserProvisioningEnabled(SetUserProvisioningEnabledRequest) returns (UpdateUserResponse);
-
-  rpc StartTerminal(StartTerminalRequest) returns (StartTerminalResponse);
-  rpc StopTerminal(StopTerminalRequest) returns (StopTerminalResponse);
-  rpc ListActiveTerminalSessions(ListActiveTerminalSessionsRequest) returns (ListActiveTerminalSessionsResponse);
-  rpc TerminateTerminalSession(TerminateTerminalSessionRequest) returns (TerminateTerminalSessionResponse);
-}
-
-message StartTerminalRequest {
-  DeviceId device_id = 1 [(buf.validate.field).required = true];
-
-  uint32 cols = 2 [
-    (buf.validate.field).uint32.gt = 0,
-    (buf.validate.field).uint32.lte = 65535,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  uint32 rows = 3 [
-    (buf.validate.field).uint32.gt = 0,
-    (buf.validate.field).uint32.lte = 65535,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message StartTerminalResponse {
-  SessionId session_id = 1 [(buf.validate.field).required = true];
-
-  string session_token = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1
-  ];
-
-  string terminal_url = 3 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.uri = true,
-    (buf.validate.field).string.prefix = "wss://"
-  ];
-
-  google.protobuf.Timestamp expires_at = 4 [(buf.validate.field).required = true];
-
-  string tty_user = 5 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 64
-  ];
-}
-
-message StopTerminalRequest {
-  SessionId session_id = 1 [(buf.validate.field).required = true];
-}
-
-message StopTerminalResponse {}
-
-message TerminalSessionInfo {
-  SessionId session_id = 1;
-
-  UserId user_id = 2;
-  string user_email = 3;
-
-  DeviceId device_id = 4;
-  string device_hostname = 5;
-
-  string tty_user = 6;
-  google.protobuf.Timestamp started_at = 7;
-
-  google.protobuf.Timestamp last_activity_at = 8;
-}
-
-message ListActiveTerminalSessionsRequest {
-  int32 page_size = 1 [
-    (buf.validate.field).int32.gte = 1,
-    (buf.validate.field).int32.lte = 200,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-
-  DeviceId device_id = 3;
-
-  UserId user_id = 4;
-}
-
-message ListActiveTerminalSessionsResponse {
-  repeated TerminalSessionInfo sessions = 1;
-  string next_page_token = 2;
-  int32 total_count = 3;
-}
-
-message TerminateTerminalSessionRequest {
-  SessionId session_id = 1 [(buf.validate.field).required = true];
-
-  string reason = 2 [
-    (buf.validate.field).string.max_len = 512,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message TerminateTerminalSessionResponse {}
-
-message EncryptionAuthoringParams {
-  optional string preshared_key = 1 [
-    debug_redact = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 256
-  ];
-  int32 rotation_interval_days = 2 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).int32.gte = 1,
-    (buf.validate.field).int32.lte = 365
-  ];
-  int32 min_words = 3 [
-    (buf.validate.field).int32.gte = 3,
-    (buf.validate.field).int32.lte = 10,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  EncryptionDeviceBoundKeyType device_bound_key_type = 4 [
-    (buf.validate.field).enum.defined_only = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  int32 user_passphrase_min_length = 5 [
-    (buf.validate.field).int32.gte = 16,
-    (buf.validate.field).int32.lte = 128,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-
-  LpsPasswordComplexity user_passphrase_complexity = 6 [
-    (buf.validate.field).enum.defined_only = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message ManagedEncryptionParams {
-  bool preshared_key_configured = 1;
-  int32 rotation_interval_days = 2;
-  int32 min_words = 3;
-  EncryptionDeviceBoundKeyType device_bound_key_type = 4;
-  int32 user_passphrase_min_length = 5;
-  LpsPasswordComplexity user_passphrase_complexity = 6;
-}
-
-message WifiAuthoringParams {
-  string ssid = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 255
-  ];
-  WifiAuthType auth_type = 2 [(buf.validate.field).required = true];
-  optional string psk = 3 [
-    debug_redact = true,
-    (buf.validate.field).string.min_len = 8,
-    (buf.validate.field).string.max_len = 64
-  ];
-  string ca_cert = 4;
-  string client_cert = 5;
-  optional string client_key = 6 [
-    debug_redact = true,
-    (buf.validate.field).string.max_len = 65536
-  ];
-  string identity = 7 [
-    (buf.validate.field).string.max_len = 254,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  bool auto_connect = 8;
-  bool hidden = 9;
-  int32 priority = 10 [
-    (buf.validate.field).int32.gte = -1,
-    (buf.validate.field).int32.lte = 999,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-}
-
-message ManagedWifiParams {
-  string ssid = 1;
-  WifiAuthType auth_type = 2;
-  bool psk_configured = 3;
-  string ca_cert = 4;
-  string client_cert = 5;
-  bool client_key_configured = 6;
-  string identity = 7;
-  bool auto_connect = 8;
-  bool hidden = 9;
-  int32 priority = 10;
+  rpc ListExecutionResults(ListExecutionResultsRequest) returns (ListExecutionResultsResponse);
+  rpc ListAuditEvents(ListAuditEventsRequest) returns (ListAuditEventsResponse);
 }

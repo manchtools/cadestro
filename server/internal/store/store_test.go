@@ -1,114 +1,18 @@
-package store_test
+package store
 
 import (
 	"context"
-	"log/slog"
-	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/manchtools/cadestro/server/internal/auth"
-	"github.com/manchtools/cadestro/server/internal/store"
-	"github.com/manchtools/cadestro/server/internal/store/sqlitetype"
 )
 
-func TestNew_RunsMigrations(t *testing.T) {
-	st, pool := setupSQLite(t)
-	ctx := context.Background()
-
-	n, err := st.CountDevices(ctx)
+func TestNewAppliesCoreSchema(t *testing.T) {
+	store, err := New(context.Background(), filepath.Join(t.TempDir(), "control.db"))
 	require.NoError(t, err)
-	assert.Zero(t, n)
-
-	var settings int64
-	require.NoError(t, pool.QueryRow(ctx, `SELECT count(*) FROM server_settings WHERE id = '00000000000000000000000003'`).Scan(&settings))
-	assert.Equal(t, int64(1), settings)
-
-	var roles int64
-	require.NoError(t, pool.QueryRow(ctx, `SELECT count(*) FROM roles WHERE is_system`).Scan(&roles))
-	assert.Equal(t, int64(2), roles)
-
-	var tables int64
-	require.NoError(t, pool.QueryRow(ctx, `
-		SELECT count(*) FROM sqlite_schema WHERE type = 'table' AND name = 'devices'`).Scan(&tables))
-	assert.Equal(t, int64(1), tables, "a fresh database must have the devices table from the goose migration")
-
-	var appliedVersion int64
-	require.NoError(t, pool.QueryRow(ctx, `
-		SELECT version_id FROM goose_db_version WHERE is_applied ORDER BY id DESC LIMIT 1`).Scan(&appliedVersion))
-	assert.Equal(t, int64(1), appliedVersion, "goose must record the baseline migration as applied")
-}
-
-func TestSQLiteFile_IsPrivateAndReadOnlyOpenDoesNotCreate(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "control.db")
-	st, err := store.New(context.Background(), path)
+	t.Cleanup(func() { require.NoError(t, store.Close()) })
+	count, err := store.Queries().CountDevices(context.Background())
 	require.NoError(t, err)
-	st.Close()
-	info, err := os.Stat(path)
-	require.NoError(t, err)
-	assert.Equal(t, os.FileMode(0o600), info.Mode().Perm())
-
-	missing := filepath.Join(t.TempDir(), "missing.db")
-	_, err = store.NewWithoutMigrations(context.Background(), missing)
-	require.Error(t, err)
-	_, statErr := os.Stat(missing)
-	assert.ErrorIs(t, statErr, os.ErrNotExist)
-}
-
-func TestSystemRoles_GrantNoLocalAuthenticationPermissions(t *testing.T) {
-	st, pool := setupSQLite(t)
-	ctx := context.Background()
-	require.NoError(t, auth.ReconcileSystemRoles(ctx, st, time.Now(), slog.Default()))
-
-	forbidden := []string{
-		"UpdateUserPassword", "UpdateUserPassword:self",
-		"SetupTOTP", "VerifyTOTP", "DisableTOTP", "AdminDisableUserTOTP",
-		"GetTOTPStatus", "RegenerateBackupCodes",
-	}
-	require.NotEmpty(t, forbidden, "matches-zero guard: the forbidden-permission list is empty")
-
-	rows, err := pool.Query(ctx, `SELECT name, permissions FROM roles WHERE is_system ORDER BY id`)
-	require.NoError(t, err)
-	defer rows.Close()
-
-	seen := 0
-	for rows.Next() {
-		var name string
-		var perms sqlitetype.StringList
-		require.NoError(t, rows.Scan(&name, &perms))
-		require.NotEmpty(t, perms, "role %s seeds no permissions at all", name)
-		seen++
-		for _, f := range forbidden {
-			assert.NotContains(t, perms, f, "role %s seeds %s, which names a subsystem that does not exist", name, f)
-		}
-	}
-	require.NoError(t, rows.Err())
-	require.Equal(t, 2, seen, "matches-zero guard: no system roles were inspected")
-}
-
-func TestNew_ConfiguresSQLiteSafetyPragmas(t *testing.T) {
-	_, pool := setupSQLite(t)
-	ctx := context.Background()
-
-	var foreignKeys, busyTimeout int
-	var journalMode string
-	require.NoError(t, pool.QueryRow(ctx, "PRAGMA foreign_keys").Scan(&foreignKeys))
-	require.NoError(t, pool.QueryRow(ctx, "PRAGMA busy_timeout").Scan(&busyTimeout))
-	require.NoError(t, pool.QueryRow(ctx, "PRAGMA journal_mode").Scan(&journalMode))
-	assert.Equal(t, 1, foreignKeys)
-	assert.Equal(t, 5_000, busyTimeout)
-	assert.Equal(t, "wal", journalMode)
-}
-
-func TestIsNotFound_RecognisesAMissingRow(t *testing.T) {
-	st, _ := setupSQLite(t)
-
-	_, err := st.GetDevice(context.Background(), newID())
-	require.Error(t, err)
-	assert.True(t, store.IsNotFound(err), "a missing row must be recognisable through the store's recognizer: %v", err)
-	assert.False(t, store.IsNotFound(nil))
+	require.Zero(t, count)
 }

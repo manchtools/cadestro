@@ -1,34 +1,7 @@
-
-
-
-
-
-.PHONY: sqlc-generate sqlc-check help
-
-
-
-
-
-
-
 SQLC_IMAGE ?= sqlc/sqlc:1.31.1
 DOCKER ?= docker
 
-help:
-	@echo "Targets:"
-	@echo "  sqlc-generate  regenerate internal/store/generated/ via the pinned sqlc image"
-	@echo "  sqlc-check     fail if generated code is stale (run sqlc-generate first)"
-
-
-
-
-
-
-
-
-
-
-
+.PHONY: sqlc-generate sqlc-check build
 
 sqlc-generate:
 	@set -eu; \
@@ -46,9 +19,8 @@ sqlc-generate:
 		exit 1; \
 	fi
 
-
-
-
-
 sqlc-check: sqlc-generate
 	git diff --exit-code internal/store/generated
+
+build:
+	GOWORK=off go build -o cadestro ./cmd/cadestro

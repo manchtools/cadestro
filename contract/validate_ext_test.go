@@ -27,9 +27,9 @@ func TestUlidOptional_AcceptsEmptyValidRejectsGarbage(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			err := v.Validate(&cadestrov1.ListUsersRequest{PageToken: tc.pageToken})
+			err := v.Validate(&cadestrov1.ListDevicesRequest{PageToken: tc.pageToken})
 			if ok := err == nil; ok != tc.wantOK {
-				t.Fatalf("ListUsersRequest{PageToken: %q} validate = %v (err: %v), want ok=%v", tc.pageToken, ok, err, tc.wantOK)
+				t.Fatalf("ListDevicesRequest{PageToken: %q} validate = %v (err: %v), want ok=%v", tc.pageToken, ok, err, tc.wantOK)
 			}
 		})
 	}

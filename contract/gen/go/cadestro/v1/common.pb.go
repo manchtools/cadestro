@@ -25,16 +25,14 @@ const (
 type ExecutionStatus int32
 
 const (
-	ExecutionStatus_EXECUTION_STATUS_UNSPECIFIED    ExecutionStatus = 0
-	ExecutionStatus_EXECUTION_STATUS_PENDING        ExecutionStatus = 1
-	ExecutionStatus_EXECUTION_STATUS_RUNNING        ExecutionStatus = 2
-	ExecutionStatus_EXECUTION_STATUS_SUCCESS        ExecutionStatus = 3
-	ExecutionStatus_EXECUTION_STATUS_FAILED         ExecutionStatus = 4
-	ExecutionStatus_EXECUTION_STATUS_SKIPPED        ExecutionStatus = 5
-	ExecutionStatus_EXECUTION_STATUS_TIMEOUT        ExecutionStatus = 6
-	ExecutionStatus_EXECUTION_STATUS_CANCELLED      ExecutionStatus = 7
-	ExecutionStatus_EXECUTION_STATUS_NOT_APPLICABLE ExecutionStatus = 8
-	ExecutionStatus_EXECUTION_STATUS_INDETERMINATE  ExecutionStatus = 9
+	ExecutionStatus_EXECUTION_STATUS_UNSPECIFIED   ExecutionStatus = 0
+	ExecutionStatus_EXECUTION_STATUS_PENDING       ExecutionStatus = 1
+	ExecutionStatus_EXECUTION_STATUS_RUNNING       ExecutionStatus = 2
+	ExecutionStatus_EXECUTION_STATUS_SUCCESS       ExecutionStatus = 3
+	ExecutionStatus_EXECUTION_STATUS_FAILED        ExecutionStatus = 4
+	ExecutionStatus_EXECUTION_STATUS_SKIPPED       ExecutionStatus = 5
+	ExecutionStatus_EXECUTION_STATUS_TIMEOUT       ExecutionStatus = 6
+	ExecutionStatus_EXECUTION_STATUS_INDETERMINATE ExecutionStatus = 7
 )
 
 // Enum value maps for ExecutionStatus.
@@ -47,21 +45,17 @@ var (
 		4: "EXECUTION_STATUS_FAILED",
 		5: "EXECUTION_STATUS_SKIPPED",
 		6: "EXECUTION_STATUS_TIMEOUT",
-		7: "EXECUTION_STATUS_CANCELLED",
-		8: "EXECUTION_STATUS_NOT_APPLICABLE",
-		9: "EXECUTION_STATUS_INDETERMINATE",
+		7: "EXECUTION_STATUS_INDETERMINATE",
 	}
 	ExecutionStatus_value = map[string]int32{
-		"EXECUTION_STATUS_UNSPECIFIED":    0,
-		"EXECUTION_STATUS_PENDING":        1,
-		"EXECUTION_STATUS_RUNNING":        2,
-		"EXECUTION_STATUS_SUCCESS":        3,
-		"EXECUTION_STATUS_FAILED":         4,
-		"EXECUTION_STATUS_SKIPPED":        5,
-		"EXECUTION_STATUS_TIMEOUT":        6,
-		"EXECUTION_STATUS_CANCELLED":      7,
-		"EXECUTION_STATUS_NOT_APPLICABLE": 8,
-		"EXECUTION_STATUS_INDETERMINATE":  9,
+		"EXECUTION_STATUS_UNSPECIFIED":   0,
+		"EXECUTION_STATUS_PENDING":       1,
+		"EXECUTION_STATUS_RUNNING":       2,
+		"EXECUTION_STATUS_SUCCESS":       3,
+		"EXECUTION_STATUS_FAILED":        4,
+		"EXECUTION_STATUS_SKIPPED":       5,
+		"EXECUTION_STATUS_TIMEOUT":       6,
+		"EXECUTION_STATUS_INDETERMINATE": 7,
 	}
 )
 
@@ -95,19 +89,22 @@ func (ExecutionStatus) EnumDescriptor() ([]byte, []int) {
 type DesiredState int32
 
 const (
-	DesiredState_DESIRED_STATE_PRESENT DesiredState = 0
-	DesiredState_DESIRED_STATE_ABSENT  DesiredState = 1
+	DesiredState_DESIRED_STATE_UNSPECIFIED DesiredState = 0
+	DesiredState_DESIRED_STATE_PRESENT     DesiredState = 1
+	DesiredState_DESIRED_STATE_ABSENT      DesiredState = 2
 )
 
 // Enum value maps for DesiredState.
 var (
 	DesiredState_name = map[int32]string{
-		0: "DESIRED_STATE_PRESENT",
-		1: "DESIRED_STATE_ABSENT",
+		0: "DESIRED_STATE_UNSPECIFIED",
+		1: "DESIRED_STATE_PRESENT",
+		2: "DESIRED_STATE_ABSENT",
 	}
 	DesiredState_value = map[string]int32{
-		"DESIRED_STATE_PRESENT": 0,
-		"DESIRED_STATE_ABSENT":  1,
+		"DESIRED_STATE_UNSPECIFIED": 0,
+		"DESIRED_STATE_PRESENT":     1,
+		"DESIRED_STATE_ABSENT":      2,
 	}
 )
 
@@ -136,266 +133,6 @@ func (x DesiredState) Number() protoreflect.EnumNumber {
 // Deprecated: Use DesiredState.Descriptor instead.
 func (DesiredState) EnumDescriptor() ([]byte, []int) {
 	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{1}
-}
-
-type AssignmentMode int32
-
-const (
-	AssignmentMode_ASSIGNMENT_MODE_REQUIRED  AssignmentMode = 0
-	AssignmentMode_ASSIGNMENT_MODE_AVAILABLE AssignmentMode = 1
-	AssignmentMode_ASSIGNMENT_MODE_EXCLUDED  AssignmentMode = 2
-	AssignmentMode_ASSIGNMENT_MODE_UNINSTALL AssignmentMode = 3
-)
-
-// Enum value maps for AssignmentMode.
-var (
-	AssignmentMode_name = map[int32]string{
-		0: "ASSIGNMENT_MODE_REQUIRED",
-		1: "ASSIGNMENT_MODE_AVAILABLE",
-		2: "ASSIGNMENT_MODE_EXCLUDED",
-		3: "ASSIGNMENT_MODE_UNINSTALL",
-	}
-	AssignmentMode_value = map[string]int32{
-		"ASSIGNMENT_MODE_REQUIRED":  0,
-		"ASSIGNMENT_MODE_AVAILABLE": 1,
-		"ASSIGNMENT_MODE_EXCLUDED":  2,
-		"ASSIGNMENT_MODE_UNINSTALL": 3,
-	}
-)
-
-func (x AssignmentMode) Enum() *AssignmentMode {
-	p := new(AssignmentMode)
-	*p = x
-	return p
-}
-
-func (x AssignmentMode) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (AssignmentMode) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_common_proto_enumTypes[2].Descriptor()
-}
-
-func (AssignmentMode) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_common_proto_enumTypes[2]
-}
-
-func (x AssignmentMode) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use AssignmentMode.Descriptor instead.
-func (AssignmentMode) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{2}
-}
-
-type AssignmentSourceType int32
-
-const (
-	AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_UNSPECIFIED       AssignmentSourceType = 0
-	AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION            AssignmentSourceType = 1
-	AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_ACTION_SET        AssignmentSourceType = 2
-	AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_DEFINITION        AssignmentSourceType = 3
-	AssignmentSourceType_ASSIGNMENT_SOURCE_TYPE_COMPLIANCE_POLICY AssignmentSourceType = 4
-)
-
-// Enum value maps for AssignmentSourceType.
-var (
-	AssignmentSourceType_name = map[int32]string{
-		0: "ASSIGNMENT_SOURCE_TYPE_UNSPECIFIED",
-		1: "ASSIGNMENT_SOURCE_TYPE_ACTION",
-		2: "ASSIGNMENT_SOURCE_TYPE_ACTION_SET",
-		3: "ASSIGNMENT_SOURCE_TYPE_DEFINITION",
-		4: "ASSIGNMENT_SOURCE_TYPE_COMPLIANCE_POLICY",
-	}
-	AssignmentSourceType_value = map[string]int32{
-		"ASSIGNMENT_SOURCE_TYPE_UNSPECIFIED":       0,
-		"ASSIGNMENT_SOURCE_TYPE_ACTION":            1,
-		"ASSIGNMENT_SOURCE_TYPE_ACTION_SET":        2,
-		"ASSIGNMENT_SOURCE_TYPE_DEFINITION":        3,
-		"ASSIGNMENT_SOURCE_TYPE_COMPLIANCE_POLICY": 4,
-	}
-)
-
-func (x AssignmentSourceType) Enum() *AssignmentSourceType {
-	p := new(AssignmentSourceType)
-	*p = x
-	return p
-}
-
-func (x AssignmentSourceType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (AssignmentSourceType) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_common_proto_enumTypes[3].Descriptor()
-}
-
-func (AssignmentSourceType) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_common_proto_enumTypes[3]
-}
-
-func (x AssignmentSourceType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use AssignmentSourceType.Descriptor instead.
-func (AssignmentSourceType) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{3}
-}
-
-type AssignmentTargetType int32
-
-const (
-	AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_UNSPECIFIED  AssignmentTargetType = 0
-	AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE       AssignmentTargetType = 1
-	AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP AssignmentTargetType = 2
-	AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_USER         AssignmentTargetType = 3
-	AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_USER_GROUP   AssignmentTargetType = 4
-)
-
-// Enum value maps for AssignmentTargetType.
-var (
-	AssignmentTargetType_name = map[int32]string{
-		0: "ASSIGNMENT_TARGET_TYPE_UNSPECIFIED",
-		1: "ASSIGNMENT_TARGET_TYPE_DEVICE",
-		2: "ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP",
-		3: "ASSIGNMENT_TARGET_TYPE_USER",
-		4: "ASSIGNMENT_TARGET_TYPE_USER_GROUP",
-	}
-	AssignmentTargetType_value = map[string]int32{
-		"ASSIGNMENT_TARGET_TYPE_UNSPECIFIED":  0,
-		"ASSIGNMENT_TARGET_TYPE_DEVICE":       1,
-		"ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP": 2,
-		"ASSIGNMENT_TARGET_TYPE_USER":         3,
-		"ASSIGNMENT_TARGET_TYPE_USER_GROUP":   4,
-	}
-)
-
-func (x AssignmentTargetType) Enum() *AssignmentTargetType {
-	p := new(AssignmentTargetType)
-	*p = x
-	return p
-}
-
-func (x AssignmentTargetType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (AssignmentTargetType) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_common_proto_enumTypes[4].Descriptor()
-}
-
-func (AssignmentTargetType) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_common_proto_enumTypes[4]
-}
-
-func (x AssignmentTargetType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use AssignmentTargetType.Descriptor instead.
-func (AssignmentTargetType) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{4}
-}
-
-type RoleGrantScopeKind int32
-
-const (
-	RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_UNSPECIFIED  RoleGrantScopeKind = 0
-	RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_DEVICE_GROUP RoleGrantScopeKind = 1
-	RoleGrantScopeKind_ROLE_GRANT_SCOPE_KIND_USER_GROUP   RoleGrantScopeKind = 2
-)
-
-// Enum value maps for RoleGrantScopeKind.
-var (
-	RoleGrantScopeKind_name = map[int32]string{
-		0: "ROLE_GRANT_SCOPE_KIND_UNSPECIFIED",
-		1: "ROLE_GRANT_SCOPE_KIND_DEVICE_GROUP",
-		2: "ROLE_GRANT_SCOPE_KIND_USER_GROUP",
-	}
-	RoleGrantScopeKind_value = map[string]int32{
-		"ROLE_GRANT_SCOPE_KIND_UNSPECIFIED":  0,
-		"ROLE_GRANT_SCOPE_KIND_DEVICE_GROUP": 1,
-		"ROLE_GRANT_SCOPE_KIND_USER_GROUP":   2,
-	}
-)
-
-func (x RoleGrantScopeKind) Enum() *RoleGrantScopeKind {
-	p := new(RoleGrantScopeKind)
-	*p = x
-	return p
-}
-
-func (x RoleGrantScopeKind) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (RoleGrantScopeKind) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_common_proto_enumTypes[5].Descriptor()
-}
-
-func (RoleGrantScopeKind) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_common_proto_enumTypes[5]
-}
-
-func (x RoleGrantScopeKind) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use RoleGrantScopeKind.Descriptor instead.
-func (RoleGrantScopeKind) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{5}
-}
-
-type PermissionTargetKind int32
-
-const (
-	PermissionTargetKind_PERMISSION_TARGET_KIND_UNSPECIFIED PermissionTargetKind = 0
-	PermissionTargetKind_PERMISSION_TARGET_KIND_DEVICE      PermissionTargetKind = 1
-	PermissionTargetKind_PERMISSION_TARGET_KIND_USER        PermissionTargetKind = 2
-)
-
-// Enum value maps for PermissionTargetKind.
-var (
-	PermissionTargetKind_name = map[int32]string{
-		0: "PERMISSION_TARGET_KIND_UNSPECIFIED",
-		1: "PERMISSION_TARGET_KIND_DEVICE",
-		2: "PERMISSION_TARGET_KIND_USER",
-	}
-	PermissionTargetKind_value = map[string]int32{
-		"PERMISSION_TARGET_KIND_UNSPECIFIED": 0,
-		"PERMISSION_TARGET_KIND_DEVICE":      1,
-		"PERMISSION_TARGET_KIND_USER":        2,
-	}
-)
-
-func (x PermissionTargetKind) Enum() *PermissionTargetKind {
-	p := new(PermissionTargetKind)
-	*p = x
-	return p
-}
-
-func (x PermissionTargetKind) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (PermissionTargetKind) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_common_proto_enumTypes[6].Descriptor()
-}
-
-func (PermissionTargetKind) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_common_proto_enumTypes[6]
-}
-
-func (x PermissionTargetKind) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use PermissionTargetKind.Descriptor instead.
-func (PermissionTargetKind) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{6}
 }
 
 type DeviceStatus int32
@@ -431,11 +168,11 @@ func (x DeviceStatus) String() string {
 }
 
 func (DeviceStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_common_proto_enumTypes[7].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[2].Descriptor()
 }
 
 func (DeviceStatus) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_common_proto_enumTypes[7]
+	return &file_cadestro_v1_common_proto_enumTypes[2]
 }
 
 func (x DeviceStatus) Number() protoreflect.EnumNumber {
@@ -444,674 +181,28 @@ func (x DeviceStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use DeviceStatus.Descriptor instead.
 func (DeviceStatus) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{7}
-}
-
-type SearchScope int32
-
-const (
-	SearchScope_SEARCH_SCOPE_UNSPECIFIED         SearchScope = 0
-	SearchScope_SEARCH_SCOPE_ACTIONS             SearchScope = 1
-	SearchScope_SEARCH_SCOPE_ACTION_SETS         SearchScope = 2
-	SearchScope_SEARCH_SCOPE_DEFINITIONS         SearchScope = 3
-	SearchScope_SEARCH_SCOPE_COMPLIANCE_POLICIES SearchScope = 4
-	SearchScope_SEARCH_SCOPE_DEVICES             SearchScope = 5
-	SearchScope_SEARCH_SCOPE_USERS               SearchScope = 6
-	SearchScope_SEARCH_SCOPE_DEVICE_GROUPS       SearchScope = 7
-	SearchScope_SEARCH_SCOPE_USER_GROUPS         SearchScope = 8
-	SearchScope_SEARCH_SCOPE_AUDIT_EVENTS        SearchScope = 9
-)
-
-// Enum value maps for SearchScope.
-var (
-	SearchScope_name = map[int32]string{
-		0: "SEARCH_SCOPE_UNSPECIFIED",
-		1: "SEARCH_SCOPE_ACTIONS",
-		2: "SEARCH_SCOPE_ACTION_SETS",
-		3: "SEARCH_SCOPE_DEFINITIONS",
-		4: "SEARCH_SCOPE_COMPLIANCE_POLICIES",
-		5: "SEARCH_SCOPE_DEVICES",
-		6: "SEARCH_SCOPE_USERS",
-		7: "SEARCH_SCOPE_DEVICE_GROUPS",
-		8: "SEARCH_SCOPE_USER_GROUPS",
-		9: "SEARCH_SCOPE_AUDIT_EVENTS",
-	}
-	SearchScope_value = map[string]int32{
-		"SEARCH_SCOPE_UNSPECIFIED":         0,
-		"SEARCH_SCOPE_ACTIONS":             1,
-		"SEARCH_SCOPE_ACTION_SETS":         2,
-		"SEARCH_SCOPE_DEFINITIONS":         3,
-		"SEARCH_SCOPE_COMPLIANCE_POLICIES": 4,
-		"SEARCH_SCOPE_DEVICES":             5,
-		"SEARCH_SCOPE_USERS":               6,
-		"SEARCH_SCOPE_DEVICE_GROUPS":       7,
-		"SEARCH_SCOPE_USER_GROUPS":         8,
-		"SEARCH_SCOPE_AUDIT_EVENTS":        9,
-	}
-)
-
-func (x SearchScope) Enum() *SearchScope {
-	p := new(SearchScope)
-	*p = x
-	return p
-}
-
-func (x SearchScope) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (SearchScope) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_common_proto_enumTypes[8].Descriptor()
-}
-
-func (SearchScope) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_common_proto_enumTypes[8]
-}
-
-func (x SearchScope) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use SearchScope.Descriptor instead.
-func (SearchScope) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{8}
-}
-
-type SortField int32
-
-const (
-	SortField_SORT_FIELD_UNSPECIFIED       SortField = 0
-	SortField_SORT_FIELD_NAME              SortField = 1
-	SortField_SORT_FIELD_TYPE              SortField = 2
-	SortField_SORT_FIELD_HOSTNAME          SortField = 3
-	SortField_SORT_FIELD_COMPLIANCE_STATUS SortField = 4
-	SortField_SORT_FIELD_EMAIL             SortField = 5
-	SortField_SORT_FIELD_DISPLAY_NAME      SortField = 6
-	SortField_SORT_FIELD_DISABLED          SortField = 7
-	SortField_SORT_FIELD_MEMBER_COUNT      SortField = 8
-	SortField_SORT_FIELD_STATUS            SortField = 9
-	SortField_SORT_FIELD_ACTION_TYPE       SortField = 10
-	SortField_SORT_FIELD_DEVICE_HOSTNAME   SortField = 11
-	SortField_SORT_FIELD_ACTOR_TYPE        SortField = 12
-	SortField_SORT_FIELD_STREAM_TYPE       SortField = 13
-	SortField_SORT_FIELD_EVENT_TYPE        SortField = 14
-	SortField_SORT_FIELD_RULE_COUNT        SortField = 15
-	SortField_SORT_FIELD_LAST_LOGIN_AT     SortField = 16
-	SortField_SORT_FIELD_CREATED_AT        SortField = 17
-	SortField_SORT_FIELD_UPDATED_AT        SortField = 18
-	SortField_SORT_FIELD_LAST_SEEN_AT      SortField = 19
-	SortField_SORT_FIELD_REGISTERED_AT     SortField = 20
-	SortField_SORT_FIELD_OCCURRED_AT       SortField = 21
-)
-
-// Enum value maps for SortField.
-var (
-	SortField_name = map[int32]string{
-		0:  "SORT_FIELD_UNSPECIFIED",
-		1:  "SORT_FIELD_NAME",
-		2:  "SORT_FIELD_TYPE",
-		3:  "SORT_FIELD_HOSTNAME",
-		4:  "SORT_FIELD_COMPLIANCE_STATUS",
-		5:  "SORT_FIELD_EMAIL",
-		6:  "SORT_FIELD_DISPLAY_NAME",
-		7:  "SORT_FIELD_DISABLED",
-		8:  "SORT_FIELD_MEMBER_COUNT",
-		9:  "SORT_FIELD_STATUS",
-		10: "SORT_FIELD_ACTION_TYPE",
-		11: "SORT_FIELD_DEVICE_HOSTNAME",
-		12: "SORT_FIELD_ACTOR_TYPE",
-		13: "SORT_FIELD_STREAM_TYPE",
-		14: "SORT_FIELD_EVENT_TYPE",
-		15: "SORT_FIELD_RULE_COUNT",
-		16: "SORT_FIELD_LAST_LOGIN_AT",
-		17: "SORT_FIELD_CREATED_AT",
-		18: "SORT_FIELD_UPDATED_AT",
-		19: "SORT_FIELD_LAST_SEEN_AT",
-		20: "SORT_FIELD_REGISTERED_AT",
-		21: "SORT_FIELD_OCCURRED_AT",
-	}
-	SortField_value = map[string]int32{
-		"SORT_FIELD_UNSPECIFIED":       0,
-		"SORT_FIELD_NAME":              1,
-		"SORT_FIELD_TYPE":              2,
-		"SORT_FIELD_HOSTNAME":          3,
-		"SORT_FIELD_COMPLIANCE_STATUS": 4,
-		"SORT_FIELD_EMAIL":             5,
-		"SORT_FIELD_DISPLAY_NAME":      6,
-		"SORT_FIELD_DISABLED":          7,
-		"SORT_FIELD_MEMBER_COUNT":      8,
-		"SORT_FIELD_STATUS":            9,
-		"SORT_FIELD_ACTION_TYPE":       10,
-		"SORT_FIELD_DEVICE_HOSTNAME":   11,
-		"SORT_FIELD_ACTOR_TYPE":        12,
-		"SORT_FIELD_STREAM_TYPE":       13,
-		"SORT_FIELD_EVENT_TYPE":        14,
-		"SORT_FIELD_RULE_COUNT":        15,
-		"SORT_FIELD_LAST_LOGIN_AT":     16,
-		"SORT_FIELD_CREATED_AT":        17,
-		"SORT_FIELD_UPDATED_AT":        18,
-		"SORT_FIELD_LAST_SEEN_AT":      19,
-		"SORT_FIELD_REGISTERED_AT":     20,
-		"SORT_FIELD_OCCURRED_AT":       21,
-	}
-)
-
-func (x SortField) Enum() *SortField {
-	p := new(SortField)
-	*p = x
-	return p
-}
-
-func (x SortField) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (SortField) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_common_proto_enumTypes[9].Descriptor()
-}
-
-func (SortField) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_common_proto_enumTypes[9]
-}
-
-func (x SortField) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use SortField.Descriptor instead.
-func (SortField) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{9}
-}
-
-type SortDirection int32
-
-const (
-	SortDirection_SORT_DIRECTION_UNSPECIFIED SortDirection = 0
-	SortDirection_SORT_DIRECTION_ASC         SortDirection = 1
-	SortDirection_SORT_DIRECTION_DESC        SortDirection = 2
-)
-
-// Enum value maps for SortDirection.
-var (
-	SortDirection_name = map[int32]string{
-		0: "SORT_DIRECTION_UNSPECIFIED",
-		1: "SORT_DIRECTION_ASC",
-		2: "SORT_DIRECTION_DESC",
-	}
-	SortDirection_value = map[string]int32{
-		"SORT_DIRECTION_UNSPECIFIED": 0,
-		"SORT_DIRECTION_ASC":         1,
-		"SORT_DIRECTION_DESC":        2,
-	}
-)
-
-func (x SortDirection) Enum() *SortDirection {
-	p := new(SortDirection)
-	*p = x
-	return p
-}
-
-func (x SortDirection) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (SortDirection) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_common_proto_enumTypes[10].Descriptor()
-}
-
-func (SortDirection) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_common_proto_enumTypes[10]
-}
-
-func (x SortDirection) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use SortDirection.Descriptor instead.
-func (SortDirection) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{10}
-}
-
-type IdentityProviderType int32
-
-const (
-	IdentityProviderType_IDENTITY_PROVIDER_TYPE_UNSPECIFIED IdentityProviderType = 0
-	IdentityProviderType_IDENTITY_PROVIDER_TYPE_OIDC        IdentityProviderType = 1
-)
-
-// Enum value maps for IdentityProviderType.
-var (
-	IdentityProviderType_name = map[int32]string{
-		0: "IDENTITY_PROVIDER_TYPE_UNSPECIFIED",
-		1: "IDENTITY_PROVIDER_TYPE_OIDC",
-	}
-	IdentityProviderType_value = map[string]int32{
-		"IDENTITY_PROVIDER_TYPE_UNSPECIFIED": 0,
-		"IDENTITY_PROVIDER_TYPE_OIDC":        1,
-	}
-)
-
-func (x IdentityProviderType) Enum() *IdentityProviderType {
-	p := new(IdentityProviderType)
-	*p = x
-	return p
-}
-
-func (x IdentityProviderType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (IdentityProviderType) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_common_proto_enumTypes[11].Descriptor()
-}
-
-func (IdentityProviderType) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_common_proto_enumTypes[11]
-}
-
-func (x IdentityProviderType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use IdentityProviderType.Descriptor instead.
-func (IdentityProviderType) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{11}
-}
-
-type RotationReason int32
-
-const (
-	RotationReason_ROTATION_REASON_UNSPECIFIED RotationReason = 0
-	RotationReason_ROTATION_REASON_INITIAL     RotationReason = 1
-	RotationReason_ROTATION_REASON_SCHEDULED   RotationReason = 2
-	RotationReason_ROTATION_REASON_AUTH_GRACE  RotationReason = 3
-)
-
-// Enum value maps for RotationReason.
-var (
-	RotationReason_name = map[int32]string{
-		0: "ROTATION_REASON_UNSPECIFIED",
-		1: "ROTATION_REASON_INITIAL",
-		2: "ROTATION_REASON_SCHEDULED",
-		3: "ROTATION_REASON_AUTH_GRACE",
-	}
-	RotationReason_value = map[string]int32{
-		"ROTATION_REASON_UNSPECIFIED": 0,
-		"ROTATION_REASON_INITIAL":     1,
-		"ROTATION_REASON_SCHEDULED":   2,
-		"ROTATION_REASON_AUTH_GRACE":  3,
-	}
-)
-
-func (x RotationReason) Enum() *RotationReason {
-	p := new(RotationReason)
-	*p = x
-	return p
-}
-
-func (x RotationReason) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (RotationReason) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_common_proto_enumTypes[12].Descriptor()
-}
-
-func (RotationReason) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_common_proto_enumTypes[12]
-}
-
-func (x RotationReason) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use RotationReason.Descriptor instead.
-func (RotationReason) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{12}
-}
-
-type LuksRevocationStatus int32
-
-const (
-	LuksRevocationStatus_LUKS_REVOCATION_STATUS_UNSPECIFIED LuksRevocationStatus = 0
-	LuksRevocationStatus_LUKS_REVOCATION_STATUS_NONE        LuksRevocationStatus = 1
-	LuksRevocationStatus_LUKS_REVOCATION_STATUS_DISPATCHED  LuksRevocationStatus = 2
-	LuksRevocationStatus_LUKS_REVOCATION_STATUS_SUCCESS     LuksRevocationStatus = 3
-	LuksRevocationStatus_LUKS_REVOCATION_STATUS_FAILED      LuksRevocationStatus = 4
-)
-
-// Enum value maps for LuksRevocationStatus.
-var (
-	LuksRevocationStatus_name = map[int32]string{
-		0: "LUKS_REVOCATION_STATUS_UNSPECIFIED",
-		1: "LUKS_REVOCATION_STATUS_NONE",
-		2: "LUKS_REVOCATION_STATUS_DISPATCHED",
-		3: "LUKS_REVOCATION_STATUS_SUCCESS",
-		4: "LUKS_REVOCATION_STATUS_FAILED",
-	}
-	LuksRevocationStatus_value = map[string]int32{
-		"LUKS_REVOCATION_STATUS_UNSPECIFIED": 0,
-		"LUKS_REVOCATION_STATUS_NONE":        1,
-		"LUKS_REVOCATION_STATUS_DISPATCHED":  2,
-		"LUKS_REVOCATION_STATUS_SUCCESS":     3,
-		"LUKS_REVOCATION_STATUS_FAILED":      4,
-	}
-)
-
-func (x LuksRevocationStatus) Enum() *LuksRevocationStatus {
-	p := new(LuksRevocationStatus)
-	*p = x
-	return p
-}
-
-func (x LuksRevocationStatus) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (LuksRevocationStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_common_proto_enumTypes[13].Descriptor()
-}
-
-func (LuksRevocationStatus) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_common_proto_enumTypes[13]
-}
-
-func (x LuksRevocationStatus) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use LuksRevocationStatus.Descriptor instead.
-func (LuksRevocationStatus) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{13}
-}
-
-type ErrorCode int32
-
-const (
-	ErrorCode_ERROR_CODE_UNSPECIFIED                       ErrorCode = 0
-	ErrorCode_ERROR_CODE_ACTION_ALREADY_IN_SET             ErrorCode = 1
-	ErrorCode_ERROR_CODE_ACTION_NOT_COMPLIANCE             ErrorCode = 2
-	ErrorCode_ERROR_CODE_ACTION_NOT_FOUND                  ErrorCode = 3
-	ErrorCode_ERROR_CODE_ACTION_SET_ALREADY_IN_DEFINITION  ErrorCode = 4
-	ErrorCode_ERROR_CODE_ACTION_SET_MEMBER_NOT_FOUND       ErrorCode = 5
-	ErrorCode_ERROR_CODE_ACTION_SET_NOT_FOUND              ErrorCode = 6
-	ErrorCode_ERROR_CODE_ASSIGNMENT_NOT_FOUND              ErrorCode = 7
-	ErrorCode_ERROR_CODE_ASSIGNMENT_SOURCE_NOT_FOUND       ErrorCode = 8
-	ErrorCode_ERROR_CODE_ASSIGNMENT_TARGET_NOT_FOUND       ErrorCode = 9
-	ErrorCode_ERROR_CODE_CANNOT_DELETE_SYSTEM_ROLE         ErrorCode = 10
-	ErrorCode_ERROR_CODE_CANNOT_MODIFY_SYSTEM_ACTION       ErrorCode = 11
-	ErrorCode_ERROR_CODE_CANNOT_MODIFY_SYSTEM_ROLE         ErrorCode = 12
-	ErrorCode_ERROR_CODE_CANNOT_RENAME_SYSTEM_ROLE         ErrorCode = 13
-	ErrorCode_ERROR_CODE_CANNOT_UNLINK_OTHER_USER          ErrorCode = 14
-	ErrorCode_ERROR_CODE_COMPLIANCE_ACTION_NEEDS_DETECTION ErrorCode = 15
-	ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_NAME_EXISTS     ErrorCode = 16
-	ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_NOT_FOUND       ErrorCode = 17
-	ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_RULE_EXISTS     ErrorCode = 18
-	ErrorCode_ERROR_CODE_COMPLIANCE_POLICY_RULE_NOT_FOUND  ErrorCode = 19
-	ErrorCode_ERROR_CODE_DEFINITION_MEMBER_NOT_FOUND       ErrorCode = 20
-	ErrorCode_ERROR_CODE_DEFINITION_NOT_FOUND              ErrorCode = 21
-	ErrorCode_ERROR_CODE_DEVICE_ALREADY_IN_GROUP           ErrorCode = 22
-	ErrorCode_ERROR_CODE_DEVICE_GROUP_MEMBER_NOT_FOUND     ErrorCode = 23
-	ErrorCode_ERROR_CODE_DEVICE_GROUP_NAME_EXISTS          ErrorCode = 24
-	ErrorCode_ERROR_CODE_DEVICE_GROUP_NOT_FOUND            ErrorCode = 25
-	ErrorCode_ERROR_CODE_DEVICE_NOT_CONNECTED              ErrorCode = 26
-	ErrorCode_ERROR_CODE_DEVICE_NOT_FOUND                  ErrorCode = 27
-	ErrorCode_ERROR_CODE_DEVICE_UNAVAILABLE                ErrorCode = 28
-	ErrorCode_ERROR_CODE_DYNAMIC_GROUP_MANUAL_MODIFY       ErrorCode = 29
-	ErrorCode_ERROR_CODE_DYNAMIC_GROUP_MEMBERSHIP_MANAGED  ErrorCode = 30
-	ErrorCode_ERROR_CODE_EMAIL_ALREADY_EXISTS              ErrorCode = 31
-	ErrorCode_ERROR_CODE_GRANT_NOT_FOUND                   ErrorCode = 32
-	ErrorCode_ERROR_CODE_GROUP_ALREADY_HAS_ROLE            ErrorCode = 33
-	ErrorCode_ERROR_CODE_GROUP_NOT_DYNAMIC                 ErrorCode = 34
-	ErrorCode_ERROR_CODE_IDENTITY_LINK_NOT_FOUND           ErrorCode = 35
-	ErrorCode_ERROR_CODE_INTERNAL_ERROR                    ErrorCode = 36
-	ErrorCode_ERROR_CODE_INVALID_DYNAMIC_QUERY             ErrorCode = 37
-	ErrorCode_ERROR_CODE_INVALID_PAGE_TOKEN                ErrorCode = 38
-	ErrorCode_ERROR_CODE_INVALID_QUERY                     ErrorCode = 39
-	ErrorCode_ERROR_CODE_LAST_AUTH_METHOD                  ErrorCode = 40
-	ErrorCode_ERROR_CODE_LPS_PASSWORD_NOT_FOUND            ErrorCode = 41
-	ErrorCode_ERROR_CODE_LUKS_KEY_ALREADY_REVOKED          ErrorCode = 42
-	ErrorCode_ERROR_CODE_LUKS_KEY_NOT_FOUND                ErrorCode = 43
-	ErrorCode_ERROR_CODE_LUKS_KEY_REVOCATION_PENDING       ErrorCode = 44
-	ErrorCode_ERROR_CODE_NO_ASSIGNMENT_FOUND               ErrorCode = 45
-	ErrorCode_ERROR_CODE_NOT_AUTHENTICATED                 ErrorCode = 46
-	ErrorCode_ERROR_CODE_PERMISSION_DENIED                 ErrorCode = 47
-	ErrorCode_ERROR_CODE_PROVIDER_DISABLED                 ErrorCode = 48
-	ErrorCode_ERROR_CODE_PROVIDER_NOT_FOUND                ErrorCode = 49
-	ErrorCode_ERROR_CODE_PROVIDER_SLUG_EXISTS              ErrorCode = 50
-	ErrorCode_ERROR_CODE_QUERY_RESULT_NOT_FOUND            ErrorCode = 51
-	ErrorCode_ERROR_CODE_RATE_LIMITED                      ErrorCode = 52
-	ErrorCode_ERROR_CODE_ROLE_IN_USE                       ErrorCode = 53
-	ErrorCode_ERROR_CODE_ROLE_NAME_EXISTS                  ErrorCode = 54
-	ErrorCode_ERROR_CODE_ROLE_NOT_FOUND                    ErrorCode = 55
-	ErrorCode_ERROR_CODE_SCIM_ALREADY_ENABLED              ErrorCode = 56
-	ErrorCode_ERROR_CODE_SCIM_MANAGED_RESOURCE             ErrorCode = 57
-	ErrorCode_ERROR_CODE_SCIM_NOT_ENABLED                  ErrorCode = 58
-	ErrorCode_ERROR_CODE_SCOPE_NOT_PERMITTED               ErrorCode = 59
-	ErrorCode_ERROR_CODE_SSO_NO_MATCHING_ACCOUNT           ErrorCode = 60
-	ErrorCode_ERROR_CODE_SSO_STATE_EXPIRED                 ErrorCode = 61
-	ErrorCode_ERROR_CODE_TERMINAL_LINUX_USERNAME_NOT_SET   ErrorCode = 62
-	ErrorCode_ERROR_CODE_TERMINAL_NOT_CONFIGURED           ErrorCode = 63
-	ErrorCode_ERROR_CODE_TERMINAL_SESSION_NOT_FOUND        ErrorCode = 64
-	ErrorCode_ERROR_CODE_TOKEN_EXPIRED                     ErrorCode = 65
-	ErrorCode_ERROR_CODE_TOKEN_NOT_FOUND                   ErrorCode = 66
-	ErrorCode_ERROR_CODE_UNIMPLEMENTED                     ErrorCode = 67
-	ErrorCode_ERROR_CODE_USER_ALREADY_HAS_ROLE             ErrorCode = 68
-	ErrorCode_ERROR_CODE_USER_ALREADY_IN_GROUP             ErrorCode = 69
-	ErrorCode_ERROR_CODE_USER_GROUP_MEMBER_NOT_FOUND       ErrorCode = 70
-	ErrorCode_ERROR_CODE_USER_GROUP_NAME_EXISTS            ErrorCode = 71
-	ErrorCode_ERROR_CODE_USER_GROUP_NOT_FOUND              ErrorCode = 72
-	ErrorCode_ERROR_CODE_USER_NOT_FOUND                    ErrorCode = 73
-	ErrorCode_ERROR_CODE_VALIDATION_FAILED                 ErrorCode = 74
-)
-
-// Enum value maps for ErrorCode.
-var (
-	ErrorCode_name = map[int32]string{
-		0:  "ERROR_CODE_UNSPECIFIED",
-		1:  "ERROR_CODE_ACTION_ALREADY_IN_SET",
-		2:  "ERROR_CODE_ACTION_NOT_COMPLIANCE",
-		3:  "ERROR_CODE_ACTION_NOT_FOUND",
-		4:  "ERROR_CODE_ACTION_SET_ALREADY_IN_DEFINITION",
-		5:  "ERROR_CODE_ACTION_SET_MEMBER_NOT_FOUND",
-		6:  "ERROR_CODE_ACTION_SET_NOT_FOUND",
-		7:  "ERROR_CODE_ASSIGNMENT_NOT_FOUND",
-		8:  "ERROR_CODE_ASSIGNMENT_SOURCE_NOT_FOUND",
-		9:  "ERROR_CODE_ASSIGNMENT_TARGET_NOT_FOUND",
-		10: "ERROR_CODE_CANNOT_DELETE_SYSTEM_ROLE",
-		11: "ERROR_CODE_CANNOT_MODIFY_SYSTEM_ACTION",
-		12: "ERROR_CODE_CANNOT_MODIFY_SYSTEM_ROLE",
-		13: "ERROR_CODE_CANNOT_RENAME_SYSTEM_ROLE",
-		14: "ERROR_CODE_CANNOT_UNLINK_OTHER_USER",
-		15: "ERROR_CODE_COMPLIANCE_ACTION_NEEDS_DETECTION",
-		16: "ERROR_CODE_COMPLIANCE_POLICY_NAME_EXISTS",
-		17: "ERROR_CODE_COMPLIANCE_POLICY_NOT_FOUND",
-		18: "ERROR_CODE_COMPLIANCE_POLICY_RULE_EXISTS",
-		19: "ERROR_CODE_COMPLIANCE_POLICY_RULE_NOT_FOUND",
-		20: "ERROR_CODE_DEFINITION_MEMBER_NOT_FOUND",
-		21: "ERROR_CODE_DEFINITION_NOT_FOUND",
-		22: "ERROR_CODE_DEVICE_ALREADY_IN_GROUP",
-		23: "ERROR_CODE_DEVICE_GROUP_MEMBER_NOT_FOUND",
-		24: "ERROR_CODE_DEVICE_GROUP_NAME_EXISTS",
-		25: "ERROR_CODE_DEVICE_GROUP_NOT_FOUND",
-		26: "ERROR_CODE_DEVICE_NOT_CONNECTED",
-		27: "ERROR_CODE_DEVICE_NOT_FOUND",
-		28: "ERROR_CODE_DEVICE_UNAVAILABLE",
-		29: "ERROR_CODE_DYNAMIC_GROUP_MANUAL_MODIFY",
-		30: "ERROR_CODE_DYNAMIC_GROUP_MEMBERSHIP_MANAGED",
-		31: "ERROR_CODE_EMAIL_ALREADY_EXISTS",
-		32: "ERROR_CODE_GRANT_NOT_FOUND",
-		33: "ERROR_CODE_GROUP_ALREADY_HAS_ROLE",
-		34: "ERROR_CODE_GROUP_NOT_DYNAMIC",
-		35: "ERROR_CODE_IDENTITY_LINK_NOT_FOUND",
-		36: "ERROR_CODE_INTERNAL_ERROR",
-		37: "ERROR_CODE_INVALID_DYNAMIC_QUERY",
-		38: "ERROR_CODE_INVALID_PAGE_TOKEN",
-		39: "ERROR_CODE_INVALID_QUERY",
-		40: "ERROR_CODE_LAST_AUTH_METHOD",
-		41: "ERROR_CODE_LPS_PASSWORD_NOT_FOUND",
-		42: "ERROR_CODE_LUKS_KEY_ALREADY_REVOKED",
-		43: "ERROR_CODE_LUKS_KEY_NOT_FOUND",
-		44: "ERROR_CODE_LUKS_KEY_REVOCATION_PENDING",
-		45: "ERROR_CODE_NO_ASSIGNMENT_FOUND",
-		46: "ERROR_CODE_NOT_AUTHENTICATED",
-		47: "ERROR_CODE_PERMISSION_DENIED",
-		48: "ERROR_CODE_PROVIDER_DISABLED",
-		49: "ERROR_CODE_PROVIDER_NOT_FOUND",
-		50: "ERROR_CODE_PROVIDER_SLUG_EXISTS",
-		51: "ERROR_CODE_QUERY_RESULT_NOT_FOUND",
-		52: "ERROR_CODE_RATE_LIMITED",
-		53: "ERROR_CODE_ROLE_IN_USE",
-		54: "ERROR_CODE_ROLE_NAME_EXISTS",
-		55: "ERROR_CODE_ROLE_NOT_FOUND",
-		56: "ERROR_CODE_SCIM_ALREADY_ENABLED",
-		57: "ERROR_CODE_SCIM_MANAGED_RESOURCE",
-		58: "ERROR_CODE_SCIM_NOT_ENABLED",
-		59: "ERROR_CODE_SCOPE_NOT_PERMITTED",
-		60: "ERROR_CODE_SSO_NO_MATCHING_ACCOUNT",
-		61: "ERROR_CODE_SSO_STATE_EXPIRED",
-		62: "ERROR_CODE_TERMINAL_LINUX_USERNAME_NOT_SET",
-		63: "ERROR_CODE_TERMINAL_NOT_CONFIGURED",
-		64: "ERROR_CODE_TERMINAL_SESSION_NOT_FOUND",
-		65: "ERROR_CODE_TOKEN_EXPIRED",
-		66: "ERROR_CODE_TOKEN_NOT_FOUND",
-		67: "ERROR_CODE_UNIMPLEMENTED",
-		68: "ERROR_CODE_USER_ALREADY_HAS_ROLE",
-		69: "ERROR_CODE_USER_ALREADY_IN_GROUP",
-		70: "ERROR_CODE_USER_GROUP_MEMBER_NOT_FOUND",
-		71: "ERROR_CODE_USER_GROUP_NAME_EXISTS",
-		72: "ERROR_CODE_USER_GROUP_NOT_FOUND",
-		73: "ERROR_CODE_USER_NOT_FOUND",
-		74: "ERROR_CODE_VALIDATION_FAILED",
-	}
-	ErrorCode_value = map[string]int32{
-		"ERROR_CODE_UNSPECIFIED":                       0,
-		"ERROR_CODE_ACTION_ALREADY_IN_SET":             1,
-		"ERROR_CODE_ACTION_NOT_COMPLIANCE":             2,
-		"ERROR_CODE_ACTION_NOT_FOUND":                  3,
-		"ERROR_CODE_ACTION_SET_ALREADY_IN_DEFINITION":  4,
-		"ERROR_CODE_ACTION_SET_MEMBER_NOT_FOUND":       5,
-		"ERROR_CODE_ACTION_SET_NOT_FOUND":              6,
-		"ERROR_CODE_ASSIGNMENT_NOT_FOUND":              7,
-		"ERROR_CODE_ASSIGNMENT_SOURCE_NOT_FOUND":       8,
-		"ERROR_CODE_ASSIGNMENT_TARGET_NOT_FOUND":       9,
-		"ERROR_CODE_CANNOT_DELETE_SYSTEM_ROLE":         10,
-		"ERROR_CODE_CANNOT_MODIFY_SYSTEM_ACTION":       11,
-		"ERROR_CODE_CANNOT_MODIFY_SYSTEM_ROLE":         12,
-		"ERROR_CODE_CANNOT_RENAME_SYSTEM_ROLE":         13,
-		"ERROR_CODE_CANNOT_UNLINK_OTHER_USER":          14,
-		"ERROR_CODE_COMPLIANCE_ACTION_NEEDS_DETECTION": 15,
-		"ERROR_CODE_COMPLIANCE_POLICY_NAME_EXISTS":     16,
-		"ERROR_CODE_COMPLIANCE_POLICY_NOT_FOUND":       17,
-		"ERROR_CODE_COMPLIANCE_POLICY_RULE_EXISTS":     18,
-		"ERROR_CODE_COMPLIANCE_POLICY_RULE_NOT_FOUND":  19,
-		"ERROR_CODE_DEFINITION_MEMBER_NOT_FOUND":       20,
-		"ERROR_CODE_DEFINITION_NOT_FOUND":              21,
-		"ERROR_CODE_DEVICE_ALREADY_IN_GROUP":           22,
-		"ERROR_CODE_DEVICE_GROUP_MEMBER_NOT_FOUND":     23,
-		"ERROR_CODE_DEVICE_GROUP_NAME_EXISTS":          24,
-		"ERROR_CODE_DEVICE_GROUP_NOT_FOUND":            25,
-		"ERROR_CODE_DEVICE_NOT_CONNECTED":              26,
-		"ERROR_CODE_DEVICE_NOT_FOUND":                  27,
-		"ERROR_CODE_DEVICE_UNAVAILABLE":                28,
-		"ERROR_CODE_DYNAMIC_GROUP_MANUAL_MODIFY":       29,
-		"ERROR_CODE_DYNAMIC_GROUP_MEMBERSHIP_MANAGED":  30,
-		"ERROR_CODE_EMAIL_ALREADY_EXISTS":              31,
-		"ERROR_CODE_GRANT_NOT_FOUND":                   32,
-		"ERROR_CODE_GROUP_ALREADY_HAS_ROLE":            33,
-		"ERROR_CODE_GROUP_NOT_DYNAMIC":                 34,
-		"ERROR_CODE_IDENTITY_LINK_NOT_FOUND":           35,
-		"ERROR_CODE_INTERNAL_ERROR":                    36,
-		"ERROR_CODE_INVALID_DYNAMIC_QUERY":             37,
-		"ERROR_CODE_INVALID_PAGE_TOKEN":                38,
-		"ERROR_CODE_INVALID_QUERY":                     39,
-		"ERROR_CODE_LAST_AUTH_METHOD":                  40,
-		"ERROR_CODE_LPS_PASSWORD_NOT_FOUND":            41,
-		"ERROR_CODE_LUKS_KEY_ALREADY_REVOKED":          42,
-		"ERROR_CODE_LUKS_KEY_NOT_FOUND":                43,
-		"ERROR_CODE_LUKS_KEY_REVOCATION_PENDING":       44,
-		"ERROR_CODE_NO_ASSIGNMENT_FOUND":               45,
-		"ERROR_CODE_NOT_AUTHENTICATED":                 46,
-		"ERROR_CODE_PERMISSION_DENIED":                 47,
-		"ERROR_CODE_PROVIDER_DISABLED":                 48,
-		"ERROR_CODE_PROVIDER_NOT_FOUND":                49,
-		"ERROR_CODE_PROVIDER_SLUG_EXISTS":              50,
-		"ERROR_CODE_QUERY_RESULT_NOT_FOUND":            51,
-		"ERROR_CODE_RATE_LIMITED":                      52,
-		"ERROR_CODE_ROLE_IN_USE":                       53,
-		"ERROR_CODE_ROLE_NAME_EXISTS":                  54,
-		"ERROR_CODE_ROLE_NOT_FOUND":                    55,
-		"ERROR_CODE_SCIM_ALREADY_ENABLED":              56,
-		"ERROR_CODE_SCIM_MANAGED_RESOURCE":             57,
-		"ERROR_CODE_SCIM_NOT_ENABLED":                  58,
-		"ERROR_CODE_SCOPE_NOT_PERMITTED":               59,
-		"ERROR_CODE_SSO_NO_MATCHING_ACCOUNT":           60,
-		"ERROR_CODE_SSO_STATE_EXPIRED":                 61,
-		"ERROR_CODE_TERMINAL_LINUX_USERNAME_NOT_SET":   62,
-		"ERROR_CODE_TERMINAL_NOT_CONFIGURED":           63,
-		"ERROR_CODE_TERMINAL_SESSION_NOT_FOUND":        64,
-		"ERROR_CODE_TOKEN_EXPIRED":                     65,
-		"ERROR_CODE_TOKEN_NOT_FOUND":                   66,
-		"ERROR_CODE_UNIMPLEMENTED":                     67,
-		"ERROR_CODE_USER_ALREADY_HAS_ROLE":             68,
-		"ERROR_CODE_USER_ALREADY_IN_GROUP":             69,
-		"ERROR_CODE_USER_GROUP_MEMBER_NOT_FOUND":       70,
-		"ERROR_CODE_USER_GROUP_NAME_EXISTS":            71,
-		"ERROR_CODE_USER_GROUP_NOT_FOUND":              72,
-		"ERROR_CODE_USER_NOT_FOUND":                    73,
-		"ERROR_CODE_VALIDATION_FAILED":                 74,
-	}
-)
-
-func (x ErrorCode) Enum() *ErrorCode {
-	p := new(ErrorCode)
-	*p = x
-	return p
-}
-
-func (x ErrorCode) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (ErrorCode) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_common_proto_enumTypes[14].Descriptor()
-}
-
-func (ErrorCode) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_common_proto_enumTypes[14]
-}
-
-func (x ErrorCode) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use ErrorCode.Descriptor instead.
-func (ErrorCode) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{14}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{2}
 }
 
 type ComplianceStatus int32
 
 const (
-	ComplianceStatus_COMPLIANCE_STATUS_UNKNOWN         ComplianceStatus = 0
-	ComplianceStatus_COMPLIANCE_STATUS_COMPLIANT       ComplianceStatus = 1
-	ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT   ComplianceStatus = 2
-	ComplianceStatus_COMPLIANCE_STATUS_IN_GRACE_PERIOD ComplianceStatus = 3
+	ComplianceStatus_COMPLIANCE_STATUS_UNSPECIFIED   ComplianceStatus = 0
+	ComplianceStatus_COMPLIANCE_STATUS_COMPLIANT     ComplianceStatus = 1
+	ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT ComplianceStatus = 2
 )
 
 // Enum value maps for ComplianceStatus.
 var (
 	ComplianceStatus_name = map[int32]string{
-		0: "COMPLIANCE_STATUS_UNKNOWN",
+		0: "COMPLIANCE_STATUS_UNSPECIFIED",
 		1: "COMPLIANCE_STATUS_COMPLIANT",
 		2: "COMPLIANCE_STATUS_NON_COMPLIANT",
-		3: "COMPLIANCE_STATUS_IN_GRACE_PERIOD",
 	}
 	ComplianceStatus_value = map[string]int32{
-		"COMPLIANCE_STATUS_UNKNOWN":         0,
-		"COMPLIANCE_STATUS_COMPLIANT":       1,
-		"COMPLIANCE_STATUS_NON_COMPLIANT":   2,
-		"COMPLIANCE_STATUS_IN_GRACE_PERIOD": 3,
+		"COMPLIANCE_STATUS_UNSPECIFIED":   0,
+		"COMPLIANCE_STATUS_COMPLIANT":     1,
+		"COMPLIANCE_STATUS_NON_COMPLIANT": 2,
 	}
 )
 
@@ -1126,11 +217,11 @@ func (x ComplianceStatus) String() string {
 }
 
 func (ComplianceStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_common_proto_enumTypes[15].Descriptor()
+	return file_cadestro_v1_common_proto_enumTypes[3].Descriptor()
 }
 
 func (ComplianceStatus) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_common_proto_enumTypes[15]
+	return &file_cadestro_v1_common_proto_enumTypes[3]
 }
 
 func (x ComplianceStatus) Number() protoreflect.EnumNumber {
@@ -1139,7 +230,56 @@ func (x ComplianceStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ComplianceStatus.Descriptor instead.
 func (ComplianceStatus) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{15}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{3}
+}
+
+type AssignmentTargetType int32
+
+const (
+	AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_UNSPECIFIED  AssignmentTargetType = 0
+	AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE       AssignmentTargetType = 1
+	AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP AssignmentTargetType = 2
+)
+
+// Enum value maps for AssignmentTargetType.
+var (
+	AssignmentTargetType_name = map[int32]string{
+		0: "ASSIGNMENT_TARGET_TYPE_UNSPECIFIED",
+		1: "ASSIGNMENT_TARGET_TYPE_DEVICE",
+		2: "ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP",
+	}
+	AssignmentTargetType_value = map[string]int32{
+		"ASSIGNMENT_TARGET_TYPE_UNSPECIFIED":  0,
+		"ASSIGNMENT_TARGET_TYPE_DEVICE":       1,
+		"ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP": 2,
+	}
+)
+
+func (x AssignmentTargetType) Enum() *AssignmentTargetType {
+	p := new(AssignmentTargetType)
+	*p = x
+	return p
+}
+
+func (x AssignmentTargetType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (AssignmentTargetType) Descriptor() protoreflect.EnumDescriptor {
+	return file_cadestro_v1_common_proto_enumTypes[4].Descriptor()
+}
+
+func (AssignmentTargetType) Type() protoreflect.EnumType {
+	return &file_cadestro_v1_common_proto_enumTypes[4]
+}
+
+func (x AssignmentTargetType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use AssignmentTargetType.Descriptor instead.
+func (AssignmentTargetType) EnumDescriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{4}
 }
 
 type ActionId struct {
@@ -1318,94 +458,6 @@ func (x *OccurrenceId) GetValue() string {
 	return ""
 }
 
-type DefinitionId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DefinitionId) Reset() {
-	*x = DefinitionId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DefinitionId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DefinitionId) ProtoMessage() {}
-
-func (x *DefinitionId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DefinitionId.ProtoReflect.Descriptor instead.
-func (*DefinitionId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *DefinitionId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type ActionSetId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ActionSetId) Reset() {
-	*x = ActionSetId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ActionSetId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ActionSetId) ProtoMessage() {}
-
-func (x *ActionSetId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ActionSetId.ProtoReflect.Descriptor instead.
-func (*ActionSetId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *ActionSetId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
 type ManifestId struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
@@ -1415,7 +467,7 @@ type ManifestId struct {
 
 func (x *ManifestId) Reset() {
 	*x = ManifestId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[6]
+	mi := &file_cadestro_v1_common_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1427,7 +479,7 @@ func (x *ManifestId) String() string {
 func (*ManifestId) ProtoMessage() {}
 
 func (x *ManifestId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[6]
+	mi := &file_cadestro_v1_common_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1440,54 +492,10 @@ func (x *ManifestId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ManifestId.ProtoReflect.Descriptor instead.
 func (*ManifestId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{6}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ManifestId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type QueryId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *QueryId) Reset() {
-	*x = QueryId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *QueryId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*QueryId) ProtoMessage() {}
-
-func (x *QueryId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use QueryId.ProtoReflect.Descriptor instead.
-func (*QueryId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *QueryId) GetValue() string {
 	if x != nil {
 		return x.Value
 	}
@@ -1503,7 +511,7 @@ type MessageId struct {
 
 func (x *MessageId) Reset() {
 	*x = MessageId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[8]
+	mi := &file_cadestro_v1_common_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1515,7 +523,7 @@ func (x *MessageId) String() string {
 func (*MessageId) ProtoMessage() {}
 
 func (x *MessageId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[8]
+	mi := &file_cadestro_v1_common_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1528,7 +536,7 @@ func (x *MessageId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MessageId.ProtoReflect.Descriptor instead.
 func (*MessageId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{8}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *MessageId) GetValue() string {
@@ -1547,7 +555,7 @@ type PolicyRevisionId struct {
 
 func (x *PolicyRevisionId) Reset() {
 	*x = PolicyRevisionId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[9]
+	mi := &file_cadestro_v1_common_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1559,7 +567,7 @@ func (x *PolicyRevisionId) String() string {
 func (*PolicyRevisionId) ProtoMessage() {}
 
 func (x *PolicyRevisionId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[9]
+	mi := &file_cadestro_v1_common_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1572,54 +580,10 @@ func (x *PolicyRevisionId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PolicyRevisionId.ProtoReflect.Descriptor instead.
 func (*PolicyRevisionId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{9}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *PolicyRevisionId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type SessionId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SessionId) Reset() {
-	*x = SessionId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SessionId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SessionId) ProtoMessage() {}
-
-func (x *SessionId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SessionId.ProtoReflect.Descriptor instead.
-func (*SessionId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *SessionId) GetValue() string {
 	if x != nil {
 		return x.Value
 	}
@@ -1635,7 +599,7 @@ type UserId struct {
 
 func (x *UserId) Reset() {
 	*x = UserId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[11]
+	mi := &file_cadestro_v1_common_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1647,7 +611,7 @@ func (x *UserId) String() string {
 func (*UserId) ProtoMessage() {}
 
 func (x *UserId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[11]
+	mi := &file_cadestro_v1_common_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1660,186 +624,10 @@ func (x *UserId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserId.ProtoReflect.Descriptor instead.
 func (*UserId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{11}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *UserId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type RoleId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RoleId) Reset() {
-	*x = RoleId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RoleId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RoleId) ProtoMessage() {}
-
-func (x *RoleId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RoleId.ProtoReflect.Descriptor instead.
-func (*RoleId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *RoleId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type GroupId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GroupId) Reset() {
-	*x = GroupId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GroupId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GroupId) ProtoMessage() {}
-
-func (x *GroupId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GroupId.ProtoReflect.Descriptor instead.
-func (*GroupId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{13}
-}
-
-func (x *GroupId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type SshKeyId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SshKeyId) Reset() {
-	*x = SshKeyId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SshKeyId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SshKeyId) ProtoMessage() {}
-
-func (x *SshKeyId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SshKeyId.ProtoReflect.Descriptor instead.
-func (*SshKeyId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *SshKeyId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type UserGroupId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UserGroupId) Reset() {
-	*x = UserGroupId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UserGroupId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UserGroupId) ProtoMessage() {}
-
-func (x *UserGroupId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[15]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UserGroupId.ProtoReflect.Descriptor instead.
-func (*UserGroupId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *UserGroupId) GetValue() string {
 	if x != nil {
 		return x.Value
 	}
@@ -1855,7 +643,7 @@ type RegistrationTokenId struct {
 
 func (x *RegistrationTokenId) Reset() {
 	*x = RegistrationTokenId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[16]
+	mi := &file_cadestro_v1_common_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1867,7 +655,7 @@ func (x *RegistrationTokenId) String() string {
 func (*RegistrationTokenId) ProtoMessage() {}
 
 func (x *RegistrationTokenId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[16]
+	mi := &file_cadestro_v1_common_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1880,54 +668,10 @@ func (x *RegistrationTokenId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegistrationTokenId.ProtoReflect.Descriptor instead.
 func (*RegistrationTokenId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{16}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *RegistrationTokenId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type ApiTokenId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ApiTokenId) Reset() {
-	*x = ApiTokenId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ApiTokenId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ApiTokenId) ProtoMessage() {}
-
-func (x *ApiTokenId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ApiTokenId.ProtoReflect.Descriptor instead.
-func (*ApiTokenId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{17}
-}
-
-func (x *ApiTokenId) GetValue() string {
 	if x != nil {
 		return x.Value
 	}
@@ -1943,7 +687,7 @@ type DeviceGroupId struct {
 
 func (x *DeviceGroupId) Reset() {
 	*x = DeviceGroupId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[18]
+	mi := &file_cadestro_v1_common_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1955,7 +699,7 @@ func (x *DeviceGroupId) String() string {
 func (*DeviceGroupId) ProtoMessage() {}
 
 func (x *DeviceGroupId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[18]
+	mi := &file_cadestro_v1_common_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1968,7 +712,7 @@ func (x *DeviceGroupId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceGroupId.ProtoReflect.Descriptor instead.
 func (*DeviceGroupId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{18}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DeviceGroupId) GetValue() string {
@@ -1987,7 +731,7 @@ type AssignmentId struct {
 
 func (x *AssignmentId) Reset() {
 	*x = AssignmentId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[19]
+	mi := &file_cadestro_v1_common_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1999,7 +743,7 @@ func (x *AssignmentId) String() string {
 func (*AssignmentId) ProtoMessage() {}
 
 func (x *AssignmentId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[19]
+	mi := &file_cadestro_v1_common_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2012,7 +756,7 @@ func (x *AssignmentId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssignmentId.ProtoReflect.Descriptor instead.
 func (*AssignmentId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{19}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *AssignmentId) GetValue() string {
@@ -2022,28 +766,28 @@ func (x *AssignmentId) GetValue() string {
 	return ""
 }
 
-type AssignmentSourceId struct {
+type IdentityProviderId struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AssignmentSourceId) Reset() {
-	*x = AssignmentSourceId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[20]
+func (x *IdentityProviderId) Reset() {
+	*x = IdentityProviderId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AssignmentSourceId) String() string {
+func (x *IdentityProviderId) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AssignmentSourceId) ProtoMessage() {}
+func (*IdentityProviderId) ProtoMessage() {}
 
-func (x *AssignmentSourceId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[20]
+func (x *IdentityProviderId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2054,12 +798,56 @@ func (x *AssignmentSourceId) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AssignmentSourceId.ProtoReflect.Descriptor instead.
-func (*AssignmentSourceId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{20}
+// Deprecated: Use IdentityProviderId.ProtoReflect.Descriptor instead.
+func (*IdentityProviderId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *AssignmentSourceId) GetValue() string {
+func (x *IdentityProviderId) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type OidcClientId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OidcClientId) Reset() {
+	*x = OidcClientId{}
+	mi := &file_cadestro_v1_common_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OidcClientId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OidcClientId) ProtoMessage() {}
+
+func (x *OidcClientId) ProtoReflect() protoreflect.Message {
+	mi := &file_cadestro_v1_common_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OidcClientId.ProtoReflect.Descriptor instead.
+func (*OidcClientId) Descriptor() ([]byte, []int) {
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *OidcClientId) GetValue() string {
 	if x != nil {
 		return x.Value
 	}
@@ -2075,7 +863,7 @@ type AssignmentTargetId struct {
 
 func (x *AssignmentTargetId) Reset() {
 	*x = AssignmentTargetId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[21]
+	mi := &file_cadestro_v1_common_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2087,7 +875,7 @@ func (x *AssignmentTargetId) String() string {
 func (*AssignmentTargetId) ProtoMessage() {}
 
 func (x *AssignmentTargetId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[21]
+	mi := &file_cadestro_v1_common_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2100,98 +888,10 @@ func (x *AssignmentTargetId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssignmentTargetId.ProtoReflect.Descriptor instead.
 func (*AssignmentTargetId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{21}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *AssignmentTargetId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type UserSelectionId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UserSelectionId) Reset() {
-	*x = UserSelectionId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[22]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UserSelectionId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UserSelectionId) ProtoMessage() {}
-
-func (x *UserSelectionId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[22]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UserSelectionId.ProtoReflect.Descriptor instead.
-func (*UserSelectionId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{22}
-}
-
-func (x *UserSelectionId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type ScopeId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ScopeId) Reset() {
-	*x = ScopeId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[23]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ScopeId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ScopeId) ProtoMessage() {}
-
-func (x *ScopeId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[23]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ScopeId.ProtoReflect.Descriptor instead.
-func (*ScopeId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{23}
-}
-
-func (x *ScopeId) GetValue() string {
 	if x != nil {
 		return x.Value
 	}
@@ -2207,7 +907,7 @@ type AuditEventId struct {
 
 func (x *AuditEventId) Reset() {
 	*x = AuditEventId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[24]
+	mi := &file_cadestro_v1_common_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2219,7 +919,7 @@ func (x *AuditEventId) String() string {
 func (*AuditEventId) ProtoMessage() {}
 
 func (x *AuditEventId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[24]
+	mi := &file_cadestro_v1_common_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2232,7 +932,7 @@ func (x *AuditEventId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuditEventId.ProtoReflect.Descriptor instead.
 func (*AuditEventId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{24}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *AuditEventId) GetValue() string {
@@ -2251,7 +951,7 @@ type AuditStreamId struct {
 
 func (x *AuditStreamId) Reset() {
 	*x = AuditStreamId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[25]
+	mi := &file_cadestro_v1_common_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2263,7 +963,7 @@ func (x *AuditStreamId) String() string {
 func (*AuditStreamId) ProtoMessage() {}
 
 func (x *AuditStreamId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[25]
+	mi := &file_cadestro_v1_common_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2276,7 +976,7 @@ func (x *AuditStreamId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuditStreamId.ProtoReflect.Descriptor instead.
 func (*AuditStreamId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{25}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *AuditStreamId) GetValue() string {
@@ -2295,7 +995,7 @@ type AuditActorId struct {
 
 func (x *AuditActorId) Reset() {
 	*x = AuditActorId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[26]
+	mi := &file_cadestro_v1_common_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2307,7 +1007,7 @@ func (x *AuditActorId) String() string {
 func (*AuditActorId) ProtoMessage() {}
 
 func (x *AuditActorId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[26]
+	mi := &file_cadestro_v1_common_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2320,600 +1020,12 @@ func (x *AuditActorId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuditActorId.ProtoReflect.Descriptor instead.
 func (*AuditActorId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{26}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *AuditActorId) GetValue() string {
 	if x != nil {
 		return x.Value
-	}
-	return ""
-}
-
-type LpsPasswordId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *LpsPasswordId) Reset() {
-	*x = LpsPasswordId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[27]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *LpsPasswordId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*LpsPasswordId) ProtoMessage() {}
-
-func (x *LpsPasswordId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[27]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use LpsPasswordId.ProtoReflect.Descriptor instead.
-func (*LpsPasswordId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{27}
-}
-
-func (x *LpsPasswordId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type LuksKeyId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *LuksKeyId) Reset() {
-	*x = LuksKeyId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[28]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *LuksKeyId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*LuksKeyId) ProtoMessage() {}
-
-func (x *LuksKeyId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[28]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use LuksKeyId.ProtoReflect.Descriptor instead.
-func (*LuksKeyId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{28}
-}
-
-func (x *LuksKeyId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type IdentityProviderId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *IdentityProviderId) Reset() {
-	*x = IdentityProviderId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[29]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *IdentityProviderId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*IdentityProviderId) ProtoMessage() {}
-
-func (x *IdentityProviderId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[29]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use IdentityProviderId.ProtoReflect.Descriptor instead.
-func (*IdentityProviderId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{29}
-}
-
-func (x *IdentityProviderId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type IdentityLinkId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *IdentityLinkId) Reset() {
-	*x = IdentityLinkId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[30]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *IdentityLinkId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*IdentityLinkId) ProtoMessage() {}
-
-func (x *IdentityLinkId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[30]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use IdentityLinkId.ProtoReflect.Descriptor instead.
-func (*IdentityLinkId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{30}
-}
-
-func (x *IdentityLinkId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type CompliancePolicyId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CompliancePolicyId) Reset() {
-	*x = CompliancePolicyId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[31]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CompliancePolicyId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CompliancePolicyId) ProtoMessage() {}
-
-func (x *CompliancePolicyId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[31]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CompliancePolicyId.ProtoReflect.Descriptor instead.
-func (*CompliancePolicyId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{31}
-}
-
-func (x *CompliancePolicyId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type SearchResultId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SearchResultId) Reset() {
-	*x = SearchResultId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[32]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SearchResultId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SearchResultId) ProtoMessage() {}
-
-func (x *SearchResultId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[32]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SearchResultId.ProtoReflect.Descriptor instead.
-func (*SearchResultId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{32}
-}
-
-func (x *SearchResultId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type RequestId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RequestId) Reset() {
-	*x = RequestId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[33]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RequestId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RequestId) ProtoMessage() {}
-
-func (x *RequestId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[33]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RequestId.ProtoReflect.Descriptor instead.
-func (*RequestId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{33}
-}
-
-func (x *RequestId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type FlatpakAppId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *FlatpakAppId) Reset() {
-	*x = FlatpakAppId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[34]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *FlatpakAppId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FlatpakAppId) ProtoMessage() {}
-
-func (x *FlatpakAppId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[34]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FlatpakAppId.ProtoReflect.Descriptor instead.
-func (*FlatpakAppId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{34}
-}
-
-func (x *FlatpakAppId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type OidcClientId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *OidcClientId) Reset() {
-	*x = OidcClientId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[35]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *OidcClientId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*OidcClientId) ProtoMessage() {}
-
-func (x *OidcClientId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[35]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use OidcClientId.ProtoReflect.Descriptor instead.
-func (*OidcClientId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{35}
-}
-
-func (x *OidcClientId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type ExternalIdentityId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ExternalIdentityId) Reset() {
-	*x = ExternalIdentityId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[36]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ExternalIdentityId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ExternalIdentityId) ProtoMessage() {}
-
-func (x *ExternalIdentityId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[36]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ExternalIdentityId.ProtoReflect.Descriptor instead.
-func (*ExternalIdentityId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{36}
-}
-
-func (x *ExternalIdentityId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type ErrorDetail struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Code          ErrorCode              `protobuf:"varint,1,opt,name=code,proto3,enum=cadestro.v1.ErrorCode" json:"code,omitempty"`
-	RequestId     *RequestId             `protobuf:"bytes,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ErrorDetail) Reset() {
-	*x = ErrorDetail{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[37]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ErrorDetail) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ErrorDetail) ProtoMessage() {}
-
-func (x *ErrorDetail) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[37]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ErrorDetail.ProtoReflect.Descriptor instead.
-func (*ErrorDetail) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{37}
-}
-
-func (x *ErrorDetail) GetCode() ErrorCode {
-	if x != nil {
-		return x.Code
-	}
-	return ErrorCode_ERROR_CODE_UNSPECIFIED
-}
-
-func (x *ErrorDetail) GetRequestId() *RequestId {
-	if x != nil {
-		return x.RequestId
-	}
-	return nil
-}
-
-type MaintenanceWindow struct {
-	state         protoimpl.MessageState    `protogen:"open.v1"`
-	Schedule      []*MaintenanceWindowEntry `protobuf:"bytes,1,rep,name=schedule,proto3" json:"schedule,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *MaintenanceWindow) Reset() {
-	*x = MaintenanceWindow{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[38]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *MaintenanceWindow) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*MaintenanceWindow) ProtoMessage() {}
-
-func (x *MaintenanceWindow) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[38]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use MaintenanceWindow.ProtoReflect.Descriptor instead.
-func (*MaintenanceWindow) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{38}
-}
-
-func (x *MaintenanceWindow) GetSchedule() []*MaintenanceWindowEntry {
-	if x != nil {
-		return x.Schedule
-	}
-	return nil
-}
-
-type MaintenanceWindowEntry struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Days          []string               `protobuf:"bytes,1,rep,name=days,proto3" json:"days,omitempty"`
-	Allow         string                 `protobuf:"bytes,2,opt,name=allow,proto3" json:"allow,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *MaintenanceWindowEntry) Reset() {
-	*x = MaintenanceWindowEntry{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[39]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *MaintenanceWindowEntry) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*MaintenanceWindowEntry) ProtoMessage() {}
-
-func (x *MaintenanceWindowEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[39]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use MaintenanceWindowEntry.ProtoReflect.Descriptor instead.
-func (*MaintenanceWindowEntry) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{39}
-}
-
-func (x *MaintenanceWindowEntry) GetDays() []string {
-	if x != nil {
-		return x.Days
-	}
-	return nil
-}
-
-func (x *MaintenanceWindowEntry) GetAllow() string {
-	if x != nil {
-		return x.Allow
 	}
 	return ""
 }
@@ -2929,7 +1041,7 @@ type CommandOutput struct {
 
 func (x *CommandOutput) Reset() {
 	*x = CommandOutput{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[40]
+	mi := &file_cadestro_v1_common_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2941,7 +1053,7 @@ func (x *CommandOutput) String() string {
 func (*CommandOutput) ProtoMessage() {}
 
 func (x *CommandOutput) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[40]
+	mi := &file_cadestro_v1_common_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2954,7 +1066,7 @@ func (x *CommandOutput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommandOutput.ProtoReflect.Descriptor instead.
 func (*CommandOutput) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{40}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *CommandOutput) GetExitCode() int32 {
@@ -2990,89 +1102,38 @@ const file_cadestro_v1_common_proto_rawDesc = "" +
 	"\x05RunId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\".\n" +
 	"\fOccurrenceId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\".\n" +
-	"\fDefinitionId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"-\n" +
-	"\vActionSetId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\",\n" +
 	"\n" +
 	"ManifestId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\")\n" +
-	"\aQueryId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"+\n" +
 	"\tMessageId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"2\n" +
 	"\x10PolicyRevisionId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"+\n" +
-	"\tSessionId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"(\n" +
 	"\x06UserId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"(\n" +
-	"\x06RoleId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\")\n" +
-	"\aGroupId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"*\n" +
-	"\bSshKeyId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"-\n" +
-	"\vUserGroupId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"5\n" +
 	"\x13RegistrationTokenId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\",\n" +
-	"\n" +
-	"ApiTokenId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"/\n" +
 	"\rDeviceGroupId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\".\n" +
 	"\fAssignmentId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"4\n" +
-	"\x12AssignmentSourceId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"4\n" +
+	"\x12IdentityProviderId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\".\n" +
+	"\fOidcClientId\x12\x1e\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x18\xff\x01R\x05value\"4\n" +
 	"\x12AssignmentTargetId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"1\n" +
-	"\x0fUserSelectionId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\")\n" +
-	"\aScopeId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\".\n" +
 	"\fAuditEventId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"/\n" +
 	"\rAuditStreamId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\".\n" +
 	"\fAuditActorId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"/\n" +
-	"\rLpsPasswordId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"+\n" +
-	"\tLuksKeyId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"4\n" +
-	"\x12IdentityProviderId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"0\n" +
-	"\x0eIdentityLinkId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"4\n" +
-	"\x12CompliancePolicyId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"0\n" +
-	"\x0eSearchResultId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"*\n" +
-	"\tRequestId\x12\x1d\n" +
-	"\x05value\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x18@R\x05value\"0\n" +
-	"\fFlatpakAppId\x12 \n" +
-	"\x05value\x18\x01 \x01(\tB\n" +
-	"\xbaH\ar\x05\x10\x01\x18\xff\x01R\x05value\".\n" +
-	"\fOidcClientId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x18\xff\x01R\x05value\"*\n" +
-	"\x12ExternalIdentityId\x12\x14\n" +
-	"\x05value\x18\x01 \x01(\tR\x05value\"z\n" +
-	"\vErrorDetail\x124\n" +
-	"\x04code\x18\x01 \x01(\x0e2\x16.cadestro.v1.ErrorCodeB\b\xbaH\x05\x82\x01\x02\x10\x01R\x04code\x125\n" +
-	"\n" +
-	"request_id\x18\x02 \x01(\v2\x16.cadestro.v1.RequestIdR\trequestId\"T\n" +
-	"\x11MaintenanceWindow\x12?\n" +
-	"\bschedule\x18\x01 \x03(\v2#.cadestro.v1.MaintenanceWindowEntryR\bschedule\"\x85\x01\n" +
-	"\x16MaintenanceWindowEntry\x12H\n" +
-	"\x04days\x18\x01 \x03(\tB4\xbaH1\xc8\x01\x01\x92\x01+\b\x01\x10\a\"%r#R\x03monR\x03tueR\x03wedR\x03thuR\x03friR\x03satR\x03sunR\x04days\x12!\n" +
-	"\x05allow\x18\x02 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x98\x01\vR\x05allow\"x\n" +
+	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"x\n" +
 	"\rCommandOutput\x12\x1b\n" +
 	"\texit_code\x18\x01 \x01(\x05R\bexitCode\x12$\n" +
 	"\x06stdout\x18\x02 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x06stdout\x12$\n" +
-	"\x06stderr\x18\x03 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x06stderr*\xcf\x02\n" +
+	"\x06stderr\x18\x03 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x06stderr*\x8a\x02\n" +
 	"\x0fExecutionStatus\x12 \n" +
 	"\x1cEXECUTION_STATUS_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18EXECUTION_STATUS_PENDING\x10\x01\x12\x1c\n" +
@@ -3080,177 +1141,24 @@ const file_cadestro_v1_common_proto_rawDesc = "" +
 	"\x18EXECUTION_STATUS_SUCCESS\x10\x03\x12\x1b\n" +
 	"\x17EXECUTION_STATUS_FAILED\x10\x04\x12\x1c\n" +
 	"\x18EXECUTION_STATUS_SKIPPED\x10\x05\x12\x1c\n" +
-	"\x18EXECUTION_STATUS_TIMEOUT\x10\x06\x12\x1e\n" +
-	"\x1aEXECUTION_STATUS_CANCELLED\x10\a\x12#\n" +
-	"\x1fEXECUTION_STATUS_NOT_APPLICABLE\x10\b\x12\"\n" +
-	"\x1eEXECUTION_STATUS_INDETERMINATE\x10\t*C\n" +
-	"\fDesiredState\x12\x19\n" +
-	"\x15DESIRED_STATE_PRESENT\x10\x00\x12\x18\n" +
-	"\x14DESIRED_STATE_ABSENT\x10\x01*\x8a\x01\n" +
-	"\x0eAssignmentMode\x12\x1c\n" +
-	"\x18ASSIGNMENT_MODE_REQUIRED\x10\x00\x12\x1d\n" +
-	"\x19ASSIGNMENT_MODE_AVAILABLE\x10\x01\x12\x1c\n" +
-	"\x18ASSIGNMENT_MODE_EXCLUDED\x10\x02\x12\x1d\n" +
-	"\x19ASSIGNMENT_MODE_UNINSTALL\x10\x03*\xdd\x01\n" +
-	"\x14AssignmentSourceType\x12&\n" +
-	"\"ASSIGNMENT_SOURCE_TYPE_UNSPECIFIED\x10\x00\x12!\n" +
-	"\x1dASSIGNMENT_SOURCE_TYPE_ACTION\x10\x01\x12%\n" +
-	"!ASSIGNMENT_SOURCE_TYPE_ACTION_SET\x10\x02\x12%\n" +
-	"!ASSIGNMENT_SOURCE_TYPE_DEFINITION\x10\x03\x12,\n" +
-	"(ASSIGNMENT_SOURCE_TYPE_COMPLIANCE_POLICY\x10\x04*\xd2\x01\n" +
-	"\x14AssignmentTargetType\x12&\n" +
-	"\"ASSIGNMENT_TARGET_TYPE_UNSPECIFIED\x10\x00\x12!\n" +
-	"\x1dASSIGNMENT_TARGET_TYPE_DEVICE\x10\x01\x12'\n" +
-	"#ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP\x10\x02\x12\x1f\n" +
-	"\x1bASSIGNMENT_TARGET_TYPE_USER\x10\x03\x12%\n" +
-	"!ASSIGNMENT_TARGET_TYPE_USER_GROUP\x10\x04*\x89\x01\n" +
-	"\x12RoleGrantScopeKind\x12%\n" +
-	"!ROLE_GRANT_SCOPE_KIND_UNSPECIFIED\x10\x00\x12&\n" +
-	"\"ROLE_GRANT_SCOPE_KIND_DEVICE_GROUP\x10\x01\x12$\n" +
-	" ROLE_GRANT_SCOPE_KIND_USER_GROUP\x10\x02*\x82\x01\n" +
-	"\x14PermissionTargetKind\x12&\n" +
-	"\"PERMISSION_TARGET_KIND_UNSPECIFIED\x10\x00\x12!\n" +
-	"\x1dPERMISSION_TARGET_KIND_DEVICE\x10\x01\x12\x1f\n" +
-	"\x1bPERMISSION_TARGET_KIND_USER\x10\x02*b\n" +
+	"\x18EXECUTION_STATUS_TIMEOUT\x10\x06\x12\"\n" +
+	"\x1eEXECUTION_STATUS_INDETERMINATE\x10\a*b\n" +
+	"\fDesiredState\x12\x1d\n" +
+	"\x19DESIRED_STATE_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15DESIRED_STATE_PRESENT\x10\x01\x12\x18\n" +
+	"\x14DESIRED_STATE_ABSENT\x10\x02*b\n" +
 	"\fDeviceStatus\x12\x1d\n" +
 	"\x19DEVICE_STATUS_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14DEVICE_STATUS_ONLINE\x10\x01\x12\x19\n" +
-	"\x15DEVICE_STATUS_OFFLINE\x10\x02*\xb6\x02\n" +
-	"\vSearchScope\x12\x1c\n" +
-	"\x18SEARCH_SCOPE_UNSPECIFIED\x10\x00\x12\x18\n" +
-	"\x14SEARCH_SCOPE_ACTIONS\x10\x01\x12\x1c\n" +
-	"\x18SEARCH_SCOPE_ACTION_SETS\x10\x02\x12\x1c\n" +
-	"\x18SEARCH_SCOPE_DEFINITIONS\x10\x03\x12$\n" +
-	" SEARCH_SCOPE_COMPLIANCE_POLICIES\x10\x04\x12\x18\n" +
-	"\x14SEARCH_SCOPE_DEVICES\x10\x05\x12\x16\n" +
-	"\x12SEARCH_SCOPE_USERS\x10\x06\x12\x1e\n" +
-	"\x1aSEARCH_SCOPE_DEVICE_GROUPS\x10\a\x12\x1c\n" +
-	"\x18SEARCH_SCOPE_USER_GROUPS\x10\b\x12\x1d\n" +
-	"\x19SEARCH_SCOPE_AUDIT_EVENTS\x10\t*\xe0\x04\n" +
-	"\tSortField\x12\x1a\n" +
-	"\x16SORT_FIELD_UNSPECIFIED\x10\x00\x12\x13\n" +
-	"\x0fSORT_FIELD_NAME\x10\x01\x12\x13\n" +
-	"\x0fSORT_FIELD_TYPE\x10\x02\x12\x17\n" +
-	"\x13SORT_FIELD_HOSTNAME\x10\x03\x12 \n" +
-	"\x1cSORT_FIELD_COMPLIANCE_STATUS\x10\x04\x12\x14\n" +
-	"\x10SORT_FIELD_EMAIL\x10\x05\x12\x1b\n" +
-	"\x17SORT_FIELD_DISPLAY_NAME\x10\x06\x12\x17\n" +
-	"\x13SORT_FIELD_DISABLED\x10\a\x12\x1b\n" +
-	"\x17SORT_FIELD_MEMBER_COUNT\x10\b\x12\x15\n" +
-	"\x11SORT_FIELD_STATUS\x10\t\x12\x1a\n" +
-	"\x16SORT_FIELD_ACTION_TYPE\x10\n" +
-	"\x12\x1e\n" +
-	"\x1aSORT_FIELD_DEVICE_HOSTNAME\x10\v\x12\x19\n" +
-	"\x15SORT_FIELD_ACTOR_TYPE\x10\f\x12\x1a\n" +
-	"\x16SORT_FIELD_STREAM_TYPE\x10\r\x12\x19\n" +
-	"\x15SORT_FIELD_EVENT_TYPE\x10\x0e\x12\x19\n" +
-	"\x15SORT_FIELD_RULE_COUNT\x10\x0f\x12\x1c\n" +
-	"\x18SORT_FIELD_LAST_LOGIN_AT\x10\x10\x12\x19\n" +
-	"\x15SORT_FIELD_CREATED_AT\x10\x11\x12\x19\n" +
-	"\x15SORT_FIELD_UPDATED_AT\x10\x12\x12\x1b\n" +
-	"\x17SORT_FIELD_LAST_SEEN_AT\x10\x13\x12\x1c\n" +
-	"\x18SORT_FIELD_REGISTERED_AT\x10\x14\x12\x1a\n" +
-	"\x16SORT_FIELD_OCCURRED_AT\x10\x15*`\n" +
-	"\rSortDirection\x12\x1e\n" +
-	"\x1aSORT_DIRECTION_UNSPECIFIED\x10\x00\x12\x16\n" +
-	"\x12SORT_DIRECTION_ASC\x10\x01\x12\x17\n" +
-	"\x13SORT_DIRECTION_DESC\x10\x02*_\n" +
-	"\x14IdentityProviderType\x12&\n" +
-	"\"IDENTITY_PROVIDER_TYPE_UNSPECIFIED\x10\x00\x12\x1f\n" +
-	"\x1bIDENTITY_PROVIDER_TYPE_OIDC\x10\x01*\x8d\x01\n" +
-	"\x0eRotationReason\x12\x1f\n" +
-	"\x1bROTATION_REASON_UNSPECIFIED\x10\x00\x12\x1b\n" +
-	"\x17ROTATION_REASON_INITIAL\x10\x01\x12\x1d\n" +
-	"\x19ROTATION_REASON_SCHEDULED\x10\x02\x12\x1e\n" +
-	"\x1aROTATION_REASON_AUTH_GRACE\x10\x03*\xcd\x01\n" +
-	"\x14LuksRevocationStatus\x12&\n" +
-	"\"LUKS_REVOCATION_STATUS_UNSPECIFIED\x10\x00\x12\x1f\n" +
-	"\x1bLUKS_REVOCATION_STATUS_NONE\x10\x01\x12%\n" +
-	"!LUKS_REVOCATION_STATUS_DISPATCHED\x10\x02\x12\"\n" +
-	"\x1eLUKS_REVOCATION_STATUS_SUCCESS\x10\x03\x12!\n" +
-	"\x1dLUKS_REVOCATION_STATUS_FAILED\x10\x04*\xba\x16\n" +
-	"\tErrorCode\x12\x1a\n" +
-	"\x16ERROR_CODE_UNSPECIFIED\x10\x00\x12$\n" +
-	" ERROR_CODE_ACTION_ALREADY_IN_SET\x10\x01\x12$\n" +
-	" ERROR_CODE_ACTION_NOT_COMPLIANCE\x10\x02\x12\x1f\n" +
-	"\x1bERROR_CODE_ACTION_NOT_FOUND\x10\x03\x12/\n" +
-	"+ERROR_CODE_ACTION_SET_ALREADY_IN_DEFINITION\x10\x04\x12*\n" +
-	"&ERROR_CODE_ACTION_SET_MEMBER_NOT_FOUND\x10\x05\x12#\n" +
-	"\x1fERROR_CODE_ACTION_SET_NOT_FOUND\x10\x06\x12#\n" +
-	"\x1fERROR_CODE_ASSIGNMENT_NOT_FOUND\x10\a\x12*\n" +
-	"&ERROR_CODE_ASSIGNMENT_SOURCE_NOT_FOUND\x10\b\x12*\n" +
-	"&ERROR_CODE_ASSIGNMENT_TARGET_NOT_FOUND\x10\t\x12(\n" +
-	"$ERROR_CODE_CANNOT_DELETE_SYSTEM_ROLE\x10\n" +
-	"\x12*\n" +
-	"&ERROR_CODE_CANNOT_MODIFY_SYSTEM_ACTION\x10\v\x12(\n" +
-	"$ERROR_CODE_CANNOT_MODIFY_SYSTEM_ROLE\x10\f\x12(\n" +
-	"$ERROR_CODE_CANNOT_RENAME_SYSTEM_ROLE\x10\r\x12'\n" +
-	"#ERROR_CODE_CANNOT_UNLINK_OTHER_USER\x10\x0e\x120\n" +
-	",ERROR_CODE_COMPLIANCE_ACTION_NEEDS_DETECTION\x10\x0f\x12,\n" +
-	"(ERROR_CODE_COMPLIANCE_POLICY_NAME_EXISTS\x10\x10\x12*\n" +
-	"&ERROR_CODE_COMPLIANCE_POLICY_NOT_FOUND\x10\x11\x12,\n" +
-	"(ERROR_CODE_COMPLIANCE_POLICY_RULE_EXISTS\x10\x12\x12/\n" +
-	"+ERROR_CODE_COMPLIANCE_POLICY_RULE_NOT_FOUND\x10\x13\x12*\n" +
-	"&ERROR_CODE_DEFINITION_MEMBER_NOT_FOUND\x10\x14\x12#\n" +
-	"\x1fERROR_CODE_DEFINITION_NOT_FOUND\x10\x15\x12&\n" +
-	"\"ERROR_CODE_DEVICE_ALREADY_IN_GROUP\x10\x16\x12,\n" +
-	"(ERROR_CODE_DEVICE_GROUP_MEMBER_NOT_FOUND\x10\x17\x12'\n" +
-	"#ERROR_CODE_DEVICE_GROUP_NAME_EXISTS\x10\x18\x12%\n" +
-	"!ERROR_CODE_DEVICE_GROUP_NOT_FOUND\x10\x19\x12#\n" +
-	"\x1fERROR_CODE_DEVICE_NOT_CONNECTED\x10\x1a\x12\x1f\n" +
-	"\x1bERROR_CODE_DEVICE_NOT_FOUND\x10\x1b\x12!\n" +
-	"\x1dERROR_CODE_DEVICE_UNAVAILABLE\x10\x1c\x12*\n" +
-	"&ERROR_CODE_DYNAMIC_GROUP_MANUAL_MODIFY\x10\x1d\x12/\n" +
-	"+ERROR_CODE_DYNAMIC_GROUP_MEMBERSHIP_MANAGED\x10\x1e\x12#\n" +
-	"\x1fERROR_CODE_EMAIL_ALREADY_EXISTS\x10\x1f\x12\x1e\n" +
-	"\x1aERROR_CODE_GRANT_NOT_FOUND\x10 \x12%\n" +
-	"!ERROR_CODE_GROUP_ALREADY_HAS_ROLE\x10!\x12 \n" +
-	"\x1cERROR_CODE_GROUP_NOT_DYNAMIC\x10\"\x12&\n" +
-	"\"ERROR_CODE_IDENTITY_LINK_NOT_FOUND\x10#\x12\x1d\n" +
-	"\x19ERROR_CODE_INTERNAL_ERROR\x10$\x12$\n" +
-	" ERROR_CODE_INVALID_DYNAMIC_QUERY\x10%\x12!\n" +
-	"\x1dERROR_CODE_INVALID_PAGE_TOKEN\x10&\x12\x1c\n" +
-	"\x18ERROR_CODE_INVALID_QUERY\x10'\x12\x1f\n" +
-	"\x1bERROR_CODE_LAST_AUTH_METHOD\x10(\x12%\n" +
-	"!ERROR_CODE_LPS_PASSWORD_NOT_FOUND\x10)\x12'\n" +
-	"#ERROR_CODE_LUKS_KEY_ALREADY_REVOKED\x10*\x12!\n" +
-	"\x1dERROR_CODE_LUKS_KEY_NOT_FOUND\x10+\x12*\n" +
-	"&ERROR_CODE_LUKS_KEY_REVOCATION_PENDING\x10,\x12\"\n" +
-	"\x1eERROR_CODE_NO_ASSIGNMENT_FOUND\x10-\x12 \n" +
-	"\x1cERROR_CODE_NOT_AUTHENTICATED\x10.\x12 \n" +
-	"\x1cERROR_CODE_PERMISSION_DENIED\x10/\x12 \n" +
-	"\x1cERROR_CODE_PROVIDER_DISABLED\x100\x12!\n" +
-	"\x1dERROR_CODE_PROVIDER_NOT_FOUND\x101\x12#\n" +
-	"\x1fERROR_CODE_PROVIDER_SLUG_EXISTS\x102\x12%\n" +
-	"!ERROR_CODE_QUERY_RESULT_NOT_FOUND\x103\x12\x1b\n" +
-	"\x17ERROR_CODE_RATE_LIMITED\x104\x12\x1a\n" +
-	"\x16ERROR_CODE_ROLE_IN_USE\x105\x12\x1f\n" +
-	"\x1bERROR_CODE_ROLE_NAME_EXISTS\x106\x12\x1d\n" +
-	"\x19ERROR_CODE_ROLE_NOT_FOUND\x107\x12#\n" +
-	"\x1fERROR_CODE_SCIM_ALREADY_ENABLED\x108\x12$\n" +
-	" ERROR_CODE_SCIM_MANAGED_RESOURCE\x109\x12\x1f\n" +
-	"\x1bERROR_CODE_SCIM_NOT_ENABLED\x10:\x12\"\n" +
-	"\x1eERROR_CODE_SCOPE_NOT_PERMITTED\x10;\x12&\n" +
-	"\"ERROR_CODE_SSO_NO_MATCHING_ACCOUNT\x10<\x12 \n" +
-	"\x1cERROR_CODE_SSO_STATE_EXPIRED\x10=\x12.\n" +
-	"*ERROR_CODE_TERMINAL_LINUX_USERNAME_NOT_SET\x10>\x12&\n" +
-	"\"ERROR_CODE_TERMINAL_NOT_CONFIGURED\x10?\x12)\n" +
-	"%ERROR_CODE_TERMINAL_SESSION_NOT_FOUND\x10@\x12\x1c\n" +
-	"\x18ERROR_CODE_TOKEN_EXPIRED\x10A\x12\x1e\n" +
-	"\x1aERROR_CODE_TOKEN_NOT_FOUND\x10B\x12\x1c\n" +
-	"\x18ERROR_CODE_UNIMPLEMENTED\x10C\x12$\n" +
-	" ERROR_CODE_USER_ALREADY_HAS_ROLE\x10D\x12$\n" +
-	" ERROR_CODE_USER_ALREADY_IN_GROUP\x10E\x12*\n" +
-	"&ERROR_CODE_USER_GROUP_MEMBER_NOT_FOUND\x10F\x12%\n" +
-	"!ERROR_CODE_USER_GROUP_NAME_EXISTS\x10G\x12#\n" +
-	"\x1fERROR_CODE_USER_GROUP_NOT_FOUND\x10H\x12\x1d\n" +
-	"\x19ERROR_CODE_USER_NOT_FOUND\x10I\x12 \n" +
-	"\x1cERROR_CODE_VALIDATION_FAILED\x10J*\x9e\x01\n" +
-	"\x10ComplianceStatus\x12\x1d\n" +
-	"\x19COMPLIANCE_STATUS_UNKNOWN\x10\x00\x12\x1f\n" +
+	"\x15DEVICE_STATUS_OFFLINE\x10\x02*{\n" +
+	"\x10ComplianceStatus\x12!\n" +
+	"\x1dCOMPLIANCE_STATUS_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bCOMPLIANCE_STATUS_COMPLIANT\x10\x01\x12#\n" +
-	"\x1fCOMPLIANCE_STATUS_NON_COMPLIANT\x10\x02\x12%\n" +
-	"!COMPLIANCE_STATUS_IN_GRACE_PERIOD\x10\x03BGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
+	"\x1fCOMPLIANCE_STATUS_NON_COMPLIANT\x10\x02*\x8a\x01\n" +
+	"\x14AssignmentTargetType\x12&\n" +
+	"\"ASSIGNMENT_TARGET_TYPE_UNSPECIFIED\x10\x00\x12!\n" +
+	"\x1dASSIGNMENT_TARGET_TYPE_DEVICE\x10\x01\x12'\n" +
+	"#ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP\x10\x02BGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
 
 var (
 	file_cadestro_v1_common_proto_rawDescOnce sync.Once
@@ -3264,76 +1172,39 @@ func file_cadestro_v1_common_proto_rawDescGZIP() []byte {
 	return file_cadestro_v1_common_proto_rawDescData
 }
 
-var file_cadestro_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 16)
-var file_cadestro_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
+var file_cadestro_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
+var file_cadestro_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_cadestro_v1_common_proto_goTypes = []any{
-	(ExecutionStatus)(0),           // 0: cadestro.v1.ExecutionStatus
-	(DesiredState)(0),              // 1: cadestro.v1.DesiredState
-	(AssignmentMode)(0),            // 2: cadestro.v1.AssignmentMode
-	(AssignmentSourceType)(0),      // 3: cadestro.v1.AssignmentSourceType
-	(AssignmentTargetType)(0),      // 4: cadestro.v1.AssignmentTargetType
-	(RoleGrantScopeKind)(0),        // 5: cadestro.v1.RoleGrantScopeKind
-	(PermissionTargetKind)(0),      // 6: cadestro.v1.PermissionTargetKind
-	(DeviceStatus)(0),              // 7: cadestro.v1.DeviceStatus
-	(SearchScope)(0),               // 8: cadestro.v1.SearchScope
-	(SortField)(0),                 // 9: cadestro.v1.SortField
-	(SortDirection)(0),             // 10: cadestro.v1.SortDirection
-	(IdentityProviderType)(0),      // 11: cadestro.v1.IdentityProviderType
-	(RotationReason)(0),            // 12: cadestro.v1.RotationReason
-	(LuksRevocationStatus)(0),      // 13: cadestro.v1.LuksRevocationStatus
-	(ErrorCode)(0),                 // 14: cadestro.v1.ErrorCode
-	(ComplianceStatus)(0),          // 15: cadestro.v1.ComplianceStatus
-	(*ActionId)(nil),               // 16: cadestro.v1.ActionId
-	(*DeviceId)(nil),               // 17: cadestro.v1.DeviceId
-	(*RunId)(nil),                  // 18: cadestro.v1.RunId
-	(*OccurrenceId)(nil),           // 19: cadestro.v1.OccurrenceId
-	(*DefinitionId)(nil),           // 20: cadestro.v1.DefinitionId
-	(*ActionSetId)(nil),            // 21: cadestro.v1.ActionSetId
-	(*ManifestId)(nil),             // 22: cadestro.v1.ManifestId
-	(*QueryId)(nil),                // 23: cadestro.v1.QueryId
-	(*MessageId)(nil),              // 24: cadestro.v1.MessageId
-	(*PolicyRevisionId)(nil),       // 25: cadestro.v1.PolicyRevisionId
-	(*SessionId)(nil),              // 26: cadestro.v1.SessionId
-	(*UserId)(nil),                 // 27: cadestro.v1.UserId
-	(*RoleId)(nil),                 // 28: cadestro.v1.RoleId
-	(*GroupId)(nil),                // 29: cadestro.v1.GroupId
-	(*SshKeyId)(nil),               // 30: cadestro.v1.SshKeyId
-	(*UserGroupId)(nil),            // 31: cadestro.v1.UserGroupId
-	(*RegistrationTokenId)(nil),    // 32: cadestro.v1.RegistrationTokenId
-	(*ApiTokenId)(nil),             // 33: cadestro.v1.ApiTokenId
-	(*DeviceGroupId)(nil),          // 34: cadestro.v1.DeviceGroupId
-	(*AssignmentId)(nil),           // 35: cadestro.v1.AssignmentId
-	(*AssignmentSourceId)(nil),     // 36: cadestro.v1.AssignmentSourceId
-	(*AssignmentTargetId)(nil),     // 37: cadestro.v1.AssignmentTargetId
-	(*UserSelectionId)(nil),        // 38: cadestro.v1.UserSelectionId
-	(*ScopeId)(nil),                // 39: cadestro.v1.ScopeId
-	(*AuditEventId)(nil),           // 40: cadestro.v1.AuditEventId
-	(*AuditStreamId)(nil),          // 41: cadestro.v1.AuditStreamId
-	(*AuditActorId)(nil),           // 42: cadestro.v1.AuditActorId
-	(*LpsPasswordId)(nil),          // 43: cadestro.v1.LpsPasswordId
-	(*LuksKeyId)(nil),              // 44: cadestro.v1.LuksKeyId
-	(*IdentityProviderId)(nil),     // 45: cadestro.v1.IdentityProviderId
-	(*IdentityLinkId)(nil),         // 46: cadestro.v1.IdentityLinkId
-	(*CompliancePolicyId)(nil),     // 47: cadestro.v1.CompliancePolicyId
-	(*SearchResultId)(nil),         // 48: cadestro.v1.SearchResultId
-	(*RequestId)(nil),              // 49: cadestro.v1.RequestId
-	(*FlatpakAppId)(nil),           // 50: cadestro.v1.FlatpakAppId
-	(*OidcClientId)(nil),           // 51: cadestro.v1.OidcClientId
-	(*ExternalIdentityId)(nil),     // 52: cadestro.v1.ExternalIdentityId
-	(*ErrorDetail)(nil),            // 53: cadestro.v1.ErrorDetail
-	(*MaintenanceWindow)(nil),      // 54: cadestro.v1.MaintenanceWindow
-	(*MaintenanceWindowEntry)(nil), // 55: cadestro.v1.MaintenanceWindowEntry
-	(*CommandOutput)(nil),          // 56: cadestro.v1.CommandOutput
+	(ExecutionStatus)(0),        // 0: cadestro.v1.ExecutionStatus
+	(DesiredState)(0),           // 1: cadestro.v1.DesiredState
+	(DeviceStatus)(0),           // 2: cadestro.v1.DeviceStatus
+	(ComplianceStatus)(0),       // 3: cadestro.v1.ComplianceStatus
+	(AssignmentTargetType)(0),   // 4: cadestro.v1.AssignmentTargetType
+	(*ActionId)(nil),            // 5: cadestro.v1.ActionId
+	(*DeviceId)(nil),            // 6: cadestro.v1.DeviceId
+	(*RunId)(nil),               // 7: cadestro.v1.RunId
+	(*OccurrenceId)(nil),        // 8: cadestro.v1.OccurrenceId
+	(*ManifestId)(nil),          // 9: cadestro.v1.ManifestId
+	(*MessageId)(nil),           // 10: cadestro.v1.MessageId
+	(*PolicyRevisionId)(nil),    // 11: cadestro.v1.PolicyRevisionId
+	(*UserId)(nil),              // 12: cadestro.v1.UserId
+	(*RegistrationTokenId)(nil), // 13: cadestro.v1.RegistrationTokenId
+	(*DeviceGroupId)(nil),       // 14: cadestro.v1.DeviceGroupId
+	(*AssignmentId)(nil),        // 15: cadestro.v1.AssignmentId
+	(*IdentityProviderId)(nil),  // 16: cadestro.v1.IdentityProviderId
+	(*OidcClientId)(nil),        // 17: cadestro.v1.OidcClientId
+	(*AssignmentTargetId)(nil),  // 18: cadestro.v1.AssignmentTargetId
+	(*AuditEventId)(nil),        // 19: cadestro.v1.AuditEventId
+	(*AuditStreamId)(nil),       // 20: cadestro.v1.AuditStreamId
+	(*AuditActorId)(nil),        // 21: cadestro.v1.AuditActorId
+	(*CommandOutput)(nil),       // 22: cadestro.v1.CommandOutput
 }
 var file_cadestro_v1_common_proto_depIdxs = []int32{
-	14, // 0: cadestro.v1.ErrorDetail.code:type_name -> cadestro.v1.ErrorCode
-	49, // 1: cadestro.v1.ErrorDetail.request_id:type_name -> cadestro.v1.RequestId
-	55, // 2: cadestro.v1.MaintenanceWindow.schedule:type_name -> cadestro.v1.MaintenanceWindowEntry
-	3,  // [3:3] is the sub-list for method output_type
-	3,  // [3:3] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	0, // [0:0] is the sub-list for method output_type
+	0, // [0:0] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_common_proto_init() }
@@ -3346,8 +1217,8 @@ func file_cadestro_v1_common_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cadestro_v1_common_proto_rawDesc), len(file_cadestro_v1_common_proto_rawDesc)),
-			NumEnums:      16,
-			NumMessages:   41,
+			NumEnums:      5,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

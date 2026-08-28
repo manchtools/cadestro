@@ -16,15 +16,12 @@ const ServiceName = "cadestrod"
 
 const UnitName = ServiceName + ".service"
 
-const restrictRealtimeMinVersion = 257
-
 //go:embed cadestrod.service.tmpl
 var unitTemplate string
 
 var tmpl = template.Must(template.New(UnitName).Parse(unitTemplate))
 
 type Manager interface {
-	Version(ctx context.Context) (int, error)
 	ReadUnit(ctx context.Context, unit string) (string, error)
 	WriteUnit(ctx context.Context, unit, content string) error
 	DaemonReload(ctx context.Context) error
@@ -32,98 +29,73 @@ type Manager interface {
 }
 
 type Params struct {
-	BinaryPath       string
-	DataDir          string
-	RestrictRealtime bool
+	BinaryPath string
+	DataDir    string
 }
 
-func Render(p Params) (string, error) {
-	if err := validateUnitPath("BinaryPath", p.BinaryPath); err != nil {
+func Render(params Params) (string, error) {
+	if err := validateUnitPath("BinaryPath", params.BinaryPath); err != nil {
 		return "", err
 	}
-	if err := validateUnitPath("DataDir", p.DataDir); err != nil {
+	if err := validateUnitPath("DataDir", params.DataDir); err != nil {
 		return "", err
 	}
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, p); err != nil {
-		return "", fmt.Errorf("unit render: %w", err)
+	var output bytes.Buffer
+	if err := tmpl.Execute(&output, params); err != nil {
+		return "", fmt.Errorf("render unit: %w", err)
 	}
-	return buf.String(), nil
+	return output.String(), nil
 }
 
 func validateUnitPath(field, value string) error {
 	if !strings.HasPrefix(value, "/") {
-		return fmt.Errorf("unit render: %s %q must be an absolute path", field, value)
+		return fmt.Errorf("%s must be an absolute path", field)
 	}
-	for _, r := range value {
-		switch {
-		case r <= 0x20 || r == 0x7f:
-			return fmt.Errorf("unit render: %s %q contains whitespace or a control character", field, value)
-		case r == '"' || r == '\'' || r == '\\' || r == '%' || r == '$':
-
-			return fmt.Errorf("unit render: %s %q contains %q, which systemd unit syntax interprets", field, value, string(r))
-		}
+	if strings.ContainsAny(value, " \t\r\n\"'\\%$") {
+		return fmt.Errorf("%s contains a character interpreted by systemd", field)
 	}
 	return nil
 }
 
-func Reconcile(ctx context.Context, mgr Manager, logger *slog.Logger, p Params) (bool, error) {
-	return sync(ctx, mgr, logger, p, false)
+func Reconcile(ctx context.Context, manager Manager, logger *slog.Logger, params Params) (bool, error) {
+	return sync(ctx, manager, logger, params, false)
 }
 
-func EnsureInstalled(ctx context.Context, mgr Manager, logger *slog.Logger, p Params) error {
-	_, err := sync(ctx, mgr, logger, p, true)
+func EnsureInstalled(ctx context.Context, manager Manager, logger *slog.Logger, params Params) error {
+	_, err := sync(ctx, manager, logger, params, true)
 	return err
 }
 
-func sync(ctx context.Context, mgr Manager, logger *slog.Logger, p Params, createIfMissing bool) (bool, error) {
-
-	absent := false
-	onDisk, err := mgr.ReadUnit(ctx, UnitName)
-	switch {
-	case errors.Is(err, fs.ErrNotExist):
-		if !createIfMissing {
-			logger.Debug("no unit file on disk; skipping unit reconcile", "unit", UnitName)
-			return false, nil
-		}
-		absent = true
-	case err != nil:
-		return false, fmt.Errorf("read unit %s: %w", UnitName, err)
+func sync(ctx context.Context, manager Manager, logger *slog.Logger, params Params, create bool) (bool, error) {
+	current, err := manager.ReadUnit(ctx, UnitName)
+	if errors.Is(err, fs.ErrNotExist) && !create {
+		return false, nil
 	}
-
-	if ver, err := mgr.Version(ctx); err != nil {
-		logger.Warn("systemd version probe failed; rendering RestrictRealtime=false as a precaution", "error", err)
-		p.RestrictRealtime = false
-	} else {
-		p.RestrictRealtime = ver >= restrictRealtimeMinVersion
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return false, fmt.Errorf("read unit: %w", err)
 	}
-
-	rendered, err := Render(p)
+	rendered, err := Render(params)
 	if err != nil {
 		return false, err
 	}
-
-	if !absent && onDisk == rendered {
-
-		pending, nrErr := mgr.NeedsReload(ctx, UnitName)
-		if nrErr != nil {
-			logger.Warn("could not check for a pending daemon-reload; continuing", "unit", UnitName, "error", nrErr)
+	if current == rendered {
+		pending, err := manager.NeedsReload(ctx, UnitName)
+		if err != nil {
+			logger.Warn("check unit reload state", "error", err)
 			return false, nil
 		}
 		if pending {
-			logger.Warn("unit file is current but systemd's loaded config is stale (an earlier daemon-reload failed?); completing the reload", "unit", UnitName)
-			if err := mgr.DaemonReload(ctx); err != nil {
-				return false, fmt.Errorf("retry daemon-reload for %s: %w", UnitName, err)
+			if err := manager.DaemonReload(ctx); err != nil {
+				return false, fmt.Errorf("reload systemd: %w", err)
 			}
 		}
 		return false, nil
 	}
-
-	if err := mgr.WriteUnit(ctx, UnitName, rendered); err != nil {
-		return false, fmt.Errorf("write unit %s: %w", UnitName, err)
+	if err := manager.WriteUnit(ctx, UnitName, rendered); err != nil {
+		return false, fmt.Errorf("write unit: %w", err)
 	}
-	if err := mgr.DaemonReload(ctx); err != nil {
-		return true, fmt.Errorf("daemon-reload after writing %s (unit IS updated on disk): %w", UnitName, err)
+	if err := manager.DaemonReload(ctx); err != nil {
+		return true, fmt.Errorf("reload systemd: %w", err)
 	}
 	return true, nil
 }

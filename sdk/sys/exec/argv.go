@@ -6,8 +6,8 @@ const EndOfOptions = "--"
 
 // SeparatePositionals builds an argv slice that places positionals
 // after an explicit EndOfOptions ("--") separator, so a value that
-// happens to be flag-shaped (a package name like "-e", a flatpak
-// remote like "--from") can never be reparsed by the invoked program
+// happens to be flag-shaped, such as a package name like "-e", can
+// never be reparsed by the invoked program
 // as an option. The "--" is ALWAYS inserted, even when there are no
 // positionals — terminating the option list is harmless and keeps the
 // invariant unconditional (callers never have to reason about the

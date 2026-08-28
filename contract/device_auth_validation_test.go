@@ -48,7 +48,7 @@ func TestCreateTokenResponse_RequiresCAPin(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	response := &cadestrov1.CreateTokenResponse{Token: &cadestrov1.RegistrationToken{}}
+	response := &cadestrov1.CreateTokenResponse{Token: &cadestrov1.RegistrationToken{Id: &cadestrov1.RegistrationTokenId{Value: "01J0000000000000000000000A"}}}
 	if v.Validate(response) == nil {
 		t.Fatal("token creation without the enrollment CA pin passed validation")
 	}

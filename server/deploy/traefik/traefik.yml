@@ -1,28 +1,19 @@
 api:
   dashboard: false
 
-
-
-
-
 ping: {}
 
 log:
   level: INFO
 
-# docref: begin safe-access-log
 accessLog:
   format: json
   fields:
     names:
-
-
-
       RequestPath: drop
       RequestLine: drop
     headers:
       defaultMode: drop
-# docref: end safe-access-log
 
 entryPoints:
   web:
@@ -43,8 +34,6 @@ providers:
 certificatesResolvers:
   letsencrypt:
     acme:
-
-
-
-
       storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web

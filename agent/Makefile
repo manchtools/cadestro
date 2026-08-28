@@ -1,28 +1,15 @@
+SQLC_IMAGE ?= sqlc/sqlc:1.31.1
+DOCKER ?= docker
 
-
-SSH         ?= user@testserver
-KEY         ?=
-GOARCH      ?= amd64
-BINARY      := cadestrod
-REMOTE_BIN  := /usr/local/bin/$(BINARY)
-SERVICE     := cadestrod
-BUILD_DIR   := dist
-
-VERSION     := dev-$(shell date +%Y%m%d-%H%M%S)
-LDFLAGS     := -s -w -X main.version=$(VERSION)
-
-KEY_OPTS    := $(if $(KEY),-i $(KEY),)
-SSH_OPTS    := -t $(KEY_OPTS)
-SCP_OPTS    := $(KEY_OPTS)
+.PHONY: sqlc-generate sqlc-check build install
 
 sqlc-generate:
 	@set -eu; \
-	command -v docker >/dev/null; \
 	stage=$$(mktemp -d internal/store/.sqlc.XXXXXX); \
 	trap 'rm -rf "$$stage"' EXIT INT TERM; \
 	cp -R internal/store/sqlc.yaml internal/store/migrations internal/store/queries "$$stage/"; \
-	docker run --rm --memory=6g --cpus=4 --user "$$(id -u):$$(id -g)" \
-		-v "$$(realpath "$$stage")":/src:Z -w /src sqlc/sqlc:1.31.1 generate; \
+	$(DOCKER) run --rm --memory=6g --cpus=4 --user "$$(id -u):$$(id -g)" \
+		-v "$$(realpath "$$stage")":/src:Z -w /src $(SQLC_IMAGE) generate; \
 	mv internal/store/generated "$$stage/previous"; \
 	if mv "$$stage/generated" internal/store/generated; then \
 		rm -rf "$$stage"; \
@@ -35,73 +22,9 @@ sqlc-generate:
 sqlc-check: sqlc-generate
 	git diff --exit-code internal/store/generated
 
-.PHONY: build deploy install logs status restart stop sqlc-generate sqlc-check \
-    test-integration-debian test-integration-fedora \
-    test-integration-opensuse test-integration-archlinux test-integration-all \
-    test-integration-edgecase
-
 build:
-	@mkdir -p $(BUILD_DIR)
-	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) go build \
-		-ldflags="$(LDFLAGS)" \
-		-o $(BUILD_DIR)/$(BINARY)-linux-$(GOARCH) \
-		./cmd/cadestrod
-	@echo "Built $(BUILD_DIR)/$(BINARY)-linux-$(GOARCH)  ($(VERSION))"
-
-deploy: build
-	ssh $(SSH_OPTS) $(SSH) 'sudo rm -f /tmp/$(BINARY) /tmp/install.sh'
-	scp $(SCP_OPTS) $(BUILD_DIR)/$(BINARY)-linux-$(GOARCH) $(SSH):/tmp/$(BINARY)
-	ssh $(SSH_OPTS) $(SSH) 'sudo systemctl stop $(SERVICE) 2>/dev/null; \
-		sudo mv /tmp/$(BINARY) $(REMOTE_BIN) && \
-		sudo chmod +x $(REMOTE_BIN) && \
-		sudo systemctl start $(SERVICE)'
-	@echo "Deployed $(VERSION) to $(SSH) (binary swap only; run 'make install' for a full install)"
+	mkdir -p dist
+	GOWORK=off go build -o dist/cadestrod ./cmd/cadestrod
 
 install: build
-	ssh $(SSH_OPTS) $(SSH) 'sudo rm -f /tmp/$(BINARY) /tmp/install.sh'
-	scp $(SCP_OPTS) $(BUILD_DIR)/$(BINARY)-linux-$(GOARCH) $(SSH):/tmp/$(BINARY)
-	scp $(SCP_OPTS) install.sh $(SSH):/tmp/install.sh
-	ssh $(SSH_OPTS) $(SSH) 'sudo mv /tmp/$(BINARY) $(REMOTE_BIN) && sudo chmod +x $(REMOTE_BIN) && sudo bash /tmp/install.sh --skip-download'
-	@echo "Full install on $(SSH) complete"
-
-logs:
-	ssh $(SSH_OPTS) $(SSH) 'sudo journalctl -u $(SERVICE) -f'
-
-status:
-	ssh $(SSH_OPTS) $(SSH) 'sudo systemctl status $(SERVICE); echo "---"; $(REMOTE_BIN) -version 2>/dev/null || true'
-
-restart:
-	ssh $(SSH_OPTS) $(SSH) 'sudo systemctl restart $(SERVICE)'
-
-stop:
-	ssh $(SSH_OPTS) $(SSH) 'sudo systemctl stop $(SERVICE)'
-
-CONTAINER_CMD := $(shell command -v podman 2>/dev/null || command -v docker 2>/dev/null)
-TEST_CMD := /usr/local/go/bin/go test -p 1 -v -tags=integration -count=1 -timeout=10m ./agent/internal/executor/ -run Integration
-CONTAINER_LIMITS := --memory=6g --cpus=4
-
-test-integration-debian:
-	$(CONTAINER_CMD) build -f test/Dockerfile.integration -t cadestro-agent-test-debian ../
-	$(CONTAINER_CMD) run --rm $(CONTAINER_LIMITS) cadestro-agent-test-debian $(TEST_CMD)
-
-test-integration-fedora:
-	$(CONTAINER_CMD) build -f test/Dockerfile.integration.fedora -t cadestro-agent-test-fedora ../
-	$(CONTAINER_CMD) run --rm $(CONTAINER_LIMITS) cadestro-agent-test-fedora $(TEST_CMD)
-
-test-integration-opensuse:
-	$(CONTAINER_CMD) build -f test/Dockerfile.integration.opensuse -t cadestro-agent-test-opensuse ../
-	$(CONTAINER_CMD) run --rm $(CONTAINER_LIMITS) cadestro-agent-test-opensuse $(TEST_CMD)
-
-test-integration-archlinux:
-	$(CONTAINER_CMD) build -f test/Dockerfile.integration.archlinux -t cadestro-agent-test-archlinux ../
-	$(CONTAINER_CMD) run --rm $(CONTAINER_LIMITS) cadestro-agent-test-archlinux $(TEST_CMD)
-
-test-integration-all:
-	$(MAKE) test-integration-debian
-	$(MAKE) test-integration-fedora
-	$(MAKE) test-integration-opensuse
-	$(MAKE) test-integration-archlinux
-
-test-integration-edgecase:
-	$(CONTAINER_CMD) build -f test/Dockerfile.integration -t cadestro-agent-test-debian ../
-	$(CONTAINER_CMD) run --rm --privileged $(CONTAINER_LIMITS) cadestro-agent-test-debian $(TEST_CMD) -run EdgeCase
+	sudo ./install.sh "$(CURDIR)/dist/cadestrod"

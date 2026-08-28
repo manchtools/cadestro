@@ -34,15 +34,6 @@ Bug fixes require a regression test that fails on the buggy version. Scoped
 non-owner access returns NotFound, never PermissionDenied. IDs are ULIDs.
 Validation runs before authentication; authorization happens at the handler.
 
-## Architecture guards
-
-`internal/architecture/` contains tests that fail the build if removed
-subsystems reappear as runtime dependencies: external databases, queues,
-caches, event stores, projectors, external indexers, payload signing on the
-direct agent stream, and CRL distribution. The server is one process with
-embedded SQLite by design — treat those guards as the architecture contract,
-not as obstacles.
-
 ## Documentation
 
 Prose about code is anchored with [docref](deploy/QUICKSTART.md) claims;
@@ -58,12 +49,8 @@ repository's [AGPL-3.0](LICENSE) license.
 ## Repository layout
 
 - `cmd/cadestro/` — the `cadestro` server executable
-- `internal/controlrpc/`, `internal/searchrpc/` — explicit RPC handlers
-- `internal/auth/` — authentication, authorization, and scope enforcement
-- `internal/ca/`, `internal/mtls/` — device PKI and direct mTLS
-- `internal/store/` — SQLite schema, queries, transactions, and the audited
-  write primitive
-- `internal/scim/`, `internal/idp/` — SCIM and OIDC
-- `internal/connection/` — active direct-agent connections
-- `internal/architecture/` — the architecture guards
+- `internal/core/` — OIDC, administration RPCs, enrollment, and agent sync
+- `internal/ca/` — device PKI
+- `internal/crypto/` — encrypted OIDC client secrets
+- `internal/store/` — Goose migrations, sqlc queries, and SQLite access
 - `deploy/` — reference deployment

@@ -12,18 +12,9 @@ import (
 
 const prefix = "enc:v1:"
 
-const (
-	PurposeIdPClientSecret              = "idp-client-secret"
-	PurposeActionEncryptionPresharedKey = "action-encryption-preshared-key"
-	PurposeActionWifiPSK                = "action-wifi-psk"
-	PurposeActionWifiClientKey          = "action-wifi-client-key"
-)
+const PurposeIdPClientSecret = "idp-client-secret"
 
 func IsEncryptedValue(value string) bool { return strings.HasPrefix(value, prefix) }
-
-func DeviceSecretAAD(rowID, deviceID, kind, subject string, version uint32) []byte {
-	return []byte(fmt.Sprintf("%s|%s|%s|%s|v%d", rowID, deviceID, kind, subject, version))
-}
 
 func RowAAD(rowID, purpose string) []byte {
 	return []byte(rowID + "|" + purpose)

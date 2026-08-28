@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cadestro/v1/common.proto.
  */
 export const file_cadestro_v1_common: GenFile = /*@__PURE__*/
-  fileDesc("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aVIDc2F0UgNzdW4SGgoFYWxsb3cYAiABKAlCC7pICMgBAXIDmAELIl4KDUNvbW1hbmRPdXRwdXQSEQoJZXhpdF9jb2RlGAEgASgFEhwKBnN0ZG91dBgCIAEoCUIMukgJ2AEBcgQYgIBAEhwKBnN0ZGVychgDIAEoCUIMukgJ2AEBcgQYgIBAKs8CCg9FeGVjdXRpb25TdGF0dXMSIAocRVhFQ1VUSU9OX1NUQVRVU19VTlNQRUNJRklFRBAAEhwKGEVYRUNVVElPTl9TVEFUVVNfUEVORElORxABEhwKGEVYRUNVVElPTl9TVEFUVVNfUlVOTklORxACEhwKGEVYRUNVVElPTl9TVEFUVVNfU1VDQ0VTUxADEhsKF0VYRUNVVElPTl9TVEFUVVNfRkFJTEVEEAQSHAoYRVhFQ1VUSU9OX1NUQVRVU19TS0lQUEVEEAUSHAoYRVhFQ1VUSU9OX1NUQVRVU19USU1FT1VUEAYSHgoaRVhFQ1VUSU9OX1NUQVRVU19DQU5DRUxMRUQQBxIjCh9FWEVDVVRJT05fU1RBVFVTX05PVF9BUFBMSUNBQkxFEAgSIgoeRVhFQ1VUSU9OX1NUQVRVU19JTkRFVEVSTUlOQVRFEAkqQwoMRGVzaXJlZFN0YXRlEhkKFURFU0lSRURfU1RBVEVfUFJFU0VOVBAAEhgKFERFU0lSRURfU1RBVEVfQUJTRU5UEAEqigEKDkFzc2lnbm1lbnRNb2RlEhwKGEFTU0lHTk1FTlRfTU9ERV9SRVFVSVJFRBAAEh0KGUFTU0lHTk1FTlRfTU9ERV9BVkFJTEFCTEUQARIcChhBU1NJR05NRU5UX01PREVfRVhDTFVERUQQAhIdChlBU1NJR05NRU5UX01PREVfVU5JTlNUQUxMEAMq3QEKFEFzc2lnbm1lbnRTb3VyY2VUeXBlEiYKIkFTU0lHTk1FTlRfU09VUkNFX1RZUEVfVU5TUEVDSUZJRUQQABIhCh1BU1NJR05NRU5UX1NPVVJDRV9UWVBFX0FDVElPThABEiUKIUFTU0lHTk1FTlRfU09VUkNFX1RZUEVfQUNUSU9OX1NFVBACEiUKIUFTU0lHTk1FTlRfU09VUkNFX1RZUEVfREVGSU5JVElPThADEiwKKEFTU0lHTk1FTlRfU09VUkNFX1RZUEVfQ09NUExJQU5DRV9QT0xJQ1kQBCrSAQoUQXNzaWdubWVudFRhcmdldFR5cGUSJgoiQVNTSUdOTUVOVF9UQVJHRVRfVFlQRV9VTlNQRUNJRklFRBAAEiEKHUFTU0lHTk1FTlRfVEFSR0VUX1RZUEVfREVWSUNFEAESJwojQVNTSUdOTUVOVF9UQVJHRVRfVFlQRV9ERVZJQ0VfR1JPVVAQAhIfChtBU1NJR05NRU5UX1RBUkdFVF9UWVBFX1VTRVIQAxIlCiFBU1NJR05NRU5UX1RBUkdFVF9UWVBFX1VTRVJfR1JPVVAQBCqJAQoSUm9sZUdyYW50U2NvcGVLaW5kEiUKIVJPTEVfR1JBTlRfU0NPUEVfS0lORF9VTlNQRUNJRklFRBAAEiYKIlJPTEVfR1JBTlRfU0NPUEVfS0lORF9ERVZJQ0VfR1JPVVAQARIkCiBST0xFX0dSQU5UX1NDT1BFX0tJTkRfVVNFUl9HUk9VUBACKoIBChRQZXJtaXNzaW9uVGFyZ2V0S2luZBImCiJQRVJNSVNTSU9OX1RBUkdFVF9LSU5EX1VOU1BFQ0lGSUVEEAASIQodUEVSTUlTU0lPTl9UQVJHRVRfS0lORF9ERVZJQ0UQARIfChtQRVJNSVNTSU9OX1RBUkdFVF9LSU5EX1VTRVIQAipiCgxEZXZpY2VTdGF0dXMSHQoZREVWSUNFX1NUQVRVU19VTlNQRUNJRklFRBAAEhgKFERFVklDRV9TVEFUVVNfT05MSU5FEAESGQoVREVWSUNFX1NUQVRVU19PRkZMSU5FEAIqtgIKC1NlYXJjaFNjb3BlEhwKGFNFQVJDSF9TQ09QRV9VTlNQRUNJRklFRBAAEhgKFFNFQVJDSF9TQ09QRV9BQ1RJT05TEAESHAoYU0VBUkNIX1NDT1BFX0FDVElPTl9TRVRTEAISHAoYU0VBUkNIX1NDT1BFX0RFRklOSVRJT05TEAMSJAogU0VBUkNIX1NDT1BFX0NPTVBMSUFOQ0VfUE9MSUNJRVMQBBIYChRTRUFSQ0hfU0NPUEVfREVWSUNFUxAFEhYKElNFQVJDSF9TQ09QRV9VU0VSUxAGEh4KGlNFQVJDSF9TQ09QRV9ERVZJQ0VfR1JPVVBTEAcSHAoYU0VBUkNIX1NDT1BFX1VTRVJfR1JPVVBTEAgSHQoZU0VBUkNIX1NDT1BFX0FVRElUX0VWRU5UUxAJKuAECglTb3J0RmllbGQSGgoWU09SVF9GSUVMRF9VTlNQRUNJRklFRBAAEhMKD1NPUlRfRklFTERfTkFNRRABEhMKD1NPUlRfRklFTERfVFlQRRACEhcKE1NPUlRfRklFTERfSE9TVE5BTUUQAxIgChxTT1JUX0ZJRUxEX0NPTVBMSUFOQ0VfU1RBVFVTEAQSFAoQU09SVF9GSUVMRF9FTUFJTBAFEhsKF1NPUlRfRklFTERfRElTUExBWV9OQU1FEAYSFwoTU09SVF9GSUVMRF9ESVNBQkxFRBAHEhsKF1NPUlRfRklFTERfTUVNQkVSX0NPVU5UEAgSFQoRU09SVF9GSUVMRF9TVEFUVVMQCRIaChZTT1JUX0ZJRUxEX0FDVElPTl9UWVBFEAoSHgoaU09SVF9GSUVMRF9ERVZJQ0VfSE9TVE5BTUUQCxIZChVTT1JUX0ZJRUxEX0FDVE9SX1RZUEUQDBIaChZTT1JUX0ZJRUxEX1NUUkVBTV9UWVBFEA0SGQoVU09SVF9GSUVMRF9FVkVOVF9UWVBFEA4SGQoVU09SVF9GSUVMRF9SVUxFX0NPVU5UEA8SHAoYU09SVF9GSUVMRF9MQVNUX0xPR0lOX0FUEBASGQoVU09SVF9GSUVMRF9DUkVBVEVEX0FUEBESGQoVU09SVF9GSUVMRF9VUERBVEVEX0FUEBISGwoXU09SVF9GSUVMRF9MQVNUX1NFRU5fQVQQExIcChhTT1JUX0ZJRUxEX1JFR0lTVEVSRURfQVQQFBIaChZTT1JUX0ZJRUxEX09DQ1VSUkVEX0FUEBUqYAoNU29ydERpcmVjdGlvbhIeChpTT1JUX0RJUkVDVElPTl9VTlNQRUNJRklFRBAAEhYKElNPUlRfRElSRUNUSU9OX0FTQxABEhcKE1NPUlRfRElSRUNUSU9OX0RFU0MQAipfChRJZGVudGl0eVByb3ZpZGVyVHlwZRImCiJJREVOVElUWV9QUk9WSURFUl9UWVBFX1VOU1BFQ0lGSUVEEAASHwobSURFTlRJVFlfUFJPVklERVJfVFlQRV9PSURDEAEqjQEKDlJvdGF0aW9uUmVhc29uEh8KG1JPVEFUSU9OX1JFQVNPTl9VTlNQRUNJRklFRBAAEhsKF1JPVEFUSU9OX1JFQVNPTl9JTklUSUFMEAESHQoZUk9UQVRJT05fUkVBU09OX1NDSEVEVUxFRBACEh4KGlJPVEFUSU9OX1JFQVNPTl9BVVRIX0dSQUNFEAMqzQEKFEx1a3NSZXZvY2F0aW9uU3RhdHVzEiYKIkxVS1NfUkVWT0NBVElPTl9TVEFUVVNfVU5TUEVDSUZJRUQQABIfChtMVUtTX1JFVk9DQVRJT05fU1RBVFVTX05PTkUQARIlCiFMVUtTX1JFVk9DQVRJT05fU1RBVFVTX0RJU1BBVENIRUQQAhIiCh5MVUtTX1JFVk9DQVRJT05fU1RBVFVTX1NVQ0NFU1MQAxIhCh1MVUtTX1JFVk9DQVRJT05fU1RBVFVTX0ZBSUxFRBAEKroWCglFcnJvckNvZGUSGgoWRVJST1JfQ09ERV9VTlNQRUNJRklFRBAAEiQKIEVSUk9SX0NPREVfQUNUSU9OX0FMUkVBRFlfSU5fU0VUEAESJAogRVJST1JfQ09ERV9BQ1RJT05fTk9UX0NPTVBMSUFOQ0UQAhIfChtFUlJPUl9DT0RFX0FDVElPTl9OT1RfRk9VTkQQAxIvCitFUlJPUl9DT0RFX0FDVElPTl9TRVRfQUxSRUFEWV9JTl9ERUZJTklUSU9OEAQSKgomRVJST1JfQ09ERV9BQ1RJT05fU0VUX01FTUJFUl9OT1RfRk9VTkQQBRIjCh9FUlJPUl9DT0RFX0FDVElPTl9TRVRfTk9UX0ZPVU5EEAYSIwofRVJST1JfQ09ERV9BU1NJR05NRU5UX05PVF9GT1VORBAHEioKJkVSUk9SX0NPREVfQVNTSUdOTUVOVF9TT1VSQ0VfTk9UX0ZPVU5EEAgSKgomRVJST1JfQ09ERV9BU1NJR05NRU5UX1RBUkdFVF9OT1RfRk9VTkQQCRIoCiRFUlJPUl9DT0RFX0NBTk5PVF9ERUxFVEVfU1lTVEVNX1JPTEUQChIqCiZFUlJPUl9DT0RFX0NBTk5PVF9NT0RJRllfU1lTVEVNX0FDVElPThALEigKJEVSUk9SX0NPREVfQ0FOTk9UX01PRElGWV9TWVNURU1fUk9MRRAMEigKJEVSUk9SX0NPREVfQ0FOTk9UX1JFTkFNRV9TWVNURU1fUk9MRRANEicKI0VSUk9SX0NPREVfQ0FOTk9UX1VOTElOS19PVEhFUl9VU0VSEA4SMAosRVJST1JfQ09ERV9DT01QTElBTkNFX0FDVElPTl9ORUVEU19ERVRFQ1RJT04QDxIsCihFUlJPUl9DT0RFX0NPTVBMSUFOQ0VfUE9MSUNZX05BTUVfRVhJU1RTEBASKgomRVJST1JfQ09ERV9DT01QTElBTkNFX1BPTElDWV9OT1RfRk9VTkQQERIsCihFUlJPUl9DT0RFX0NPTVBMSUFOQ0VfUE9MSUNZX1JVTEVfRVhJU1RTEBISLworRVJST1JfQ09ERV9DT01QTElBTkNFX1BPTElDWV9SVUxFX05PVF9GT1VORBATEioKJkVSUk9SX0NPREVfREVGSU5JVElPTl9NRU1CRVJfTk9UX0ZPVU5EEBQSIwofRVJST1JfQ09ERV9ERUZJTklUSU9OX05PVF9GT1VORBAVEiYKIkVSUk9SX0NPREVfREVWSUNFX0FMUkVBRFlfSU5fR1JPVVAQFhIsCihFUlJPUl9DT0RFX0RFVklDRV9HUk9VUF9NRU1CRVJfTk9UX0ZPVU5EEBcSJwojRVJST1JfQ09ERV9ERVZJQ0VfR1JPVVBfTkFNRV9FWElTVFMQGBIlCiFFUlJPUl9DT0RFX0RFVklDRV9HUk9VUF9OT1RfRk9VTkQQGRIjCh9FUlJPUl9DT0RFX0RFVklDRV9OT1RfQ09OTkVDVEVEEBoSHwobRVJST1JfQ09ERV9ERVZJQ0VfTk9UX0ZPVU5EEBsSIQodRVJST1JfQ09ERV9ERVZJQ0VfVU5BVkFJTEFCTEUQHBIqCiZFUlJPUl9DT0RFX0RZTkFNSUNfR1JPVVBfTUFOVUFMX01PRElGWRAdEi8KK0VSUk9SX0NPREVfRFlOQU1JQ19HUk9VUF9NRU1CRVJTSElQX01BTkFHRUQQHhIjCh9FUlJPUl9DT0RFX0VNQUlMX0FMUkVBRFlfRVhJU1RTEB8SHgoaRVJST1JfQ09ERV9HUkFOVF9OT1RfRk9VTkQQIBIlCiFFUlJPUl9DT0RFX0dST1VQX0FMUkVBRFlfSEFTX1JPTEUQIRIgChxFUlJPUl9DT0RFX0dST1VQX05PVF9EWU5BTUlDECISJgoiRVJST1JfQ09ERV9JREVOVElUWV9MSU5LX05PVF9GT1VORBAjEh0KGUVSUk9SX0NPREVfSU5URVJOQUxfRVJST1IQJBIkCiBFUlJPUl9DT0RFX0lOVkFMSURfRFlOQU1JQ19RVUVSWRAlEiEKHUVSUk9SX0NPREVfSU5WQUxJRF9QQUdFX1RPS0VOECYSHAoYRVJST1JfQ09ERV9JTlZBTElEX1FVRVJZECcSHwobRVJST1JfQ09ERV9MQVNUX0FVVEhfTUVUSE9EECgSJQohRVJST1JfQ09ERV9MUFNfUEFTU1dPUkRfTk9UX0ZPVU5EECkSJwojRVJST1JfQ09ERV9MVUtTX0tFWV9BTFJFQURZX1JFVk9LRUQQKhIhCh1FUlJPUl9DT0RFX0xVS1NfS0VZX05PVF9GT1VORBArEioKJkVSUk9SX0NPREVfTFVLU19LRVlfUkVWT0NBVElPTl9QRU5ESU5HECwSIgoeRVJST1JfQ09ERV9OT19BU1NJR05NRU5UX0ZPVU5EEC0SIAocRVJST1JfQ09ERV9OT1RfQVVUSEVOVElDQVRFRBAuEiAKHEVSUk9SX0NPREVfUEVSTUlTU0lPTl9ERU5JRUQQLxIgChxFUlJPUl9DT0RFX1BST1ZJREVSX0RJU0FCTEVEEDASIQodRVJST1JfQ09ERV9QUk9WSURFUl9OT1RfRk9VTkQQMRIjCh9FUlJPUl9DT0RFX1BST1ZJREVSX1NMVUdfRVhJU1RTEDISJQohRVJST1JfQ09ERV9RVUVSWV9SRVNVTFRfTk9UX0ZPVU5EEDMSGwoXRVJST1JfQ09ERV9SQVRFX0xJTUlURUQQNBIaChZFUlJPUl9DT0RFX1JPTEVfSU5fVVNFEDUSHwobRVJST1JfQ09ERV9ST0xFX05BTUVfRVhJU1RTEDYSHQoZRVJST1JfQ09ERV9ST0xFX05PVF9GT1VORBA3EiMKH0VSUk9SX0NPREVfU0NJTV9BTFJFQURZX0VOQUJMRUQQOBIkCiBFUlJPUl9DT0RFX1NDSU1fTUFOQUdFRF9SRVNPVVJDRRA5Eh8KG0VSUk9SX0NPREVfU0NJTV9OT1RfRU5BQkxFRBA6EiIKHkVSUk9SX0NPREVfU0NPUEVfTk9UX1BFUk1JVFRFRBA7EiYKIkVSUk9SX0NPREVfU1NPX05PX01BVENISU5HX0FDQ09VTlQQPBIgChxFUlJPUl9DT0RFX1NTT19TVEFURV9FWFBJUkVEED0SLgoqRVJST1JfQ09ERV9URVJNSU5BTF9MSU5VWF9VU0VSTkFNRV9OT1RfU0VUED4SJgoiRVJST1JfQ09ERV9URVJNSU5BTF9OT1RfQ09ORklHVVJFRBA/EikKJUVSUk9SX0NPREVfVEVSTUlOQUxfU0VTU0lPTl9OT1RfRk9VTkQQQBIcChhFUlJPUl9DT0RFX1RPS0VOX0VYUElSRUQQQRIeChpFUlJPUl9DT0RFX1RPS0VOX05PVF9GT1VORBBCEhwKGEVSUk9SX0NPREVfVU5JTVBMRU1FTlRFRBBDEiQKIEVSUk9SX0NPREVfVVNFUl9BTFJFQURZX0hBU19ST0xFEEQSJAogRVJST1JfQ09ERV9VU0VSX0FMUkVBRFlfSU5fR1JPVVAQRRIqCiZFUlJPUl9DT0RFX1VTRVJfR1JPVVBfTUVNQkVSX05PVF9GT1VORBBGEiUKIUVSUk9SX0NPREVfVVNFUl9HUk9VUF9OQU1FX0VYSVNUUxBHEiMKH0VSUk9SX0NPREVfVVNFUl9HUk9VUF9OT1RfRk9VTkQQSBIdChlFUlJPUl9DT0RFX1VTRVJfTk9UX0ZPVU5EEEkSIAocRVJST1JfQ09ERV9WQUxJREFUSU9OX0ZBSUxFRBBKKp4BChBDb21wbGlhbmNlU3RhdHVzEh0KGUNPTVBMSUFOQ0VfU1RBVFVTX1VOS05PV04QABIfChtDT01QTElBTkNFX1NUQVRVU19DT01QTElBTlQQARIjCh9DT01QTElBTkNFX1NUQVRVU19OT05fQ09NUExJQU5UEAISJQohQ09NUExJQU5DRV9TVEFUVVNfSU5fR1JBQ0VfUEVSSU9EEANCR1pFZ2l0aHViLmNvbS9tYW5jaHRvb2xzL2NhZGVzdHJvL2NvbnRyYWN0L2dlbi9nby9jYWRlc3Ryby92MTtjYWRlc3Ryb3YxYgZwcm90bzM", [file_buf_validate_validate]);
+  fileDesc("ChhjYWRlc3Ryby92MS9jb21tb24ucHJvdG8SC2NhZGVzdHJvLnYxIiMKCEFjdGlvbklkEhcKBXZhbHVlGAEgASgJQgi6SAVyA5gCASIjCghEZXZpY2VJZBIXCgV2YWx1ZRgBIAEoCUIIukgFcgOYAgEiIAoFUnVuSWQSFwoFdmFsdWUYASABKAlCCLpIBXIDmAIBIicKDE9jY3VycmVuY2VJZBIXCgV2YWx1ZRgBIAEoCUIIukgFcgOYAgEiJQoKTWFuaWZlc3RJZBIXCgV2YWx1ZRgBIAEoCUIIukgFcgOYAgEiJAoJTWVzc2FnZUlkEhcKBXZhbHVlGAEgASgJQgi6SAVyA5gCASIrChBQb2xpY3lSZXZpc2lvbklkEhcKBXZhbHVlGAEgASgJQgi6SAVyA5gCASIhCgZVc2VySWQSFwoFdmFsdWUYASABKAlCCLpIBXIDmAIBIi4KE1JlZ2lzdHJhdGlvblRva2VuSWQSFwoFdmFsdWUYASABKAlCCLpIBXIDmAIBIigKDURldmljZUdyb3VwSWQSFwoFdmFsdWUYASABKAlCCLpIBXIDmAIBIicKDEFzc2lnbm1lbnRJZBIXCgV2YWx1ZRgBIAEoCUIIukgFcgOYAgEiLQoSSWRlbnRpdHlQcm92aWRlcklkEhcKBXZhbHVlGAEgASgJQgi6SAVyA5gCASInCgxPaWRjQ2xpZW50SWQSFwoFdmFsdWUYASABKAlCCLpIBXIDGP8BIi0KEkFzc2lnbm1lbnRUYXJnZXRJZBIXCgV2YWx1ZRgBIAEoCUIIukgFcgOYAgEiJwoMQXVkaXRFdmVudElkEhcKBXZhbHVlGAEgASgJQgi6SAVyA5gCASIoCg1BdWRpdFN0cmVhbUlkEhcKBXZhbHVlGAEgASgJQgi6SAVyA5gCASInCgxBdWRpdEFjdG9ySWQSFwoFdmFsdWUYASABKAlCCLpIBXIDmAIBIl4KDUNvbW1hbmRPdXRwdXQSEQoJZXhpdF9jb2RlGAEgASgFEhwKBnN0ZG91dBgCIAEoCUIMukgJ2AEBcgQYgIBAEhwKBnN0ZGVychgDIAEoCUIMukgJ2AEBcgQYgIBAKooCCg9FeGVjdXRpb25TdGF0dXMSIAocRVhFQ1VUSU9OX1NUQVRVU19VTlNQRUNJRklFRBAAEhwKGEVYRUNVVElPTl9TVEFUVVNfUEVORElORxABEhwKGEVYRUNVVElPTl9TVEFUVVNfUlVOTklORxACEhwKGEVYRUNVVElPTl9TVEFUVVNfU1VDQ0VTUxADEhsKF0VYRUNVVElPTl9TVEFUVVNfRkFJTEVEEAQSHAoYRVhFQ1VUSU9OX1NUQVRVU19TS0lQUEVEEAUSHAoYRVhFQ1VUSU9OX1NUQVRVU19USU1FT1VUEAYSIgoeRVhFQ1VUSU9OX1NUQVRVU19JTkRFVEVSTUlOQVRFEAcqYgoMRGVzaXJlZFN0YXRlEh0KGURFU0lSRURfU1RBVEVfVU5TUEVDSUZJRUQQABIZChVERVNJUkVEX1NUQVRFX1BSRVNFTlQQARIYChRERVNJUkVEX1NUQVRFX0FCU0VOVBACKmIKDERldmljZVN0YXR1cxIdChlERVZJQ0VfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGAoUREVWSUNFX1NUQVRVU19PTkxJTkUQARIZChVERVZJQ0VfU1RBVFVTX09GRkxJTkUQAip7ChBDb21wbGlhbmNlU3RhdHVzEiEKHUNPTVBMSUFOQ0VfU1RBVFVTX1VOU1BFQ0lGSUVEEAASHwobQ09NUExJQU5DRV9TVEFUVVNfQ09NUExJQU5UEAESIwofQ09NUExJQU5DRV9TVEFUVVNfTk9OX0NPTVBMSUFOVBACKooBChRBc3NpZ25tZW50VGFyZ2V0VHlwZRImCiJBU1NJR05NRU5UX1RBUkdFVF9UWVBFX1VOU1BFQ0lGSUVEEAASIQodQVNTSUdOTUVOVF9UQVJHRVRfVFlQRV9ERVZJQ0UQARInCiNBU1NJR05NRU5UX1RBUkdFVF9UWVBFX0RFVklDRV9HUk9VUBACQkdaRWdpdGh1Yi5jb20vbWFuY2h0b29scy9jYWRlc3Ryby9jb250cmFjdC9nZW4vZ28vY2FkZXN0cm8vdjE7Y2FkZXN0cm92MWIGcHJvdG8z", [file_buf_validate_validate]);
 
 /**
  * @generated from message cadestro.v1.ActionId
@@ -82,40 +82,6 @@ export const OccurrenceIdSchema: GenMessage<OccurrenceId> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_common, 3);
 
 /**
- * @generated from message cadestro.v1.DefinitionId
- */
-export type DefinitionId = Message<"cadestro.v1.DefinitionId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.DefinitionId.
- * Use `create(DefinitionIdSchema)` to create a new message.
- */
-export const DefinitionIdSchema: GenMessage<DefinitionId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 4);
-
-/**
- * @generated from message cadestro.v1.ActionSetId
- */
-export type ActionSetId = Message<"cadestro.v1.ActionSetId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.ActionSetId.
- * Use `create(ActionSetIdSchema)` to create a new message.
- */
-export const ActionSetIdSchema: GenMessage<ActionSetId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 5);
-
-/**
  * @generated from message cadestro.v1.ManifestId
  */
 export type ManifestId = Message<"cadestro.v1.ManifestId"> & {
@@ -130,24 +96,7 @@ export type ManifestId = Message<"cadestro.v1.ManifestId"> & {
  * Use `create(ManifestIdSchema)` to create a new message.
  */
 export const ManifestIdSchema: GenMessage<ManifestId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 6);
-
-/**
- * @generated from message cadestro.v1.QueryId
- */
-export type QueryId = Message<"cadestro.v1.QueryId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.QueryId.
- * Use `create(QueryIdSchema)` to create a new message.
- */
-export const QueryIdSchema: GenMessage<QueryId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 7);
+  messageDesc(file_cadestro_v1_common, 4);
 
 /**
  * @generated from message cadestro.v1.MessageId
@@ -164,7 +113,7 @@ export type MessageId = Message<"cadestro.v1.MessageId"> & {
  * Use `create(MessageIdSchema)` to create a new message.
  */
 export const MessageIdSchema: GenMessage<MessageId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 8);
+  messageDesc(file_cadestro_v1_common, 5);
 
 /**
  * @generated from message cadestro.v1.PolicyRevisionId
@@ -181,24 +130,7 @@ export type PolicyRevisionId = Message<"cadestro.v1.PolicyRevisionId"> & {
  * Use `create(PolicyRevisionIdSchema)` to create a new message.
  */
 export const PolicyRevisionIdSchema: GenMessage<PolicyRevisionId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 9);
-
-/**
- * @generated from message cadestro.v1.SessionId
- */
-export type SessionId = Message<"cadestro.v1.SessionId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.SessionId.
- * Use `create(SessionIdSchema)` to create a new message.
- */
-export const SessionIdSchema: GenMessage<SessionId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 10);
+  messageDesc(file_cadestro_v1_common, 6);
 
 /**
  * @generated from message cadestro.v1.UserId
@@ -215,75 +147,7 @@ export type UserId = Message<"cadestro.v1.UserId"> & {
  * Use `create(UserIdSchema)` to create a new message.
  */
 export const UserIdSchema: GenMessage<UserId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 11);
-
-/**
- * @generated from message cadestro.v1.RoleId
- */
-export type RoleId = Message<"cadestro.v1.RoleId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.RoleId.
- * Use `create(RoleIdSchema)` to create a new message.
- */
-export const RoleIdSchema: GenMessage<RoleId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 12);
-
-/**
- * @generated from message cadestro.v1.GroupId
- */
-export type GroupId = Message<"cadestro.v1.GroupId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.GroupId.
- * Use `create(GroupIdSchema)` to create a new message.
- */
-export const GroupIdSchema: GenMessage<GroupId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 13);
-
-/**
- * @generated from message cadestro.v1.SshKeyId
- */
-export type SshKeyId = Message<"cadestro.v1.SshKeyId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.SshKeyId.
- * Use `create(SshKeyIdSchema)` to create a new message.
- */
-export const SshKeyIdSchema: GenMessage<SshKeyId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 14);
-
-/**
- * @generated from message cadestro.v1.UserGroupId
- */
-export type UserGroupId = Message<"cadestro.v1.UserGroupId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.UserGroupId.
- * Use `create(UserGroupIdSchema)` to create a new message.
- */
-export const UserGroupIdSchema: GenMessage<UserGroupId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 15);
+  messageDesc(file_cadestro_v1_common, 7);
 
 /**
  * @generated from message cadestro.v1.RegistrationTokenId
@@ -300,24 +164,7 @@ export type RegistrationTokenId = Message<"cadestro.v1.RegistrationTokenId"> & {
  * Use `create(RegistrationTokenIdSchema)` to create a new message.
  */
 export const RegistrationTokenIdSchema: GenMessage<RegistrationTokenId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 16);
-
-/**
- * @generated from message cadestro.v1.ApiTokenId
- */
-export type ApiTokenId = Message<"cadestro.v1.ApiTokenId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.ApiTokenId.
- * Use `create(ApiTokenIdSchema)` to create a new message.
- */
-export const ApiTokenIdSchema: GenMessage<ApiTokenId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 17);
+  messageDesc(file_cadestro_v1_common, 8);
 
 /**
  * @generated from message cadestro.v1.DeviceGroupId
@@ -334,7 +181,7 @@ export type DeviceGroupId = Message<"cadestro.v1.DeviceGroupId"> & {
  * Use `create(DeviceGroupIdSchema)` to create a new message.
  */
 export const DeviceGroupIdSchema: GenMessage<DeviceGroupId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 18);
+  messageDesc(file_cadestro_v1_common, 9);
 
 /**
  * @generated from message cadestro.v1.AssignmentId
@@ -351,160 +198,7 @@ export type AssignmentId = Message<"cadestro.v1.AssignmentId"> & {
  * Use `create(AssignmentIdSchema)` to create a new message.
  */
 export const AssignmentIdSchema: GenMessage<AssignmentId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 19);
-
-/**
- * @generated from message cadestro.v1.AssignmentSourceId
- */
-export type AssignmentSourceId = Message<"cadestro.v1.AssignmentSourceId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.AssignmentSourceId.
- * Use `create(AssignmentSourceIdSchema)` to create a new message.
- */
-export const AssignmentSourceIdSchema: GenMessage<AssignmentSourceId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 20);
-
-/**
- * @generated from message cadestro.v1.AssignmentTargetId
- */
-export type AssignmentTargetId = Message<"cadestro.v1.AssignmentTargetId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.AssignmentTargetId.
- * Use `create(AssignmentTargetIdSchema)` to create a new message.
- */
-export const AssignmentTargetIdSchema: GenMessage<AssignmentTargetId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 21);
-
-/**
- * @generated from message cadestro.v1.UserSelectionId
- */
-export type UserSelectionId = Message<"cadestro.v1.UserSelectionId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.UserSelectionId.
- * Use `create(UserSelectionIdSchema)` to create a new message.
- */
-export const UserSelectionIdSchema: GenMessage<UserSelectionId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 22);
-
-/**
- * @generated from message cadestro.v1.ScopeId
- */
-export type ScopeId = Message<"cadestro.v1.ScopeId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.ScopeId.
- * Use `create(ScopeIdSchema)` to create a new message.
- */
-export const ScopeIdSchema: GenMessage<ScopeId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 23);
-
-/**
- * @generated from message cadestro.v1.AuditEventId
- */
-export type AuditEventId = Message<"cadestro.v1.AuditEventId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.AuditEventId.
- * Use `create(AuditEventIdSchema)` to create a new message.
- */
-export const AuditEventIdSchema: GenMessage<AuditEventId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 24);
-
-/**
- * @generated from message cadestro.v1.AuditStreamId
- */
-export type AuditStreamId = Message<"cadestro.v1.AuditStreamId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.AuditStreamId.
- * Use `create(AuditStreamIdSchema)` to create a new message.
- */
-export const AuditStreamIdSchema: GenMessage<AuditStreamId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 25);
-
-/**
- * @generated from message cadestro.v1.AuditActorId
- */
-export type AuditActorId = Message<"cadestro.v1.AuditActorId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.AuditActorId.
- * Use `create(AuditActorIdSchema)` to create a new message.
- */
-export const AuditActorIdSchema: GenMessage<AuditActorId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 26);
-
-/**
- * @generated from message cadestro.v1.LpsPasswordId
- */
-export type LpsPasswordId = Message<"cadestro.v1.LpsPasswordId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.LpsPasswordId.
- * Use `create(LpsPasswordIdSchema)` to create a new message.
- */
-export const LpsPasswordIdSchema: GenMessage<LpsPasswordId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 27);
-
-/**
- * @generated from message cadestro.v1.LuksKeyId
- */
-export type LuksKeyId = Message<"cadestro.v1.LuksKeyId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.LuksKeyId.
- * Use `create(LuksKeyIdSchema)` to create a new message.
- */
-export const LuksKeyIdSchema: GenMessage<LuksKeyId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 28);
+  messageDesc(file_cadestro_v1_common, 10);
 
 /**
  * @generated from message cadestro.v1.IdentityProviderId
@@ -521,92 +215,7 @@ export type IdentityProviderId = Message<"cadestro.v1.IdentityProviderId"> & {
  * Use `create(IdentityProviderIdSchema)` to create a new message.
  */
 export const IdentityProviderIdSchema: GenMessage<IdentityProviderId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 29);
-
-/**
- * @generated from message cadestro.v1.IdentityLinkId
- */
-export type IdentityLinkId = Message<"cadestro.v1.IdentityLinkId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.IdentityLinkId.
- * Use `create(IdentityLinkIdSchema)` to create a new message.
- */
-export const IdentityLinkIdSchema: GenMessage<IdentityLinkId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 30);
-
-/**
- * @generated from message cadestro.v1.CompliancePolicyId
- */
-export type CompliancePolicyId = Message<"cadestro.v1.CompliancePolicyId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.CompliancePolicyId.
- * Use `create(CompliancePolicyIdSchema)` to create a new message.
- */
-export const CompliancePolicyIdSchema: GenMessage<CompliancePolicyId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 31);
-
-/**
- * @generated from message cadestro.v1.SearchResultId
- */
-export type SearchResultId = Message<"cadestro.v1.SearchResultId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.SearchResultId.
- * Use `create(SearchResultIdSchema)` to create a new message.
- */
-export const SearchResultIdSchema: GenMessage<SearchResultId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 32);
-
-/**
- * @generated from message cadestro.v1.RequestId
- */
-export type RequestId = Message<"cadestro.v1.RequestId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.RequestId.
- * Use `create(RequestIdSchema)` to create a new message.
- */
-export const RequestIdSchema: GenMessage<RequestId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 33);
-
-/**
- * @generated from message cadestro.v1.FlatpakAppId
- */
-export type FlatpakAppId = Message<"cadestro.v1.FlatpakAppId"> & {
-  /**
-   * @generated from field: string value = 1;
-   */
-  value: string;
-};
-
-/**
- * Describes the message cadestro.v1.FlatpakAppId.
- * Use `create(FlatpakAppIdSchema)` to create a new message.
- */
-export const FlatpakAppIdSchema: GenMessage<FlatpakAppId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 34);
+  messageDesc(file_cadestro_v1_common, 11);
 
 /**
  * @generated from message cadestro.v1.OidcClientId
@@ -623,12 +232,12 @@ export type OidcClientId = Message<"cadestro.v1.OidcClientId"> & {
  * Use `create(OidcClientIdSchema)` to create a new message.
  */
 export const OidcClientIdSchema: GenMessage<OidcClientId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 35);
+  messageDesc(file_cadestro_v1_common, 12);
 
 /**
- * @generated from message cadestro.v1.ExternalIdentityId
+ * @generated from message cadestro.v1.AssignmentTargetId
  */
-export type ExternalIdentityId = Message<"cadestro.v1.ExternalIdentityId"> & {
+export type AssignmentTargetId = Message<"cadestro.v1.AssignmentTargetId"> & {
   /**
    * @generated from field: string value = 1;
    */
@@ -636,72 +245,62 @@ export type ExternalIdentityId = Message<"cadestro.v1.ExternalIdentityId"> & {
 };
 
 /**
- * Describes the message cadestro.v1.ExternalIdentityId.
- * Use `create(ExternalIdentityIdSchema)` to create a new message.
+ * Describes the message cadestro.v1.AssignmentTargetId.
+ * Use `create(AssignmentTargetIdSchema)` to create a new message.
  */
-export const ExternalIdentityIdSchema: GenMessage<ExternalIdentityId> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 36);
+export const AssignmentTargetIdSchema: GenMessage<AssignmentTargetId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 13);
 
 /**
- * @generated from message cadestro.v1.ErrorDetail
+ * @generated from message cadestro.v1.AuditEventId
  */
-export type ErrorDetail = Message<"cadestro.v1.ErrorDetail"> & {
+export type AuditEventId = Message<"cadestro.v1.AuditEventId"> & {
   /**
-   * @generated from field: cadestro.v1.ErrorCode code = 1;
+   * @generated from field: string value = 1;
    */
-  code: ErrorCode;
-
-  /**
-   * @generated from field: cadestro.v1.RequestId request_id = 2;
-   */
-  requestId?: RequestId;
+  value: string;
 };
 
 /**
- * Describes the message cadestro.v1.ErrorDetail.
- * Use `create(ErrorDetailSchema)` to create a new message.
+ * Describes the message cadestro.v1.AuditEventId.
+ * Use `create(AuditEventIdSchema)` to create a new message.
  */
-export const ErrorDetailSchema: GenMessage<ErrorDetail> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 37);
+export const AuditEventIdSchema: GenMessage<AuditEventId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 14);
 
 /**
- * @generated from message cadestro.v1.MaintenanceWindow
+ * @generated from message cadestro.v1.AuditStreamId
  */
-export type MaintenanceWindow = Message<"cadestro.v1.MaintenanceWindow"> & {
+export type AuditStreamId = Message<"cadestro.v1.AuditStreamId"> & {
   /**
-   * @generated from field: repeated cadestro.v1.MaintenanceWindowEntry schedule = 1;
+   * @generated from field: string value = 1;
    */
-  schedule: MaintenanceWindowEntry[];
+  value: string;
 };
 
 /**
- * Describes the message cadestro.v1.MaintenanceWindow.
- * Use `create(MaintenanceWindowSchema)` to create a new message.
+ * Describes the message cadestro.v1.AuditStreamId.
+ * Use `create(AuditStreamIdSchema)` to create a new message.
  */
-export const MaintenanceWindowSchema: GenMessage<MaintenanceWindow> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 38);
+export const AuditStreamIdSchema: GenMessage<AuditStreamId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 15);
 
 /**
- * @generated from message cadestro.v1.MaintenanceWindowEntry
+ * @generated from message cadestro.v1.AuditActorId
  */
-export type MaintenanceWindowEntry = Message<"cadestro.v1.MaintenanceWindowEntry"> & {
+export type AuditActorId = Message<"cadestro.v1.AuditActorId"> & {
   /**
-   * @generated from field: repeated string days = 1;
+   * @generated from field: string value = 1;
    */
-  days: string[];
-
-  /**
-   * @generated from field: string allow = 2;
-   */
-  allow: string;
+  value: string;
 };
 
 /**
- * Describes the message cadestro.v1.MaintenanceWindowEntry.
- * Use `create(MaintenanceWindowEntrySchema)` to create a new message.
+ * Describes the message cadestro.v1.AuditActorId.
+ * Use `create(AuditActorIdSchema)` to create a new message.
  */
-export const MaintenanceWindowEntrySchema: GenMessage<MaintenanceWindowEntry> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 39);
+export const AuditActorIdSchema: GenMessage<AuditActorId> = /*@__PURE__*/
+  messageDesc(file_cadestro_v1_common, 16);
 
 /**
  * @generated from message cadestro.v1.CommandOutput
@@ -728,7 +327,7 @@ export type CommandOutput = Message<"cadestro.v1.CommandOutput"> & {
  * Use `create(CommandOutputSchema)` to create a new message.
  */
 export const CommandOutputSchema: GenMessage<CommandOutput> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_common, 40);
+  messageDesc(file_cadestro_v1_common, 17);
 
 /**
  * @generated from enum cadestro.v1.ExecutionStatus
@@ -770,19 +369,9 @@ export enum ExecutionStatus {
   TIMEOUT = 6,
 
   /**
-   * @generated from enum value: EXECUTION_STATUS_CANCELLED = 7;
+   * @generated from enum value: EXECUTION_STATUS_INDETERMINATE = 7;
    */
-  CANCELLED = 7,
-
-  /**
-   * @generated from enum value: EXECUTION_STATUS_NOT_APPLICABLE = 8;
-   */
-  NOT_APPLICABLE = 8,
-
-  /**
-   * @generated from enum value: EXECUTION_STATUS_INDETERMINATE = 9;
-   */
-  INDETERMINATE = 9,
+  INDETERMINATE = 7,
 }
 
 /**
@@ -796,14 +385,19 @@ export const ExecutionStatusSchema: GenEnum<ExecutionStatus> = /*@__PURE__*/
  */
 export enum DesiredState {
   /**
-   * @generated from enum value: DESIRED_STATE_PRESENT = 0;
+   * @generated from enum value: DESIRED_STATE_UNSPECIFIED = 0;
    */
-  PRESENT = 0,
+  UNSPECIFIED = 0,
 
   /**
-   * @generated from enum value: DESIRED_STATE_ABSENT = 1;
+   * @generated from enum value: DESIRED_STATE_PRESENT = 1;
    */
-  ABSENT = 1,
+  PRESENT = 1,
+
+  /**
+   * @generated from enum value: DESIRED_STATE_ABSENT = 2;
+   */
+  ABSENT = 2,
 }
 
 /**
@@ -811,161 +405,6 @@ export enum DesiredState {
  */
 export const DesiredStateSchema: GenEnum<DesiredState> = /*@__PURE__*/
   enumDesc(file_cadestro_v1_common, 1);
-
-/**
- * @generated from enum cadestro.v1.AssignmentMode
- */
-export enum AssignmentMode {
-  /**
-   * @generated from enum value: ASSIGNMENT_MODE_REQUIRED = 0;
-   */
-  REQUIRED = 0,
-
-  /**
-   * @generated from enum value: ASSIGNMENT_MODE_AVAILABLE = 1;
-   */
-  AVAILABLE = 1,
-
-  /**
-   * @generated from enum value: ASSIGNMENT_MODE_EXCLUDED = 2;
-   */
-  EXCLUDED = 2,
-
-  /**
-   * @generated from enum value: ASSIGNMENT_MODE_UNINSTALL = 3;
-   */
-  UNINSTALL = 3,
-}
-
-/**
- * Describes the enum cadestro.v1.AssignmentMode.
- */
-export const AssignmentModeSchema: GenEnum<AssignmentMode> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_common, 2);
-
-/**
- * @generated from enum cadestro.v1.AssignmentSourceType
- */
-export enum AssignmentSourceType {
-  /**
-   * @generated from enum value: ASSIGNMENT_SOURCE_TYPE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: ASSIGNMENT_SOURCE_TYPE_ACTION = 1;
-   */
-  ACTION = 1,
-
-  /**
-   * @generated from enum value: ASSIGNMENT_SOURCE_TYPE_ACTION_SET = 2;
-   */
-  ACTION_SET = 2,
-
-  /**
-   * @generated from enum value: ASSIGNMENT_SOURCE_TYPE_DEFINITION = 3;
-   */
-  DEFINITION = 3,
-
-  /**
-   * @generated from enum value: ASSIGNMENT_SOURCE_TYPE_COMPLIANCE_POLICY = 4;
-   */
-  COMPLIANCE_POLICY = 4,
-}
-
-/**
- * Describes the enum cadestro.v1.AssignmentSourceType.
- */
-export const AssignmentSourceTypeSchema: GenEnum<AssignmentSourceType> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_common, 3);
-
-/**
- * @generated from enum cadestro.v1.AssignmentTargetType
- */
-export enum AssignmentTargetType {
-  /**
-   * @generated from enum value: ASSIGNMENT_TARGET_TYPE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: ASSIGNMENT_TARGET_TYPE_DEVICE = 1;
-   */
-  DEVICE = 1,
-
-  /**
-   * @generated from enum value: ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP = 2;
-   */
-  DEVICE_GROUP = 2,
-
-  /**
-   * @generated from enum value: ASSIGNMENT_TARGET_TYPE_USER = 3;
-   */
-  USER = 3,
-
-  /**
-   * @generated from enum value: ASSIGNMENT_TARGET_TYPE_USER_GROUP = 4;
-   */
-  USER_GROUP = 4,
-}
-
-/**
- * Describes the enum cadestro.v1.AssignmentTargetType.
- */
-export const AssignmentTargetTypeSchema: GenEnum<AssignmentTargetType> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_common, 4);
-
-/**
- * @generated from enum cadestro.v1.RoleGrantScopeKind
- */
-export enum RoleGrantScopeKind {
-  /**
-   * @generated from enum value: ROLE_GRANT_SCOPE_KIND_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: ROLE_GRANT_SCOPE_KIND_DEVICE_GROUP = 1;
-   */
-  DEVICE_GROUP = 1,
-
-  /**
-   * @generated from enum value: ROLE_GRANT_SCOPE_KIND_USER_GROUP = 2;
-   */
-  USER_GROUP = 2,
-}
-
-/**
- * Describes the enum cadestro.v1.RoleGrantScopeKind.
- */
-export const RoleGrantScopeKindSchema: GenEnum<RoleGrantScopeKind> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_common, 5);
-
-/**
- * @generated from enum cadestro.v1.PermissionTargetKind
- */
-export enum PermissionTargetKind {
-  /**
-   * @generated from enum value: PERMISSION_TARGET_KIND_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: PERMISSION_TARGET_KIND_DEVICE = 1;
-   */
-  DEVICE = 1,
-
-  /**
-   * @generated from enum value: PERMISSION_TARGET_KIND_USER = 2;
-   */
-  USER = 2,
-}
-
-/**
- * Describes the enum cadestro.v1.PermissionTargetKind.
- */
-export const PermissionTargetKindSchema: GenEnum<PermissionTargetKind> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_common, 6);
 
 /**
  * @generated from enum cadestro.v1.DeviceStatus
@@ -991,698 +430,16 @@ export enum DeviceStatus {
  * Describes the enum cadestro.v1.DeviceStatus.
  */
 export const DeviceStatusSchema: GenEnum<DeviceStatus> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_common, 7);
-
-/**
- * @generated from enum cadestro.v1.SearchScope
- */
-export enum SearchScope {
-  /**
-   * @generated from enum value: SEARCH_SCOPE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: SEARCH_SCOPE_ACTIONS = 1;
-   */
-  ACTIONS = 1,
-
-  /**
-   * @generated from enum value: SEARCH_SCOPE_ACTION_SETS = 2;
-   */
-  ACTION_SETS = 2,
-
-  /**
-   * @generated from enum value: SEARCH_SCOPE_DEFINITIONS = 3;
-   */
-  DEFINITIONS = 3,
-
-  /**
-   * @generated from enum value: SEARCH_SCOPE_COMPLIANCE_POLICIES = 4;
-   */
-  COMPLIANCE_POLICIES = 4,
-
-  /**
-   * @generated from enum value: SEARCH_SCOPE_DEVICES = 5;
-   */
-  DEVICES = 5,
-
-  /**
-   * @generated from enum value: SEARCH_SCOPE_USERS = 6;
-   */
-  USERS = 6,
-
-  /**
-   * @generated from enum value: SEARCH_SCOPE_DEVICE_GROUPS = 7;
-   */
-  DEVICE_GROUPS = 7,
-
-  /**
-   * @generated from enum value: SEARCH_SCOPE_USER_GROUPS = 8;
-   */
-  USER_GROUPS = 8,
-
-  /**
-   * @generated from enum value: SEARCH_SCOPE_AUDIT_EVENTS = 9;
-   */
-  AUDIT_EVENTS = 9,
-}
-
-/**
- * Describes the enum cadestro.v1.SearchScope.
- */
-export const SearchScopeSchema: GenEnum<SearchScope> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_common, 8);
-
-/**
- * @generated from enum cadestro.v1.SortField
- */
-export enum SortField {
-  /**
-   * @generated from enum value: SORT_FIELD_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: SORT_FIELD_NAME = 1;
-   */
-  NAME = 1,
-
-  /**
-   * @generated from enum value: SORT_FIELD_TYPE = 2;
-   */
-  TYPE = 2,
-
-  /**
-   * @generated from enum value: SORT_FIELD_HOSTNAME = 3;
-   */
-  HOSTNAME = 3,
-
-  /**
-   * @generated from enum value: SORT_FIELD_COMPLIANCE_STATUS = 4;
-   */
-  COMPLIANCE_STATUS = 4,
-
-  /**
-   * @generated from enum value: SORT_FIELD_EMAIL = 5;
-   */
-  EMAIL = 5,
-
-  /**
-   * @generated from enum value: SORT_FIELD_DISPLAY_NAME = 6;
-   */
-  DISPLAY_NAME = 6,
-
-  /**
-   * @generated from enum value: SORT_FIELD_DISABLED = 7;
-   */
-  DISABLED = 7,
-
-  /**
-   * @generated from enum value: SORT_FIELD_MEMBER_COUNT = 8;
-   */
-  MEMBER_COUNT = 8,
-
-  /**
-   * @generated from enum value: SORT_FIELD_STATUS = 9;
-   */
-  STATUS = 9,
-
-  /**
-   * @generated from enum value: SORT_FIELD_ACTION_TYPE = 10;
-   */
-  ACTION_TYPE = 10,
-
-  /**
-   * @generated from enum value: SORT_FIELD_DEVICE_HOSTNAME = 11;
-   */
-  DEVICE_HOSTNAME = 11,
-
-  /**
-   * @generated from enum value: SORT_FIELD_ACTOR_TYPE = 12;
-   */
-  ACTOR_TYPE = 12,
-
-  /**
-   * @generated from enum value: SORT_FIELD_STREAM_TYPE = 13;
-   */
-  STREAM_TYPE = 13,
-
-  /**
-   * @generated from enum value: SORT_FIELD_EVENT_TYPE = 14;
-   */
-  EVENT_TYPE = 14,
-
-  /**
-   * @generated from enum value: SORT_FIELD_RULE_COUNT = 15;
-   */
-  RULE_COUNT = 15,
-
-  /**
-   * @generated from enum value: SORT_FIELD_LAST_LOGIN_AT = 16;
-   */
-  LAST_LOGIN_AT = 16,
-
-  /**
-   * @generated from enum value: SORT_FIELD_CREATED_AT = 17;
-   */
-  CREATED_AT = 17,
-
-  /**
-   * @generated from enum value: SORT_FIELD_UPDATED_AT = 18;
-   */
-  UPDATED_AT = 18,
-
-  /**
-   * @generated from enum value: SORT_FIELD_LAST_SEEN_AT = 19;
-   */
-  LAST_SEEN_AT = 19,
-
-  /**
-   * @generated from enum value: SORT_FIELD_REGISTERED_AT = 20;
-   */
-  REGISTERED_AT = 20,
-
-  /**
-   * @generated from enum value: SORT_FIELD_OCCURRED_AT = 21;
-   */
-  OCCURRED_AT = 21,
-}
-
-/**
- * Describes the enum cadestro.v1.SortField.
- */
-export const SortFieldSchema: GenEnum<SortField> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_common, 9);
-
-/**
- * @generated from enum cadestro.v1.SortDirection
- */
-export enum SortDirection {
-  /**
-   * @generated from enum value: SORT_DIRECTION_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: SORT_DIRECTION_ASC = 1;
-   */
-  ASC = 1,
-
-  /**
-   * @generated from enum value: SORT_DIRECTION_DESC = 2;
-   */
-  DESC = 2,
-}
-
-/**
- * Describes the enum cadestro.v1.SortDirection.
- */
-export const SortDirectionSchema: GenEnum<SortDirection> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_common, 10);
-
-/**
- * @generated from enum cadestro.v1.IdentityProviderType
- */
-export enum IdentityProviderType {
-  /**
-   * @generated from enum value: IDENTITY_PROVIDER_TYPE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: IDENTITY_PROVIDER_TYPE_OIDC = 1;
-   */
-  OIDC = 1,
-}
-
-/**
- * Describes the enum cadestro.v1.IdentityProviderType.
- */
-export const IdentityProviderTypeSchema: GenEnum<IdentityProviderType> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_common, 11);
-
-/**
- * @generated from enum cadestro.v1.RotationReason
- */
-export enum RotationReason {
-  /**
-   * @generated from enum value: ROTATION_REASON_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: ROTATION_REASON_INITIAL = 1;
-   */
-  INITIAL = 1,
-
-  /**
-   * @generated from enum value: ROTATION_REASON_SCHEDULED = 2;
-   */
-  SCHEDULED = 2,
-
-  /**
-   * @generated from enum value: ROTATION_REASON_AUTH_GRACE = 3;
-   */
-  AUTH_GRACE = 3,
-}
-
-/**
- * Describes the enum cadestro.v1.RotationReason.
- */
-export const RotationReasonSchema: GenEnum<RotationReason> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_common, 12);
-
-/**
- * @generated from enum cadestro.v1.LuksRevocationStatus
- */
-export enum LuksRevocationStatus {
-  /**
-   * @generated from enum value: LUKS_REVOCATION_STATUS_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: LUKS_REVOCATION_STATUS_NONE = 1;
-   */
-  NONE = 1,
-
-  /**
-   * @generated from enum value: LUKS_REVOCATION_STATUS_DISPATCHED = 2;
-   */
-  DISPATCHED = 2,
-
-  /**
-   * @generated from enum value: LUKS_REVOCATION_STATUS_SUCCESS = 3;
-   */
-  SUCCESS = 3,
-
-  /**
-   * @generated from enum value: LUKS_REVOCATION_STATUS_FAILED = 4;
-   */
-  FAILED = 4,
-}
-
-/**
- * Describes the enum cadestro.v1.LuksRevocationStatus.
- */
-export const LuksRevocationStatusSchema: GenEnum<LuksRevocationStatus> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_common, 13);
-
-/**
- * @generated from enum cadestro.v1.ErrorCode
- */
-export enum ErrorCode {
-  /**
-   * @generated from enum value: ERROR_CODE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: ERROR_CODE_ACTION_ALREADY_IN_SET = 1;
-   */
-  ACTION_ALREADY_IN_SET = 1,
-
-  /**
-   * @generated from enum value: ERROR_CODE_ACTION_NOT_COMPLIANCE = 2;
-   */
-  ACTION_NOT_COMPLIANCE = 2,
-
-  /**
-   * @generated from enum value: ERROR_CODE_ACTION_NOT_FOUND = 3;
-   */
-  ACTION_NOT_FOUND = 3,
-
-  /**
-   * @generated from enum value: ERROR_CODE_ACTION_SET_ALREADY_IN_DEFINITION = 4;
-   */
-  ACTION_SET_ALREADY_IN_DEFINITION = 4,
-
-  /**
-   * @generated from enum value: ERROR_CODE_ACTION_SET_MEMBER_NOT_FOUND = 5;
-   */
-  ACTION_SET_MEMBER_NOT_FOUND = 5,
-
-  /**
-   * @generated from enum value: ERROR_CODE_ACTION_SET_NOT_FOUND = 6;
-   */
-  ACTION_SET_NOT_FOUND = 6,
-
-  /**
-   * @generated from enum value: ERROR_CODE_ASSIGNMENT_NOT_FOUND = 7;
-   */
-  ASSIGNMENT_NOT_FOUND = 7,
-
-  /**
-   * @generated from enum value: ERROR_CODE_ASSIGNMENT_SOURCE_NOT_FOUND = 8;
-   */
-  ASSIGNMENT_SOURCE_NOT_FOUND = 8,
-
-  /**
-   * @generated from enum value: ERROR_CODE_ASSIGNMENT_TARGET_NOT_FOUND = 9;
-   */
-  ASSIGNMENT_TARGET_NOT_FOUND = 9,
-
-  /**
-   * @generated from enum value: ERROR_CODE_CANNOT_DELETE_SYSTEM_ROLE = 10;
-   */
-  CANNOT_DELETE_SYSTEM_ROLE = 10,
-
-  /**
-   * @generated from enum value: ERROR_CODE_CANNOT_MODIFY_SYSTEM_ACTION = 11;
-   */
-  CANNOT_MODIFY_SYSTEM_ACTION = 11,
-
-  /**
-   * @generated from enum value: ERROR_CODE_CANNOT_MODIFY_SYSTEM_ROLE = 12;
-   */
-  CANNOT_MODIFY_SYSTEM_ROLE = 12,
-
-  /**
-   * @generated from enum value: ERROR_CODE_CANNOT_RENAME_SYSTEM_ROLE = 13;
-   */
-  CANNOT_RENAME_SYSTEM_ROLE = 13,
-
-  /**
-   * @generated from enum value: ERROR_CODE_CANNOT_UNLINK_OTHER_USER = 14;
-   */
-  CANNOT_UNLINK_OTHER_USER = 14,
-
-  /**
-   * @generated from enum value: ERROR_CODE_COMPLIANCE_ACTION_NEEDS_DETECTION = 15;
-   */
-  COMPLIANCE_ACTION_NEEDS_DETECTION = 15,
-
-  /**
-   * @generated from enum value: ERROR_CODE_COMPLIANCE_POLICY_NAME_EXISTS = 16;
-   */
-  COMPLIANCE_POLICY_NAME_EXISTS = 16,
-
-  /**
-   * @generated from enum value: ERROR_CODE_COMPLIANCE_POLICY_NOT_FOUND = 17;
-   */
-  COMPLIANCE_POLICY_NOT_FOUND = 17,
-
-  /**
-   * @generated from enum value: ERROR_CODE_COMPLIANCE_POLICY_RULE_EXISTS = 18;
-   */
-  COMPLIANCE_POLICY_RULE_EXISTS = 18,
-
-  /**
-   * @generated from enum value: ERROR_CODE_COMPLIANCE_POLICY_RULE_NOT_FOUND = 19;
-   */
-  COMPLIANCE_POLICY_RULE_NOT_FOUND = 19,
-
-  /**
-   * @generated from enum value: ERROR_CODE_DEFINITION_MEMBER_NOT_FOUND = 20;
-   */
-  DEFINITION_MEMBER_NOT_FOUND = 20,
-
-  /**
-   * @generated from enum value: ERROR_CODE_DEFINITION_NOT_FOUND = 21;
-   */
-  DEFINITION_NOT_FOUND = 21,
-
-  /**
-   * @generated from enum value: ERROR_CODE_DEVICE_ALREADY_IN_GROUP = 22;
-   */
-  DEVICE_ALREADY_IN_GROUP = 22,
-
-  /**
-   * @generated from enum value: ERROR_CODE_DEVICE_GROUP_MEMBER_NOT_FOUND = 23;
-   */
-  DEVICE_GROUP_MEMBER_NOT_FOUND = 23,
-
-  /**
-   * @generated from enum value: ERROR_CODE_DEVICE_GROUP_NAME_EXISTS = 24;
-   */
-  DEVICE_GROUP_NAME_EXISTS = 24,
-
-  /**
-   * @generated from enum value: ERROR_CODE_DEVICE_GROUP_NOT_FOUND = 25;
-   */
-  DEVICE_GROUP_NOT_FOUND = 25,
-
-  /**
-   * @generated from enum value: ERROR_CODE_DEVICE_NOT_CONNECTED = 26;
-   */
-  DEVICE_NOT_CONNECTED = 26,
-
-  /**
-   * @generated from enum value: ERROR_CODE_DEVICE_NOT_FOUND = 27;
-   */
-  DEVICE_NOT_FOUND = 27,
-
-  /**
-   * @generated from enum value: ERROR_CODE_DEVICE_UNAVAILABLE = 28;
-   */
-  DEVICE_UNAVAILABLE = 28,
-
-  /**
-   * @generated from enum value: ERROR_CODE_DYNAMIC_GROUP_MANUAL_MODIFY = 29;
-   */
-  DYNAMIC_GROUP_MANUAL_MODIFY = 29,
-
-  /**
-   * @generated from enum value: ERROR_CODE_DYNAMIC_GROUP_MEMBERSHIP_MANAGED = 30;
-   */
-  DYNAMIC_GROUP_MEMBERSHIP_MANAGED = 30,
-
-  /**
-   * @generated from enum value: ERROR_CODE_EMAIL_ALREADY_EXISTS = 31;
-   */
-  EMAIL_ALREADY_EXISTS = 31,
-
-  /**
-   * @generated from enum value: ERROR_CODE_GRANT_NOT_FOUND = 32;
-   */
-  GRANT_NOT_FOUND = 32,
-
-  /**
-   * @generated from enum value: ERROR_CODE_GROUP_ALREADY_HAS_ROLE = 33;
-   */
-  GROUP_ALREADY_HAS_ROLE = 33,
-
-  /**
-   * @generated from enum value: ERROR_CODE_GROUP_NOT_DYNAMIC = 34;
-   */
-  GROUP_NOT_DYNAMIC = 34,
-
-  /**
-   * @generated from enum value: ERROR_CODE_IDENTITY_LINK_NOT_FOUND = 35;
-   */
-  IDENTITY_LINK_NOT_FOUND = 35,
-
-  /**
-   * @generated from enum value: ERROR_CODE_INTERNAL_ERROR = 36;
-   */
-  INTERNAL_ERROR = 36,
-
-  /**
-   * @generated from enum value: ERROR_CODE_INVALID_DYNAMIC_QUERY = 37;
-   */
-  INVALID_DYNAMIC_QUERY = 37,
-
-  /**
-   * @generated from enum value: ERROR_CODE_INVALID_PAGE_TOKEN = 38;
-   */
-  INVALID_PAGE_TOKEN = 38,
-
-  /**
-   * @generated from enum value: ERROR_CODE_INVALID_QUERY = 39;
-   */
-  INVALID_QUERY = 39,
-
-  /**
-   * @generated from enum value: ERROR_CODE_LAST_AUTH_METHOD = 40;
-   */
-  LAST_AUTH_METHOD = 40,
-
-  /**
-   * @generated from enum value: ERROR_CODE_LPS_PASSWORD_NOT_FOUND = 41;
-   */
-  LPS_PASSWORD_NOT_FOUND = 41,
-
-  /**
-   * @generated from enum value: ERROR_CODE_LUKS_KEY_ALREADY_REVOKED = 42;
-   */
-  LUKS_KEY_ALREADY_REVOKED = 42,
-
-  /**
-   * @generated from enum value: ERROR_CODE_LUKS_KEY_NOT_FOUND = 43;
-   */
-  LUKS_KEY_NOT_FOUND = 43,
-
-  /**
-   * @generated from enum value: ERROR_CODE_LUKS_KEY_REVOCATION_PENDING = 44;
-   */
-  LUKS_KEY_REVOCATION_PENDING = 44,
-
-  /**
-   * @generated from enum value: ERROR_CODE_NO_ASSIGNMENT_FOUND = 45;
-   */
-  NO_ASSIGNMENT_FOUND = 45,
-
-  /**
-   * @generated from enum value: ERROR_CODE_NOT_AUTHENTICATED = 46;
-   */
-  NOT_AUTHENTICATED = 46,
-
-  /**
-   * @generated from enum value: ERROR_CODE_PERMISSION_DENIED = 47;
-   */
-  PERMISSION_DENIED = 47,
-
-  /**
-   * @generated from enum value: ERROR_CODE_PROVIDER_DISABLED = 48;
-   */
-  PROVIDER_DISABLED = 48,
-
-  /**
-   * @generated from enum value: ERROR_CODE_PROVIDER_NOT_FOUND = 49;
-   */
-  PROVIDER_NOT_FOUND = 49,
-
-  /**
-   * @generated from enum value: ERROR_CODE_PROVIDER_SLUG_EXISTS = 50;
-   */
-  PROVIDER_SLUG_EXISTS = 50,
-
-  /**
-   * @generated from enum value: ERROR_CODE_QUERY_RESULT_NOT_FOUND = 51;
-   */
-  QUERY_RESULT_NOT_FOUND = 51,
-
-  /**
-   * @generated from enum value: ERROR_CODE_RATE_LIMITED = 52;
-   */
-  RATE_LIMITED = 52,
-
-  /**
-   * @generated from enum value: ERROR_CODE_ROLE_IN_USE = 53;
-   */
-  ROLE_IN_USE = 53,
-
-  /**
-   * @generated from enum value: ERROR_CODE_ROLE_NAME_EXISTS = 54;
-   */
-  ROLE_NAME_EXISTS = 54,
-
-  /**
-   * @generated from enum value: ERROR_CODE_ROLE_NOT_FOUND = 55;
-   */
-  ROLE_NOT_FOUND = 55,
-
-  /**
-   * @generated from enum value: ERROR_CODE_SCIM_ALREADY_ENABLED = 56;
-   */
-  SCIM_ALREADY_ENABLED = 56,
-
-  /**
-   * @generated from enum value: ERROR_CODE_SCIM_MANAGED_RESOURCE = 57;
-   */
-  SCIM_MANAGED_RESOURCE = 57,
-
-  /**
-   * @generated from enum value: ERROR_CODE_SCIM_NOT_ENABLED = 58;
-   */
-  SCIM_NOT_ENABLED = 58,
-
-  /**
-   * @generated from enum value: ERROR_CODE_SCOPE_NOT_PERMITTED = 59;
-   */
-  SCOPE_NOT_PERMITTED = 59,
-
-  /**
-   * @generated from enum value: ERROR_CODE_SSO_NO_MATCHING_ACCOUNT = 60;
-   */
-  SSO_NO_MATCHING_ACCOUNT = 60,
-
-  /**
-   * @generated from enum value: ERROR_CODE_SSO_STATE_EXPIRED = 61;
-   */
-  SSO_STATE_EXPIRED = 61,
-
-  /**
-   * @generated from enum value: ERROR_CODE_TERMINAL_LINUX_USERNAME_NOT_SET = 62;
-   */
-  TERMINAL_LINUX_USERNAME_NOT_SET = 62,
-
-  /**
-   * @generated from enum value: ERROR_CODE_TERMINAL_NOT_CONFIGURED = 63;
-   */
-  TERMINAL_NOT_CONFIGURED = 63,
-
-  /**
-   * @generated from enum value: ERROR_CODE_TERMINAL_SESSION_NOT_FOUND = 64;
-   */
-  TERMINAL_SESSION_NOT_FOUND = 64,
-
-  /**
-   * @generated from enum value: ERROR_CODE_TOKEN_EXPIRED = 65;
-   */
-  TOKEN_EXPIRED = 65,
-
-  /**
-   * @generated from enum value: ERROR_CODE_TOKEN_NOT_FOUND = 66;
-   */
-  TOKEN_NOT_FOUND = 66,
-
-  /**
-   * @generated from enum value: ERROR_CODE_UNIMPLEMENTED = 67;
-   */
-  UNIMPLEMENTED = 67,
-
-  /**
-   * @generated from enum value: ERROR_CODE_USER_ALREADY_HAS_ROLE = 68;
-   */
-  USER_ALREADY_HAS_ROLE = 68,
-
-  /**
-   * @generated from enum value: ERROR_CODE_USER_ALREADY_IN_GROUP = 69;
-   */
-  USER_ALREADY_IN_GROUP = 69,
-
-  /**
-   * @generated from enum value: ERROR_CODE_USER_GROUP_MEMBER_NOT_FOUND = 70;
-   */
-  USER_GROUP_MEMBER_NOT_FOUND = 70,
-
-  /**
-   * @generated from enum value: ERROR_CODE_USER_GROUP_NAME_EXISTS = 71;
-   */
-  USER_GROUP_NAME_EXISTS = 71,
-
-  /**
-   * @generated from enum value: ERROR_CODE_USER_GROUP_NOT_FOUND = 72;
-   */
-  USER_GROUP_NOT_FOUND = 72,
-
-  /**
-   * @generated from enum value: ERROR_CODE_USER_NOT_FOUND = 73;
-   */
-  USER_NOT_FOUND = 73,
-
-  /**
-   * @generated from enum value: ERROR_CODE_VALIDATION_FAILED = 74;
-   */
-  VALIDATION_FAILED = 74,
-}
-
-/**
- * Describes the enum cadestro.v1.ErrorCode.
- */
-export const ErrorCodeSchema: GenEnum<ErrorCode> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_common, 14);
+  enumDesc(file_cadestro_v1_common, 2);
 
 /**
  * @generated from enum cadestro.v1.ComplianceStatus
  */
 export enum ComplianceStatus {
   /**
-   * @generated from enum value: COMPLIANCE_STATUS_UNKNOWN = 0;
+   * @generated from enum value: COMPLIANCE_STATUS_UNSPECIFIED = 0;
    */
-  UNKNOWN = 0,
+  UNSPECIFIED = 0,
 
   /**
    * @generated from enum value: COMPLIANCE_STATUS_COMPLIANT = 1;
@@ -1693,16 +450,37 @@ export enum ComplianceStatus {
    * @generated from enum value: COMPLIANCE_STATUS_NON_COMPLIANT = 2;
    */
   NON_COMPLIANT = 2,
-
-  /**
-   * @generated from enum value: COMPLIANCE_STATUS_IN_GRACE_PERIOD = 3;
-   */
-  IN_GRACE_PERIOD = 3,
 }
 
 /**
  * Describes the enum cadestro.v1.ComplianceStatus.
  */
 export const ComplianceStatusSchema: GenEnum<ComplianceStatus> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_common, 15);
+  enumDesc(file_cadestro_v1_common, 3);
+
+/**
+ * @generated from enum cadestro.v1.AssignmentTargetType
+ */
+export enum AssignmentTargetType {
+  /**
+   * @generated from enum value: ASSIGNMENT_TARGET_TYPE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: ASSIGNMENT_TARGET_TYPE_DEVICE = 1;
+   */
+  DEVICE = 1,
+
+  /**
+   * @generated from enum value: ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP = 2;
+   */
+  DEVICE_GROUP = 2,
+}
+
+/**
+ * Describes the enum cadestro.v1.AssignmentTargetType.
+ */
+export const AssignmentTargetTypeSchema: GenEnum<AssignmentTargetType> = /*@__PURE__*/
+  enumDesc(file_cadestro_v1_common, 4);
 

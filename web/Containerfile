@@ -2,22 +2,13 @@ FROM docker.io/library/node:22-alpine AS build
 WORKDIR /src
 
 COPY contract/gen/ts/ /contract/gen/ts/
-COPY contract/ts/ /contract/ts/
-
 COPY web/package.json web/package-lock.json ./
 RUN npm ci
 RUN ln -s /src/node_modules /contract/node_modules
 
 COPY web/src ./src
 COPY web/static ./static
-COPY web/messages ./messages
-COPY web/project.inlang ./project.inlang
-COPY web/svelte.config.js web/vite.config.ts web/tsconfig.json web/components.json ./
-
-ARG VERSION=dev
-ARG BASE_PATH=
-ENV APP_VERSION=${VERSION}
-ENV BASE_PATH=${BASE_PATH}
+COPY web/svelte.config.js web/vite.config.ts web/tsconfig.json ./
 RUN npm run build
 
 FROM docker.io/library/node:22-alpine AS deps

@@ -25,10 +25,10 @@ func TestSeparatePositionals_InsertsEndOfOptions(t *testing.T) {
 			want:        []string{"-e", "--", "--eval=evil"},
 		},
 		{
-			name:        "flatpak install with remote+appid",
-			flags:       []string{"install", "-y", "--noninteractive", "--system"},
-			positionals: []string{"flathub", "org.videolan.VLC"},
-			want:        []string{"install", "-y", "--noninteractive", "--system", "--", "flathub", "org.videolan.VLC"},
+			name:        "package install with multiple names",
+			flags:       []string{"install", "-y"},
+			positionals: []string{"curl", "jq"},
+			want:        []string{"install", "-y", "--", "curl", "jq"},
 		},
 		{
 			name:        "no flags",
