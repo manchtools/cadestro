@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 func TestActionSurfaceIsTheCoreThree(t *testing.T) {
@@ -19,6 +20,19 @@ func TestActionSurfaceIsTheCoreThree(t *testing.T) {
 	for value := range cadestrov1.ActionType_name {
 		if !want[cadestrov1.ActionType(value)] {
 			t.Fatalf("unexpected action type %d", value)
+		}
+	}
+}
+
+func TestListDevicesRequestMatchesImplementedFilters(t *testing.T) {
+	fields := (&cadestrov1.ListDevicesRequest{}).ProtoReflect().Descriptor().Fields()
+	want := []protoreflect.Name{"page_size", "page_token"}
+	if fields.Len() != len(want) {
+		t.Fatalf("ListDevicesRequest has %d fields, want %d", fields.Len(), len(want))
+	}
+	for index, name := range want {
+		if fields.Get(index).Name() != name {
+			t.Fatalf("ListDevicesRequest field %d is %q, want %q", index, fields.Get(index).Name(), name)
 		}
 	}
 }

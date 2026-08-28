@@ -226,10 +226,6 @@ message ListDevicesRequest {
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
   string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-  DeviceStatus status_filter = 3 [
-    (buf.validate.field).enum.defined_only = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
 }
 
 message ListDevicesResponse {
