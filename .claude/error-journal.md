@@ -237,3 +237,15 @@
 **Harness fix**: None, because this is an exploratory product-scope ruling rather than a missing repository-wide engineering rule; the correction is recorded here for future scope work.
 
 **Prevention**: Future core-scope proposals must evaluate self-service, interactive terminal access, shell actions, and thin compliance independently rather than removing them as one remote-management class.
+
+## 2026-08-28 User correction: answered the broader feature status instead of the quoted inconsistency
+
+**What happened**: I explained the distinction between dynamic queries and status filtering when the user wanted the exact contract-to-handler mismatch explained.
+
+**What the user said**: "I meant, explain this ->  One inconsistency remains: contract/proto/cadestro/v1/control.proto:222 exists, but server/internal/core/devices.go:58 ignores it and returns every device page."
+
+**Root cause**: I treated the quoted statement as context for the earlier question instead of resolving "this" to the quoted statement and explaining its request path end to end.
+
+**Harness fix**: None; the repeated `User correction` category was already promoted on 2026-08-27, and this conversational referent error does not justify another repository engineering rule.
+
+**Prevention**: When the operator quotes a specific statement after "this," answer that statement's mechanics first and only add broader context if it is necessary to understand them.
