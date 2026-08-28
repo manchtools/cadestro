@@ -27,7 +27,6 @@ func fakeOIDCServer(t *testing.T) *httptest.Server {
 			"issuer":                                srv.URL,
 			"authorization_endpoint":                srv.URL + "/authorize",
 			"token_endpoint":                        srv.URL + "/token",
-			"userinfo_endpoint":                     srv.URL + "/userinfo",
 			"jwks_uri":                              srv.URL + "/jwks.json",
 			"response_types_supported":              []string{"code"},
 			"subject_types_supported":               []string{"public"},
@@ -47,10 +46,9 @@ func TestNewOIDCProvider_DiscoverySucceeds(t *testing.T) {
 	srv := fakeOIDCServer(t)
 
 	p, err := idp.NewOIDCProvider(context.Background(), idp.ProviderConfig{
-		IssuerURL:    srv.URL,
-		ClientID:     "test-client",
-		ClientSecret: "test-secret",
-		RedirectURL:  "https://app.example.com/auth/callback/test",
+		IssuerURL:   srv.URL,
+		ClientID:    "test-client",
+		RedirectURL: "https://app.example.com/auth/callback/test",
 	})
 	require.NoError(t, err)
 	require.NotNil(t, p)
@@ -127,4 +125,49 @@ func TestOIDCProvider_AuthCodeURL_HonoursAuthorizationURLOverride(t *testing.T) 
 	authURL := p.AuthCodeURL("s", "n", "v-of-enough-length-please")
 	assert.True(t, strings.HasPrefix(authURL, "https://override.example.com/authorize"),
 		"AuthorizationURL override must take precedence over the discovered endpoint; got %s", authURL)
+}
+
+func TestOIDCProvider_ExchangeCode_UsesPKCEPublicClient(t *testing.T) {
+	var authorization string
+	var exchangeRequests int
+	var tokenForm url.Values
+	mux := http.NewServeMux()
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+	mux.HandleFunc("/.well-known/openid-configuration", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"issuer": srv.URL, "authorization_endpoint": srv.URL + "/authorize", "token_endpoint": srv.URL + "/token",
+			"jwks_uri": srv.URL + "/jwks.json", "response_types_supported": []string{"code"},
+			"subject_types_supported": []string{"public"}, "id_token_signing_alg_values_supported": []string{"RS256"},
+		})
+	})
+	mux.HandleFunc("/jwks.json", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"keys": []any{}})
+	})
+	mux.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
+		exchangeRequests++
+		authorization = r.Header.Get("Authorization")
+		if err := r.ParseForm(); err != nil {
+			t.Error(err)
+			return
+		}
+		tokenForm = make(url.Values, len(r.Form))
+		for key, values := range r.Form {
+			tokenForm[key] = append([]string(nil), values...)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]string{"access_token": "access", "token_type": "Bearer"})
+	})
+
+	provider, err := idp.NewOIDCProvider(context.Background(), idp.ProviderConfig{IssuerURL: srv.URL, ClientID: "public-client"})
+	require.NoError(t, err)
+	_, err = provider.ExchangeCode(context.Background(), "authorization-code", "verifier")
+	require.NoError(t, err)
+	assert.Equal(t, 1, exchangeRequests)
+	assert.Empty(t, authorization)
+	assert.Equal(t, "public-client", tokenForm.Get("client_id"))
+	assert.Equal(t, "verifier", tokenForm.Get("code_verifier"))
+	assert.Empty(t, tokenForm.Get("client"+"_"+"secret"))
 }

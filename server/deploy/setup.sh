@@ -24,7 +24,7 @@ load_environment() {
         name="${line%%=*}"
         value="${line#*=}"
         case "$name" in
-            CONTROL_DOMAIN|AGENT_DOMAIN|ACME_EMAIL|IMAGE_TAG|OIDC_ISSUER_URL|OIDC_CLIENT_ID|OIDC_CLIENT_SECRET) ;;
+            CONTROL_DOMAIN|AGENT_DOMAIN|ACME_EMAIL|IMAGE_TAG|OIDC_ISSUER_URL|OIDC_CLIENT_ID) ;;
             *) fail "unknown .env variable: $name" ;;
         esac
         printf -v "$name" '%s' "$value"
@@ -40,11 +40,9 @@ validate_environment() {
     [[ "${ACME_EMAIL:-}" =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ ]] || fail "ACME_EMAIL is invalid"
     [[ "${OIDC_ISSUER_URL:-}" == https://* ]] || fail "OIDC_ISSUER_URL must use HTTPS"
     [[ -n "${OIDC_CLIENT_ID:-}" ]] || fail "OIDC_CLIENT_ID is required"
-    [[ -n "${OIDC_CLIENT_SECRET:-}" ]] || fail "OIDC_CLIENT_SECRET is required"
     [[ "$CONTROL_DOMAIN" != manage.example.com ]] || fail "replace the example CONTROL_DOMAIN"
     [[ "$AGENT_DOMAIN" != agents.example.com ]] || fail "replace the example AGENT_DOMAIN"
     [[ "$ACME_EMAIL" != admin@example.com ]] || fail "replace the example ACME_EMAIL"
-    [[ "$OIDC_CLIENT_SECRET" != replace-me ]] || fail "replace the example OIDC_CLIENT_SECRET"
 }
 
 validate_key_pair() {
@@ -79,9 +77,7 @@ ensure_control_certificate() {
 }
 
 ensure_secrets() {
-    [[ -f "$SECRETS_DIR/encryption.key" ]] || openssl rand -hex 32 > "$SECRETS_DIR/encryption.key"
     [[ -f "$SECRETS_DIR/session-signing.pem" ]] || openssl genpkey -algorithm Ed25519 -out "$SECRETS_DIR/session-signing.pem"
-    grep -Eq '^[0-9a-fA-F]{64}$' "$SECRETS_DIR/encryption.key" || fail "encryption key is invalid"
     openssl pkey -in "$SECRETS_DIR/session-signing.pem" -noout >/dev/null || fail "session signing key is invalid"
 }
 
@@ -103,13 +99,11 @@ write_config() {
         'CADESTRO_AGENT_TLS_KEY_FILE=/run/certs/control.key'
         'CADESTRO_PUBLIC_TLS_CERT_FILE=/run/certs/control.crt'
         'CADESTRO_PUBLIC_TLS_KEY_FILE=/run/certs/control.key'
-        'CADESTRO_ENCRYPTION_KEY_FILE=/run/secrets/encryption.key'
         'CADESTRO_SESSION_SIGNING_KEY_FILE=/run/secrets/session-signing.pem'
         'CADESTRO_OIDC_NAME=Company SSO'
         'CADESTRO_OIDC_SLUG=sso'
         "CADESTRO_OIDC_ISSUER_URL=$OIDC_ISSUER_URL"
         "CADESTRO_OIDC_CLIENT_ID=$OIDC_CLIENT_ID"
-        "CADESTRO_OIDC_CLIENT_SECRET=$OIDC_CLIENT_SECRET"
         'CADESTRO_OIDC_SCOPES=openid,profile,email'
     )
     printf '%s\n' "${lines[@]}" > "$CONFIG_DIR/control.env"

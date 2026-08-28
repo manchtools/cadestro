@@ -21,7 +21,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/ca"
 	"github.com/manchtools/cadestro/server/internal/core"
-	servercrypto "github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/middleware"
 	"github.com/manchtools/cadestro/server/internal/store"
 )
@@ -58,22 +57,18 @@ func run(config *Config, logger *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("load session signer: %w", err)
 	}
-	encryptor, err := servercrypto.NewEncryptor(config.EncryptionKey)
-	if err != nil {
-		return fmt.Errorf("load at-rest encryption key: %w", err)
-	}
 	fingerprint, err := crypto.CAFingerprintFromPEM(certificateAuthority.CACertPEM())
 	if err != nil {
 		return fmt.Errorf("fingerprint certificate authority: %w", err)
 	}
 	service := core.New(core.Config{
-		Store: storage, CA: certificateAuthority, JWT: jwt, Encryptor: encryptor, Logger: logger,
+		Store: storage, CA: certificateAuthority, JWT: jwt, Logger: logger,
 		PublicBaseURL: config.PublicBaseURL, AgentURL: config.AgentURL, CAFingerprint: fingerprint,
 		Version: version, HeartbeatInterval: config.HeartbeatInterval,
 	})
 	if err := service.EnsureBootstrapProvider(ctx, core.BootstrapProvider{
 		Name: config.BootstrapOIDCName, Slug: config.BootstrapOIDCSlug, ClientID: config.BootstrapOIDCClientID,
-		ClientSecret: config.BootstrapOIDCSecret, IssuerURL: config.BootstrapOIDCIssuer, Scopes: config.BootstrapOIDCScopes,
+		IssuerURL: config.BootstrapOIDCIssuer, Scopes: config.BootstrapOIDCScopes,
 	}); err != nil {
 		return fmt.Errorf("bootstrap identity provider: %w", err)
 	}

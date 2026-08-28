@@ -14,7 +14,6 @@ import (
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/auth"
-	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/idp"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -23,12 +22,11 @@ import (
 const authStateTTL = 10 * time.Minute
 
 type BootstrapProvider struct {
-	Name         string
-	Slug         string
-	ClientID     string
-	ClientSecret string
-	IssuerURL    string
-	Scopes       []string
+	Name      string
+	Slug      string
+	ClientID  string
+	IssuerURL string
+	Scopes    []string
 }
 
 func (service *Service) EnsureBootstrapProvider(ctx context.Context, config BootstrapProvider) error {
@@ -36,8 +34,8 @@ func (service *Service) EnsureBootstrapProvider(ctx context.Context, config Boot
 	if err != nil || count > 0 {
 		return err
 	}
-	if config.IssuerURL == "" || config.ClientID == "" || config.ClientSecret == "" {
-		return errors.New("bootstrap OIDC issuer, client ID, and client secret are required for a new database")
+	if config.IssuerURL == "" || config.ClientID == "" {
+		return errors.New("bootstrap OIDC issuer and client ID are required for a new database")
 	}
 	if config.Name == "" {
 		config.Name = "Company SSO"
@@ -46,11 +44,7 @@ func (service *Service) EnsureBootstrapProvider(ctx context.Context, config Boot
 		config.Slug = "sso"
 	}
 	id := ulid.Make().String()
-	if _, err := service.newOIDCProvider(ctx, id, config.ClientID, config.ClientSecret, config.IssuerURL, config.Scopes, service.publicBaseURL); err != nil {
-		return err
-	}
-	secret, err := service.encryptor.EncryptWithContext(config.ClientSecret, crypto.RowAAD(id, crypto.PurposeIdPClientSecret))
-	if err != nil {
+	if _, err := service.newOIDCProvider(ctx, id, config.ClientID, config.IssuerURL, config.Scopes, service.publicBaseURL); err != nil {
 		return err
 	}
 	scopes, err := json.Marshal(config.Scopes)
@@ -60,7 +54,7 @@ func (service *Service) EnsureBootstrapProvider(ctx context.Context, config Boot
 	now := service.now().UTC()
 	_, err = service.store.Queries().CreateIdentityProvider(ctx, db.CreateIdentityProviderParams{
 		ID: id, Name: config.Name, Slug: config.Slug, Enabled: true, ClientID: config.ClientID,
-		ClientSecret: secret, IssuerUrl: config.IssuerURL, ScopesJson: string(scopes), CreatedAt: now, UpdatedAt: now,
+		IssuerUrl: config.IssuerURL, ScopesJson: string(scopes), CreatedAt: now, UpdatedAt: now,
 	})
 	return err
 }
@@ -245,12 +239,8 @@ func (service *Service) linkIdentity(ctx context.Context, providerID string, cla
 
 func (service *Service) CreateIdentityProvider(ctx context.Context, request *connect.Request[cadestrov1.CreateIdentityProviderRequest]) (*connect.Response[cadestrov1.CreateIdentityProviderResponse], error) {
 	id := ulid.Make().String()
-	if _, err := service.newOIDCProvider(ctx, id, request.Msg.GetClientId().GetValue(), request.Msg.GetClientSecret(), request.Msg.GetIssuerUrl(), request.Msg.GetScopes(), service.publicBaseURL); err != nil {
+	if _, err := service.newOIDCProvider(ctx, id, request.Msg.GetClientId().GetValue(), request.Msg.GetIssuerUrl(), request.Msg.GetScopes(), service.publicBaseURL); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("identity provider discovery failed"))
-	}
-	secret, err := service.encryptor.EncryptWithContext(request.Msg.GetClientSecret(), crypto.RowAAD(id, crypto.PurposeIdPClientSecret))
-	if err != nil {
-		return nil, service.internal("encrypt provider secret", err)
 	}
 	scopes, err := json.Marshal(request.Msg.GetScopes())
 	if err != nil {
@@ -259,7 +249,7 @@ func (service *Service) CreateIdentityProvider(ctx context.Context, request *con
 	now := service.now().UTC()
 	provider, err := service.store.Queries().CreateIdentityProvider(ctx, db.CreateIdentityProviderParams{
 		ID: id, Name: request.Msg.GetName(), Slug: request.Msg.GetSlug(), Enabled: true,
-		ClientID: request.Msg.GetClientId().GetValue(), ClientSecret: secret, IssuerUrl: request.Msg.GetIssuerUrl(),
+		ClientID: request.Msg.GetClientId().GetValue(), IssuerUrl: request.Msg.GetIssuerUrl(),
 		ScopesJson: string(scopes), CreatedAt: now, UpdatedAt: now,
 	})
 	if err != nil {
@@ -311,26 +301,15 @@ func (service *Service) ListIdentityProviders(ctx context.Context, _ *connect.Re
 
 func (service *Service) UpdateIdentityProvider(ctx context.Context, request *connect.Request[cadestrov1.UpdateIdentityProviderRequest]) (*connect.Response[cadestrov1.UpdateIdentityProviderResponse], error) {
 	id := request.Msg.GetId().GetValue()
-	current, err := service.store.Queries().GetIdentityProvider(ctx, id)
+	_, err := service.store.Queries().GetIdentityProvider(ctx, id)
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, rpcNotFound("identity provider")
 		}
 		return nil, service.internal("get provider for update", err)
 	}
-	secretValue := request.Msg.GetClientSecret()
-	if secretValue == "" {
-		secretValue, err = service.encryptor.DecryptWithContext(current.ClientSecret, crypto.RowAAD(id, crypto.PurposeIdPClientSecret))
-		if err != nil {
-			return nil, service.internal("decrypt provider secret", err)
-		}
-	}
-	if _, err := service.newOIDCProvider(ctx, id, request.Msg.GetClientId().GetValue(), secretValue, request.Msg.GetIssuerUrl(), request.Msg.GetScopes(), service.publicBaseURL); err != nil {
+	if _, err := service.newOIDCProvider(ctx, id, request.Msg.GetClientId().GetValue(), request.Msg.GetIssuerUrl(), request.Msg.GetScopes(), service.publicBaseURL); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("identity provider discovery failed"))
-	}
-	encrypted, err := service.encryptor.EncryptWithContext(secretValue, crypto.RowAAD(id, crypto.PurposeIdPClientSecret))
-	if err != nil {
-		return nil, service.internal("encrypt provider secret", err)
 	}
 	scopes, err := json.Marshal(request.Msg.GetScopes())
 	if err != nil {
@@ -338,7 +317,7 @@ func (service *Service) UpdateIdentityProvider(ctx context.Context, request *con
 	}
 	provider, err := service.store.Queries().UpdateIdentityProvider(ctx, db.UpdateIdentityProviderParams{
 		Name: request.Msg.GetName(), Enabled: request.Msg.GetEnabled(), ClientID: request.Msg.GetClientId().GetValue(),
-		ClientSecret: encrypted, IssuerUrl: request.Msg.GetIssuerUrl(), ScopesJson: string(scopes),
+		IssuerUrl: request.Msg.GetIssuerUrl(), ScopesJson: string(scopes),
 		UpdatedAt: service.now().UTC(), ID: id,
 	})
 	if err != nil {
@@ -370,20 +349,16 @@ func (service *Service) DeleteIdentityProvider(ctx context.Context, request *con
 }
 
 func (service *Service) providerClient(ctx context.Context, provider *db.IdentityProvider, redirectURL string) (*idp.OIDCProvider, error) {
-	secret, err := service.encryptor.DecryptWithContext(provider.ClientSecret, crypto.RowAAD(provider.ID, crypto.PurposeIdPClientSecret))
-	if err != nil {
-		return nil, err
-	}
 	var scopes []string
 	if err := json.Unmarshal([]byte(provider.ScopesJson), &scopes); err != nil {
 		return nil, err
 	}
-	return service.newOIDCProvider(ctx, provider.ID, provider.ClientID, secret, provider.IssuerUrl, scopes, redirectURL)
+	return service.newOIDCProvider(ctx, provider.ID, provider.ClientID, provider.IssuerUrl, scopes, redirectURL)
 }
 
-func (service *Service) newOIDCProvider(ctx context.Context, _, clientID, clientSecret, issuerURL string, scopes []string, redirectURL string) (*idp.OIDCProvider, error) {
+func (service *Service) newOIDCProvider(ctx context.Context, _, clientID, issuerURL string, scopes []string, redirectURL string) (*idp.OIDCProvider, error) {
 	return idp.NewOIDCProvider(ctx, idp.ProviderConfig{
-		IssuerURL: issuerURL, ClientID: clientID, ClientSecret: clientSecret, Scopes: scopes, RedirectURL: redirectURL,
+		IssuerURL: issuerURL, ClientID: clientID, Scopes: scopes, RedirectURL: redirectURL,
 	})
 }
 

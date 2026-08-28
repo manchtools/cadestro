@@ -16,7 +16,6 @@ import (
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/server/internal/auth"
 	"github.com/manchtools/cadestro/server/internal/ca"
-	"github.com/manchtools/cadestro/server/internal/crypto"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
@@ -25,7 +24,6 @@ type Config struct {
 	Store             *store.Store
 	CA                *ca.CA
 	JWT               *auth.JWTManager
-	Encryptor         *crypto.Encryptor
 	Logger            *slog.Logger
 	Now               func() time.Time
 	PublicBaseURL     string
@@ -41,7 +39,6 @@ type Service struct {
 	store             *store.Store
 	ca                *ca.CA
 	jwt               *auth.JWTManager
-	encryptor         *crypto.Encryptor
 	logger            *slog.Logger
 	now               func() time.Time
 	publicBaseURL     string
@@ -52,8 +49,8 @@ type Service struct {
 }
 
 func New(config Config) *Service {
-	if config.Store == nil || config.CA == nil || config.JWT == nil || config.Encryptor == nil {
-		panic("core: store, CA, JWT manager, and encryptor are required")
+	if config.Store == nil || config.CA == nil || config.JWT == nil {
+		panic("core: store, CA, and JWT manager are required")
 	}
 	if config.Logger == nil {
 		config.Logger = slog.Default()
@@ -65,7 +62,7 @@ func New(config Config) *Service {
 		config.HeartbeatInterval = 30 * time.Second
 	}
 	return &Service{
-		store: config.Store, ca: config.CA, jwt: config.JWT, encryptor: config.Encryptor,
+		store: config.Store, ca: config.CA, jwt: config.JWT,
 		logger: config.Logger, now: config.Now, publicBaseURL: config.PublicBaseURL,
 		agentURL: config.AgentURL, caFingerprint: config.CAFingerprint, version: config.Version,
 		heartbeatInterval: config.HeartbeatInterval,

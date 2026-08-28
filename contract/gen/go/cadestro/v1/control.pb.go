@@ -1072,9 +1072,8 @@ type CreateIdentityProviderRequest struct {
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Slug          string                 `protobuf:"bytes,2,opt,name=slug,proto3" json:"slug,omitempty"`
 	ClientId      *OidcClientId          `protobuf:"bytes,3,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	ClientSecret  string                 `protobuf:"bytes,4,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
-	IssuerUrl     string                 `protobuf:"bytes,5,opt,name=issuer_url,json=issuerUrl,proto3" json:"issuer_url,omitempty"`
-	Scopes        []string               `protobuf:"bytes,6,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	IssuerUrl     string                 `protobuf:"bytes,4,opt,name=issuer_url,json=issuerUrl,proto3" json:"issuer_url,omitempty"`
+	Scopes        []string               `protobuf:"bytes,5,rep,name=scopes,proto3" json:"scopes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1128,13 +1127,6 @@ func (x *CreateIdentityProviderRequest) GetClientId() *OidcClientId {
 		return x.ClientId
 	}
 	return nil
-}
-
-func (x *CreateIdentityProviderRequest) GetClientSecret() string {
-	if x != nil {
-		return x.ClientSecret
-	}
-	return ""
 }
 
 func (x *CreateIdentityProviderRequest) GetIssuerUrl() string {
@@ -1369,9 +1361,8 @@ type UpdateIdentityProviderRequest struct {
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Enabled       bool                   `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
 	ClientId      *OidcClientId          `protobuf:"bytes,4,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	ClientSecret  string                 `protobuf:"bytes,5,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
-	IssuerUrl     string                 `protobuf:"bytes,6,opt,name=issuer_url,json=issuerUrl,proto3" json:"issuer_url,omitempty"`
-	Scopes        []string               `protobuf:"bytes,7,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	IssuerUrl     string                 `protobuf:"bytes,5,opt,name=issuer_url,json=issuerUrl,proto3" json:"issuer_url,omitempty"`
+	Scopes        []string               `protobuf:"bytes,6,rep,name=scopes,proto3" json:"scopes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1432,13 +1423,6 @@ func (x *UpdateIdentityProviderRequest) GetClientId() *OidcClientId {
 		return x.ClientId
 	}
 	return nil
-}
-
-func (x *UpdateIdentityProviderRequest) GetClientSecret() string {
-	if x != nil {
-		return x.ClientSecret
-	}
-	return ""
 }
 
 func (x *UpdateIdentityProviderRequest) GetIssuerUrl() string {
@@ -5533,15 +5517,14 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xb8\x02\n" +
+	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x86\x02\n" +
 	"\x1dCreateIdentityProviderRequest\x12 \n" +
 	"\x04name\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x04name\x120\n" +
 	"\x04slug\x18\x02 \x01(\tB\x1c\xbaH\x19\xc8\x01\x01r\x14\x10\x01\x18@2\x0e^[a-zA-Z0-9]+$R\x04slug\x12>\n" +
-	"\tclient_id\x18\x03 \x01(\v2\x19.cadestro.v1.OidcClientIdB\x06\xbaH\x03\xc8\x01\x01R\bclientId\x120\n" +
-	"\rclient_secret\x18\x04 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x18\x80 R\fclientSecret\x12*\n" +
+	"\tclient_id\x18\x03 \x01(\v2\x19.cadestro.v1.OidcClientIdB\x06\xbaH\x03\xc8\x01\x01R\bclientId\x12*\n" +
 	"\n" +
-	"issuer_url\x18\x05 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x88\x01\x01R\tissuerUrl\x12%\n" +
-	"\x06scopes\x18\x06 \x03(\tB\r\xbaH\n" +
+	"issuer_url\x18\x04 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x88\x01\x01R\tissuerUrl\x12%\n" +
+	"\x06scopes\x18\x05 \x03(\tB\r\xbaH\n" +
 	"\x92\x01\a\"\x05r\x03\x18\xff\x01R\x06scopes\"c\n" +
 	"\x1eCreateIdentityProviderResponse\x12A\n" +
 	"\bprovider\x18\x01 \x01(\v2\x1d.cadestro.v1.IdentityProviderB\x06\xbaH\x03\xc8\x01\x01R\bprovider\"U\n" +
@@ -5551,16 +5534,15 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\bprovider\x18\x01 \x01(\v2\x1d.cadestro.v1.IdentityProviderB\x06\xbaH\x03\xc8\x01\x01R\bprovider\"\x1e\n" +
 	"\x1cListIdentityProvidersRequest\"\\\n" +
 	"\x1dListIdentityProvidersResponse\x12;\n" +
-	"\tproviders\x18\x01 \x03(\v2\x1d.cadestro.v1.IdentityProviderR\tproviders\"\xd9\x02\n" +
+	"\tproviders\x18\x01 \x03(\v2\x1d.cadestro.v1.IdentityProviderR\tproviders\"\xa7\x02\n" +
 	"\x1dUpdateIdentityProviderRequest\x127\n" +
 	"\x02id\x18\x01 \x01(\v2\x1f.cadestro.v1.IdentityProviderIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x12 \n" +
 	"\x04name\x18\x02 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x04name\x12\x18\n" +
 	"\aenabled\x18\x03 \x01(\bR\aenabled\x12>\n" +
-	"\tclient_id\x18\x04 \x01(\v2\x19.cadestro.v1.OidcClientIdB\x06\xbaH\x03\xc8\x01\x01R\bclientId\x120\n" +
-	"\rclient_secret\x18\x05 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\fclientSecret\x12*\n" +
+	"\tclient_id\x18\x04 \x01(\v2\x19.cadestro.v1.OidcClientIdB\x06\xbaH\x03\xc8\x01\x01R\bclientId\x12*\n" +
 	"\n" +
-	"issuer_url\x18\x06 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x88\x01\x01R\tissuerUrl\x12%\n" +
-	"\x06scopes\x18\a \x03(\tB\r\xbaH\n" +
+	"issuer_url\x18\x05 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x88\x01\x01R\tissuerUrl\x12%\n" +
+	"\x06scopes\x18\x06 \x03(\tB\r\xbaH\n" +
 	"\x92\x01\a\"\x05r\x03\x18\xff\x01R\x06scopes\"c\n" +
 	"\x1eUpdateIdentityProviderResponse\x12A\n" +
 	"\bprovider\x18\x01 \x01(\v2\x1d.cadestro.v1.IdentityProviderB\x06\xbaH\x03\xc8\x01\x01R\bprovider\"X\n" +

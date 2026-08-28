@@ -11,9 +11,8 @@ The public and agent listeners are distinct TLS endpoints. Validation runs
 before authentication and authorization. Device identity comes from the
 verified client certificate and active certificate serial.
 
-OIDC client secrets are encrypted at rest with AES-256-GCM and resource-bound
-additional authenticated data. CA keys, TLS keys, session signing keys,
-encryption keys, and the SQLite database require owner-only storage.
+CA keys, TLS keys, session signing keys, and the SQLite database require
+owner-only storage.
 
 Shell actions run as root and are therefore equivalent to administrator code
 execution on assigned devices. Only trusted administrators should be able to

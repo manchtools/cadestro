@@ -6,7 +6,6 @@ CREATE TABLE identity_providers (
     slug TEXT NOT NULL UNIQUE,
     enabled BOOLEAN NOT NULL DEFAULT TRUE,
     client_id TEXT NOT NULL,
-    client_secret TEXT NOT NULL,
     issuer_url TEXT NOT NULL,
     scopes_json TEXT NOT NULL,
     created_at DATETIME NOT NULL,

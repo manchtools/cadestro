@@ -381,22 +381,21 @@ func (q *Queries) CreateExecutionResult(ctx context.Context, arg CreateExecution
 }
 
 const createIdentityProvider = `-- name: CreateIdentityProvider :one
-INSERT INTO identity_providers (id, name, slug, enabled, client_id, client_secret, issuer_url, scopes_json, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-RETURNING id, name, slug, enabled, client_id, client_secret, issuer_url, scopes_json, created_at, updated_at
+INSERT INTO identity_providers (id, name, slug, enabled, client_id, issuer_url, scopes_json, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING id, name, slug, enabled, client_id, issuer_url, scopes_json, created_at, updated_at
 `
 
 type CreateIdentityProviderParams struct {
-	ID           string    `json:"id"`
-	Name         string    `json:"name"`
-	Slug         string    `json:"slug"`
-	Enabled      bool      `json:"enabled"`
-	ClientID     string    `json:"client_id"`
-	ClientSecret string    `json:"client_secret"`
-	IssuerUrl    string    `json:"issuer_url"`
-	ScopesJson   string    `json:"scopes_json"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID         string    `json:"id"`
+	Name       string    `json:"name"`
+	Slug       string    `json:"slug"`
+	Enabled    bool      `json:"enabled"`
+	ClientID   string    `json:"client_id"`
+	IssuerUrl  string    `json:"issuer_url"`
+	ScopesJson string    `json:"scopes_json"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 func (q *Queries) CreateIdentityProvider(ctx context.Context, arg CreateIdentityProviderParams) (*IdentityProvider, error) {
@@ -406,7 +405,6 @@ func (q *Queries) CreateIdentityProvider(ctx context.Context, arg CreateIdentity
 		arg.Slug,
 		arg.Enabled,
 		arg.ClientID,
-		arg.ClientSecret,
 		arg.IssuerUrl,
 		arg.ScopesJson,
 		arg.CreatedAt,
@@ -419,7 +417,6 @@ func (q *Queries) CreateIdentityProvider(ctx context.Context, arg CreateIdentity
 		&i.Slug,
 		&i.Enabled,
 		&i.ClientID,
-		&i.ClientSecret,
 		&i.IssuerUrl,
 		&i.ScopesJson,
 		&i.CreatedAt,
@@ -764,7 +761,7 @@ func (q *Queries) GetDeviceGroup(ctx context.Context, id string) (*GetDeviceGrou
 }
 
 const getIdentityProvider = `-- name: GetIdentityProvider :one
-SELECT id, name, slug, enabled, client_id, client_secret, issuer_url, scopes_json, created_at, updated_at FROM identity_providers WHERE id = ?
+SELECT id, name, slug, enabled, client_id, issuer_url, scopes_json, created_at, updated_at FROM identity_providers WHERE id = ?
 `
 
 func (q *Queries) GetIdentityProvider(ctx context.Context, id string) (*IdentityProvider, error) {
@@ -776,7 +773,6 @@ func (q *Queries) GetIdentityProvider(ctx context.Context, id string) (*Identity
 		&i.Slug,
 		&i.Enabled,
 		&i.ClientID,
-		&i.ClientSecret,
 		&i.IssuerUrl,
 		&i.ScopesJson,
 		&i.CreatedAt,
@@ -786,7 +782,7 @@ func (q *Queries) GetIdentityProvider(ctx context.Context, id string) (*Identity
 }
 
 const getIdentityProviderBySlug = `-- name: GetIdentityProviderBySlug :one
-SELECT id, name, slug, enabled, client_id, client_secret, issuer_url, scopes_json, created_at, updated_at FROM identity_providers WHERE slug = ?
+SELECT id, name, slug, enabled, client_id, issuer_url, scopes_json, created_at, updated_at FROM identity_providers WHERE slug = ?
 `
 
 func (q *Queries) GetIdentityProviderBySlug(ctx context.Context, slug string) (*IdentityProvider, error) {
@@ -798,7 +794,6 @@ func (q *Queries) GetIdentityProviderBySlug(ctx context.Context, slug string) (*
 		&i.Slug,
 		&i.Enabled,
 		&i.ClientID,
-		&i.ClientSecret,
 		&i.IssuerUrl,
 		&i.ScopesJson,
 		&i.CreatedAt,
@@ -1391,7 +1386,7 @@ func (q *Queries) ListDevices(ctx context.Context, arg ListDevicesParams) ([]*De
 }
 
 const listEnabledIdentityProviders = `-- name: ListEnabledIdentityProviders :many
-SELECT id, name, slug, enabled, client_id, client_secret, issuer_url, scopes_json, created_at, updated_at FROM identity_providers WHERE enabled = TRUE ORDER BY name, id
+SELECT id, name, slug, enabled, client_id, issuer_url, scopes_json, created_at, updated_at FROM identity_providers WHERE enabled = TRUE ORDER BY name, id
 `
 
 func (q *Queries) ListEnabledIdentityProviders(ctx context.Context) ([]*IdentityProvider, error) {
@@ -1409,7 +1404,6 @@ func (q *Queries) ListEnabledIdentityProviders(ctx context.Context) ([]*Identity
 			&i.Slug,
 			&i.Enabled,
 			&i.ClientID,
-			&i.ClientSecret,
 			&i.IssuerUrl,
 			&i.ScopesJson,
 			&i.CreatedAt,
@@ -1497,7 +1491,7 @@ func (q *Queries) ListExecutionResults(ctx context.Context, arg ListExecutionRes
 }
 
 const listIdentityProviders = `-- name: ListIdentityProviders :many
-SELECT id, name, slug, enabled, client_id, client_secret, issuer_url, scopes_json, created_at, updated_at FROM identity_providers ORDER BY name, id
+SELECT id, name, slug, enabled, client_id, issuer_url, scopes_json, created_at, updated_at FROM identity_providers ORDER BY name, id
 `
 
 func (q *Queries) ListIdentityProviders(ctx context.Context) ([]*IdentityProvider, error) {
@@ -1515,7 +1509,6 @@ func (q *Queries) ListIdentityProviders(ctx context.Context) ([]*IdentityProvide
 			&i.Slug,
 			&i.Enabled,
 			&i.ClientID,
-			&i.ClientSecret,
 			&i.IssuerUrl,
 			&i.ScopesJson,
 			&i.CreatedAt,
@@ -1905,20 +1898,19 @@ func (q *Queries) UpdateDeviceGroupDescription(ctx context.Context, arg UpdateDe
 
 const updateIdentityProvider = `-- name: UpdateIdentityProvider :one
 UPDATE identity_providers
-SET name = ?, enabled = ?, client_id = ?, client_secret = ?, issuer_url = ?, scopes_json = ?, updated_at = ?
+SET name = ?, enabled = ?, client_id = ?, issuer_url = ?, scopes_json = ?, updated_at = ?
 WHERE id = ?
-RETURNING id, name, slug, enabled, client_id, client_secret, issuer_url, scopes_json, created_at, updated_at
+RETURNING id, name, slug, enabled, client_id, issuer_url, scopes_json, created_at, updated_at
 `
 
 type UpdateIdentityProviderParams struct {
-	Name         string    `json:"name"`
-	Enabled      bool      `json:"enabled"`
-	ClientID     string    `json:"client_id"`
-	ClientSecret string    `json:"client_secret"`
-	IssuerUrl    string    `json:"issuer_url"`
-	ScopesJson   string    `json:"scopes_json"`
-	UpdatedAt    time.Time `json:"updated_at"`
-	ID           string    `json:"id"`
+	Name       string    `json:"name"`
+	Enabled    bool      `json:"enabled"`
+	ClientID   string    `json:"client_id"`
+	IssuerUrl  string    `json:"issuer_url"`
+	ScopesJson string    `json:"scopes_json"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	ID         string    `json:"id"`
 }
 
 func (q *Queries) UpdateIdentityProvider(ctx context.Context, arg UpdateIdentityProviderParams) (*IdentityProvider, error) {
@@ -1926,7 +1918,6 @@ func (q *Queries) UpdateIdentityProvider(ctx context.Context, arg UpdateIdentity
 		arg.Name,
 		arg.Enabled,
 		arg.ClientID,
-		arg.ClientSecret,
 		arg.IssuerUrl,
 		arg.ScopesJson,
 		arg.UpdatedAt,
@@ -1939,7 +1930,6 @@ func (q *Queries) UpdateIdentityProvider(ctx context.Context, arg UpdateIdentity
 		&i.Slug,
 		&i.Enabled,
 		&i.ClientID,
-		&i.ClientSecret,
 		&i.IssuerUrl,
 		&i.ScopesJson,
 		&i.CreatedAt,

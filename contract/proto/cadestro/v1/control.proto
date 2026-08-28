@@ -147,15 +147,11 @@ message CreateIdentityProviderRequest {
     (buf.validate.field).string.pattern = "^[a-zA-Z0-9]+$"
   ];
   OidcClientId client_id = 3 [(buf.validate.field).required = true];
-  string client_secret = 4 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.max_len = 4096
-  ];
-  string issuer_url = 5 [
+  string issuer_url = 4 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.uri = true
   ];
-  repeated string scopes = 6 [(buf.validate.field).repeated.items.string.max_len = 255];
+  repeated string scopes = 5 [(buf.validate.field).repeated.items.string.max_len = 255];
 }
 
 message CreateIdentityProviderResponse {
@@ -185,15 +181,11 @@ message UpdateIdentityProviderRequest {
   ];
   bool enabled = 3;
   OidcClientId client_id = 4 [(buf.validate.field).required = true];
-  string client_secret = 5 [
-    (buf.validate.field).string.max_len = 4096,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  string issuer_url = 6 [
+  string issuer_url = 5 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.uri = true
   ];
-  repeated string scopes = 7 [(buf.validate.field).repeated.items.string.max_len = 255];
+  repeated string scopes = 6 [(buf.validate.field).repeated.items.string.max_len = 255];
 }
 
 message UpdateIdentityProviderResponse {

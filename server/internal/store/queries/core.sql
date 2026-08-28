@@ -2,8 +2,8 @@
 SELECT COUNT(*) FROM identity_providers;
 
 -- name: CreateIdentityProvider :one
-INSERT INTO identity_providers (id, name, slug, enabled, client_id, client_secret, issuer_url, scopes_json, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO identity_providers (id, name, slug, enabled, client_id, issuer_url, scopes_json, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: GetIdentityProvider :one
@@ -20,7 +20,7 @@ SELECT * FROM identity_providers WHERE enabled = TRUE ORDER BY name, id;
 
 -- name: UpdateIdentityProvider :one
 UPDATE identity_providers
-SET name = ?, enabled = ?, client_id = ?, client_secret = ?, issuer_url = ?, scopes_json = ?, updated_at = ?
+SET name = ?, enabled = ?, client_id = ?, issuer_url = ?, scopes_json = ?, updated_at = ?
 WHERE id = ?
 RETURNING *;
 

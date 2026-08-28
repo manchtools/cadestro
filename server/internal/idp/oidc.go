@@ -16,11 +16,10 @@ import (
 )
 
 type OIDCProvider struct {
-	Provider    *oidc.Provider
-	OAuth2Cfg   oauth2.Config
-	Verifier    *oidc.IDTokenVerifier
-	GroupClaim  string
-	UserinfoURL string
+	Provider   *oidc.Provider
+	OAuth2Cfg  oauth2.Config
+	Verifier   *oidc.IDTokenVerifier
+	GroupClaim string
 
 	httpClient *http.Client
 }
@@ -71,9 +70,7 @@ type ProviderConfig struct {
 	IssuerURL        string
 	AuthorizationURL string
 	TokenURL         string
-	UserinfoURL      string
 	ClientID         string
-	ClientSecret     string
 	Scopes           []string
 	RedirectURL      string
 	GroupClaim       string
@@ -100,37 +97,25 @@ func NewOIDCProvider(ctx context.Context, cfg ProviderConfig) (*OIDCProvider, er
 	if cfg.TokenURL != "" {
 		endpoint.TokenURL = cfg.TokenURL
 	}
+	endpoint.AuthStyle = oauth2.AuthStyleInParams
 
 	oauth2Cfg := oauth2.Config{
-		ClientID:     cfg.ClientID,
-		ClientSecret: cfg.ClientSecret,
-		Endpoint:     endpoint,
-		Scopes:       scopes,
-		RedirectURL:  cfg.RedirectURL,
+		ClientID:    cfg.ClientID,
+		Endpoint:    endpoint,
+		Scopes:      scopes,
+		RedirectURL: cfg.RedirectURL,
 	}
 
 	verifier := provider.Verifier(&oidc.Config{
 		ClientID: cfg.ClientID,
 	})
 
-	userinfoURL := cfg.UserinfoURL
-	if userinfoURL == "" {
-
-		var claims struct {
-			UserinfoEndpoint string `json:"userinfo_endpoint"`
-		}
-		if err := provider.Claims(&claims); err == nil {
-			userinfoURL = claims.UserinfoEndpoint
-		}
-	}
-
 	return &OIDCProvider{
-		Provider:    provider,
-		OAuth2Cfg:   oauth2Cfg,
-		Verifier:    verifier,
-		GroupClaim:  cfg.GroupClaim,
-		UserinfoURL: userinfoURL,
-		httpClient:  httpClient,
+		Provider:   provider,
+		OAuth2Cfg:  oauth2Cfg,
+		Verifier:   verifier,
+		GroupClaim: cfg.GroupClaim,
+		httpClient: httpClient,
 	}, nil
 }
 

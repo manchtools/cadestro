@@ -32,12 +32,10 @@ type Config struct {
 	PublicTLSCertFile     string
 	PublicTLSKeyFile      string
 	DatabasePath          string
-	EncryptionKey         string
 	SessionSigningKey     ed25519.PrivateKey
 	BootstrapOIDCName     string
 	BootstrapOIDCSlug     string
 	BootstrapOIDCClientID string
-	BootstrapOIDCSecret   string
 	BootstrapOIDCIssuer   string
 	BootstrapOIDCScopes   []string
 }
@@ -117,22 +115,6 @@ func loadSessionKey(path string) (ed25519.PrivateKey, error) {
 	return privateKey, nil
 }
 
-func secretEnvironment(valueName, fileName string) (string, error) {
-	value := strings.TrimSpace(os.Getenv(valueName))
-	path := strings.TrimSpace(os.Getenv(fileName))
-	if value != "" && path != "" {
-		return "", fmt.Errorf("set only one of %s and %s", valueName, fileName)
-	}
-	if path == "" {
-		return value, nil
-	}
-	contents, err := readPrivateFile(path)
-	if err != nil {
-		return "", fmt.Errorf("%s: %w", fileName, err)
-	}
-	return strings.TrimSpace(string(contents)), nil
-}
-
 func validateHTTPS(name, value string) error {
 	if err := contract.ValidateHTTPSURL(value); err != nil {
 		return fmt.Errorf("%s: %w", name, err)
@@ -149,14 +131,6 @@ func loadConfig() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	encryptionKey, err := secretEnvironment("CADESTRO_ENCRYPTION_KEY", "CADESTRO_ENCRYPTION_KEY_FILE")
-	if err != nil {
-		return nil, err
-	}
-	oidcSecret, err := secretEnvironment("CADESTRO_OIDC_CLIENT_SECRET", "CADESTRO_OIDC_CLIENT_SECRET_FILE")
-	if err != nil {
-		return nil, err
-	}
 	sessionKey, err := loadSessionKey(environment("CADESTRO_SESSION_SIGNING_KEY_FILE", ""))
 	if err != nil {
 		return nil, fmt.Errorf("CADESTRO_SESSION_SIGNING_KEY_FILE: %w", err)
@@ -169,10 +143,10 @@ func loadConfig() (*Config, error) {
 		CACertFile: environment("CADESTRO_CA_CERT_FILE", ""), CAKeyFile: environment("CADESTRO_CA_KEY_FILE", ""),
 		AgentTLSCertFile: environment("CADESTRO_AGENT_TLS_CERT_FILE", ""), AgentTLSKeyFile: environment("CADESTRO_AGENT_TLS_KEY_FILE", ""),
 		PublicTLSCertFile: environment("CADESTRO_PUBLIC_TLS_CERT_FILE", ""), PublicTLSKeyFile: environment("CADESTRO_PUBLIC_TLS_KEY_FILE", ""),
-		DatabasePath: environment("CADESTRO_DATABASE_PATH", "/var/lib/cadestro/control.db"), EncryptionKey: encryptionKey, SessionSigningKey: sessionKey,
+		DatabasePath: environment("CADESTRO_DATABASE_PATH", "/var/lib/cadestro/control.db"), SessionSigningKey: sessionKey,
 		BootstrapOIDCName: environment("CADESTRO_OIDC_NAME", "Company SSO"), BootstrapOIDCSlug: environment("CADESTRO_OIDC_SLUG", "sso"),
-		BootstrapOIDCClientID: environment("CADESTRO_OIDC_CLIENT_ID", ""), BootstrapOIDCSecret: oidcSecret,
-		BootstrapOIDCIssuer: environment("CADESTRO_OIDC_ISSUER_URL", ""), BootstrapOIDCScopes: listEnvironment("CADESTRO_OIDC_SCOPES", []string{"openid", "profile", "email"}),
+		BootstrapOIDCClientID: environment("CADESTRO_OIDC_CLIENT_ID", ""),
+		BootstrapOIDCIssuer:   environment("CADESTRO_OIDC_ISSUER_URL", ""), BootstrapOIDCScopes: listEnvironment("CADESTRO_OIDC_SCOPES", []string{"openid", "profile", "email"}),
 	}
 	if config.PublicListen == config.AgentListen {
 		return nil, errors.New("public and agent listeners must be distinct")
@@ -188,9 +162,6 @@ func loadConfig() (*Config, error) {
 		if err != nil || parsed.Scheme != "https" || parsed.Host == "" || parsed.User != nil || parsed.Path != "" || parsed.RawQuery != "" || parsed.Fragment != "" {
 			return nil, fmt.Errorf("invalid CORS origin %q", origin)
 		}
-	}
-	if config.EncryptionKey == "" {
-		return nil, errors.New("encryption key is required")
 	}
 	if !filepath.IsAbs(config.DatabasePath) {
 		return nil, errors.New("database path must be absolute")

@@ -5,7 +5,7 @@ The public Go module behind Cadestro's minimal device-management core:
 - native package management for apt, dnf/dnf5, pacman, and zypper;
 - bounded, non-interactive command execution;
 - the filesystem and systemd operations required by the agent;
-- enrollment, certificate, encryption, and logging helpers.
+- enrollment, certificate, and logging helpers.
 
 Install it with:
 

@@ -108,16 +108,15 @@ type IdentityLink struct {
 }
 
 type IdentityProvider struct {
-	ID           string    `json:"id"`
-	Name         string    `json:"name"`
-	Slug         string    `json:"slug"`
-	Enabled      bool      `json:"enabled"`
-	ClientID     string    `json:"client_id"`
-	ClientSecret string    `json:"client_secret"`
-	IssuerUrl    string    `json:"issuer_url"`
-	ScopesJson   string    `json:"scopes_json"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID         string    `json:"id"`
+	Name       string    `json:"name"`
+	Slug       string    `json:"slug"`
+	Enabled    bool      `json:"enabled"`
+	ClientID   string    `json:"client_id"`
+	IssuerUrl  string    `json:"issuer_url"`
+	ScopesJson string    `json:"scopes_json"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 type RegistrationToken struct {
