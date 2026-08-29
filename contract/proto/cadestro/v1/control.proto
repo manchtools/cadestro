@@ -10,6 +10,57 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1";
 
+enum Permission {
+  PERMISSION_UNSPECIFIED = 0;
+  PERMISSION_GET_CURRENT_USER = 1;
+  PERMISSION_CREATE_IDENTITY_PROVIDER = 2;
+  PERMISSION_GET_IDENTITY_PROVIDER = 3;
+  PERMISSION_LIST_IDENTITY_PROVIDERS = 4;
+  PERMISSION_UPDATE_IDENTITY_PROVIDER = 5;
+  PERMISSION_DELETE_IDENTITY_PROVIDER = 6;
+  PERMISSION_LIST_DEVICES = 7;
+  PERMISSION_GET_DEVICE = 8;
+  PERMISSION_DELETE_DEVICE = 9;
+  PERMISSION_CREATE_TOKEN = 10;
+  PERMISSION_LIST_TOKENS = 11;
+  PERMISSION_RENAME_TOKEN = 12;
+  PERMISSION_SET_TOKEN_DISABLED = 13;
+  PERMISSION_DELETE_TOKEN = 14;
+  PERMISSION_CREATE_ACTION = 15;
+  PERMISSION_GET_ACTION = 16;
+  PERMISSION_LIST_ACTIONS = 17;
+  PERMISSION_RENAME_ACTION = 18;
+  PERMISSION_UPDATE_ACTION_DESCRIPTION = 19;
+  PERMISSION_UPDATE_ACTION_PARAMS = 20;
+  PERMISSION_DELETE_ACTION = 21;
+  PERMISSION_CREATE_DEVICE_GROUP = 22;
+  PERMISSION_GET_DEVICE_GROUP = 23;
+  PERMISSION_LIST_DEVICE_GROUPS = 24;
+  PERMISSION_LIST_DEVICE_GROUPS_FOR_DEVICE = 25;
+  PERMISSION_RENAME_DEVICE_GROUP = 26;
+  PERMISSION_UPDATE_DEVICE_GROUP_DESCRIPTION = 27;
+  PERMISSION_DELETE_DEVICE_GROUP = 28;
+  PERMISSION_ADD_DEVICE_TO_GROUP = 29;
+  PERMISSION_REMOVE_DEVICE_FROM_GROUP = 30;
+  PERMISSION_CREATE_ASSIGNMENT = 31;
+  PERMISSION_DELETE_ASSIGNMENT = 32;
+  PERMISSION_LIST_ASSIGNMENTS = 33;
+  PERMISSION_GET_DEVICE_ASSIGNMENTS = 34;
+  PERMISSION_GET_DEVICE_COMPLIANCE = 35;
+  PERMISSION_LIST_EXECUTION_RESULTS = 36;
+  PERMISSION_LIST_AUDIT_EVENTS = 37;
+  PERMISSION_CREATE_ROLE = 38;
+  PERMISSION_GET_ROLE = 39;
+  PERMISSION_LIST_ROLES = 40;
+  PERMISSION_UPDATE_ROLE = 41;
+  PERMISSION_DELETE_ROLE = 42;
+  PERMISSION_ASSIGN_ROLE_TO_USER = 43;
+  PERMISSION_REVOKE_ROLE_FROM_USER = 44;
+  PERMISSION_LIST_PERMISSIONS = 45;
+  PERMISSION_LIST_USERS = 46;
+  PERMISSION_REVOKE_USER_SESSIONS = 47;
+}
+
 message RegisterRequest {
   string token = 1 [
     (buf.validate.field).required = true,
@@ -70,7 +121,119 @@ message User {
   string picture = 4;
   google.protobuf.Timestamp created_at = 5;
   google.protobuf.Timestamp last_login_at = 6;
+  repeated Permission permissions = 7 [(buf.validate.field).repeated.items.enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+  repeated Role roles = 8;
 }
+
+message Role {
+  RoleId id = 1 [(buf.validate.field).required = true];
+  string name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 128
+  ];
+  string description = 3 [(buf.validate.field).string.max_len = 1024];
+  repeated Permission permissions = 4 [(buf.validate.field).repeated.items.enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+  bool is_system = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message CreateRoleRequest {
+  string name = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 128
+  ];
+  string description = 2 [(buf.validate.field).string.max_len = 1024];
+  repeated Permission permissions = 3 [(buf.validate.field).repeated.items.enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+}
+message CreateRoleResponse {
+  Role role = 1 [(buf.validate.field).required = true];
+}
+message GetRoleRequest {
+  RoleId id = 1 [(buf.validate.field).required = true];
+}
+message GetRoleResponse {
+  Role role = 1 [(buf.validate.field).required = true];
+}
+message ListRolesRequest {
+  int32 page_size = 1 [
+    (buf.validate.field).int32.gte = 1,
+    (buf.validate.field).int32.lte = 100,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string page_token = 2 [
+    (buf.validate.field).string.max_len = 32,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+}
+message ListRolesResponse {
+  repeated Role roles = 1;
+  string next_page_token = 2;
+}
+message UpdateRoleRequest {
+  RoleId id = 1 [(buf.validate.field).required = true];
+  string name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 128
+  ];
+  string description = 3 [(buf.validate.field).string.max_len = 1024];
+  repeated Permission permissions = 4 [(buf.validate.field).repeated.items.enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+}
+message UpdateRoleResponse {
+  Role role = 1 [(buf.validate.field).required = true];
+}
+message DeleteRoleRequest {
+  RoleId id = 1 [(buf.validate.field).required = true];
+}
+message DeleteRoleResponse {}
+message AssignRoleToUserRequest {
+  UserId user_id = 1 [(buf.validate.field).required = true];
+  RoleId role_id = 2 [(buf.validate.field).required = true];
+}
+message AssignRoleToUserResponse {}
+message RevokeRoleFromUserRequest {
+  UserId user_id = 1 [(buf.validate.field).required = true];
+  RoleId role_id = 2 [(buf.validate.field).required = true];
+}
+message RevokeRoleFromUserResponse {}
+message ListPermissionsRequest {}
+message ListPermissionsResponse {
+  repeated Permission permissions = 1;
+}
+message ListUsersRequest {
+  int32 page_size = 1 [
+    (buf.validate.field).int32.gte = 1,
+    (buf.validate.field).int32.lte = 100,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+  string page_token = 2 [
+    (buf.validate.field).string.max_len = 32,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+}
+message ListUsersResponse {
+  repeated User users = 1;
+  string next_page_token = 2;
+}
+message RevokeUserSessionsRequest {
+  UserId user_id = 1 [(buf.validate.field).required = true];
+}
+message RevokeUserSessionsResponse {}
 
 message GetCurrentUserRequest {}
 
@@ -709,4 +872,14 @@ service ControlService {
   rpc GetDeviceCompliance(GetDeviceComplianceRequest) returns (GetDeviceComplianceResponse);
   rpc ListExecutionResults(ListExecutionResultsRequest) returns (ListExecutionResultsResponse);
   rpc ListAuditEvents(ListAuditEventsRequest) returns (ListAuditEventsResponse);
+  rpc CreateRole(CreateRoleRequest) returns (CreateRoleResponse);
+  rpc GetRole(GetRoleRequest) returns (GetRoleResponse);
+  rpc ListRoles(ListRolesRequest) returns (ListRolesResponse);
+  rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse);
+  rpc DeleteRole(DeleteRoleRequest) returns (DeleteRoleResponse);
+  rpc AssignRoleToUser(AssignRoleToUserRequest) returns (AssignRoleToUserResponse);
+  rpc RevokeRoleFromUser(RevokeRoleFromUserRequest) returns (RevokeRoleFromUserResponse);
+  rpc ListPermissions(ListPermissionsRequest) returns (ListPermissionsResponse);
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+  rpc RevokeUserSessions(RevokeUserSessionsRequest) returns (RevokeUserSessionsResponse);
 }

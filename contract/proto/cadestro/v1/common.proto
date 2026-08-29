@@ -38,6 +38,10 @@ message UserId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }
 
+message RoleId {
+  string value = 1 [(buf.validate.field).string.ulid = true];
+}
+
 message RegistrationTokenId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }

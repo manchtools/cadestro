@@ -15,3 +15,10 @@ sql:
             go_type: "bool"
           - db_type: "datetime"
             go_type: "time.Time"
+          - column: "users.session_version"
+            go_type: "int32"
+          - column: "role_permissions.permission"
+            go_type:
+              import: "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+              package: "cadestrov1"
+              type: "Permission"

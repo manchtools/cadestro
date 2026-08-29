@@ -69,14 +69,6 @@ func New(config Config) *Service {
 	}
 }
 
-func (service *Service) LookupUser(ctx context.Context, id string) (string, int32, error) {
-	user, err := service.store.Queries().GetUser(ctx, id)
-	if err != nil {
-		return "", 0, err
-	}
-	return user.Email, int32(user.SessionVersion), nil
-}
-
 func (service *Service) internal(operation string, err error) error {
 	service.logger.Error("core operation failed", "operation", operation, "error", err)
 	return connect.NewError(connect.CodeInternal, errors.New("internal error"))
@@ -119,13 +111,6 @@ func (service *Service) audit(ctx context.Context, eventType, streamType, stream
 		ID: ulid.Make().String(), EventType: eventType, StreamType: streamType,
 		StreamID: streamID, ActorType: actorType, ActorID: actorID, OccurredAt: service.now().UTC(),
 	})
-}
-
-func userProto(user *db.User) *cadestrov1.User {
-	return &cadestrov1.User{
-		Id: &cadestrov1.UserId{Value: user.ID}, Email: user.Email, DisplayName: user.DisplayName,
-		Picture: user.Picture, CreatedAt: timestamppb.New(user.CreatedAt), LastLoginAt: timestamppb.New(user.LastLoginAt),
-	}
 }
 
 func providerProto(provider *db.IdentityProvider) (*cadestrov1.IdentityProvider, error) {

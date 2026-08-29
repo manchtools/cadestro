@@ -163,6 +163,35 @@ const (
 	// ControlServiceListAuditEventsProcedure is the fully-qualified name of the ControlService's
 	// ListAuditEvents RPC.
 	ControlServiceListAuditEventsProcedure = "/cadestro.v1.ControlService/ListAuditEvents"
+	// ControlServiceCreateRoleProcedure is the fully-qualified name of the ControlService's CreateRole
+	// RPC.
+	ControlServiceCreateRoleProcedure = "/cadestro.v1.ControlService/CreateRole"
+	// ControlServiceGetRoleProcedure is the fully-qualified name of the ControlService's GetRole RPC.
+	ControlServiceGetRoleProcedure = "/cadestro.v1.ControlService/GetRole"
+	// ControlServiceListRolesProcedure is the fully-qualified name of the ControlService's ListRoles
+	// RPC.
+	ControlServiceListRolesProcedure = "/cadestro.v1.ControlService/ListRoles"
+	// ControlServiceUpdateRoleProcedure is the fully-qualified name of the ControlService's UpdateRole
+	// RPC.
+	ControlServiceUpdateRoleProcedure = "/cadestro.v1.ControlService/UpdateRole"
+	// ControlServiceDeleteRoleProcedure is the fully-qualified name of the ControlService's DeleteRole
+	// RPC.
+	ControlServiceDeleteRoleProcedure = "/cadestro.v1.ControlService/DeleteRole"
+	// ControlServiceAssignRoleToUserProcedure is the fully-qualified name of the ControlService's
+	// AssignRoleToUser RPC.
+	ControlServiceAssignRoleToUserProcedure = "/cadestro.v1.ControlService/AssignRoleToUser"
+	// ControlServiceRevokeRoleFromUserProcedure is the fully-qualified name of the ControlService's
+	// RevokeRoleFromUser RPC.
+	ControlServiceRevokeRoleFromUserProcedure = "/cadestro.v1.ControlService/RevokeRoleFromUser"
+	// ControlServiceListPermissionsProcedure is the fully-qualified name of the ControlService's
+	// ListPermissions RPC.
+	ControlServiceListPermissionsProcedure = "/cadestro.v1.ControlService/ListPermissions"
+	// ControlServiceListUsersProcedure is the fully-qualified name of the ControlService's ListUsers
+	// RPC.
+	ControlServiceListUsersProcedure = "/cadestro.v1.ControlService/ListUsers"
+	// ControlServiceRevokeUserSessionsProcedure is the fully-qualified name of the ControlService's
+	// RevokeUserSessions RPC.
+	ControlServiceRevokeUserSessionsProcedure = "/cadestro.v1.ControlService/RevokeUserSessions"
 )
 
 // ControlServiceClient is a client for the cadestro.v1.ControlService service.
@@ -211,6 +240,16 @@ type ControlServiceClient interface {
 	GetDeviceCompliance(context.Context, *connect.Request[v1.GetDeviceComplianceRequest]) (*connect.Response[v1.GetDeviceComplianceResponse], error)
 	ListExecutionResults(context.Context, *connect.Request[v1.ListExecutionResultsRequest]) (*connect.Response[v1.ListExecutionResultsResponse], error)
 	ListAuditEvents(context.Context, *connect.Request[v1.ListAuditEventsRequest]) (*connect.Response[v1.ListAuditEventsResponse], error)
+	CreateRole(context.Context, *connect.Request[v1.CreateRoleRequest]) (*connect.Response[v1.CreateRoleResponse], error)
+	GetRole(context.Context, *connect.Request[v1.GetRoleRequest]) (*connect.Response[v1.GetRoleResponse], error)
+	ListRoles(context.Context, *connect.Request[v1.ListRolesRequest]) (*connect.Response[v1.ListRolesResponse], error)
+	UpdateRole(context.Context, *connect.Request[v1.UpdateRoleRequest]) (*connect.Response[v1.UpdateRoleResponse], error)
+	DeleteRole(context.Context, *connect.Request[v1.DeleteRoleRequest]) (*connect.Response[v1.DeleteRoleResponse], error)
+	AssignRoleToUser(context.Context, *connect.Request[v1.AssignRoleToUserRequest]) (*connect.Response[v1.AssignRoleToUserResponse], error)
+	RevokeRoleFromUser(context.Context, *connect.Request[v1.RevokeRoleFromUserRequest]) (*connect.Response[v1.RevokeRoleFromUserResponse], error)
+	ListPermissions(context.Context, *connect.Request[v1.ListPermissionsRequest]) (*connect.Response[v1.ListPermissionsResponse], error)
+	ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error)
+	RevokeUserSessions(context.Context, *connect.Request[v1.RevokeUserSessionsRequest]) (*connect.Response[v1.RevokeUserSessionsResponse], error)
 }
 
 // NewControlServiceClient constructs a client for the cadestro.v1.ControlService service. By
@@ -488,6 +527,66 @@ func NewControlServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(controlServiceMethods.ByName("ListAuditEvents")),
 			connect.WithClientOptions(opts...),
 		),
+		createRole: connect.NewClient[v1.CreateRoleRequest, v1.CreateRoleResponse](
+			httpClient,
+			baseURL+ControlServiceCreateRoleProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("CreateRole")),
+			connect.WithClientOptions(opts...),
+		),
+		getRole: connect.NewClient[v1.GetRoleRequest, v1.GetRoleResponse](
+			httpClient,
+			baseURL+ControlServiceGetRoleProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("GetRole")),
+			connect.WithClientOptions(opts...),
+		),
+		listRoles: connect.NewClient[v1.ListRolesRequest, v1.ListRolesResponse](
+			httpClient,
+			baseURL+ControlServiceListRolesProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("ListRoles")),
+			connect.WithClientOptions(opts...),
+		),
+		updateRole: connect.NewClient[v1.UpdateRoleRequest, v1.UpdateRoleResponse](
+			httpClient,
+			baseURL+ControlServiceUpdateRoleProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("UpdateRole")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteRole: connect.NewClient[v1.DeleteRoleRequest, v1.DeleteRoleResponse](
+			httpClient,
+			baseURL+ControlServiceDeleteRoleProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("DeleteRole")),
+			connect.WithClientOptions(opts...),
+		),
+		assignRoleToUser: connect.NewClient[v1.AssignRoleToUserRequest, v1.AssignRoleToUserResponse](
+			httpClient,
+			baseURL+ControlServiceAssignRoleToUserProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("AssignRoleToUser")),
+			connect.WithClientOptions(opts...),
+		),
+		revokeRoleFromUser: connect.NewClient[v1.RevokeRoleFromUserRequest, v1.RevokeRoleFromUserResponse](
+			httpClient,
+			baseURL+ControlServiceRevokeRoleFromUserProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("RevokeRoleFromUser")),
+			connect.WithClientOptions(opts...),
+		),
+		listPermissions: connect.NewClient[v1.ListPermissionsRequest, v1.ListPermissionsResponse](
+			httpClient,
+			baseURL+ControlServiceListPermissionsProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("ListPermissions")),
+			connect.WithClientOptions(opts...),
+		),
+		listUsers: connect.NewClient[v1.ListUsersRequest, v1.ListUsersResponse](
+			httpClient,
+			baseURL+ControlServiceListUsersProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("ListUsers")),
+			connect.WithClientOptions(opts...),
+		),
+		revokeUserSessions: connect.NewClient[v1.RevokeUserSessionsRequest, v1.RevokeUserSessionsResponse](
+			httpClient,
+			baseURL+ControlServiceRevokeUserSessionsProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("RevokeUserSessions")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -537,6 +636,16 @@ type controlServiceClient struct {
 	getDeviceCompliance          *connect.Client[v1.GetDeviceComplianceRequest, v1.GetDeviceComplianceResponse]
 	listExecutionResults         *connect.Client[v1.ListExecutionResultsRequest, v1.ListExecutionResultsResponse]
 	listAuditEvents              *connect.Client[v1.ListAuditEventsRequest, v1.ListAuditEventsResponse]
+	createRole                   *connect.Client[v1.CreateRoleRequest, v1.CreateRoleResponse]
+	getRole                      *connect.Client[v1.GetRoleRequest, v1.GetRoleResponse]
+	listRoles                    *connect.Client[v1.ListRolesRequest, v1.ListRolesResponse]
+	updateRole                   *connect.Client[v1.UpdateRoleRequest, v1.UpdateRoleResponse]
+	deleteRole                   *connect.Client[v1.DeleteRoleRequest, v1.DeleteRoleResponse]
+	assignRoleToUser             *connect.Client[v1.AssignRoleToUserRequest, v1.AssignRoleToUserResponse]
+	revokeRoleFromUser           *connect.Client[v1.RevokeRoleFromUserRequest, v1.RevokeRoleFromUserResponse]
+	listPermissions              *connect.Client[v1.ListPermissionsRequest, v1.ListPermissionsResponse]
+	listUsers                    *connect.Client[v1.ListUsersRequest, v1.ListUsersResponse]
+	revokeUserSessions           *connect.Client[v1.RevokeUserSessionsRequest, v1.RevokeUserSessionsResponse]
 }
 
 // RefreshToken calls cadestro.v1.ControlService.RefreshToken.
@@ -759,6 +868,56 @@ func (c *controlServiceClient) ListAuditEvents(ctx context.Context, req *connect
 	return c.listAuditEvents.CallUnary(ctx, req)
 }
 
+// CreateRole calls cadestro.v1.ControlService.CreateRole.
+func (c *controlServiceClient) CreateRole(ctx context.Context, req *connect.Request[v1.CreateRoleRequest]) (*connect.Response[v1.CreateRoleResponse], error) {
+	return c.createRole.CallUnary(ctx, req)
+}
+
+// GetRole calls cadestro.v1.ControlService.GetRole.
+func (c *controlServiceClient) GetRole(ctx context.Context, req *connect.Request[v1.GetRoleRequest]) (*connect.Response[v1.GetRoleResponse], error) {
+	return c.getRole.CallUnary(ctx, req)
+}
+
+// ListRoles calls cadestro.v1.ControlService.ListRoles.
+func (c *controlServiceClient) ListRoles(ctx context.Context, req *connect.Request[v1.ListRolesRequest]) (*connect.Response[v1.ListRolesResponse], error) {
+	return c.listRoles.CallUnary(ctx, req)
+}
+
+// UpdateRole calls cadestro.v1.ControlService.UpdateRole.
+func (c *controlServiceClient) UpdateRole(ctx context.Context, req *connect.Request[v1.UpdateRoleRequest]) (*connect.Response[v1.UpdateRoleResponse], error) {
+	return c.updateRole.CallUnary(ctx, req)
+}
+
+// DeleteRole calls cadestro.v1.ControlService.DeleteRole.
+func (c *controlServiceClient) DeleteRole(ctx context.Context, req *connect.Request[v1.DeleteRoleRequest]) (*connect.Response[v1.DeleteRoleResponse], error) {
+	return c.deleteRole.CallUnary(ctx, req)
+}
+
+// AssignRoleToUser calls cadestro.v1.ControlService.AssignRoleToUser.
+func (c *controlServiceClient) AssignRoleToUser(ctx context.Context, req *connect.Request[v1.AssignRoleToUserRequest]) (*connect.Response[v1.AssignRoleToUserResponse], error) {
+	return c.assignRoleToUser.CallUnary(ctx, req)
+}
+
+// RevokeRoleFromUser calls cadestro.v1.ControlService.RevokeRoleFromUser.
+func (c *controlServiceClient) RevokeRoleFromUser(ctx context.Context, req *connect.Request[v1.RevokeRoleFromUserRequest]) (*connect.Response[v1.RevokeRoleFromUserResponse], error) {
+	return c.revokeRoleFromUser.CallUnary(ctx, req)
+}
+
+// ListPermissions calls cadestro.v1.ControlService.ListPermissions.
+func (c *controlServiceClient) ListPermissions(ctx context.Context, req *connect.Request[v1.ListPermissionsRequest]) (*connect.Response[v1.ListPermissionsResponse], error) {
+	return c.listPermissions.CallUnary(ctx, req)
+}
+
+// ListUsers calls cadestro.v1.ControlService.ListUsers.
+func (c *controlServiceClient) ListUsers(ctx context.Context, req *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error) {
+	return c.listUsers.CallUnary(ctx, req)
+}
+
+// RevokeUserSessions calls cadestro.v1.ControlService.RevokeUserSessions.
+func (c *controlServiceClient) RevokeUserSessions(ctx context.Context, req *connect.Request[v1.RevokeUserSessionsRequest]) (*connect.Response[v1.RevokeUserSessionsResponse], error) {
+	return c.revokeUserSessions.CallUnary(ctx, req)
+}
+
 // ControlServiceHandler is an implementation of the cadestro.v1.ControlService service.
 type ControlServiceHandler interface {
 	RefreshToken(context.Context, *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error)
@@ -805,6 +964,16 @@ type ControlServiceHandler interface {
 	GetDeviceCompliance(context.Context, *connect.Request[v1.GetDeviceComplianceRequest]) (*connect.Response[v1.GetDeviceComplianceResponse], error)
 	ListExecutionResults(context.Context, *connect.Request[v1.ListExecutionResultsRequest]) (*connect.Response[v1.ListExecutionResultsResponse], error)
 	ListAuditEvents(context.Context, *connect.Request[v1.ListAuditEventsRequest]) (*connect.Response[v1.ListAuditEventsResponse], error)
+	CreateRole(context.Context, *connect.Request[v1.CreateRoleRequest]) (*connect.Response[v1.CreateRoleResponse], error)
+	GetRole(context.Context, *connect.Request[v1.GetRoleRequest]) (*connect.Response[v1.GetRoleResponse], error)
+	ListRoles(context.Context, *connect.Request[v1.ListRolesRequest]) (*connect.Response[v1.ListRolesResponse], error)
+	UpdateRole(context.Context, *connect.Request[v1.UpdateRoleRequest]) (*connect.Response[v1.UpdateRoleResponse], error)
+	DeleteRole(context.Context, *connect.Request[v1.DeleteRoleRequest]) (*connect.Response[v1.DeleteRoleResponse], error)
+	AssignRoleToUser(context.Context, *connect.Request[v1.AssignRoleToUserRequest]) (*connect.Response[v1.AssignRoleToUserResponse], error)
+	RevokeRoleFromUser(context.Context, *connect.Request[v1.RevokeRoleFromUserRequest]) (*connect.Response[v1.RevokeRoleFromUserResponse], error)
+	ListPermissions(context.Context, *connect.Request[v1.ListPermissionsRequest]) (*connect.Response[v1.ListPermissionsResponse], error)
+	ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error)
+	RevokeUserSessions(context.Context, *connect.Request[v1.RevokeUserSessionsRequest]) (*connect.Response[v1.RevokeUserSessionsResponse], error)
 }
 
 // NewControlServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -1078,6 +1247,66 @@ func NewControlServiceHandler(svc ControlServiceHandler, opts ...connect.Handler
 		connect.WithSchema(controlServiceMethods.ByName("ListAuditEvents")),
 		connect.WithHandlerOptions(opts...),
 	)
+	controlServiceCreateRoleHandler := connect.NewUnaryHandler(
+		ControlServiceCreateRoleProcedure,
+		svc.CreateRole,
+		connect.WithSchema(controlServiceMethods.ByName("CreateRole")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceGetRoleHandler := connect.NewUnaryHandler(
+		ControlServiceGetRoleProcedure,
+		svc.GetRole,
+		connect.WithSchema(controlServiceMethods.ByName("GetRole")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceListRolesHandler := connect.NewUnaryHandler(
+		ControlServiceListRolesProcedure,
+		svc.ListRoles,
+		connect.WithSchema(controlServiceMethods.ByName("ListRoles")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceUpdateRoleHandler := connect.NewUnaryHandler(
+		ControlServiceUpdateRoleProcedure,
+		svc.UpdateRole,
+		connect.WithSchema(controlServiceMethods.ByName("UpdateRole")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceDeleteRoleHandler := connect.NewUnaryHandler(
+		ControlServiceDeleteRoleProcedure,
+		svc.DeleteRole,
+		connect.WithSchema(controlServiceMethods.ByName("DeleteRole")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceAssignRoleToUserHandler := connect.NewUnaryHandler(
+		ControlServiceAssignRoleToUserProcedure,
+		svc.AssignRoleToUser,
+		connect.WithSchema(controlServiceMethods.ByName("AssignRoleToUser")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceRevokeRoleFromUserHandler := connect.NewUnaryHandler(
+		ControlServiceRevokeRoleFromUserProcedure,
+		svc.RevokeRoleFromUser,
+		connect.WithSchema(controlServiceMethods.ByName("RevokeRoleFromUser")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceListPermissionsHandler := connect.NewUnaryHandler(
+		ControlServiceListPermissionsProcedure,
+		svc.ListPermissions,
+		connect.WithSchema(controlServiceMethods.ByName("ListPermissions")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceListUsersHandler := connect.NewUnaryHandler(
+		ControlServiceListUsersProcedure,
+		svc.ListUsers,
+		connect.WithSchema(controlServiceMethods.ByName("ListUsers")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceRevokeUserSessionsHandler := connect.NewUnaryHandler(
+		ControlServiceRevokeUserSessionsProcedure,
+		svc.RevokeUserSessions,
+		connect.WithSchema(controlServiceMethods.ByName("RevokeUserSessions")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/cadestro.v1.ControlService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ControlServiceRefreshTokenProcedure:
@@ -1168,6 +1397,26 @@ func NewControlServiceHandler(svc ControlServiceHandler, opts ...connect.Handler
 			controlServiceListExecutionResultsHandler.ServeHTTP(w, r)
 		case ControlServiceListAuditEventsProcedure:
 			controlServiceListAuditEventsHandler.ServeHTTP(w, r)
+		case ControlServiceCreateRoleProcedure:
+			controlServiceCreateRoleHandler.ServeHTTP(w, r)
+		case ControlServiceGetRoleProcedure:
+			controlServiceGetRoleHandler.ServeHTTP(w, r)
+		case ControlServiceListRolesProcedure:
+			controlServiceListRolesHandler.ServeHTTP(w, r)
+		case ControlServiceUpdateRoleProcedure:
+			controlServiceUpdateRoleHandler.ServeHTTP(w, r)
+		case ControlServiceDeleteRoleProcedure:
+			controlServiceDeleteRoleHandler.ServeHTTP(w, r)
+		case ControlServiceAssignRoleToUserProcedure:
+			controlServiceAssignRoleToUserHandler.ServeHTTP(w, r)
+		case ControlServiceRevokeRoleFromUserProcedure:
+			controlServiceRevokeRoleFromUserHandler.ServeHTTP(w, r)
+		case ControlServiceListPermissionsProcedure:
+			controlServiceListPermissionsHandler.ServeHTTP(w, r)
+		case ControlServiceListUsersProcedure:
+			controlServiceListUsersHandler.ServeHTTP(w, r)
+		case ControlServiceRevokeUserSessionsProcedure:
+			controlServiceRevokeUserSessionsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1351,4 +1600,44 @@ func (UnimplementedControlServiceHandler) ListExecutionResults(context.Context, 
 
 func (UnimplementedControlServiceHandler) ListAuditEvents(context.Context, *connect.Request[v1.ListAuditEventsRequest]) (*connect.Response[v1.ListAuditEventsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.ListAuditEvents is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) CreateRole(context.Context, *connect.Request[v1.CreateRoleRequest]) (*connect.Response[v1.CreateRoleResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.CreateRole is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) GetRole(context.Context, *connect.Request[v1.GetRoleRequest]) (*connect.Response[v1.GetRoleResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.GetRole is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) ListRoles(context.Context, *connect.Request[v1.ListRolesRequest]) (*connect.Response[v1.ListRolesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.ListRoles is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) UpdateRole(context.Context, *connect.Request[v1.UpdateRoleRequest]) (*connect.Response[v1.UpdateRoleResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.UpdateRole is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) DeleteRole(context.Context, *connect.Request[v1.DeleteRoleRequest]) (*connect.Response[v1.DeleteRoleResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.DeleteRole is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) AssignRoleToUser(context.Context, *connect.Request[v1.AssignRoleToUserRequest]) (*connect.Response[v1.AssignRoleToUserResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.AssignRoleToUser is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) RevokeRoleFromUser(context.Context, *connect.Request[v1.RevokeRoleFromUserRequest]) (*connect.Response[v1.RevokeRoleFromUserResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.RevokeRoleFromUser is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) ListPermissions(context.Context, *connect.Request[v1.ListPermissionsRequest]) (*connect.Response[v1.ListPermissionsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.ListPermissions is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.ListUsers is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) RevokeUserSessions(context.Context, *connect.Request[v1.RevokeUserSessionsRequest]) (*connect.Response[v1.RevokeUserSessionsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.RevokeUserSessions is not implemented"))
 }

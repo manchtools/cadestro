@@ -64,18 +64,18 @@ func (service *Service) RefreshToken(ctx context.Context, request *connect.Reque
 	if err != nil || claims.ID == "" || claims.ExpiresAt == nil {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid refresh token"))
 	}
-	user, err := service.store.Queries().GetUser(ctx, claims.UserID)
-	if err != nil || user.SessionVersion != int64(claims.SessionVersion) {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid refresh token"))
-	}
-	rows, err := service.store.Queries().CreateRevokedToken(ctx, db.CreateRevokedTokenParams{ID: claims.ID, ExpiresAt: claims.ExpiresAt.Time})
+	user, err := service.store.Queries().RotateUserSession(ctx, db.RotateUserSessionParams{ID: claims.UserID, SessionVersion: claims.SessionVersion})
 	if err != nil {
-		return nil, service.internal("revoke refresh token", err)
+		if store.IsNotFound(err) {
+			return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid refresh token"))
+		}
+		return nil, service.internal("rotate refresh session", err)
 	}
-	if rows != 1 {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("refresh token already used"))
+	permissions, err := service.store.Queries().ListUserPermissions(ctx, user.ID)
+	if err != nil {
+		return nil, service.internal("load session permissions", err)
 	}
-	pair, err := service.jwt.GenerateTokens(user.ID, user.Email, int32(user.SessionVersion))
+	pair, err := service.jwt.GenerateTokens(user.ID, user.Email, user.SessionVersion, permissions)
 	if err != nil {
 		return nil, service.internal("mint session", err)
 	}
@@ -89,8 +89,11 @@ func (service *Service) Logout(ctx context.Context, request *connect.Request[cad
 	if err != nil || claims.ID == "" || claims.ExpiresAt == nil {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid refresh token"))
 	}
-	if _, err := service.store.Queries().CreateRevokedToken(ctx, db.CreateRevokedTokenParams{ID: claims.ID, ExpiresAt: claims.ExpiresAt.Time}); err != nil {
-		return nil, service.internal("revoke session", err)
+	if _, err := service.store.Queries().RotateUserSession(ctx, db.RotateUserSessionParams{ID: claims.UserID, SessionVersion: claims.SessionVersion}); err != nil {
+		if store.IsNotFound(err) {
+			return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid refresh token"))
+		}
+		return nil, service.internal("rotate logout session", err)
 	}
 	return connect.NewResponse(&cadestrov1.LogoutResponse{}), nil
 }
@@ -107,7 +110,11 @@ func (service *Service) GetCurrentUser(ctx context.Context, _ *connect.Request[c
 		}
 		return nil, service.internal("get current user", err)
 	}
-	return connect.NewResponse(&cadestrov1.GetCurrentUserResponse{User: userProto(user)}), nil
+	value, err := service.userProto(ctx, user)
+	if err != nil {
+		return nil, service.internal("read current user roles", err)
+	}
+	return connect.NewResponse(&cadestrov1.GetCurrentUserResponse{User: value}), nil
 }
 
 func (service *Service) ListAuthMethods(ctx context.Context, _ *connect.Request[cadestrov1.ListAuthMethodsRequest]) (*connect.Response[cadestrov1.ListAuthMethodsResponse], error) {
@@ -197,13 +204,21 @@ func (service *Service) SSOCallback(ctx context.Context, request *connect.Reques
 	if err != nil {
 		return nil, service.internal("link OIDC identity", err)
 	}
-	pair, err := service.jwt.GenerateTokens(user.ID, user.Email, int32(user.SessionVersion))
+	permissions, err := service.store.Queries().ListUserPermissions(ctx, user.ID)
+	if err != nil {
+		return nil, service.internal("load OIDC permissions", err)
+	}
+	pair, err := service.jwt.GenerateTokens(user.ID, user.Email, user.SessionVersion, permissions)
 	if err != nil {
 		return nil, service.internal("mint OIDC session", err)
 	}
+	value, err := service.userProto(ctx, user)
+	if err != nil {
+		return nil, service.internal("read OIDC user roles", err)
+	}
 	return connect.NewResponse(&cadestrov1.SSOCallbackResponse{
 		AccessToken: pair.AccessToken, RefreshToken: pair.RefreshToken,
-		ExpiresAt: timestamppb.New(pair.ExpiresAt), User: userProto(user),
+		ExpiresAt: timestamppb.New(pair.ExpiresAt), User: value,
 	}), nil
 }
 
@@ -232,7 +247,21 @@ func (service *Service) linkIdentity(ctx context.Context, providerID string, cla
 		if err != nil {
 			return err
 		}
-		return queries.LinkIdentity(ctx, db.LinkIdentityParams{ProviderID: providerID, Subject: claims.Subject, UserID: linked.ID})
+		if err := queries.LinkIdentity(ctx, db.LinkIdentityParams{ProviderID: providerID, Subject: claims.Subject, UserID: linked.ID}); err != nil {
+			return err
+		}
+		count, err := queries.CountUsers(ctx)
+		if err != nil {
+			return err
+		}
+		roleID := usersRoleID
+		if count == 1 {
+			roleID = administratorsRoleID
+		}
+		if err := queries.AssignRoleToUser(ctx, db.AssignRoleToUserParams{UserID: linked.ID, RoleID: roleID}); err != nil {
+			return err
+		}
+		return nil
 	})
 	return linked, err
 }

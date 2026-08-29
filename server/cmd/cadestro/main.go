@@ -72,6 +72,9 @@ func run(config *Config, logger *slog.Logger) error {
 	}); err != nil {
 		return fmt.Errorf("bootstrap identity provider: %w", err)
 	}
+	if err := service.ReconcileSystemRoles(ctx); err != nil {
+		return fmt.Errorf("reconcile system roles: %w", err)
+	}
 	publicServer, agentServer, err := buildServers(config, service, jwt, logger, certificateAuthority)
 	if err != nil {
 		return err
@@ -117,7 +120,7 @@ func buildServers(config *Config, service *core.Service, jwt *auth.JWTManager, l
 		return nil, nil, fmt.Errorf("load agent TLS certificate: %w", err)
 	}
 	validator := connectvalidate.NewInterceptor()
-	authenticator := auth.NewInterceptor(jwt, service.LookupUser)
+	authenticator := auth.NewInterceptor(jwt)
 	publicMux := http.NewServeMux()
 	publicPath, publicHandler := cadestrov1connect.NewControlServiceHandler(service, connect.WithInterceptors(validator, connect.UnaryInterceptorFunc(authenticator.WrapUnary)))
 	publicMux.Handle(publicPath, publicHandler)

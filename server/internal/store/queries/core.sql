@@ -57,16 +57,76 @@ RETURNING *;
 INSERT INTO identity_links (provider_id, subject, user_id) VALUES (?, ?, ?);
 
 -- name: UpdateUserLogin :one
-UPDATE users SET email = ?, display_name = ?, picture = ?, last_login_at = ? WHERE id = ? RETURNING *;
+UPDATE users
+SET email = ?, display_name = ?, picture = ?, session_version = session_version + 1, last_login_at = ?
+WHERE id = ?
+RETURNING *;
 
--- name: CreateRevokedToken :execrows
-INSERT INTO revoked_tokens (id, expires_at) VALUES (?, ?) ON CONFLICT(id) DO NOTHING;
+-- name: RotateUserSession :one
+UPDATE users
+SET session_version = session_version + 1
+WHERE id = ? AND session_version = ?
+RETURNING *;
 
--- name: IsTokenRevoked :one
-SELECT EXISTS(SELECT 1 FROM revoked_tokens WHERE id = ? AND expires_at > ?);
+-- name: CreateRole :one
+INSERT INTO roles (id, name, description, is_system, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?)
+RETURNING *;
 
--- name: DeleteExpiredRevokedTokens :exec
-DELETE FROM revoked_tokens WHERE expires_at <= ?;
+-- name: GetRole :one
+SELECT * FROM roles WHERE id = ?;
+
+-- name: GetRoleByName :one
+SELECT * FROM roles WHERE name = ?;
+
+-- name: ListRoles :many
+SELECT * FROM roles WHERE id > ? ORDER BY id LIMIT ?;
+
+-- name: UpdateRole :one
+UPDATE roles SET name = ?, description = ?, updated_at = ? WHERE id = ? RETURNING *;
+
+-- name: DeleteRole :execrows
+DELETE FROM roles WHERE id = ?;
+
+-- name: ReplaceRolePermissions :exec
+DELETE FROM role_permissions WHERE role_id = ?;
+
+-- name: AddRolePermission :exec
+INSERT INTO role_permissions (role_id, permission) VALUES (?, ?);
+
+-- name: ListRolePermissions :many
+SELECT permission FROM role_permissions WHERE role_id = ? ORDER BY permission;
+
+-- name: ListUserRoles :many
+SELECT roles.* FROM user_roles JOIN roles ON roles.id = user_roles.role_id
+WHERE user_roles.user_id = ? ORDER BY roles.id;
+
+-- name: ListUserPermissions :many
+SELECT DISTINCT role_permissions.permission
+FROM user_roles JOIN role_permissions ON role_permissions.role_id = user_roles.role_id
+WHERE user_roles.user_id = ? ORDER BY role_permissions.permission;
+
+-- name: AssignRoleToUser :exec
+INSERT INTO user_roles (user_id, role_id) VALUES (?, ?);
+
+-- name: RevokeRoleFromUser :execrows
+DELETE FROM user_roles WHERE user_id = ? AND role_id = ?;
+
+-- name: CountUsersWithRole :one
+SELECT COUNT(*) FROM user_roles WHERE role_id = ?;
+
+-- name: BumpSessionsForRole :exec
+UPDATE users SET session_version = session_version + 1
+WHERE id IN (SELECT user_id FROM user_roles WHERE role_id = ?);
+
+-- name: RotateUserSessionByID :one
+UPDATE users SET session_version = session_version + 1 WHERE id = ? RETURNING *;
+
+-- name: ListUsers :many
+SELECT * FROM users WHERE id > ? ORDER BY id LIMIT ?;
+
+-- name: CountUsers :one
+SELECT COUNT(*) FROM users;
 
 -- name: CreateRegistrationToken :one
 INSERT INTO registration_tokens (id, value_hash, name, max_uses, current_uses, expires_at, created_at, disabled)

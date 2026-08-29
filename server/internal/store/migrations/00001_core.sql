@@ -22,6 +22,30 @@ CREATE TABLE users (
     last_login_at DATETIME NOT NULL
 );
 
+CREATE TABLE roles (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL DEFAULT '',
+    is_system BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL
+);
+
+CREATE TABLE role_permissions (
+    role_id TEXT NOT NULL,
+    permission INTEGER NOT NULL CHECK (permission BETWEEN 1 AND 47),
+    PRIMARY KEY (role_id, permission),
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_roles (
+    user_id TEXT NOT NULL,
+    role_id TEXT NOT NULL,
+    PRIMARY KEY (user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+);
+
 CREATE TABLE identity_links (
     provider_id TEXT NOT NULL,
     subject TEXT NOT NULL,
@@ -39,11 +63,6 @@ CREATE TABLE auth_states (
     redirect_url TEXT NOT NULL,
     expires_at DATETIME NOT NULL,
     FOREIGN KEY (provider_id) REFERENCES identity_providers(id) ON DELETE CASCADE
-);
-
-CREATE TABLE revoked_tokens (
-    id TEXT PRIMARY KEY,
-    expires_at DATETIME NOT NULL
 );
 
 CREATE TABLE registration_tokens (
@@ -162,8 +181,10 @@ DROP TABLE device_groups;
 DROP TABLE actions;
 DROP TABLE devices;
 DROP TABLE registration_tokens;
-DROP TABLE revoked_tokens;
 DROP TABLE auth_states;
+DROP TABLE user_roles;
+DROP TABLE role_permissions;
+DROP TABLE roles;
 DROP TABLE identity_links;
 DROP TABLE users;
 DROP TABLE identity_providers;

@@ -6,6 +6,8 @@ package generated
 
 import (
 	"time"
+
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 type Action struct {
@@ -130,9 +132,18 @@ type RegistrationToken struct {
 	Disabled    bool      `json:"disabled"`
 }
 
-type RevokedToken struct {
-	ID        string    `json:"id"`
-	ExpiresAt time.Time `json:"expires_at"`
+type Role struct {
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	IsSystem    bool      `json:"is_system"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type RolePermission struct {
+	RoleID     string                `json:"role_id"`
+	Permission cadestrov1.Permission `json:"permission"`
 }
 
 type User struct {
@@ -140,7 +151,12 @@ type User struct {
 	Email          string    `json:"email"`
 	DisplayName    string    `json:"display_name"`
 	Picture        string    `json:"picture"`
-	SessionVersion int64     `json:"session_version"`
+	SessionVersion int32     `json:"session_version"`
 	CreatedAt      time.Time `json:"created_at"`
 	LastLoginAt    time.Time `json:"last_login_at"`
+}
+
+type UserRole struct {
+	UserID string `json:"user_id"`
+	RoleID string `json:"role_id"`
 }

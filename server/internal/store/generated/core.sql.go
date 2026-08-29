@@ -8,6 +8,8 @@ package generated
 import (
 	"context"
 	"time"
+
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 const addDeviceToGroup = `-- name: AddDeviceToGroup :exec
@@ -21,6 +23,44 @@ type AddDeviceToGroupParams struct {
 
 func (q *Queries) AddDeviceToGroup(ctx context.Context, arg AddDeviceToGroupParams) error {
 	_, err := q.db.ExecContext(ctx, addDeviceToGroup, arg.GroupID, arg.DeviceID)
+	return err
+}
+
+const addRolePermission = `-- name: AddRolePermission :exec
+INSERT INTO role_permissions (role_id, permission) VALUES (?, ?)
+`
+
+type AddRolePermissionParams struct {
+	RoleID     string                `json:"role_id"`
+	Permission cadestrov1.Permission `json:"permission"`
+}
+
+func (q *Queries) AddRolePermission(ctx context.Context, arg AddRolePermissionParams) error {
+	_, err := q.db.ExecContext(ctx, addRolePermission, arg.RoleID, arg.Permission)
+	return err
+}
+
+const assignRoleToUser = `-- name: AssignRoleToUser :exec
+INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)
+`
+
+type AssignRoleToUserParams struct {
+	UserID string `json:"user_id"`
+	RoleID string `json:"role_id"`
+}
+
+func (q *Queries) AssignRoleToUser(ctx context.Context, arg AssignRoleToUserParams) error {
+	_, err := q.db.ExecContext(ctx, assignRoleToUser, arg.UserID, arg.RoleID)
+	return err
+}
+
+const bumpSessionsForRole = `-- name: BumpSessionsForRole :exec
+UPDATE users SET session_version = session_version + 1
+WHERE id IN (SELECT user_id FROM user_roles WHERE role_id = ?)
+`
+
+func (q *Queries) BumpSessionsForRole(ctx context.Context, roleID string) error {
+	_, err := q.db.ExecContext(ctx, bumpSessionsForRole, roleID)
 	return err
 }
 
@@ -93,6 +133,28 @@ SELECT COUNT(*) FROM registration_tokens WHERE (CAST(?1 AS BOOLEAN) OR disabled 
 
 func (q *Queries) CountRegistrationTokens(ctx context.Context, includeDisabled bool) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countRegistrationTokens, includeDisabled)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countUsers = `-- name: CountUsers :one
+SELECT COUNT(*) FROM users
+`
+
+func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUsers)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countUsersWithRole = `-- name: CountUsersWithRole :one
+SELECT COUNT(*) FROM user_roles WHERE role_id = ?
+`
+
+func (q *Queries) CountUsersWithRole(ctx context.Context, roleID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUsersWithRole, roleID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -463,21 +525,40 @@ func (q *Queries) CreateRegistrationToken(ctx context.Context, arg CreateRegistr
 	return &i, err
 }
 
-const createRevokedToken = `-- name: CreateRevokedToken :execrows
-INSERT INTO revoked_tokens (id, expires_at) VALUES (?, ?) ON CONFLICT(id) DO NOTHING
+const createRole = `-- name: CreateRole :one
+INSERT INTO roles (id, name, description, is_system, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?)
+RETURNING id, name, description, is_system, created_at, updated_at
 `
 
-type CreateRevokedTokenParams struct {
-	ID        string    `json:"id"`
-	ExpiresAt time.Time `json:"expires_at"`
+type CreateRoleParams struct {
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	IsSystem    bool      `json:"is_system"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-func (q *Queries) CreateRevokedToken(ctx context.Context, arg CreateRevokedTokenParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, createRevokedToken, arg.ID, arg.ExpiresAt)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected()
+func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (*Role, error) {
+	row := q.db.QueryRowContext(ctx, createRole,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.IsSystem,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	var i Role
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.IsSystem,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
 }
 
 const createUser = `-- name: CreateUser :one
@@ -586,15 +667,6 @@ func (q *Queries) DeleteExpiredAuthStates(ctx context.Context, expiresAt time.Ti
 	return err
 }
 
-const deleteExpiredRevokedTokens = `-- name: DeleteExpiredRevokedTokens :exec
-DELETE FROM revoked_tokens WHERE expires_at <= ?
-`
-
-func (q *Queries) DeleteExpiredRevokedTokens(ctx context.Context, expiresAt time.Time) error {
-	_, err := q.db.ExecContext(ctx, deleteExpiredRevokedTokens, expiresAt)
-	return err
-}
-
 const deleteIdentityProvider = `-- name: DeleteIdentityProvider :execrows
 DELETE FROM identity_providers WHERE id = ?
 `
@@ -613,6 +685,18 @@ DELETE FROM registration_tokens WHERE id = ?
 
 func (q *Queries) DeleteRegistrationToken(ctx context.Context, id string) (int64, error) {
 	result, err := q.db.ExecContext(ctx, deleteRegistrationToken, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const deleteRole = `-- name: DeleteRole :execrows
+DELETE FROM roles WHERE id = ?
+`
+
+func (q *Queries) DeleteRole(ctx context.Context, id string) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteRole, id)
 	if err != nil {
 		return 0, err
 	}
@@ -848,6 +932,42 @@ func (q *Queries) GetRegistrationToken(ctx context.Context, id string) (*Registr
 	return &i, err
 }
 
+const getRole = `-- name: GetRole :one
+SELECT id, name, description, is_system, created_at, updated_at FROM roles WHERE id = ?
+`
+
+func (q *Queries) GetRole(ctx context.Context, id string) (*Role, error) {
+	row := q.db.QueryRowContext(ctx, getRole, id)
+	var i Role
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.IsSystem,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const getRoleByName = `-- name: GetRoleByName :one
+SELECT id, name, description, is_system, created_at, updated_at FROM roles WHERE name = ?
+`
+
+func (q *Queries) GetRoleByName(ctx context.Context, name string) (*Role, error) {
+	row := q.db.QueryRowContext(ctx, getRoleByName, name)
+	var i Role
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.IsSystem,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
 const getUsableRegistrationToken = `-- name: GetUsableRegistrationToken :one
 SELECT id, value_hash, name, max_uses, current_uses, expires_at, created_at, disabled FROM registration_tokens
 WHERE value_hash = ? AND disabled = FALSE AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses)
@@ -891,22 +1011,6 @@ func (q *Queries) GetUser(ctx context.Context, id string) (*User, error) {
 		&i.LastLoginAt,
 	)
 	return &i, err
-}
-
-const isTokenRevoked = `-- name: IsTokenRevoked :one
-SELECT EXISTS(SELECT 1 FROM revoked_tokens WHERE id = ? AND expires_at > ?)
-`
-
-type IsTokenRevokedParams struct {
-	ID        string    `json:"id"`
-	ExpiresAt time.Time `json:"expires_at"`
-}
-
-func (q *Queries) IsTokenRevoked(ctx context.Context, arg IsTokenRevokedParams) (bool, error) {
-	row := q.db.QueryRowContext(ctx, isTokenRevoked, arg.ID, arg.ExpiresAt)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
 }
 
 const linkIdentity = `-- name: LinkIdentity :exec
@@ -1571,6 +1675,176 @@ func (q *Queries) ListRegistrationTokens(ctx context.Context, arg ListRegistrati
 	return items, nil
 }
 
+const listRolePermissions = `-- name: ListRolePermissions :many
+SELECT permission FROM role_permissions WHERE role_id = ? ORDER BY permission
+`
+
+func (q *Queries) ListRolePermissions(ctx context.Context, roleID string) ([]cadestrov1.Permission, error) {
+	rows, err := q.db.QueryContext(ctx, listRolePermissions, roleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []cadestrov1.Permission
+	for rows.Next() {
+		var permission cadestrov1.Permission
+		if err := rows.Scan(&permission); err != nil {
+			return nil, err
+		}
+		items = append(items, permission)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRoles = `-- name: ListRoles :many
+SELECT id, name, description, is_system, created_at, updated_at FROM roles WHERE id > ? ORDER BY id LIMIT ?
+`
+
+type ListRolesParams struct {
+	ID    string `json:"id"`
+	Limit int64  `json:"limit"`
+}
+
+func (q *Queries) ListRoles(ctx context.Context, arg ListRolesParams) ([]*Role, error) {
+	rows, err := q.db.QueryContext(ctx, listRoles, arg.ID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Role
+	for rows.Next() {
+		var i Role
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.IsSystem,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUserPermissions = `-- name: ListUserPermissions :many
+SELECT DISTINCT role_permissions.permission
+FROM user_roles JOIN role_permissions ON role_permissions.role_id = user_roles.role_id
+WHERE user_roles.user_id = ? ORDER BY role_permissions.permission
+`
+
+func (q *Queries) ListUserPermissions(ctx context.Context, userID string) ([]cadestrov1.Permission, error) {
+	rows, err := q.db.QueryContext(ctx, listUserPermissions, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []cadestrov1.Permission
+	for rows.Next() {
+		var permission cadestrov1.Permission
+		if err := rows.Scan(&permission); err != nil {
+			return nil, err
+		}
+		items = append(items, permission)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUserRoles = `-- name: ListUserRoles :many
+SELECT roles.id, roles.name, roles.description, roles.is_system, roles.created_at, roles.updated_at FROM user_roles JOIN roles ON roles.id = user_roles.role_id
+WHERE user_roles.user_id = ? ORDER BY roles.id
+`
+
+func (q *Queries) ListUserRoles(ctx context.Context, userID string) ([]*Role, error) {
+	rows, err := q.db.QueryContext(ctx, listUserRoles, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Role
+	for rows.Next() {
+		var i Role
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.IsSystem,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsers = `-- name: ListUsers :many
+SELECT id, email, display_name, picture, session_version, created_at, last_login_at FROM users WHERE id > ? ORDER BY id LIMIT ?
+`
+
+type ListUsersParams struct {
+	ID    string `json:"id"`
+	Limit int64  `json:"limit"`
+}
+
+func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, error) {
+	rows, err := q.db.QueryContext(ctx, listUsers, arg.ID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.DisplayName,
+			&i.Picture,
+			&i.SessionVersion,
+			&i.CreatedAt,
+			&i.LastLoginAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const promotePendingDeviceCertificate = `-- name: PromotePendingDeviceCertificate :execrows
 UPDATE devices
 SET active_certificate_pem = pending_certificate_pem,
@@ -1691,6 +1965,78 @@ func (q *Queries) RenameRegistrationToken(ctx context.Context, arg RenameRegistr
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.Disabled,
+	)
+	return &i, err
+}
+
+const replaceRolePermissions = `-- name: ReplaceRolePermissions :exec
+DELETE FROM role_permissions WHERE role_id = ?
+`
+
+func (q *Queries) ReplaceRolePermissions(ctx context.Context, roleID string) error {
+	_, err := q.db.ExecContext(ctx, replaceRolePermissions, roleID)
+	return err
+}
+
+const revokeRoleFromUser = `-- name: RevokeRoleFromUser :execrows
+DELETE FROM user_roles WHERE user_id = ? AND role_id = ?
+`
+
+type RevokeRoleFromUserParams struct {
+	UserID string `json:"user_id"`
+	RoleID string `json:"role_id"`
+}
+
+func (q *Queries) RevokeRoleFromUser(ctx context.Context, arg RevokeRoleFromUserParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, revokeRoleFromUser, arg.UserID, arg.RoleID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const rotateUserSession = `-- name: RotateUserSession :one
+UPDATE users
+SET session_version = session_version + 1
+WHERE id = ? AND session_version = ?
+RETURNING id, email, display_name, picture, session_version, created_at, last_login_at
+`
+
+type RotateUserSessionParams struct {
+	ID             string `json:"id"`
+	SessionVersion int32  `json:"session_version"`
+}
+
+func (q *Queries) RotateUserSession(ctx context.Context, arg RotateUserSessionParams) (*User, error) {
+	row := q.db.QueryRowContext(ctx, rotateUserSession, arg.ID, arg.SessionVersion)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.DisplayName,
+		&i.Picture,
+		&i.SessionVersion,
+		&i.CreatedAt,
+		&i.LastLoginAt,
+	)
+	return &i, err
+}
+
+const rotateUserSessionByID = `-- name: RotateUserSessionByID :one
+UPDATE users SET session_version = session_version + 1 WHERE id = ? RETURNING id, email, display_name, picture, session_version, created_at, last_login_at
+`
+
+func (q *Queries) RotateUserSessionByID(ctx context.Context, id string) (*User, error) {
+	row := q.db.QueryRowContext(ctx, rotateUserSessionByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.DisplayName,
+		&i.Picture,
+		&i.SessionVersion,
+		&i.CreatedAt,
+		&i.LastLoginAt,
 	)
 	return &i, err
 }
@@ -1938,8 +2284,41 @@ func (q *Queries) UpdateIdentityProvider(ctx context.Context, arg UpdateIdentity
 	return &i, err
 }
 
+const updateRole = `-- name: UpdateRole :one
+UPDATE roles SET name = ?, description = ?, updated_at = ? WHERE id = ? RETURNING id, name, description, is_system, created_at, updated_at
+`
+
+type UpdateRoleParams struct {
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	ID          string    `json:"id"`
+}
+
+func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (*Role, error) {
+	row := q.db.QueryRowContext(ctx, updateRole,
+		arg.Name,
+		arg.Description,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	var i Role
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.IsSystem,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
 const updateUserLogin = `-- name: UpdateUserLogin :one
-UPDATE users SET email = ?, display_name = ?, picture = ?, last_login_at = ? WHERE id = ? RETURNING id, email, display_name, picture, session_version, created_at, last_login_at
+UPDATE users
+SET email = ?, display_name = ?, picture = ?, session_version = session_version + 1, last_login_at = ?
+WHERE id = ?
+RETURNING id, email, display_name, picture, session_version, created_at, last_login_at
 `
 
 type UpdateUserLoginParams struct {

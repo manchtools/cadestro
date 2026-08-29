@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/oklog/ulid/v2"
 )
 
@@ -20,10 +21,11 @@ const (
 
 type Claims struct {
 	jwt.RegisteredClaims
-	UserID         string    `json:"uid"`
-	Email          string    `json:"email"`
-	TokenType      TokenType `json:"type"`
-	SessionVersion int32     `json:"sv"`
+	UserID         string                  `json:"uid"`
+	Email          string                  `json:"email"`
+	TokenType      TokenType               `json:"type"`
+	SessionVersion int32                   `json:"sv"`
+	Permissions    []cadestrov1.Permission `json:"permissions,omitempty"`
 }
 
 type JWTConfig struct {
@@ -69,21 +71,21 @@ func GenerateSessionKey() (ed25519.PublicKey, ed25519.PrivateKey, error) {
 
 func (manager *JWTManager) AccessTokenTTL() time.Duration { return manager.config.AccessTokenExpiry }
 
-func (manager *JWTManager) GenerateTokens(userID, email string, sessionVersion int32) (*TokenPair, error) {
+func (manager *JWTManager) GenerateTokens(userID, email string, sessionVersion int32, permissions []cadestrov1.Permission) (*TokenPair, error) {
 	now := manager.config.Now().UTC()
 	accessExpiry := now.Add(manager.config.AccessTokenExpiry)
-	access, err := manager.sign(userID, email, sessionVersion, TokenTypeAccess, accessExpiry)
+	access, err := manager.sign(userID, email, sessionVersion, permissions, TokenTypeAccess, accessExpiry)
 	if err != nil {
 		return nil, err
 	}
-	refresh, err := manager.sign(userID, email, sessionVersion, TokenTypeRefresh, now.Add(manager.config.RefreshTokenExpiry))
+	refresh, err := manager.sign(userID, email, sessionVersion, nil, TokenTypeRefresh, now.Add(manager.config.RefreshTokenExpiry))
 	if err != nil {
 		return nil, err
 	}
 	return &TokenPair{AccessToken: access, RefreshToken: refresh, ExpiresAt: accessExpiry}, nil
 }
 
-func (manager *JWTManager) sign(userID, email string, sessionVersion int32, tokenType TokenType, expires time.Time) (string, error) {
+func (manager *JWTManager) sign(userID, email string, sessionVersion int32, permissions []cadestrov1.Permission, tokenType TokenType, expires time.Time) (string, error) {
 	now := manager.config.Now().UTC()
 	id, err := ulid.New(ulid.Timestamp(now), rand.Reader)
 	if err != nil {
@@ -94,7 +96,7 @@ func (manager *JWTManager) sign(userID, email string, sessionVersion int32, toke
 			ID: id.String(), Issuer: manager.config.Issuer, Subject: userID,
 			IssuedAt: jwt.NewNumericDate(now), ExpiresAt: jwt.NewNumericDate(expires),
 		},
-		UserID: userID, Email: email, TokenType: tokenType, SessionVersion: sessionVersion,
+		UserID: userID, Email: email, TokenType: tokenType, SessionVersion: sessionVersion, Permissions: permissions,
 	}
 	value, err := jwt.NewWithClaims(jwt.SigningMethodEdDSA, claims).SignedString(manager.config.PrivateKey)
 	if err != nil {
