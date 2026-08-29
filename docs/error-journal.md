@@ -21,3 +21,14 @@
 **Harness fix**: None; the existing AGENTS.md already requires tracing issuance, claim construction, refresh, revocation, and invalidation and forbids simplifying security measures.
 
 **Prevention**: Verify and state expiration rejection independently before discussing replay, rotation, logout, or session-version behavior; never describe an expired refresh token as reusable or idempotently valid.
+## 2026-08-29 Wrong scope: Reduced core authorization to one hardcoded permission
+
+**What happened**: I chose a first-user-only `REVOKE_USER_SESSIONS` grant and explicitly excluded role management, even though user-controlled roles and permissions are a core administrative expectation.
+
+**What the user said**: "hm okay, we should restore the permission and role system. Thats something every user will expect to be able to control"
+
+**Root cause**: I applied product-feature descoping to the control plane's authority model instead of separating optional device features from expected administrator access control.
+
+**Harness fix**: record the operator ruling in AGENTS.md.
+
+**Prevention**: before removing or replacing an authority system during descoping, classify whether administrators still need to delegate every retained capability; if yes, preserve user-manageable roles and permissions.

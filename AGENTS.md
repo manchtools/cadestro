@@ -34,6 +34,11 @@ process running regardless of model name or age.
 
 ## Recorded operator rulings
 
+Role and permission management are core control-plane capabilities; preserve
+user-manageable roles, permission assignment, and enforcement across every
+retained administrative RPC; do not replace them with hardcoded first-user or
+single-admin gates when descoping product features.
+
 Ordinary authored actions are assigned and pulled during sync. Do not preserve
 or reintroduce server-push dispatch for actions, action sets, definitions, or
 groups, including durable one-shot delivery built only for that path. Push is
