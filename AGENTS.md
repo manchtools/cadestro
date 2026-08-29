@@ -39,6 +39,12 @@ user-manageable roles, permission assignment, and enforcement across every
 retained administrative RPC; do not replace them with hardcoded first-user or
 single-admin gates when descoping product features.
 
+Access tokens carry their effective permissions and authorize without a
+per-request database lookup; role, permission, logout, and session-version
+changes invalidate refresh-token generations immediately but already-issued
+access tokens remain valid until their short expiry; increasing freshness later
+requires an explicit operator ruling.
+
 Ordinary authored actions are assigned and pulled during sync. Do not preserve
 or reintroduce server-push dispatch for actions, action sets, definitions, or
 groups, including durable one-shot delivery built only for that path. Push is

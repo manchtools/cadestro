@@ -21,6 +21,7 @@
 **Harness fix**: None; the existing AGENTS.md already requires tracing issuance, claim construction, refresh, revocation, and invalidation and forbids simplifying security measures.
 
 **Prevention**: Verify and state expiration rejection independently before discussing replay, rotation, logout, or session-version behavior; never describe an expired refresh token as reusable or idempotently valid.
+
 ## 2026-08-29 Wrong scope: Reduced core authorization to one hardcoded permission
 
 **What happened**: I chose a first-user-only `REVOKE_USER_SESSIONS` grant and explicitly excluded role management, even though user-controlled roles and permissions are a core administrative expectation.
@@ -32,3 +33,15 @@
 **Harness fix**: record the operator ruling in AGENTS.md.
 
 **Prevention**: before removing or replacing an authority system during descoping, classify whether administrators still need to delegate every retained capability; if yes, preserve user-manageable roles and permissions.
+
+## 2026-08-29 Assumed intent: Required DB-fresh permissions on every request
+
+**What happened**: I required every authenticated request to reload the user's session version and effective permissions from SQLite, although the operator accepts access-token-lifetime permission freshness to avoid that database lookup.
+
+**What the user said**: "could we not bake in the user roles in the access token? Id say that good enough for security and avoids a DB lookup"
+
+**Root cause**: I inherited the archived DB-fresh authority semantics instead of first obtaining the explicit permission-freshness ruling required by AGENTS.md.
+
+**Harness fix**: add the operator ruling to AGENTS.md.
+
+**Prevention**: decide and record the permitted staleness window before designing token claims or request authorization; derive the enforcement path from that ruling.
