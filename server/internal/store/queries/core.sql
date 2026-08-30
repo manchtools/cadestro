@@ -268,7 +268,7 @@ FROM assignments JOIN actions ON actions.id = assignments.action_id
 LEFT JOIN devices ON assignments.target_type = 1 AND devices.id = assignments.target_id
 LEFT JOIN device_groups ON assignments.target_type = 2 AND device_groups.id = assignments.target_id
 WHERE (CAST(sqlc.arg(action_filter) AS TEXT) = '' OR assignments.action_id = CAST(sqlc.arg(action_filter) AS TEXT))
-  AND (CAST(sqlc.arg(target_kind_filter) AS INTEGER) = 0 OR assignments.target_type = CAST(sqlc.arg(target_kind_filter) AS INTEGER))
+  AND (CAST(sqlc.arg(target_type_filter) AS INTEGER) = 0 OR assignments.target_type = CAST(sqlc.arg(target_type_filter) AS INTEGER))
   AND (CAST(sqlc.arg(target_filter) AS TEXT) = '' OR assignments.target_id = CAST(sqlc.arg(target_filter) AS TEXT))
 ORDER BY assignments.created_at, assignments.id;
 

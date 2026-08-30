@@ -97,7 +97,7 @@ func (service *Service) DeleteAssignment(ctx context.Context, request *connect.R
 
 func (service *Service) ListAssignments(ctx context.Context, request *connect.Request[cadestrov1.ListAssignmentsRequest]) (*connect.Response[cadestrov1.ListAssignmentsResponse], error) {
 	assignments, err := service.store.Queries().ListAssignments(ctx, db.ListAssignmentsParams{
-		ActionFilter: request.Msg.GetActionId().GetValue(), TargetKindFilter: int64(request.Msg.GetTargetType()), TargetFilter: request.Msg.GetTargetId().GetValue(),
+		ActionFilter: request.Msg.GetActionId().GetValue(), TargetTypeFilter: int64(request.Msg.GetTargetType()), TargetFilter: request.Msg.GetTargetId().GetValue(),
 	})
 	if err != nil {
 		return nil, service.internal("list assignments", err)

@@ -992,7 +992,7 @@ ORDER BY assignments.created_at, assignments.id
 
 type ListAssignmentsParams struct {
 	ActionFilter     string `json:"action_filter"`
-	TargetKindFilter int64  `json:"target_kind_filter"`
+	TargetTypeFilter int64  `json:"target_type_filter"`
 	TargetFilter     string `json:"target_filter"`
 }
 
@@ -1007,7 +1007,7 @@ type ListAssignmentsRow struct {
 }
 
 func (q *Queries) ListAssignments(ctx context.Context, arg ListAssignmentsParams) ([]*ListAssignmentsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listAssignments, arg.ActionFilter, arg.TargetKindFilter, arg.TargetFilter)
+	rows, err := q.db.QueryContext(ctx, listAssignments, arg.ActionFilter, arg.TargetTypeFilter, arg.TargetFilter)
 	if err != nil {
 		return nil, err
 	}

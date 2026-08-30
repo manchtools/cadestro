@@ -14,7 +14,7 @@ func TestActionSurfaceIsTheCoreThree(t *testing.T) {
 		(&cadestrov1.CreateActionRequest{}).ProtoReflect().Descriptor(),
 		(&cadestrov1.UpdateActionParamsRequest{}).ProtoReflect().Descriptor(),
 	} {
-		if message.Fields().ByName("type") != nil || message.Fields().ByName("type"+"_filter") != nil {
+		if message.Fields().ByName("type") != nil {
 			t.Fatalf("%s retains a redundant action discriminator", message.FullName())
 		}
 		oneof := message.Oneofs().ByName("params")
@@ -25,6 +25,19 @@ func TestActionSurfaceIsTheCoreThree(t *testing.T) {
 			if oneof.Fields().Get(index).Name() != name {
 				t.Fatalf("%s params arm %d is %q, want %q", message.FullName(), index, oneof.Fields().Get(index).Name(), name)
 			}
+		}
+	}
+}
+
+func TestListActionsRequestMatchesImplementedFilters(t *testing.T) {
+	fields := (&cadestrov1.ListActionsRequest{}).ProtoReflect().Descriptor().Fields()
+	want := []protoreflect.Name{"page_size", "page_token"}
+	if fields.Len() != len(want) {
+		t.Fatalf("ListActionsRequest has %d fields, want %d", fields.Len(), len(want))
+	}
+	for index, name := range want {
+		if fields.Get(index).Name() != name {
+			t.Fatalf("ListActionsRequest field %d is %q, want %q", index, fields.Get(index).Name(), name)
 		}
 	}
 }

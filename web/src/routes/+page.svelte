@@ -97,7 +97,7 @@
 		return value ? timestampDate(value).toLocaleString() : 'Never';
 	}
 
-	function actionTypeName(type: string | undefined): string {
+	function actionTypeName(type: ManagedAction['params']['case']): string {
 		return type === 'package' ? 'Package' : type === 'update' ? 'System update' : 'Shell';
 	}
 
@@ -346,7 +346,7 @@
 			{/if}
 			<button class="primary" disabled={busy}>Create action</button>
 		</form>{/if}
-		{#if can(Permission.LIST_ACTIONS)}<div class="table-wrap"><table><thead><tr><th>Name</th><th>Type</th><th>Schedule</th><th></th></tr></thead><tbody>{#each actions as action (action.id?.value)}<tr><td><strong>{action.name}</strong><small>{action.description}</small></td><td>{actionTypeName(action.params?.case)}</td><td>{action.schedule?.intervalHours ? `Every ${action.schedule.intervalHours}h` : 'On sync'}</td><td>{#if can(Permission.DELETE_ACTION)}<button class="danger" onclick={() => run(() => api.deleteAction(create(DeleteActionRequestSchema, { id: action.id })))} disabled={busy}>Delete</button>{/if}</td></tr>{/each}</tbody></table></div>{/if}
+		{#if can(Permission.LIST_ACTIONS)}<div class="table-wrap"><table><thead><tr><th>Name</th><th>Type</th><th>Schedule</th><th></th></tr></thead><tbody>{#each actions as action (action.id?.value)}<tr><td><strong>{action.name}</strong><small>{action.description}</small></td><td>{actionTypeName(action.params.case)}</td><td>{action.schedule?.intervalHours ? `Every ${action.schedule.intervalHours}h` : 'On sync'}</td><td>{#if can(Permission.DELETE_ACTION)}<button class="danger" onclick={() => run(() => api.deleteAction(create(DeleteActionRequestSchema, { id: action.id })))} disabled={busy}>Delete</button>{/if}</td></tr>{/each}</tbody></table></div>{/if}
 	</section>
 	{/if}
 
