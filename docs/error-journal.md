@@ -57,3 +57,15 @@
 **Harness fix**: record the operator ruling in AGENTS.md.
 
 **Prevention**: treat seeded defaults as ordinary deletable data and use deletion as the sole registration-token revocation state unless the operator explicitly rules otherwise.
+
+## 2026-08-30 Shallow analysis: Invented a separate storage proto for action definitions
+
+**What happened**: The orchestrator said a separate storage protobuf was the only compliant action-blob option and left action storage unchanged, missing the operator's intended direct reuse of existing action proto messages.
+
+**What the user said**: "Not a seperate storage protobuf. Just marshall the proto to binary and store it? we have the action types arealdy as proto messages".
+
+**Root cause**: I applied the general API/storage separation rule without recognizing the operator's bounded action-storage exception, inventing a parallel storage message that defeats the simplification.
+
+**Harness fix**: add a recorded operator ruling to root AGENTS.md that action definitions may persist the existing concrete action proto message as a binary blob with the action type stored separately; do not create a parallel storage proto.
+
+**Prevention**: trace the bounded payload/query surface and ask whether direct wire/storage coupling is the explicit ruling before proposing duplicate schema types.

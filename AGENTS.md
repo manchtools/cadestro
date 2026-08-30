@@ -69,3 +69,5 @@ Default roles are ordinary seed data, not immutable system roles. Administrators
 may update, delete, or revoke any role, including defaults, assigned roles, and
 the last administrator role. Registration tokens are revoked by deletion only;
 finite-use tokens are deleted on their final successful enrollment use.
+
+Action definitions may persist the existing concrete action proto message as a binary blob with the action type stored separately; do not create a parallel storage proto. This is a scoped exception for action definitions and does not repeal the general API/storage separation rule.
