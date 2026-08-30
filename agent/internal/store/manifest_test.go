@@ -14,7 +14,7 @@ func testManifest() *pb.Manifest {
 	return &pb.Manifest{
 		ManifestId:   &pb.ManifestId{Value: "01K00000000000000000000002"},
 		OccurrenceId: &pb.OccurrenceId{Value: "01K00000000000000000000003"},
-		Action:       &pb.Action{Id: &pb.ActionId{Value: "01K00000000000000000000004"}, Type: pb.ActionType_ACTION_TYPE_UPDATE},
+		Action:       &pb.Action{Id: &pb.ActionId{Value: "01K00000000000000000000004"}, Params: &pb.Action_Update{Update: &pb.UpdateActionParams{}}},
 		Schedule:     &pb.ActionSchedule{RunOnAssign: true, IntervalHours: 8},
 	}
 }

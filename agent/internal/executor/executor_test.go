@@ -83,9 +83,9 @@ func TestComplianceShellOnlyDetects(t *testing.T) {
 	runner := &fakeRunner{results: []sysexec.Result{{ExitCode: 1}}}
 	executor := NewExecutor(runner)
 	result := executor.ExecuteAction(context.Background(), &pb.Action{
-		Id: &pb.ActionId{Value: "01J0000000000000000000000A"}, Type: pb.ActionType_ACTION_TYPE_SHELL,
+		Id:           &pb.ActionId{Value: "01J0000000000000000000000A"},
 		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
-		Params: &pb.Action_Shell{Shell: &pb.ShellParams{
+		Params: &pb.Action_Shell{Shell: &pb.ShellActionParams{
 			DetectionScript: "test -f /etc/example", IsCompliance: true,
 		}},
 	})
@@ -101,9 +101,9 @@ func TestShellRemediatesAndVerifies(t *testing.T) {
 	runner := &fakeRunner{results: []sysexec.Result{{ExitCode: 1}, {}, {}}}
 	executor := NewExecutor(runner)
 	result := executor.ExecuteAction(context.Background(), &pb.Action{
-		Id: &pb.ActionId{Value: "01J0000000000000000000000A"}, Type: pb.ActionType_ACTION_TYPE_SHELL,
+		Id:           &pb.ActionId{Value: "01J0000000000000000000000A"},
 		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
-		Params: &pb.Action_Shell{Shell: &pb.ShellParams{
+		Params: &pb.Action_Shell{Shell: &pb.ShellActionParams{
 			DetectionScript: "test -f /etc/example", Script: "touch /etc/example",
 		}},
 	})
@@ -119,9 +119,9 @@ func TestShellRejectsHijackEnvironment(t *testing.T) {
 	runner := &fakeRunner{}
 	executor := NewExecutor(runner)
 	result := executor.ExecuteAction(context.Background(), &pb.Action{
-		Id: &pb.ActionId{Value: "01J0000000000000000000000A"}, Type: pb.ActionType_ACTION_TYPE_SHELL,
+		Id:           &pb.ActionId{Value: "01J0000000000000000000000A"},
 		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
-		Params: &pb.Action_Shell{Shell: &pb.ShellParams{
+		Params: &pb.Action_Shell{Shell: &pb.ShellActionParams{
 			Script: "true", Environment: map[string]string{"PATH": "/tmp"},
 		}},
 	})
@@ -135,9 +135,9 @@ func TestPackageSkipsInstalledVersion(t *testing.T) {
 	executor := NewExecutor(&fakeRunner{})
 	executor.pkgManager = manager
 	result := executor.ExecuteAction(context.Background(), &pb.Action{
-		Id: &pb.ActionId{Value: "01J0000000000000000000000A"}, Type: pb.ActionType_ACTION_TYPE_PACKAGE,
+		Id:           &pb.ActionId{Value: "01J0000000000000000000000A"},
 		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
-		Params:       &pb.Action_Package{Package: &pb.PackageParams{Name: "example", Version: "1.0"}},
+		Params:       &pb.Action_Package{Package: &pb.PackageActionParams{Name: "example", Version: "1.0"}},
 	})
 	if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS || result.GetChanged() || manager.installCalls != 0 {
 		t.Fatalf("status=%s changed=%v installs=%d", result.GetStatus(), result.GetChanged(), manager.installCalls)
@@ -149,9 +149,9 @@ func TestUpdateSkipsCurrentSystem(t *testing.T) {
 	executor := NewExecutor(&fakeRunner{})
 	executor.pkgManager = manager
 	result := executor.ExecuteAction(context.Background(), &pb.Action{
-		Id: &pb.ActionId{Value: "01J0000000000000000000000A"}, Type: pb.ActionType_ACTION_TYPE_UPDATE,
+		Id:           &pb.ActionId{Value: "01J0000000000000000000000A"},
 		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
-		Params:       &pb.Action_Update{Update: &pb.UpdateParams{}},
+		Params:       &pb.Action_Update{Update: &pb.UpdateActionParams{}},
 	})
 	if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS || result.GetChanged() || manager.upgradeCalls != 0 {
 		t.Fatalf("status=%s changed=%v upgrades=%d", result.GetStatus(), result.GetChanged(), manager.upgradeCalls)

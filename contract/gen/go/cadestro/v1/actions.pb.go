@@ -24,65 +24,12 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type ActionType int32
-
-const (
-	ActionType_ACTION_TYPE_UNSPECIFIED ActionType = 0
-	ActionType_ACTION_TYPE_PACKAGE     ActionType = 1
-	ActionType_ACTION_TYPE_UPDATE      ActionType = 2
-	ActionType_ACTION_TYPE_SHELL       ActionType = 3
-)
-
-// Enum value maps for ActionType.
-var (
-	ActionType_name = map[int32]string{
-		0: "ACTION_TYPE_UNSPECIFIED",
-		1: "ACTION_TYPE_PACKAGE",
-		2: "ACTION_TYPE_UPDATE",
-		3: "ACTION_TYPE_SHELL",
-	}
-	ActionType_value = map[string]int32{
-		"ACTION_TYPE_UNSPECIFIED": 0,
-		"ACTION_TYPE_PACKAGE":     1,
-		"ACTION_TYPE_UPDATE":      2,
-		"ACTION_TYPE_SHELL":       3,
-	}
-)
-
-func (x ActionType) Enum() *ActionType {
-	p := new(ActionType)
-	*p = x
-	return p
-}
-
-func (x ActionType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (ActionType) Descriptor() protoreflect.EnumDescriptor {
-	return file_cadestro_v1_actions_proto_enumTypes[0].Descriptor()
-}
-
-func (ActionType) Type() protoreflect.EnumType {
-	return &file_cadestro_v1_actions_proto_enumTypes[0]
-}
-
-func (x ActionType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use ActionType.Descriptor instead.
-func (ActionType) EnumDescriptor() ([]byte, []int) {
-	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{0}
-}
-
 type Action struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Id             *ActionId              `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Type           ActionType             `protobuf:"varint,2,opt,name=type,proto3,enum=cadestro.v1.ActionType" json:"type,omitempty"`
-	DesiredState   DesiredState           `protobuf:"varint,3,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.DesiredState" json:"desired_state,omitempty"`
-	TimeoutSeconds int32                  `protobuf:"varint,4,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty"`
-	Schedule       *ActionSchedule        `protobuf:"bytes,5,opt,name=schedule,proto3" json:"schedule,omitempty"`
+	DesiredState   DesiredState           `protobuf:"varint,2,opt,name=desired_state,json=desiredState,proto3,enum=cadestro.v1.DesiredState" json:"desired_state,omitempty"`
+	TimeoutSeconds int32                  `protobuf:"varint,3,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty"`
+	Schedule       *ActionSchedule        `protobuf:"bytes,4,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	// Types that are valid to be assigned to Params:
 	//
 	//	*Action_Package
@@ -130,13 +77,6 @@ func (x *Action) GetId() *ActionId {
 	return nil
 }
 
-func (x *Action) GetType() ActionType {
-	if x != nil {
-		return x.Type
-	}
-	return ActionType_ACTION_TYPE_UNSPECIFIED
-}
-
 func (x *Action) GetDesiredState() DesiredState {
 	if x != nil {
 		return x.DesiredState
@@ -165,7 +105,7 @@ func (x *Action) GetParams() isAction_Params {
 	return nil
 }
 
-func (x *Action) GetPackage() *PackageParams {
+func (x *Action) GetPackage() *PackageActionParams {
 	if x != nil {
 		if x, ok := x.Params.(*Action_Package); ok {
 			return x.Package
@@ -174,7 +114,7 @@ func (x *Action) GetPackage() *PackageParams {
 	return nil
 }
 
-func (x *Action) GetUpdate() *UpdateParams {
+func (x *Action) GetUpdate() *UpdateActionParams {
 	if x != nil {
 		if x, ok := x.Params.(*Action_Update); ok {
 			return x.Update
@@ -183,7 +123,7 @@ func (x *Action) GetUpdate() *UpdateParams {
 	return nil
 }
 
-func (x *Action) GetShell() *ShellParams {
+func (x *Action) GetShell() *ShellActionParams {
 	if x != nil {
 		if x, ok := x.Params.(*Action_Shell); ok {
 			return x.Shell
@@ -197,15 +137,15 @@ type isAction_Params interface {
 }
 
 type Action_Package struct {
-	Package *PackageParams `protobuf:"bytes,6,opt,name=package,proto3,oneof"`
+	Package *PackageActionParams `protobuf:"bytes,5,opt,name=package,proto3,oneof"`
 }
 
 type Action_Update struct {
-	Update *UpdateParams `protobuf:"bytes,7,opt,name=update,proto3,oneof"`
+	Update *UpdateActionParams `protobuf:"bytes,6,opt,name=update,proto3,oneof"`
 }
 
 type Action_Shell struct {
-	Shell *ShellParams `protobuf:"bytes,8,opt,name=shell,proto3,oneof"`
+	Shell *ShellActionParams `protobuf:"bytes,7,opt,name=shell,proto3,oneof"`
 }
 
 func (*Action_Package) isAction_Params() {}
@@ -274,7 +214,7 @@ func (x *ActionSchedule) GetSkipIfUnchanged() bool {
 	return false
 }
 
-type PackageParams struct {
+type PackageActionParams struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Version       string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
@@ -282,20 +222,20 @@ type PackageParams struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PackageParams) Reset() {
-	*x = PackageParams{}
+func (x *PackageActionParams) Reset() {
+	*x = PackageActionParams{}
 	mi := &file_cadestro_v1_actions_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PackageParams) String() string {
+func (x *PackageActionParams) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PackageParams) ProtoMessage() {}
+func (*PackageActionParams) ProtoMessage() {}
 
-func (x *PackageParams) ProtoReflect() protoreflect.Message {
+func (x *PackageActionParams) ProtoReflect() protoreflect.Message {
 	mi := &file_cadestro_v1_actions_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -307,45 +247,45 @@ func (x *PackageParams) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PackageParams.ProtoReflect.Descriptor instead.
-func (*PackageParams) Descriptor() ([]byte, []int) {
+// Deprecated: Use PackageActionParams.ProtoReflect.Descriptor instead.
+func (*PackageActionParams) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *PackageParams) GetName() string {
+func (x *PackageActionParams) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *PackageParams) GetVersion() string {
+func (x *PackageActionParams) GetVersion() string {
 	if x != nil {
 		return x.Version
 	}
 	return ""
 }
 
-type UpdateParams struct {
+type UpdateActionParams struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UpdateParams) Reset() {
-	*x = UpdateParams{}
+func (x *UpdateActionParams) Reset() {
+	*x = UpdateActionParams{}
 	mi := &file_cadestro_v1_actions_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UpdateParams) String() string {
+func (x *UpdateActionParams) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpdateParams) ProtoMessage() {}
+func (*UpdateActionParams) ProtoMessage() {}
 
-func (x *UpdateParams) ProtoReflect() protoreflect.Message {
+func (x *UpdateActionParams) ProtoReflect() protoreflect.Message {
 	mi := &file_cadestro_v1_actions_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -357,12 +297,12 @@ func (x *UpdateParams) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpdateParams.ProtoReflect.Descriptor instead.
-func (*UpdateParams) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpdateActionParams.ProtoReflect.Descriptor instead.
+func (*UpdateActionParams) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{3}
 }
 
-type ShellParams struct {
+type ShellActionParams struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	Script           string                 `protobuf:"bytes,1,opt,name=script,proto3" json:"script,omitempty"`
 	Interpreter      string                 `protobuf:"bytes,2,opt,name=interpreter,proto3" json:"interpreter,omitempty"`
@@ -374,20 +314,20 @@ type ShellParams struct {
 	sizeCache        protoimpl.SizeCache
 }
 
-func (x *ShellParams) Reset() {
-	*x = ShellParams{}
+func (x *ShellActionParams) Reset() {
+	*x = ShellActionParams{}
 	mi := &file_cadestro_v1_actions_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ShellParams) String() string {
+func (x *ShellActionParams) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ShellParams) ProtoMessage() {}
+func (*ShellActionParams) ProtoMessage() {}
 
-func (x *ShellParams) ProtoReflect() protoreflect.Message {
+func (x *ShellActionParams) ProtoReflect() protoreflect.Message {
 	mi := &file_cadestro_v1_actions_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -399,47 +339,47 @@ func (x *ShellParams) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ShellParams.ProtoReflect.Descriptor instead.
-func (*ShellParams) Descriptor() ([]byte, []int) {
+// Deprecated: Use ShellActionParams.ProtoReflect.Descriptor instead.
+func (*ShellActionParams) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_actions_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *ShellParams) GetScript() string {
+func (x *ShellActionParams) GetScript() string {
 	if x != nil {
 		return x.Script
 	}
 	return ""
 }
 
-func (x *ShellParams) GetInterpreter() string {
+func (x *ShellActionParams) GetInterpreter() string {
 	if x != nil {
 		return x.Interpreter
 	}
 	return ""
 }
 
-func (x *ShellParams) GetWorkingDirectory() string {
+func (x *ShellActionParams) GetWorkingDirectory() string {
 	if x != nil {
 		return x.WorkingDirectory
 	}
 	return ""
 }
 
-func (x *ShellParams) GetEnvironment() map[string]string {
+func (x *ShellActionParams) GetEnvironment() map[string]string {
 	if x != nil {
 		return x.Environment
 	}
 	return nil
 }
 
-func (x *ShellParams) GetDetectionScript() string {
+func (x *ShellActionParams) GetDetectionScript() string {
 	if x != nil {
 		return x.DetectionScript
 	}
 	return ""
 }
 
-func (x *ShellParams) GetIsCompliance() bool {
+func (x *ShellActionParams) GetIsCompliance() bool {
 	if x != nil {
 		return x.IsCompliance
 	}
@@ -574,33 +514,32 @@ var File_cadestro_v1_actions_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\n" +
-	"\x19cadestro/v1/actions.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x18cadestro/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xce\x03\n" +
+	"\x19cadestro/v1/actions.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x18cadestro/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xab\x03\n" +
 	"\x06Action\x12-\n" +
-	"\x02id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x123\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x17.cadestro.v1.ActionTypeB\x06\xbaH\x03\xc8\x01\x01R\x04type\x12F\n" +
-	"\rdesired_state\x18\x03 \x01(\x0e2\x19.cadestro.v1.DesiredStateB\x06\xbaH\x03\xc8\x01\x01R\fdesiredState\x126\n" +
-	"\x0ftimeout_seconds\x18\x04 \x01(\x05B\r\xbaH\n" +
+	"\x02id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x12F\n" +
+	"\rdesired_state\x18\x02 \x01(\x0e2\x19.cadestro.v1.DesiredStateB\x06\xbaH\x03\xc8\x01\x01R\fdesiredState\x126\n" +
+	"\x0ftimeout_seconds\x18\x03 \x01(\x05B\r\xbaH\n" +
 	"\xd8\x01\x01\x1a\x05\x18\x90\x1c(\x00R\x0etimeoutSeconds\x127\n" +
-	"\bschedule\x18\x05 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x126\n" +
-	"\apackage\x18\x06 \x01(\v2\x1a.cadestro.v1.PackageParamsH\x00R\apackage\x123\n" +
-	"\x06update\x18\a \x01(\v2\x19.cadestro.v1.UpdateParamsH\x00R\x06update\x120\n" +
-	"\x05shell\x18\b \x01(\v2\x18.cadestro.v1.ShellParamsH\x00R\x05shellB\b\n" +
+	"\bschedule\x18\x04 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x12<\n" +
+	"\apackage\x18\x05 \x01(\v2 .cadestro.v1.PackageActionParamsH\x00R\apackage\x129\n" +
+	"\x06update\x18\x06 \x01(\v2\x1f.cadestro.v1.UpdateActionParamsH\x00R\x06update\x126\n" +
+	"\x05shell\x18\a \x01(\v2\x1e.cadestro.v1.ShellActionParamsH\x00R\x05shellB\b\n" +
 	"\x06params\"\x96\x01\n" +
 	"\x0eActionSchedule\x124\n" +
 	"\x0einterval_hours\x18\x01 \x01(\x05B\r\xbaH\n" +
 	"\xd8\x01\x01\x1a\x05\x18\xb8D(\x00R\rintervalHours\x12\"\n" +
 	"\rrun_on_assign\x18\x02 \x01(\bR\vrunOnAssign\x12*\n" +
-	"\x11skip_if_unchanged\x18\x03 \x01(\bR\x0fskipIfUnchanged\"Y\n" +
-	"\rPackageParams\x12!\n" +
+	"\x11skip_if_unchanged\x18\x03 \x01(\bR\x0fskipIfUnchanged\"_\n" +
+	"\x13PackageActionParams\x12!\n" +
 	"\x04name\x18\x01 \x01(\tB\r\xbaH\n" +
 	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x04name\x12%\n" +
-	"\aversion\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x01R\aversion\"\x0e\n" +
-	"\fUpdateParams\"\x9d\x03\n" +
-	"\vShellParams\x12$\n" +
+	"\aversion\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x01R\aversion\"\x14\n" +
+	"\x12UpdateActionParams\"\xa9\x03\n" +
+	"\x11ShellActionParams\x12$\n" +
 	"\x06script\x18\x01 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x06script\x12-\n" +
 	"\vinterpreter\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xff\x01R\vinterpreter\x128\n" +
-	"\x11working_directory\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03:\x01/R\x10workingDirectory\x12a\n" +
-	"\venvironment\x18\x04 \x03(\v2).cadestro.v1.ShellParams.EnvironmentEntryB\x14\xbaH\x11\x9a\x01\x0e\"\x05r\x03\x18\xff\x01*\x05r\x03\x18\x80 R\venvironment\x127\n" +
+	"\x11working_directory\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03:\x01/R\x10workingDirectory\x12g\n" +
+	"\venvironment\x18\x04 \x03(\v2/.cadestro.v1.ShellActionParams.EnvironmentEntryB\x14\xbaH\x11\x9a\x01\x0e\"\x05r\x03\x18\xff\x01*\x05r\x03\x18\x80 R\venvironment\x127\n" +
 	"\x10detection_script\x18\x05 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x0fdetectionScript\x12#\n" +
 	"\ris_compliance\x18\x06 \x01(\bR\fisCompliance\x1a>\n" +
 	"\x10EnvironmentEntry\x12\x10\n" +
@@ -618,13 +557,7 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\x10detection_output\x18\t \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x121\n" +
 	"\x06run_id\x18\n" +
 	" \x01(\v2\x12.cadestro.v1.RunIdB\x06\xbaH\x03\xc8\x01\x01R\x05runId\x12F\n" +
-	"\roccurrence_id\x18\v \x01(\v2\x19.cadestro.v1.OccurrenceIdB\x06\xbaH\x03\xc8\x01\x01R\foccurrenceId*q\n" +
-	"\n" +
-	"ActionType\x12\x1b\n" +
-	"\x17ACTION_TYPE_UNSPECIFIED\x10\x00\x12\x17\n" +
-	"\x13ACTION_TYPE_PACKAGE\x10\x01\x12\x16\n" +
-	"\x12ACTION_TYPE_UPDATE\x10\x02\x12\x15\n" +
-	"\x11ACTION_TYPE_SHELL\x10\x03BGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
+	"\roccurrence_id\x18\v \x01(\v2\x19.cadestro.v1.OccurrenceIdB\x06\xbaH\x03\xc8\x01\x01R\foccurrenceIdBGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
 
 var (
 	file_cadestro_v1_actions_proto_rawDescOnce sync.Once
@@ -638,48 +571,45 @@ func file_cadestro_v1_actions_proto_rawDescGZIP() []byte {
 	return file_cadestro_v1_actions_proto_rawDescData
 }
 
-var file_cadestro_v1_actions_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_cadestro_v1_actions_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_cadestro_v1_actions_proto_goTypes = []any{
-	(ActionType)(0),               // 0: cadestro.v1.ActionType
-	(*Action)(nil),                // 1: cadestro.v1.Action
-	(*ActionSchedule)(nil),        // 2: cadestro.v1.ActionSchedule
-	(*PackageParams)(nil),         // 3: cadestro.v1.PackageParams
-	(*UpdateParams)(nil),          // 4: cadestro.v1.UpdateParams
-	(*ShellParams)(nil),           // 5: cadestro.v1.ShellParams
-	(*ActionResult)(nil),          // 6: cadestro.v1.ActionResult
-	nil,                           // 7: cadestro.v1.ShellParams.EnvironmentEntry
-	(*ActionId)(nil),              // 8: cadestro.v1.ActionId
-	(DesiredState)(0),             // 9: cadestro.v1.DesiredState
-	(ExecutionStatus)(0),          // 10: cadestro.v1.ExecutionStatus
-	(*CommandOutput)(nil),         // 11: cadestro.v1.CommandOutput
-	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
-	(*durationpb.Duration)(nil),   // 13: google.protobuf.Duration
-	(*RunId)(nil),                 // 14: cadestro.v1.RunId
-	(*OccurrenceId)(nil),          // 15: cadestro.v1.OccurrenceId
+	(*Action)(nil),                // 0: cadestro.v1.Action
+	(*ActionSchedule)(nil),        // 1: cadestro.v1.ActionSchedule
+	(*PackageActionParams)(nil),   // 2: cadestro.v1.PackageActionParams
+	(*UpdateActionParams)(nil),    // 3: cadestro.v1.UpdateActionParams
+	(*ShellActionParams)(nil),     // 4: cadestro.v1.ShellActionParams
+	(*ActionResult)(nil),          // 5: cadestro.v1.ActionResult
+	nil,                           // 6: cadestro.v1.ShellActionParams.EnvironmentEntry
+	(*ActionId)(nil),              // 7: cadestro.v1.ActionId
+	(DesiredState)(0),             // 8: cadestro.v1.DesiredState
+	(ExecutionStatus)(0),          // 9: cadestro.v1.ExecutionStatus
+	(*CommandOutput)(nil),         // 10: cadestro.v1.CommandOutput
+	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
+	(*durationpb.Duration)(nil),   // 12: google.protobuf.Duration
+	(*RunId)(nil),                 // 13: cadestro.v1.RunId
+	(*OccurrenceId)(nil),          // 14: cadestro.v1.OccurrenceId
 }
 var file_cadestro_v1_actions_proto_depIdxs = []int32{
-	8,  // 0: cadestro.v1.Action.id:type_name -> cadestro.v1.ActionId
-	0,  // 1: cadestro.v1.Action.type:type_name -> cadestro.v1.ActionType
-	9,  // 2: cadestro.v1.Action.desired_state:type_name -> cadestro.v1.DesiredState
-	2,  // 3: cadestro.v1.Action.schedule:type_name -> cadestro.v1.ActionSchedule
-	3,  // 4: cadestro.v1.Action.package:type_name -> cadestro.v1.PackageParams
-	4,  // 5: cadestro.v1.Action.update:type_name -> cadestro.v1.UpdateParams
-	5,  // 6: cadestro.v1.Action.shell:type_name -> cadestro.v1.ShellParams
-	7,  // 7: cadestro.v1.ShellParams.environment:type_name -> cadestro.v1.ShellParams.EnvironmentEntry
-	8,  // 8: cadestro.v1.ActionResult.action_id:type_name -> cadestro.v1.ActionId
-	10, // 9: cadestro.v1.ActionResult.status:type_name -> cadestro.v1.ExecutionStatus
-	11, // 10: cadestro.v1.ActionResult.output:type_name -> cadestro.v1.CommandOutput
-	12, // 11: cadestro.v1.ActionResult.completed_at:type_name -> google.protobuf.Timestamp
-	13, // 12: cadestro.v1.ActionResult.duration:type_name -> google.protobuf.Duration
-	11, // 13: cadestro.v1.ActionResult.detection_output:type_name -> cadestro.v1.CommandOutput
-	14, // 14: cadestro.v1.ActionResult.run_id:type_name -> cadestro.v1.RunId
-	15, // 15: cadestro.v1.ActionResult.occurrence_id:type_name -> cadestro.v1.OccurrenceId
-	16, // [16:16] is the sub-list for method output_type
-	16, // [16:16] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	7,  // 0: cadestro.v1.Action.id:type_name -> cadestro.v1.ActionId
+	8,  // 1: cadestro.v1.Action.desired_state:type_name -> cadestro.v1.DesiredState
+	1,  // 2: cadestro.v1.Action.schedule:type_name -> cadestro.v1.ActionSchedule
+	2,  // 3: cadestro.v1.Action.package:type_name -> cadestro.v1.PackageActionParams
+	3,  // 4: cadestro.v1.Action.update:type_name -> cadestro.v1.UpdateActionParams
+	4,  // 5: cadestro.v1.Action.shell:type_name -> cadestro.v1.ShellActionParams
+	6,  // 6: cadestro.v1.ShellActionParams.environment:type_name -> cadestro.v1.ShellActionParams.EnvironmentEntry
+	7,  // 7: cadestro.v1.ActionResult.action_id:type_name -> cadestro.v1.ActionId
+	9,  // 8: cadestro.v1.ActionResult.status:type_name -> cadestro.v1.ExecutionStatus
+	10, // 9: cadestro.v1.ActionResult.output:type_name -> cadestro.v1.CommandOutput
+	11, // 10: cadestro.v1.ActionResult.completed_at:type_name -> google.protobuf.Timestamp
+	12, // 11: cadestro.v1.ActionResult.duration:type_name -> google.protobuf.Duration
+	10, // 12: cadestro.v1.ActionResult.detection_output:type_name -> cadestro.v1.CommandOutput
+	13, // 13: cadestro.v1.ActionResult.run_id:type_name -> cadestro.v1.RunId
+	14, // 14: cadestro.v1.ActionResult.occurrence_id:type_name -> cadestro.v1.OccurrenceId
+	15, // [15:15] is the sub-list for method output_type
+	15, // [15:15] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_actions_proto_init() }
@@ -698,14 +628,13 @@ func file_cadestro_v1_actions_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cadestro_v1_actions_proto_rawDesc), len(file_cadestro_v1_actions_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      0,
 			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_cadestro_v1_actions_proto_goTypes,
 		DependencyIndexes: file_cadestro_v1_actions_proto_depIdxs,
-		EnumInfos:         file_cadestro_v1_actions_proto_enumTypes,
 		MessageInfos:      file_cadestro_v1_actions_proto_msgTypes,
 	}.Build()
 	File_cadestro_v1_actions_proto = out.File

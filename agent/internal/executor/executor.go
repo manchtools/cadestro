@@ -59,15 +59,15 @@ func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.Act
 	var output *pb.CommandOutput
 	var changed bool
 	var err error
-	switch action.GetType() {
-	case pb.ActionType_ACTION_TYPE_PACKAGE:
-		output, changed, err = e.executePackage(ctx, action.GetPackage(), action.GetDesiredState())
-	case pb.ActionType_ACTION_TYPE_UPDATE:
-		output, changed, err = e.executeUpdate(ctx, action.GetUpdate())
-	case pb.ActionType_ACTION_TYPE_SHELL:
-		output, result.DetectionOutput, result.Compliant, changed, err = e.executeShell(ctx, action.GetShell())
+	switch params := action.GetParams().(type) {
+	case *pb.Action_Package:
+		output, changed, err = e.executePackage(ctx, params.Package, action.GetDesiredState())
+	case *pb.Action_Update:
+		output, changed, err = e.executeUpdate(ctx, params.Update)
+	case *pb.Action_Shell:
+		output, result.DetectionOutput, result.Compliant, changed, err = e.executeShell(ctx, params.Shell)
 	default:
-		err = fmt.Errorf("unsupported action type: %s", action.GetType())
+		err = errors.New("unsupported action parameters")
 	}
 	result.Output = output
 	result.Changed = changed
@@ -89,7 +89,7 @@ func (e *Executor) finish(result *pb.ActionResult, started time.Time) *pb.Action
 	return result
 }
 
-func (e *Executor) executeShell(ctx context.Context, params *pb.ShellParams) (*pb.CommandOutput, *pb.CommandOutput, bool, bool, error) {
+func (e *Executor) executeShell(ctx context.Context, params *pb.ShellActionParams) (*pb.CommandOutput, *pb.CommandOutput, bool, bool, error) {
 	if params == nil {
 		return nil, nil, false, false, errors.New("shell params required")
 	}
@@ -133,7 +133,7 @@ func (e *Executor) executeShell(ctx context.Context, params *pb.ShellParams) (*p
 	return output, verified, true, true, nil
 }
 
-func (e *Executor) runShell(ctx context.Context, params *pb.ShellParams, script string) (*pb.CommandOutput, error) {
+func (e *Executor) runShell(ctx context.Context, params *pb.ShellActionParams, script string) (*pb.CommandOutput, error) {
 	interpreter := params.GetInterpreter()
 	if interpreter == "" {
 		interpreter = "/bin/sh"

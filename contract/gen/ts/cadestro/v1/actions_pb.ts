@@ -2,8 +2,8 @@
 // @generated from file cadestro/v1/actions.proto (package cadestro.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
-import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
+import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 import type { ActionId, CommandOutput, DesiredState, ExecutionStatus, OccurrenceId, RunId } from "./common_pb";
 import { file_cadestro_v1_common } from "./common_pb";
@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cadestro/v1/actions.proto.
  */
 export const file_cadestro_v1_actions: GenFile = /*@__PURE__*/
-  fileDesc("ChljYWRlc3Ryby92MS9hY3Rpb25zLnByb3RvEgtjYWRlc3Ryby52MSKEAwoGQWN0aW9uEikKAmlkGAEgASgLMhUuY2FkZXN0cm8udjEuQWN0aW9uSWRCBrpIA8gBARItCgR0eXBlGAIgASgOMhcuY2FkZXN0cm8udjEuQWN0aW9uVHlwZUIGukgDyAEBEjgKDWRlc2lyZWRfc3RhdGUYAyABKA4yGS5jYWRlc3Ryby52MS5EZXNpcmVkU3RhdGVCBrpIA8gBARImCg90aW1lb3V0X3NlY29uZHMYBCABKAVCDbpICtgBARoFGJAcKAASLQoIc2NoZWR1bGUYBSABKAsyGy5jYWRlc3Ryby52MS5BY3Rpb25TY2hlZHVsZRItCgdwYWNrYWdlGAYgASgLMhouY2FkZXN0cm8udjEuUGFja2FnZVBhcmFtc0gAEisKBnVwZGF0ZRgHIAEoCzIZLmNhZGVzdHJvLnYxLlVwZGF0ZVBhcmFtc0gAEikKBXNoZWxsGAggASgLMhguY2FkZXN0cm8udjEuU2hlbGxQYXJhbXNIAEIICgZwYXJhbXMiaQoOQWN0aW9uU2NoZWR1bGUSJQoOaW50ZXJ2YWxfaG91cnMYASABKAVCDbpICtgBARoFGLhEKAASFQoNcnVuX29uX2Fzc2lnbhgCIAEoCBIZChFza2lwX2lmX3VuY2hhbmdlZBgDIAEoCCJKCg1QYWNrYWdlUGFyYW1zEhsKBG5hbWUYASABKAlCDbpICsgBAXIFEAEY/wESHAoHdmVyc2lvbhgCIAEoCUILukgI2AEBcgMYgAEiDgoMVXBkYXRlUGFyYW1zIr4CCgtTaGVsbFBhcmFtcxIcCgZzY3JpcHQYASABKAlCDLpICdgBAXIEGICAQBIgCgtpbnRlcnByZXRlchgCIAEoCUILukgI2AEBcgMY/wESJgoRd29ya2luZ19kaXJlY3RvcnkYAyABKAlCC7pICNgBAXIDOgEvElQKC2Vudmlyb25tZW50GAQgAygLMikuY2FkZXN0cm8udjEuU2hlbGxQYXJhbXMuRW52aXJvbm1lbnRFbnRyeUIUukgRmgEOIgVyAxj/ASoFcgMYgCASJgoQZGV0ZWN0aW9uX3NjcmlwdBgFIAEoCUIMukgJ2AEBcgQYgIBAEhUKDWlzX2NvbXBsaWFuY2UYBiABKAgaMgoQRW52aXJvbm1lbnRFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIucDCgxBY3Rpb25SZXN1bHQSMAoJYWN0aW9uX2lkGAEgASgLMhUuY2FkZXN0cm8udjEuQWN0aW9uSWRCBrpIA8gBARI0CgZzdGF0dXMYAiABKA4yHC5jYWRlc3Ryby52MS5FeGVjdXRpb25TdGF0dXNCBrpIA8gBARIaCgVlcnJvchgDIAEoCUILukgI2AEBcgMYgCASKgoGb3V0cHV0GAQgASgLMhouY2FkZXN0cm8udjEuQ29tbWFuZE91dHB1dBIwCgxjb21wbGV0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjUKCGR1cmF0aW9uGAYgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uQgi6SAWqAQIyABIPCgdjaGFuZ2VkGAcgASgIEhEKCWNvbXBsaWFudBgIIAEoCBI0ChBkZXRlY3Rpb25fb3V0cHV0GAkgASgLMhouY2FkZXN0cm8udjEuQ29tbWFuZE91dHB1dBIqCgZydW5faWQYCiABKAsyEi5jYWRlc3Ryby52MS5SdW5JZEIGukgDyAEBEjgKDW9jY3VycmVuY2VfaWQYCyABKAsyGS5jYWRlc3Ryby52MS5PY2N1cnJlbmNlSWRCBrpIA8gBASpxCgpBY3Rpb25UeXBlEhsKF0FDVElPTl9UWVBFX1VOU1BFQ0lGSUVEEAASFwoTQUNUSU9OX1RZUEVfUEFDS0FHRRABEhYKEkFDVElPTl9UWVBFX1VQREFURRACEhUKEUFDVElPTl9UWVBFX1NIRUxMEANCR1pFZ2l0aHViLmNvbS9tYW5jaHRvb2xzL2NhZGVzdHJvL2NvbnRyYWN0L2dlbi9nby9jYWRlc3Ryby92MTtjYWRlc3Ryb3YxYgZwcm90bzM", [file_buf_validate_validate, file_cadestro_v1_common, file_google_protobuf_duration, file_google_protobuf_timestamp]);
+  fileDesc("ChljYWRlc3Ryby92MS9hY3Rpb25zLnByb3RvEgtjYWRlc3Ryby52MSLnAgoGQWN0aW9uEikKAmlkGAEgASgLMhUuY2FkZXN0cm8udjEuQWN0aW9uSWRCBrpIA8gBARI4Cg1kZXNpcmVkX3N0YXRlGAIgASgOMhkuY2FkZXN0cm8udjEuRGVzaXJlZFN0YXRlQga6SAPIAQESJgoPdGltZW91dF9zZWNvbmRzGAMgASgFQg26SArYAQEaBRiQHCgAEi0KCHNjaGVkdWxlGAQgASgLMhsuY2FkZXN0cm8udjEuQWN0aW9uU2NoZWR1bGUSMwoHcGFja2FnZRgFIAEoCzIgLmNhZGVzdHJvLnYxLlBhY2thZ2VBY3Rpb25QYXJhbXNIABIxCgZ1cGRhdGUYBiABKAsyHy5jYWRlc3Ryby52MS5VcGRhdGVBY3Rpb25QYXJhbXNIABIvCgVzaGVsbBgHIAEoCzIeLmNhZGVzdHJvLnYxLlNoZWxsQWN0aW9uUGFyYW1zSABCCAoGcGFyYW1zImkKDkFjdGlvblNjaGVkdWxlEiUKDmludGVydmFsX2hvdXJzGAEgASgFQg26SArYAQEaBRi4RCgAEhUKDXJ1bl9vbl9hc3NpZ24YAiABKAgSGQoRc2tpcF9pZl91bmNoYW5nZWQYAyABKAgiUAoTUGFja2FnZUFjdGlvblBhcmFtcxIbCgRuYW1lGAEgASgJQg26SArIAQFyBRABGP8BEhwKB3ZlcnNpb24YAiABKAlCC7pICNgBAXIDGIABIhQKElVwZGF0ZUFjdGlvblBhcmFtcyLKAgoRU2hlbGxBY3Rpb25QYXJhbXMSHAoGc2NyaXB0GAEgASgJQgy6SAnYAQFyBBiAgEASIAoLaW50ZXJwcmV0ZXIYAiABKAlCC7pICNgBAXIDGP8BEiYKEXdvcmtpbmdfZGlyZWN0b3J5GAMgASgJQgu6SAjYAQFyAzoBLxJaCgtlbnZpcm9ubWVudBgEIAMoCzIvLmNhZGVzdHJvLnYxLlNoZWxsQWN0aW9uUGFyYW1zLkVudmlyb25tZW50RW50cnlCFLpIEZoBDiIFcgMY/wEqBXIDGIAgEiYKEGRldGVjdGlvbl9zY3JpcHQYBSABKAlCDLpICdgBAXIEGICAQBIVCg1pc19jb21wbGlhbmNlGAYgASgIGjIKEEVudmlyb25tZW50RW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASLnAwoMQWN0aW9uUmVzdWx0EjAKCWFjdGlvbl9pZBgBIAEoCzIVLmNhZGVzdHJvLnYxLkFjdGlvbklkQga6SAPIAQESNAoGc3RhdHVzGAIgASgOMhwuY2FkZXN0cm8udjEuRXhlY3V0aW9uU3RhdHVzQga6SAPIAQESGgoFZXJyb3IYAyABKAlCC7pICNgBAXIDGIAgEioKBm91dHB1dBgEIAEoCzIaLmNhZGVzdHJvLnYxLkNvbW1hbmRPdXRwdXQSMAoMY29tcGxldGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI1CghkdXJhdGlvbhgGIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbkIIukgFqgECMgASDwoHY2hhbmdlZBgHIAEoCBIRCgljb21wbGlhbnQYCCABKAgSNAoQZGV0ZWN0aW9uX291dHB1dBgJIAEoCzIaLmNhZGVzdHJvLnYxLkNvbW1hbmRPdXRwdXQSKgoGcnVuX2lkGAogASgLMhIuY2FkZXN0cm8udjEuUnVuSWRCBrpIA8gBARI4Cg1vY2N1cnJlbmNlX2lkGAsgASgLMhkuY2FkZXN0cm8udjEuT2NjdXJyZW5jZUlkQga6SAPIAQFCR1pFZ2l0aHViLmNvbS9tYW5jaHRvb2xzL2NhZGVzdHJvL2NvbnRyYWN0L2dlbi9nby9jYWRlc3Ryby92MTtjYWRlc3Ryb3YxYgZwcm90bzM", [file_buf_validate_validate, file_cadestro_v1_common, file_google_protobuf_duration, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message cadestro.v1.Action
@@ -27,22 +27,17 @@ export type Action = Message<"cadestro.v1.Action"> & {
   id?: ActionId;
 
   /**
-   * @generated from field: cadestro.v1.ActionType type = 2;
-   */
-  type: ActionType;
-
-  /**
-   * @generated from field: cadestro.v1.DesiredState desired_state = 3;
+   * @generated from field: cadestro.v1.DesiredState desired_state = 2;
    */
   desiredState: DesiredState;
 
   /**
-   * @generated from field: int32 timeout_seconds = 4;
+   * @generated from field: int32 timeout_seconds = 3;
    */
   timeoutSeconds: number;
 
   /**
-   * @generated from field: cadestro.v1.ActionSchedule schedule = 5;
+   * @generated from field: cadestro.v1.ActionSchedule schedule = 4;
    */
   schedule?: ActionSchedule;
 
@@ -51,21 +46,21 @@ export type Action = Message<"cadestro.v1.Action"> & {
    */
   params: {
     /**
-     * @generated from field: cadestro.v1.PackageParams package = 6;
+     * @generated from field: cadestro.v1.PackageActionParams package = 5;
      */
-    value: PackageParams;
+    value: PackageActionParams;
     case: "package";
   } | {
     /**
-     * @generated from field: cadestro.v1.UpdateParams update = 7;
+     * @generated from field: cadestro.v1.UpdateActionParams update = 6;
      */
-    value: UpdateParams;
+    value: UpdateActionParams;
     case: "update";
   } | {
     /**
-     * @generated from field: cadestro.v1.ShellParams shell = 8;
+     * @generated from field: cadestro.v1.ShellActionParams shell = 7;
      */
-    value: ShellParams;
+    value: ShellActionParams;
     case: "shell";
   } | { case: undefined; value?: undefined };
 };
@@ -105,9 +100,9 @@ export const ActionScheduleSchema: GenMessage<ActionSchedule> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 1);
 
 /**
- * @generated from message cadestro.v1.PackageParams
+ * @generated from message cadestro.v1.PackageActionParams
  */
-export type PackageParams = Message<"cadestro.v1.PackageParams"> & {
+export type PackageActionParams = Message<"cadestro.v1.PackageActionParams"> & {
   /**
    * @generated from field: string name = 1;
    */
@@ -120,29 +115,29 @@ export type PackageParams = Message<"cadestro.v1.PackageParams"> & {
 };
 
 /**
- * Describes the message cadestro.v1.PackageParams.
- * Use `create(PackageParamsSchema)` to create a new message.
+ * Describes the message cadestro.v1.PackageActionParams.
+ * Use `create(PackageActionParamsSchema)` to create a new message.
  */
-export const PackageParamsSchema: GenMessage<PackageParams> = /*@__PURE__*/
+export const PackageActionParamsSchema: GenMessage<PackageActionParams> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 2);
 
 /**
- * @generated from message cadestro.v1.UpdateParams
+ * @generated from message cadestro.v1.UpdateActionParams
  */
-export type UpdateParams = Message<"cadestro.v1.UpdateParams"> & {
+export type UpdateActionParams = Message<"cadestro.v1.UpdateActionParams"> & {
 };
 
 /**
- * Describes the message cadestro.v1.UpdateParams.
- * Use `create(UpdateParamsSchema)` to create a new message.
+ * Describes the message cadestro.v1.UpdateActionParams.
+ * Use `create(UpdateActionParamsSchema)` to create a new message.
  */
-export const UpdateParamsSchema: GenMessage<UpdateParams> = /*@__PURE__*/
+export const UpdateActionParamsSchema: GenMessage<UpdateActionParams> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 3);
 
 /**
- * @generated from message cadestro.v1.ShellParams
+ * @generated from message cadestro.v1.ShellActionParams
  */
-export type ShellParams = Message<"cadestro.v1.ShellParams"> & {
+export type ShellActionParams = Message<"cadestro.v1.ShellActionParams"> & {
   /**
    * @generated from field: string script = 1;
    */
@@ -175,10 +170,10 @@ export type ShellParams = Message<"cadestro.v1.ShellParams"> & {
 };
 
 /**
- * Describes the message cadestro.v1.ShellParams.
- * Use `create(ShellParamsSchema)` to create a new message.
+ * Describes the message cadestro.v1.ShellActionParams.
+ * Use `create(ShellActionParamsSchema)` to create a new message.
  */
-export const ShellParamsSchema: GenMessage<ShellParams> = /*@__PURE__*/
+export const ShellActionParamsSchema: GenMessage<ShellActionParams> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 4);
 
 /**
@@ -247,35 +242,4 @@ export type ActionResult = Message<"cadestro.v1.ActionResult"> & {
  */
 export const ActionResultSchema: GenMessage<ActionResult> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_actions, 5);
-
-/**
- * @generated from enum cadestro.v1.ActionType
- */
-export enum ActionType {
-  /**
-   * @generated from enum value: ACTION_TYPE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_PACKAGE = 1;
-   */
-  PACKAGE = 1,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_UPDATE = 2;
-   */
-  UPDATE = 2,
-
-  /**
-   * @generated from enum value: ACTION_TYPE_SHELL = 3;
-   */
-  SHELL = 3,
-}
-
-/**
- * Describes the enum cadestro.v1.ActionType.
- */
-export const ActionTypeSchema: GenEnum<ActionType> = /*@__PURE__*/
-  enumDesc(file_cadestro_v1_actions, 0);
 

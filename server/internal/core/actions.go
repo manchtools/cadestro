@@ -15,27 +15,27 @@ import (
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
-func validateAction(actionType cadestrov1.ActionType, desiredState cadestrov1.DesiredState, timeoutSeconds int32, schedule *cadestrov1.ActionSchedule, packageParams *cadestrov1.PackageParams, updateParams *cadestrov1.UpdateParams, shellParams *cadestrov1.ShellParams) (*cadestrov1.Action, error) {
-	action := &cadestrov1.Action{Type: actionType, DesiredState: desiredState, TimeoutSeconds: timeoutSeconds, Schedule: schedule}
-	switch actionType {
-	case cadestrov1.ActionType_ACTION_TYPE_PACKAGE:
-		if packageParams == nil || updateParams != nil || shellParams != nil {
+func validateAction(desiredState cadestrov1.DesiredState, timeoutSeconds int32, schedule *cadestrov1.ActionSchedule, packageParams *cadestrov1.PackageActionParams, updateParams *cadestrov1.UpdateActionParams, shellParams *cadestrov1.ShellActionParams) (*cadestrov1.Action, error) {
+	action := &cadestrov1.Action{DesiredState: desiredState, TimeoutSeconds: timeoutSeconds, Schedule: schedule}
+	switch {
+	case packageParams != nil:
+		if updateParams != nil || shellParams != nil {
 			return nil, errors.New("package action requires package parameters")
 		}
 		if desiredState != cadestrov1.DesiredState_DESIRED_STATE_PRESENT && desiredState != cadestrov1.DesiredState_DESIRED_STATE_ABSENT {
 			return nil, errors.New("package action requires present or absent desired state")
 		}
 		action.Params = &cadestrov1.Action_Package{Package: packageParams}
-	case cadestrov1.ActionType_ACTION_TYPE_UPDATE:
-		if updateParams == nil || packageParams != nil || shellParams != nil {
+	case updateParams != nil:
+		if packageParams != nil || shellParams != nil {
 			return nil, errors.New("update action requires update parameters")
 		}
 		if desiredState != cadestrov1.DesiredState_DESIRED_STATE_PRESENT {
 			return nil, errors.New("update action requires present desired state")
 		}
 		action.Params = &cadestrov1.Action_Update{Update: updateParams}
-	case cadestrov1.ActionType_ACTION_TYPE_SHELL:
-		if shellParams == nil || packageParams != nil || updateParams != nil {
+	case shellParams != nil:
+		if packageParams != nil || updateParams != nil {
 			return nil, errors.New("shell action requires shell parameters")
 		}
 		if desiredState != cadestrov1.DesiredState_DESIRED_STATE_PRESENT {
@@ -49,7 +49,7 @@ func validateAction(actionType cadestrov1.ActionType, desiredState cadestrov1.De
 		}
 		action.Params = &cadestrov1.Action_Shell{Shell: shellParams}
 	default:
-		return nil, errors.New("unsupported action type")
+		return nil, errors.New("action parameters are required")
 	}
 	return action, nil
 }
@@ -61,7 +61,7 @@ func actionProto(action *db.Action) (*cadestrov1.ManagedAction, error) {
 	}
 	mapped := &cadestrov1.ManagedAction{
 		Id: executable.Id, Name: action.Name, Description: action.Description,
-		Type: executable.Type, DesiredState: executable.DesiredState, TimeoutSeconds: executable.TimeoutSeconds,
+		DesiredState: executable.DesiredState, TimeoutSeconds: executable.TimeoutSeconds,
 		Schedule:  executable.Schedule,
 		CreatedAt: timestamppb.New(action.CreatedAt), UpdatedAt: timestamppb.New(action.UpdatedAt),
 	}
@@ -83,10 +83,26 @@ func executableAction(action *db.Action) (*cadestrov1.Action, error) {
 	if err := proto.Unmarshal(action.ActionBlob, result); err != nil {
 		return nil, err
 	}
-	if result.GetId().GetValue() != action.ID || result.Type != action.Type {
+	if result.GetId().GetValue() != action.ID {
 		return nil, errors.New("stored action metadata does not match action blob")
 	}
 	return result, nil
+}
+
+func sameActionKind(left, right *cadestrov1.Action) bool {
+	switch left.GetParams().(type) {
+	case *cadestrov1.Action_Package:
+		_, ok := right.GetParams().(*cadestrov1.Action_Package)
+		return ok
+	case *cadestrov1.Action_Update:
+		_, ok := right.GetParams().(*cadestrov1.Action_Update)
+		return ok
+	case *cadestrov1.Action_Shell:
+		_, ok := right.GetParams().(*cadestrov1.Action_Shell)
+		return ok
+	default:
+		return false
+	}
 }
 
 func createActionParams(request *cadestrov1.CreateActionRequest, action *cadestrov1.Action, now time.Time) (db.CreateActionParams, error) {
@@ -95,11 +111,11 @@ func createActionParams(request *cadestrov1.CreateActionRequest, action *cadestr
 	if err != nil {
 		return db.CreateActionParams{}, err
 	}
-	return db.CreateActionParams{ID: action.Id.GetValue(), Name: request.GetName(), Description: request.GetDescription(), Type: action.Type, ActionBlob: blob, CreatedAt: now, UpdatedAt: now}, nil
+	return db.CreateActionParams{ID: action.Id.GetValue(), Name: request.GetName(), Description: request.GetDescription(), ActionBlob: blob, CreatedAt: now, UpdatedAt: now}, nil
 }
 
 func (service *Service) CreateAction(ctx context.Context, request *connect.Request[cadestrov1.CreateActionRequest]) (*connect.Response[cadestrov1.CreateActionResponse], error) {
-	actionValue, err := validateAction(request.Msg.GetType(), request.Msg.GetDesiredState(), request.Msg.GetTimeoutSeconds(), request.Msg.GetSchedule(), request.Msg.GetPackage(), request.Msg.GetUpdate(), request.Msg.GetShell())
+	actionValue, err := validateAction(request.Msg.GetDesiredState(), request.Msg.GetTimeoutSeconds(), request.Msg.GetSchedule(), request.Msg.GetPackage(), request.Msg.GetUpdate(), request.Msg.GetShell())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
@@ -141,11 +157,11 @@ func (service *Service) GetAction(ctx context.Context, request *connect.Request[
 
 func (service *Service) ListActions(ctx context.Context, request *connect.Request[cadestrov1.ListActionsRequest]) (*connect.Response[cadestrov1.ListActionsResponse], error) {
 	limit := pageSize(request.Msg.GetPageSize())
-	actions, err := service.store.Queries().ListActions(ctx, db.ListActionsParams{AfterID: request.Msg.GetPageToken(), TypeFilter: int64(request.Msg.GetTypeFilter()), PageLimit: limit})
+	actions, err := service.store.Queries().ListActions(ctx, db.ListActionsParams{AfterID: request.Msg.GetPageToken(), PageLimit: limit})
 	if err != nil {
 		return nil, service.internal("list actions", err)
 	}
-	total, err := service.store.Queries().CountActions(ctx, int64(request.Msg.GetTypeFilter()))
+	total, err := service.store.Queries().CountActions(ctx)
 	if err != nil {
 		return nil, service.internal("count actions", err)
 	}
@@ -178,9 +194,16 @@ func (service *Service) UpdateActionParams(ctx context.Context, request *connect
 		}
 		return nil, service.internal("get action for update", err)
 	}
-	actionValue, err := validateAction(current.Type, request.Msg.GetDesiredState(), request.Msg.GetTimeoutSeconds(), request.Msg.GetSchedule(), request.Msg.GetPackage(), request.Msg.GetUpdate(), request.Msg.GetShell())
+	stored, err := executableAction(current)
+	if err != nil {
+		return nil, service.internal("decode action for update", err)
+	}
+	actionValue, err := validateAction(request.Msg.GetDesiredState(), request.Msg.GetTimeoutSeconds(), request.Msg.GetSchedule(), request.Msg.GetPackage(), request.Msg.GetUpdate(), request.Msg.GetShell())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+	if !sameActionKind(stored, actionValue) {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("action kind cannot change"))
 	}
 	actionValue.Id = &cadestrov1.ActionId{Value: current.ID}
 	blob, err := proto.Marshal(actionValue)

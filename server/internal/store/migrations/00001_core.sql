@@ -115,7 +115,6 @@ CREATE TABLE actions (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     description TEXT NOT NULL DEFAULT '',
-    type INTEGER NOT NULL,
     action_blob BLOB NOT NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL

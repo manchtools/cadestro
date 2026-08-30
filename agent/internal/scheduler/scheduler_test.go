@@ -38,7 +38,7 @@ func TestDueActionRunsOnceAndQueuesResults(t *testing.T) {
 	manifest := &pb.Manifest{
 		ManifestId:   &pb.ManifestId{Value: "01K00000000000000000000012"},
 		OccurrenceId: &pb.OccurrenceId{Value: "01K00000000000000000000013"},
-		Action:       &pb.Action{Id: &pb.ActionId{Value: "01K00000000000000000000014"}, Type: pb.ActionType_ACTION_TYPE_UPDATE},
+		Action:       &pb.Action{Id: &pb.ActionId{Value: "01K00000000000000000000014"}, Params: &pb.Action_Update{Update: &pb.UpdateActionParams{}}},
 		Schedule:     &pb.ActionSchedule{RunOnAssign: true, IntervalHours: 8},
 	}
 	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{

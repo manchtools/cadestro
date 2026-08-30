@@ -92,11 +92,10 @@ func (q *Queries) ConsumeRegistrationToken(ctx context.Context, arg ConsumeRegis
 
 const countActions = `-- name: CountActions :one
 SELECT COUNT(*) FROM actions
-WHERE (CAST(?1 AS INTEGER) = 0 OR type = CAST(?1 AS INTEGER))
 `
 
-func (q *Queries) CountActions(ctx context.Context, typeFilter int64) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countActions, typeFilter)
+func (q *Queries) CountActions(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countActions)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -158,19 +157,18 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 }
 
 const createAction = `-- name: CreateAction :one
-INSERT INTO actions (id, name, description, type, action_blob, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?)
-RETURNING id, name, description, type, action_blob, created_at, updated_at
+INSERT INTO actions (id, name, description, action_blob, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?)
+RETURNING id, name, description, action_blob, created_at, updated_at
 `
 
 type CreateActionParams struct {
-	ID          string                `json:"id"`
-	Name        string                `json:"name"`
-	Description string                `json:"description"`
-	Type        cadestrov1.ActionType `json:"type"`
-	ActionBlob  []byte                `json:"action_blob"`
-	CreatedAt   time.Time             `json:"created_at"`
-	UpdatedAt   time.Time             `json:"updated_at"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	ActionBlob  []byte    `json:"action_blob"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 func (q *Queries) CreateAction(ctx context.Context, arg CreateActionParams) (*Action, error) {
@@ -178,7 +176,6 @@ func (q *Queries) CreateAction(ctx context.Context, arg CreateActionParams) (*Ac
 		arg.ID,
 		arg.Name,
 		arg.Description,
-		arg.Type,
 		arg.ActionBlob,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -188,7 +185,6 @@ func (q *Queries) CreateAction(ctx context.Context, arg CreateActionParams) (*Ac
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.Type,
 		&i.ActionBlob,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -632,7 +628,7 @@ func (q *Queries) FindDeviceByIdentityKey(ctx context.Context, identityPublicKey
 }
 
 const getAction = `-- name: GetAction :one
-SELECT id, name, description, type, action_blob, created_at, updated_at FROM actions WHERE id = ?
+SELECT id, name, description, action_blob, created_at, updated_at FROM actions WHERE id = ?
 `
 
 func (q *Queries) GetAction(ctx context.Context, id string) (*Action, error) {
@@ -642,7 +638,6 @@ func (q *Queries) GetAction(ctx context.Context, id string) (*Action, error) {
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.Type,
 		&i.ActionBlob,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -897,20 +892,18 @@ func (q *Queries) LinkIdentity(ctx context.Context, arg LinkIdentityParams) erro
 }
 
 const listActions = `-- name: ListActions :many
-SELECT id, name, description, type, action_blob, created_at, updated_at FROM actions
+SELECT id, name, description, action_blob, created_at, updated_at FROM actions
 WHERE id > ?1
-  AND (CAST(?2 AS INTEGER) = 0 OR type = CAST(?2 AS INTEGER))
-ORDER BY id LIMIT ?3
+ORDER BY id LIMIT ?2
 `
 
 type ListActionsParams struct {
-	AfterID    string `json:"after_id"`
-	TypeFilter int64  `json:"type_filter"`
-	PageLimit  int64  `json:"page_limit"`
+	AfterID   string `json:"after_id"`
+	PageLimit int64  `json:"page_limit"`
 }
 
 func (q *Queries) ListActions(ctx context.Context, arg ListActionsParams) ([]*Action, error) {
-	rows, err := q.db.QueryContext(ctx, listActions, arg.AfterID, arg.TypeFilter, arg.PageLimit)
+	rows, err := q.db.QueryContext(ctx, listActions, arg.AfterID, arg.PageLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -922,7 +915,6 @@ func (q *Queries) ListActions(ctx context.Context, arg ListActionsParams) ([]*Ac
 			&i.ID,
 			&i.Name,
 			&i.Description,
-			&i.Type,
 			&i.ActionBlob,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -941,7 +933,7 @@ func (q *Queries) ListActions(ctx context.Context, arg ListActionsParams) ([]*Ac
 }
 
 const listActionsForDevice = `-- name: ListActionsForDevice :many
-SELECT DISTINCT actions.id, actions.name, actions.description, actions.type, actions.action_blob, actions.created_at, actions.updated_at FROM actions
+SELECT DISTINCT actions.id, actions.name, actions.description, actions.action_blob, actions.created_at, actions.updated_at FROM actions
 JOIN assignments ON assignments.action_id = actions.id
 LEFT JOIN device_group_members ON assignments.target_type = 2
     AND assignments.target_id = device_group_members.group_id
@@ -969,7 +961,6 @@ func (q *Queries) ListActionsForDevice(ctx context.Context, arg ListActionsForDe
 			&i.ID,
 			&i.Name,
 			&i.Description,
-			&i.Type,
 			&i.ActionBlob,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -1001,7 +992,7 @@ ORDER BY assignments.created_at, assignments.id
 
 type ListAssignmentsParams struct {
 	ActionFilter     string `json:"action_filter"`
-	TargetTypeFilter int64  `json:"target_type_filter"`
+	TargetKindFilter int64  `json:"target_kind_filter"`
 	TargetFilter     string `json:"target_filter"`
 }
 
@@ -1016,7 +1007,7 @@ type ListAssignmentsRow struct {
 }
 
 func (q *Queries) ListAssignments(ctx context.Context, arg ListAssignmentsParams) ([]*ListAssignmentsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listAssignments, arg.ActionFilter, arg.TargetTypeFilter, arg.TargetFilter)
+	rows, err := q.db.QueryContext(ctx, listAssignments, arg.ActionFilter, arg.TargetKindFilter, arg.TargetFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -1726,7 +1717,7 @@ func (q *Queries) RemoveDeviceFromGroup(ctx context.Context, arg RemoveDeviceFro
 }
 
 const renameAction = `-- name: RenameAction :one
-UPDATE actions SET name = ?, updated_at = ? WHERE id = ? RETURNING id, name, description, type, action_blob, created_at, updated_at
+UPDATE actions SET name = ?, updated_at = ? WHERE id = ? RETURNING id, name, description, action_blob, created_at, updated_at
 `
 
 type RenameActionParams struct {
@@ -1742,7 +1733,6 @@ func (q *Queries) RenameAction(ctx context.Context, arg RenameActionParams) (*Ac
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.Type,
 		&i.ActionBlob,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -1915,7 +1905,7 @@ func (q *Queries) TouchDevice(ctx context.Context, arg TouchDeviceParams) error 
 }
 
 const updateActionDescription = `-- name: UpdateActionDescription :one
-UPDATE actions SET description = ?, updated_at = ? WHERE id = ? RETURNING id, name, description, type, action_blob, created_at, updated_at
+UPDATE actions SET description = ?, updated_at = ? WHERE id = ? RETURNING id, name, description, action_blob, created_at, updated_at
 `
 
 type UpdateActionDescriptionParams struct {
@@ -1931,7 +1921,6 @@ func (q *Queries) UpdateActionDescription(ctx context.Context, arg UpdateActionD
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.Type,
 		&i.ActionBlob,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -1941,7 +1930,7 @@ func (q *Queries) UpdateActionDescription(ctx context.Context, arg UpdateActionD
 
 const updateActionParams = `-- name: UpdateActionParams :one
 UPDATE actions SET action_blob = ?, updated_at = ?
-WHERE id = ? RETURNING id, name, description, type, action_blob, created_at, updated_at
+WHERE id = ? RETURNING id, name, description, action_blob, created_at, updated_at
 `
 
 type UpdateActionParamsParams struct {
@@ -1957,7 +1946,6 @@ func (q *Queries) UpdateActionParams(ctx context.Context, arg UpdateActionParams
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.Type,
 		&i.ActionBlob,
 		&i.CreatedAt,
 		&i.UpdatedAt,

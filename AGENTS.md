@@ -39,6 +39,11 @@ user-manageable roles, permission assignment, and enforcement across every
 retained administrative RPC; do not replace them with hardcoded first-user or
 single-admin gates when descoping product features.
 
+Action definitions may persist the existing concrete action proto as a binary
+blob under the scoped action-storage exception. The selected params oneof arm
+is the sole action-kind authority: do not add a separate kind column, enum
+discriminator, or type filter.
+
 Access tokens carry their effective permissions and authorize without a
 per-request database lookup; role, permission, logout, and session-version
 changes invalidate refresh-token generations immediately but already-issued

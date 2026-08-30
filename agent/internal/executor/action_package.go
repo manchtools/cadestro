@@ -9,7 +9,7 @@ import (
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
 
-func (e *Executor) executePackage(ctx context.Context, params *pb.PackageParams, state pb.DesiredState) (*pb.CommandOutput, bool, error) {
+func (e *Executor) executePackage(ctx context.Context, params *pb.PackageActionParams, state pb.DesiredState) (*pb.CommandOutput, bool, error) {
 	if params == nil {
 		return nil, false, fmt.Errorf("package params required")
 	}

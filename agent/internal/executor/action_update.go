@@ -8,7 +8,7 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-func (e *Executor) executeUpdate(ctx context.Context, _ *pb.UpdateParams) (*pb.CommandOutput, bool, error) {
+func (e *Executor) executeUpdate(ctx context.Context, _ *pb.UpdateActionParams) (*pb.CommandOutput, bool, error) {
 	if e.pkgManager == nil {
 		return nil, false, fmt.Errorf("no supported package manager found")
 	}

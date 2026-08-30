@@ -11,13 +11,12 @@ import (
 )
 
 type Action struct {
-	ID          string                `json:"id"`
-	Name        string                `json:"name"`
-	Description string                `json:"description"`
-	Type        cadestrov1.ActionType `json:"type"`
-	ActionBlob  []byte                `json:"action_blob"`
-	CreatedAt   time.Time             `json:"created_at"`
-	UpdatedAt   time.Time             `json:"updated_at"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	ActionBlob  []byte    `json:"action_blob"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type Assignment struct {

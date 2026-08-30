@@ -470,17 +470,16 @@ message ManagedAction {
   ActionId id = 1 [(buf.validate.field).required = true];
   string name = 2;
   string description = 3;
-  ActionType type = 4;
-  DesiredState desired_state = 5;
-  int32 timeout_seconds = 6;
-  ActionSchedule schedule = 7;
-  google.protobuf.Timestamp created_at = 8;
-  google.protobuf.Timestamp updated_at = 9;
+  DesiredState desired_state = 4;
+  int32 timeout_seconds = 5;
+  ActionSchedule schedule = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
 
   oneof params {
-    PackageParams package = 10;
-    UpdateParams update = 11;
-    ShellParams shell = 12;
+    PackageActionParams package = 9;
+    UpdateActionParams update = 10;
+    ShellActionParams shell = 11;
   }
 }
 
@@ -494,19 +493,18 @@ message CreateActionRequest {
     (buf.validate.field).string.max_len = 1024,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  ActionType type = 3 [(buf.validate.field).required = true];
-  DesiredState desired_state = 4 [(buf.validate.field).required = true];
-  int32 timeout_seconds = 5 [
+  DesiredState desired_state = 3 [(buf.validate.field).required = true];
+  int32 timeout_seconds = 4 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).int32.lte = 3600,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  ActionSchedule schedule = 6;
+  ActionSchedule schedule = 5;
 
   oneof params {
-    PackageParams package = 7;
-    UpdateParams update = 8;
-    ShellParams shell = 9;
+    PackageActionParams package = 6;
+    UpdateActionParams update = 7;
+    ShellActionParams shell = 8;
   }
 }
 
@@ -529,10 +527,6 @@ message ListActionsRequest {
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
   string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-  ActionType type_filter = 3 [
-    (buf.validate.field).enum.defined_only = true,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
 }
 
 message ListActionsResponse {
@@ -569,9 +563,9 @@ message UpdateActionParamsRequest {
   ActionSchedule schedule = 4;
 
   oneof params {
-    PackageParams package = 5;
-    UpdateParams update = 6;
-    ShellParams shell = 7;
+    PackageActionParams package = 5;
+    UpdateActionParams update = 6;
+    ShellActionParams shell = 7;
   }
 }
 

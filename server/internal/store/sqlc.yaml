@@ -22,8 +22,3 @@ sql:
               import: "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
               package: "cadestrov1"
               type: "Permission"
-          - column: "actions.type"
-            go_type:
-              import: "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-              package: "cadestrov1"
-              type: "ActionType"

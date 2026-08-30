@@ -182,8 +182,8 @@ SELECT COUNT(*) FROM devices;
 DELETE FROM devices WHERE id = ?;
 
 -- name: CreateAction :one
-INSERT INTO actions (id, name, description, type, action_blob, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?)
+INSERT INTO actions (id, name, description, action_blob, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: GetAction :one
@@ -192,12 +192,10 @@ SELECT * FROM actions WHERE id = ?;
 -- name: ListActions :many
 SELECT * FROM actions
 WHERE id > sqlc.arg(after_id)
-  AND (CAST(sqlc.arg(type_filter) AS INTEGER) = 0 OR type = CAST(sqlc.arg(type_filter) AS INTEGER))
 ORDER BY id LIMIT sqlc.arg(page_limit);
 
 -- name: CountActions :one
-SELECT COUNT(*) FROM actions
-WHERE (CAST(sqlc.arg(type_filter) AS INTEGER) = 0 OR type = CAST(sqlc.arg(type_filter) AS INTEGER));
+SELECT COUNT(*) FROM actions;
 
 -- name: RenameAction :one
 UPDATE actions SET name = ?, updated_at = ? WHERE id = ? RETURNING *;
@@ -270,7 +268,7 @@ FROM assignments JOIN actions ON actions.id = assignments.action_id
 LEFT JOIN devices ON assignments.target_type = 1 AND devices.id = assignments.target_id
 LEFT JOIN device_groups ON assignments.target_type = 2 AND device_groups.id = assignments.target_id
 WHERE (CAST(sqlc.arg(action_filter) AS TEXT) = '' OR assignments.action_id = CAST(sqlc.arg(action_filter) AS TEXT))
-  AND (CAST(sqlc.arg(target_type_filter) AS INTEGER) = 0 OR assignments.target_type = CAST(sqlc.arg(target_type_filter) AS INTEGER))
+  AND (CAST(sqlc.arg(target_kind_filter) AS INTEGER) = 0 OR assignments.target_type = CAST(sqlc.arg(target_kind_filter) AS INTEGER))
   AND (CAST(sqlc.arg(target_filter) AS TEXT) = '' OR assignments.target_id = CAST(sqlc.arg(target_filter) AS TEXT))
 ORDER BY assignments.created_at, assignments.id;
 

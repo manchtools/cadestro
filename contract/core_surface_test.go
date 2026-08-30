@@ -8,18 +8,23 @@ import (
 )
 
 func TestActionSurfaceIsTheCoreThree(t *testing.T) {
-	want := map[cadestrov1.ActionType]bool{
-		cadestrov1.ActionType_ACTION_TYPE_UNSPECIFIED: true,
-		cadestrov1.ActionType_ACTION_TYPE_PACKAGE:     true,
-		cadestrov1.ActionType_ACTION_TYPE_UPDATE:      true,
-		cadestrov1.ActionType_ACTION_TYPE_SHELL:       true,
-	}
-	if len(cadestrov1.ActionType_name) != len(want) {
-		t.Fatalf("ActionType has %d values, want %d", len(cadestrov1.ActionType_name), len(want))
-	}
-	for value := range cadestrov1.ActionType_name {
-		if !want[cadestrov1.ActionType(value)] {
-			t.Fatalf("unexpected action type %d", value)
+	for _, message := range []protoreflect.MessageDescriptor{
+		(&cadestrov1.Action{}).ProtoReflect().Descriptor(),
+		(&cadestrov1.ManagedAction{}).ProtoReflect().Descriptor(),
+		(&cadestrov1.CreateActionRequest{}).ProtoReflect().Descriptor(),
+		(&cadestrov1.UpdateActionParamsRequest{}).ProtoReflect().Descriptor(),
+	} {
+		if message.Fields().ByName("type") != nil || message.Fields().ByName("type"+"_filter") != nil {
+			t.Fatalf("%s retains a redundant action discriminator", message.FullName())
+		}
+		oneof := message.Oneofs().ByName("params")
+		if oneof == nil || oneof.Fields().Len() != 3 {
+			t.Fatalf("%s params oneof is incomplete", message.FullName())
+		}
+		for index, name := range []protoreflect.Name{"package", "update", "shell"} {
+			if oneof.Fields().Get(index).Name() != name {
+				t.Fatalf("%s params arm %d is %q, want %q", message.FullName(), index, oneof.Fields().Get(index).Name(), name)
+			}
 		}
 	}
 }

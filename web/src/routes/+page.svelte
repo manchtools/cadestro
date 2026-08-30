@@ -3,7 +3,7 @@
 	import { onMount } from 'svelte';
 	import { create } from '@bufbuild/protobuf';
 	import { timestampDate, timestampFromDate } from '@bufbuild/protobuf/wkt';
-	import { ActionScheduleSchema, ActionType, PackageParamsSchema, ShellParamsSchema, UpdateParamsSchema } from '$contract/cadestro/v1/actions_pb';
+	import { ActionScheduleSchema, PackageActionParamsSchema, ShellActionParamsSchema, UpdateActionParamsSchema } from '$contract/cadestro/v1/actions_pb';
 	import { AssignmentTargetType, ComplianceStatus, DesiredState, DeviceStatus } from '$contract/cadestro/v1/common_pb';
 	import {
 		AddDeviceToGroupRequestSchema,
@@ -97,8 +97,8 @@
 		return value ? timestampDate(value).toLocaleString() : 'Never';
 	}
 
-	function actionTypeName(type: ActionType): string {
-		return type === ActionType.PACKAGE ? 'Package' : type === ActionType.UPDATE ? 'System update' : 'Shell';
+	function actionTypeName(type: string | undefined): string {
+		return type === 'package' ? 'Package' : type === 'update' ? 'System update' : 'Shell';
 	}
 
 	async function load() {
@@ -175,22 +175,19 @@
 		const request = create(CreateActionRequestSchema, {
 			name: actionName,
 			description: actionDescription,
-			type: ActionType.PACKAGE,
 			desiredState: packageRemove ? DesiredState.ABSENT : DesiredState.PRESENT,
 			schedule,
-			params: { case: 'package', value: create(PackageParamsSchema, { name: packageName, version: packageVersion }) }
+			params: { case: 'package', value: create(PackageActionParamsSchema, { name: packageName, version: packageVersion }) }
 		});
 		if (actionType === 'update') {
-			request.type = ActionType.UPDATE;
 			request.desiredState = DesiredState.PRESENT;
-			request.params = { case: 'update', value: create(UpdateParamsSchema) };
+			request.params = { case: 'update', value: create(UpdateActionParamsSchema) };
 		}
 		if (actionType === 'shell') {
-			request.type = ActionType.SHELL;
 			request.desiredState = DesiredState.PRESENT;
 			request.params = {
 				case: 'shell',
-				value: create(ShellParamsSchema, { script: shellScript, detectionScript, isCompliance: complianceAction })
+				value: create(ShellActionParamsSchema, { script: shellScript, detectionScript, isCompliance: complianceAction })
 			};
 		}
 		await run(() => api.createAction(request));
@@ -349,7 +346,7 @@
 			{/if}
 			<button class="primary" disabled={busy}>Create action</button>
 		</form>{/if}
-		{#if can(Permission.LIST_ACTIONS)}<div class="table-wrap"><table><thead><tr><th>Name</th><th>Type</th><th>Schedule</th><th></th></tr></thead><tbody>{#each actions as action (action.id?.value)}<tr><td><strong>{action.name}</strong><small>{action.description}</small></td><td>{actionTypeName(action.type)}</td><td>{action.schedule?.intervalHours ? `Every ${action.schedule.intervalHours}h` : 'On sync'}</td><td>{#if can(Permission.DELETE_ACTION)}<button class="danger" onclick={() => run(() => api.deleteAction(create(DeleteActionRequestSchema, { id: action.id })))} disabled={busy}>Delete</button>{/if}</td></tr>{/each}</tbody></table></div>{/if}
+		{#if can(Permission.LIST_ACTIONS)}<div class="table-wrap"><table><thead><tr><th>Name</th><th>Type</th><th>Schedule</th><th></th></tr></thead><tbody>{#each actions as action (action.id?.value)}<tr><td><strong>{action.name}</strong><small>{action.description}</small></td><td>{actionTypeName(action.params?.case)}</td><td>{action.schedule?.intervalHours ? `Every ${action.schedule.intervalHours}h` : 'On sync'}</td><td>{#if can(Permission.DELETE_ACTION)}<button class="danger" onclick={() => run(() => api.deleteAction(create(DeleteActionRequestSchema, { id: action.id })))} disabled={busy}>Delete</button>{/if}</td></tr>{/each}</tbody></table></div>{/if}
 	</section>
 	{/if}
 

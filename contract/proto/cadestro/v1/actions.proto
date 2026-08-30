@@ -9,28 +9,20 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1";
 
-enum ActionType {
-  ACTION_TYPE_UNSPECIFIED = 0;
-  ACTION_TYPE_PACKAGE = 1;
-  ACTION_TYPE_UPDATE = 2;
-  ACTION_TYPE_SHELL = 3;
-}
-
 message Action {
   ActionId id = 1 [(buf.validate.field).required = true];
-  ActionType type = 2 [(buf.validate.field).required = true];
-  DesiredState desired_state = 3 [(buf.validate.field).required = true];
-  int32 timeout_seconds = 4 [
+  DesiredState desired_state = 2 [(buf.validate.field).required = true];
+  int32 timeout_seconds = 3 [
     (buf.validate.field).int32.gte = 0,
     (buf.validate.field).int32.lte = 3600,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  ActionSchedule schedule = 5;
+  ActionSchedule schedule = 4;
 
   oneof params {
-    PackageParams package = 6;
-    UpdateParams update = 7;
-    ShellParams shell = 8;
+    PackageActionParams package = 5;
+    UpdateActionParams update = 6;
+    ShellActionParams shell = 7;
   }
 }
 
@@ -44,7 +36,7 @@ message ActionSchedule {
   bool skip_if_unchanged = 3;
 }
 
-message PackageParams {
+message PackageActionParams {
   string name = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
@@ -56,9 +48,9 @@ message PackageParams {
   ];
 }
 
-message UpdateParams {}
+message UpdateActionParams {}
 
-message ShellParams {
+message ShellActionParams {
   string script = 1 [
     (buf.validate.field).string.max_len = 1048576,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
