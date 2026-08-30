@@ -142,12 +142,12 @@ func (service *Service) CreateToken(ctx context.Context, request *connect.Reques
 func (service *Service) ListTokens(ctx context.Context, request *connect.Request[cadestrov1.ListTokensRequest]) (*connect.Response[cadestrov1.ListTokensResponse], error) {
 	limit := pageSize(request.Msg.GetPageSize())
 	tokens, err := service.store.Queries().ListRegistrationTokens(ctx, db.ListRegistrationTokensParams{
-		IncludeDisabled: request.Msg.GetIncludeDisabled(), AfterID: request.Msg.GetPageToken(), PageLimit: limit,
+		AfterID: request.Msg.GetPageToken(), PageLimit: limit,
 	})
 	if err != nil {
 		return nil, service.internal("list registration tokens", err)
 	}
-	total, err := service.store.Queries().CountRegistrationTokens(ctx, request.Msg.GetIncludeDisabled())
+	total, err := service.store.Queries().CountRegistrationTokens(ctx)
 	if err != nil {
 		return nil, service.internal("count registration tokens", err)
 	}
@@ -161,11 +161,6 @@ func (service *Service) ListTokens(ctx context.Context, request *connect.Request
 func (service *Service) RenameToken(ctx context.Context, request *connect.Request[cadestrov1.RenameTokenRequest]) (*connect.Response[cadestrov1.UpdateTokenResponse], error) {
 	token, err := service.store.Queries().RenameRegistrationToken(ctx, db.RenameRegistrationTokenParams{Name: request.Msg.GetName(), ID: request.Msg.GetId().GetValue()})
 	return service.tokenUpdateResponse(ctx, "rename registration token", token, err)
-}
-
-func (service *Service) SetTokenDisabled(ctx context.Context, request *connect.Request[cadestrov1.SetTokenDisabledRequest]) (*connect.Response[cadestrov1.UpdateTokenResponse], error) {
-	token, err := service.store.Queries().SetRegistrationTokenDisabled(ctx, db.SetRegistrationTokenDisabledParams{Disabled: request.Msg.GetDisabled(), ID: request.Msg.GetId().GetValue()})
-	return service.tokenUpdateResponse(ctx, "set registration token status", token, err)
 }
 
 func (service *Service) tokenUpdateResponse(ctx context.Context, operation string, token *db.RegistrationToken, err error) (*connect.Response[cadestrov1.UpdateTokenResponse], error) {

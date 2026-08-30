@@ -24,41 +24,40 @@ enum Permission {
   PERMISSION_CREATE_TOKEN = 10;
   PERMISSION_LIST_TOKENS = 11;
   PERMISSION_RENAME_TOKEN = 12;
-  PERMISSION_SET_TOKEN_DISABLED = 13;
-  PERMISSION_DELETE_TOKEN = 14;
-  PERMISSION_CREATE_ACTION = 15;
-  PERMISSION_GET_ACTION = 16;
-  PERMISSION_LIST_ACTIONS = 17;
-  PERMISSION_RENAME_ACTION = 18;
-  PERMISSION_UPDATE_ACTION_DESCRIPTION = 19;
-  PERMISSION_UPDATE_ACTION_PARAMS = 20;
-  PERMISSION_DELETE_ACTION = 21;
-  PERMISSION_CREATE_DEVICE_GROUP = 22;
-  PERMISSION_GET_DEVICE_GROUP = 23;
-  PERMISSION_LIST_DEVICE_GROUPS = 24;
-  PERMISSION_LIST_DEVICE_GROUPS_FOR_DEVICE = 25;
-  PERMISSION_RENAME_DEVICE_GROUP = 26;
-  PERMISSION_UPDATE_DEVICE_GROUP_DESCRIPTION = 27;
-  PERMISSION_DELETE_DEVICE_GROUP = 28;
-  PERMISSION_ADD_DEVICE_TO_GROUP = 29;
-  PERMISSION_REMOVE_DEVICE_FROM_GROUP = 30;
-  PERMISSION_CREATE_ASSIGNMENT = 31;
-  PERMISSION_DELETE_ASSIGNMENT = 32;
-  PERMISSION_LIST_ASSIGNMENTS = 33;
-  PERMISSION_GET_DEVICE_ASSIGNMENTS = 34;
-  PERMISSION_GET_DEVICE_COMPLIANCE = 35;
-  PERMISSION_LIST_EXECUTION_RESULTS = 36;
-  PERMISSION_LIST_AUDIT_EVENTS = 37;
-  PERMISSION_CREATE_ROLE = 38;
-  PERMISSION_GET_ROLE = 39;
-  PERMISSION_LIST_ROLES = 40;
-  PERMISSION_UPDATE_ROLE = 41;
-  PERMISSION_DELETE_ROLE = 42;
-  PERMISSION_ASSIGN_ROLE_TO_USER = 43;
-  PERMISSION_REVOKE_ROLE_FROM_USER = 44;
-  PERMISSION_LIST_PERMISSIONS = 45;
-  PERMISSION_LIST_USERS = 46;
-  PERMISSION_REVOKE_USER_SESSIONS = 47;
+  PERMISSION_DELETE_TOKEN = 13;
+  PERMISSION_CREATE_ACTION = 14;
+  PERMISSION_GET_ACTION = 15;
+  PERMISSION_LIST_ACTIONS = 16;
+  PERMISSION_RENAME_ACTION = 17;
+  PERMISSION_UPDATE_ACTION_DESCRIPTION = 18;
+  PERMISSION_UPDATE_ACTION_PARAMS = 19;
+  PERMISSION_DELETE_ACTION = 20;
+  PERMISSION_CREATE_DEVICE_GROUP = 21;
+  PERMISSION_GET_DEVICE_GROUP = 22;
+  PERMISSION_LIST_DEVICE_GROUPS = 23;
+  PERMISSION_LIST_DEVICE_GROUPS_FOR_DEVICE = 24;
+  PERMISSION_RENAME_DEVICE_GROUP = 25;
+  PERMISSION_UPDATE_DEVICE_GROUP_DESCRIPTION = 26;
+  PERMISSION_DELETE_DEVICE_GROUP = 27;
+  PERMISSION_ADD_DEVICE_TO_GROUP = 28;
+  PERMISSION_REMOVE_DEVICE_FROM_GROUP = 29;
+  PERMISSION_CREATE_ASSIGNMENT = 30;
+  PERMISSION_DELETE_ASSIGNMENT = 31;
+  PERMISSION_LIST_ASSIGNMENTS = 32;
+  PERMISSION_GET_DEVICE_ASSIGNMENTS = 33;
+  PERMISSION_GET_DEVICE_COMPLIANCE = 34;
+  PERMISSION_LIST_EXECUTION_RESULTS = 35;
+  PERMISSION_LIST_AUDIT_EVENTS = 36;
+  PERMISSION_CREATE_ROLE = 37;
+  PERMISSION_GET_ROLE = 38;
+  PERMISSION_LIST_ROLES = 39;
+  PERMISSION_UPDATE_ROLE = 40;
+  PERMISSION_DELETE_ROLE = 41;
+  PERMISSION_ASSIGN_ROLE_TO_USER = 42;
+  PERMISSION_REVOKE_ROLE_FROM_USER = 43;
+  PERMISSION_LIST_PERMISSIONS = 44;
+  PERMISSION_LIST_USERS = 45;
+  PERMISSION_REVOKE_USER_SESSIONS = 46;
 }
 
 message RegisterRequest {
@@ -118,14 +117,13 @@ message User {
   UserId id = 1 [(buf.validate.field).required = true];
   string email = 2 [(buf.validate.field).string.email = true];
   string display_name = 3;
-  string picture = 4;
-  google.protobuf.Timestamp created_at = 5;
-  google.protobuf.Timestamp last_login_at = 6;
-  repeated Permission permissions = 7 [(buf.validate.field).repeated.items.enum = {
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp last_login_at = 5;
+  repeated Permission permissions = 6 [(buf.validate.field).repeated.items.enum = {
     defined_only: true
     not_in: [0]
   }];
-  repeated Role roles = 8;
+  repeated Role roles = 7;
 }
 
 message Role {
@@ -140,9 +138,8 @@ message Role {
     defined_only: true
     not_in: [0]
   }];
-  bool is_system = 5;
-  google.protobuf.Timestamp created_at = 6;
-  google.protobuf.Timestamp updated_at = 7;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
 }
 
 message CreateRoleRequest {
@@ -411,7 +408,6 @@ message RegistrationToken {
   int32 current_uses = 5;
   google.protobuf.Timestamp expires_at = 6;
   google.protobuf.Timestamp created_at = 7;
-  bool disabled = 8;
 }
 
 message CreateTokenRequest {
@@ -443,7 +439,6 @@ message ListTokensRequest {
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
   string page_token = 2 [(buf.validate.field).string.(cadestro.v1.ulid_optional) = true];
-  bool include_disabled = 3;
 }
 
 message ListTokensResponse {
@@ -459,11 +454,6 @@ message RenameTokenRequest {
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 128
   ];
-}
-
-message SetTokenDisabledRequest {
-  RegistrationTokenId id = 1 [(buf.validate.field).required = true];
-  bool disabled = 2;
 }
 
 message UpdateTokenResponse {
@@ -847,7 +837,6 @@ service ControlService {
   rpc CreateToken(CreateTokenRequest) returns (CreateTokenResponse);
   rpc ListTokens(ListTokensRequest) returns (ListTokensResponse);
   rpc RenameToken(RenameTokenRequest) returns (UpdateTokenResponse);
-  rpc SetTokenDisabled(SetTokenDisabledRequest) returns (UpdateTokenResponse);
   rpc DeleteToken(DeleteTokenRequest) returns (DeleteTokenResponse);
   rpc CreateAction(CreateActionRequest) returns (CreateActionResponse);
   rpc GetAction(GetActionRequest) returns (GetActionResponse);

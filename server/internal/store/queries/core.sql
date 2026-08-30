@@ -49,8 +49,8 @@ JOIN users ON users.id = identity_links.user_id
 WHERE identity_links.provider_id = ? AND identity_links.subject = ?;
 
 -- name: CreateUser :one
-INSERT INTO users (id, email, display_name, picture, session_version, created_at, last_login_at)
-VALUES (?, ?, ?, ?, 1, ?, ?)
+INSERT INTO users (id, email, display_name, session_version, created_at, last_login_at)
+VALUES (?, ?, ?, 1, ?, ?)
 RETURNING *;
 
 -- name: LinkIdentity :exec
@@ -58,7 +58,7 @@ INSERT INTO identity_links (provider_id, subject, user_id) VALUES (?, ?, ?);
 
 -- name: UpdateUserLogin :one
 UPDATE users
-SET email = ?, display_name = ?, picture = ?, session_version = session_version + 1, last_login_at = ?
+SET email = ?, display_name = ?, session_version = session_version + 1, last_login_at = ?
 WHERE id = ?
 RETURNING *;
 
@@ -69,8 +69,8 @@ WHERE id = ? AND session_version = ?
 RETURNING *;
 
 -- name: CreateRole :one
-INSERT INTO roles (id, name, description, is_system, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?)
+INSERT INTO roles (id, name, description, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: GetRole :one
@@ -112,9 +112,6 @@ INSERT INTO user_roles (user_id, role_id) VALUES (?, ?);
 -- name: RevokeRoleFromUser :execrows
 DELETE FROM user_roles WHERE user_id = ? AND role_id = ?;
 
--- name: CountUsersWithRole :one
-SELECT COUNT(*) FROM user_roles WHERE role_id = ?;
-
 -- name: BumpSessionsForRole :exec
 UPDATE users SET session_version = session_version + 1
 WHERE id IN (SELECT user_id FROM user_roles WHERE role_id = ?);
@@ -129,8 +126,8 @@ SELECT * FROM users WHERE id > ? ORDER BY id LIMIT ?;
 SELECT COUNT(*) FROM users;
 
 -- name: CreateRegistrationToken :one
-INSERT INTO registration_tokens (id, value_hash, name, max_uses, current_uses, expires_at, created_at, disabled)
-VALUES (?, ?, ?, ?, 0, ?, ?, FALSE)
+INSERT INTO registration_tokens (id, value_hash, name, max_uses, current_uses, expires_at, created_at)
+VALUES (?, ?, ?, ?, 0, ?, ?)
 RETURNING *;
 
 -- name: GetRegistrationToken :one
@@ -138,25 +135,22 @@ SELECT * FROM registration_tokens WHERE id = ?;
 
 -- name: GetUsableRegistrationToken :one
 SELECT * FROM registration_tokens
-WHERE value_hash = ? AND disabled = FALSE AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses);
+WHERE value_hash = ? AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses);
 
 -- name: ConsumeRegistrationToken :execrows
 UPDATE registration_tokens SET current_uses = current_uses + 1
-WHERE id = ? AND disabled = FALSE AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses);
+WHERE id = ? AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses);
 
 -- name: ListRegistrationTokens :many
 SELECT * FROM registration_tokens
-WHERE (CAST(sqlc.arg(include_disabled) AS BOOLEAN) OR disabled = FALSE) AND id > sqlc.arg(after_id)
+WHERE id > sqlc.arg(after_id)
 ORDER BY id LIMIT sqlc.arg(page_limit);
 
 -- name: CountRegistrationTokens :one
-SELECT COUNT(*) FROM registration_tokens WHERE (CAST(sqlc.arg(include_disabled) AS BOOLEAN) OR disabled = FALSE);
+SELECT COUNT(*) FROM registration_tokens;
 
 -- name: RenameRegistrationToken :one
 UPDATE registration_tokens SET name = ? WHERE id = ? RETURNING *;
-
--- name: SetRegistrationTokenDisabled :one
-UPDATE registration_tokens SET disabled = ? WHERE id = ? RETURNING *;
 
 -- name: DeleteRegistrationToken :execrows
 DELETE FROM registration_tokens WHERE id = ?;

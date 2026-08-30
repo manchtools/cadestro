@@ -44,7 +44,6 @@ func testUser(t *testing.T, service *Service, ctx context.Context, id string) *d
 func TestRefreshAndLogoutRotateSessionGeneration(t *testing.T) {
 	service, ctx, now, privateKey := testService(t)
 	user := testUser(t, service, ctx, "01K00000000000000000000001")
-	require.NoError(t, service.ReconcileSystemRoles(ctx))
 	role, err := service.CreateRole(ctx, connect.NewRequest(&cadestrov1.CreateRoleRequest{Name: "Reader", Permissions: []cadestrov1.Permission{cadestrov1.Permission_PERMISSION_GET_CURRENT_USER}}))
 	require.NoError(t, err)
 	_, err = service.AssignRoleToUser(ctx, connect.NewRequest(&cadestrov1.AssignRoleToUserRequest{UserId: &cadestrov1.UserId{Value: user.ID}, RoleId: role.Msg.Role.Id}))
@@ -95,7 +94,8 @@ func TestRoleMutationsRotateAffectedSessions(t *testing.T) {
 	service, ctx, _, _ := testService(t)
 	admin := testUser(t, service, ctx, "01K00000000000000000000001")
 	target := testUser(t, service, ctx, "01K00000000000000000000002")
-	require.NoError(t, service.ReconcileSystemRoles(ctx))
+	_, err := service.AssignRoleToUser(ctx, connect.NewRequest(&cadestrov1.AssignRoleToUserRequest{UserId: &cadestrov1.UserId{Value: admin.ID}, RoleId: &cadestrov1.RoleId{Value: administratorsRoleID}}))
+	require.NoError(t, err)
 	custom, err := service.CreateRole(ctx, connect.NewRequest(&cadestrov1.CreateRoleRequest{Name: "Custom", Permissions: []cadestrov1.Permission{cadestrov1.Permission_PERMISSION_LIST_USERS}}))
 	require.NoError(t, err)
 	_, err = service.AssignRoleToUser(ctx, connect.NewRequest(&cadestrov1.AssignRoleToUserRequest{UserId: &cadestrov1.UserId{Value: target.ID}, RoleId: custom.Msg.Role.Id}))
@@ -105,22 +105,18 @@ func TestRoleMutationsRotateAffectedSessions(t *testing.T) {
 	require.NoError(t, err)
 	require.EqualValues(t, 3, mustUser(t, service, ctx, target.ID).SessionVersion)
 	_, err = service.DeleteRole(ctx, connect.NewRequest(&cadestrov1.DeleteRoleRequest{Id: custom.Msg.Role.Id}))
-	require.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
-	_, err = service.RevokeRoleFromUser(ctx, connect.NewRequest(&cadestrov1.RevokeRoleFromUserRequest{UserId: &cadestrov1.UserId{Value: target.ID}, RoleId: custom.Msg.Role.Id}))
 	require.NoError(t, err)
 	require.EqualValues(t, 4, mustUser(t, service, ctx, target.ID).SessionVersion)
-	_, err = service.DeleteRole(ctx, connect.NewRequest(&cadestrov1.DeleteRoleRequest{Id: custom.Msg.Role.Id}))
-	require.NoError(t, err)
-	_, err = service.UpdateRole(ctx, connect.NewRequest(&cadestrov1.UpdateRoleRequest{Id: &cadestrov1.RoleId{Value: administratorsRoleID}, Name: "Administrators"}))
-	require.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
-	_, err = service.DeleteRole(ctx, connect.NewRequest(&cadestrov1.DeleteRoleRequest{Id: &cadestrov1.RoleId{Value: administratorsRoleID}}))
-	require.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
-	_, err = service.AssignRoleToUser(ctx, connect.NewRequest(&cadestrov1.AssignRoleToUserRequest{UserId: &cadestrov1.UserId{Value: admin.ID}, RoleId: &cadestrov1.RoleId{Value: administratorsRoleID}}))
-	require.NoError(t, err)
+	_, err = service.RevokeRoleFromUser(ctx, connect.NewRequest(&cadestrov1.RevokeRoleFromUserRequest{UserId: &cadestrov1.UserId{Value: target.ID}, RoleId: custom.Msg.Role.Id}))
+	require.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 	version := mustUser(t, service, ctx, admin.ID).SessionVersion
 	_, err = service.RevokeRoleFromUser(ctx, connect.NewRequest(&cadestrov1.RevokeRoleFromUserRequest{UserId: &cadestrov1.UserId{Value: admin.ID}, RoleId: &cadestrov1.RoleId{Value: administratorsRoleID}}))
-	require.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
-	require.Equal(t, version, mustUser(t, service, ctx, admin.ID).SessionVersion)
+	require.NoError(t, err)
+	require.EqualValues(t, version+1, mustUser(t, service, ctx, admin.ID).SessionVersion)
+	_, err = service.UpdateRole(ctx, connect.NewRequest(&cadestrov1.UpdateRoleRequest{Id: &cadestrov1.RoleId{Value: administratorsRoleID}, Name: "Administrators"}))
+	require.NoError(t, err)
+	_, err = service.DeleteRole(ctx, connect.NewRequest(&cadestrov1.DeleteRoleRequest{Id: &cadestrov1.RoleId{Value: administratorsRoleID}}))
+	require.NoError(t, err)
 	_, err = service.RevokeUserSessions(ctx, connect.NewRequest(&cadestrov1.RevokeUserSessionsRequest{UserId: &cadestrov1.UserId{Value: target.ID}}))
 	require.NoError(t, err)
 	require.EqualValues(t, 5, mustUser(t, service, ctx, target.ID).SessionVersion)
@@ -128,9 +124,8 @@ func TestRoleMutationsRotateAffectedSessions(t *testing.T) {
 	require.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 }
 
-func TestOIDCUsersReceiveSystemRolesByCreationOrder(t *testing.T) {
+func TestOIDCUsersReceiveSeedRolesByCreationOrder(t *testing.T) {
 	service, ctx, now, _ := testService(t)
-	require.NoError(t, service.ReconcileSystemRoles(ctx))
 	_, err := service.store.Queries().CreateIdentityProvider(ctx, db.CreateIdentityProviderParams{ID: "01K00000000000000000000010", Name: "SSO", Slug: "sso", Enabled: true, ClientID: "client", IssuerUrl: "https://issuer.example", ScopesJson: "[]", CreatedAt: now, UpdatedAt: now})
 	require.NoError(t, err)
 	first, err := service.linkIdentity(ctx, "01K00000000000000000000010", &idp.UserClaims{Subject: "first", Email: "first@example.com", Name: "First"})
@@ -146,6 +141,26 @@ func TestOIDCUsersReceiveSystemRolesByCreationOrder(t *testing.T) {
 	updated, err := service.linkIdentity(ctx, "01K00000000000000000000010", &idp.UserClaims{Subject: "first", Email: "first@example.com", Name: "First"})
 	require.NoError(t, err)
 	require.EqualValues(t, 2, updated.SessionVersion)
+}
+
+func TestOIDCUsersSucceedWithoutDeletedSeedRoles(t *testing.T) {
+	service, ctx, now, _ := testService(t)
+	_, err := service.DeleteRole(ctx, connect.NewRequest(&cadestrov1.DeleteRoleRequest{Id: &cadestrov1.RoleId{Value: administratorsRoleID}}))
+	require.NoError(t, err)
+	_, err = service.DeleteRole(ctx, connect.NewRequest(&cadestrov1.DeleteRoleRequest{Id: &cadestrov1.RoleId{Value: usersRoleID}}))
+	require.NoError(t, err)
+	_, err = service.store.Queries().CreateIdentityProvider(ctx, db.CreateIdentityProviderParams{ID: "01K00000000000000000000010", Name: "SSO", Slug: "sso", Enabled: true, ClientID: "client", IssuerUrl: "https://issuer.example", ScopesJson: "[]", CreatedAt: now, UpdatedAt: now})
+	require.NoError(t, err)
+	first, err := service.linkIdentity(ctx, "01K00000000000000000000010", &idp.UserClaims{Subject: "first", Email: "first@example.com", Name: "First"})
+	require.NoError(t, err)
+	second, err := service.linkIdentity(ctx, "01K00000000000000000000010", &idp.UserClaims{Subject: "second", Email: "second@example.com", Name: "Second"})
+	require.NoError(t, err)
+	firstRoles, err := service.store.Queries().ListUserRoles(ctx, first.ID)
+	require.NoError(t, err)
+	secondRoles, err := service.store.Queries().ListUserRoles(ctx, second.ID)
+	require.NoError(t, err)
+	require.Empty(t, firstRoles)
+	require.Empty(t, secondRoles)
 }
 
 func mustUser(t *testing.T, service *Service, ctx context.Context, id string) *db.User {

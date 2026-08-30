@@ -76,8 +76,6 @@ func PermissionForProcedure(procedure string) (cadestrov1.Permission, bool) {
 		return cadestrov1.Permission_PERMISSION_LIST_TOKENS, true
 	case cadestrov1connect.ControlServiceRenameTokenProcedure:
 		return cadestrov1.Permission_PERMISSION_RENAME_TOKEN, true
-	case cadestrov1connect.ControlServiceSetTokenDisabledProcedure:
-		return cadestrov1.Permission_PERMISSION_SET_TOKEN_DISABLED, true
 	case cadestrov1connect.ControlServiceDeleteTokenProcedure:
 		return cadestrov1.Permission_PERMISSION_DELETE_TOKEN, true
 	case cadestrov1connect.ControlServiceCreateActionProcedure:

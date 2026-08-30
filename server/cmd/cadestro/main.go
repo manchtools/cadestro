@@ -72,9 +72,6 @@ func run(config *Config, logger *slog.Logger) error {
 	}); err != nil {
 		return fmt.Errorf("bootstrap identity provider: %w", err)
 	}
-	if err := service.ReconcileSystemRoles(ctx); err != nil {
-		return fmt.Errorf("reconcile system roles: %w", err)
-	}
 	publicServer, agentServer, err := buildServers(config, service, jwt, logger, certificateAuthority)
 	if err != nil {
 		return err

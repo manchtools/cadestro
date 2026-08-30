@@ -129,14 +129,12 @@ type RegistrationToken struct {
 	CurrentUses int64     `json:"current_uses"`
 	ExpiresAt   time.Time `json:"expires_at"`
 	CreatedAt   time.Time `json:"created_at"`
-	Disabled    bool      `json:"disabled"`
 }
 
 type Role struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
-	IsSystem    bool      `json:"is_system"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -150,7 +148,6 @@ type User struct {
 	ID             string    `json:"id"`
 	Email          string    `json:"email"`
 	DisplayName    string    `json:"display_name"`
-	Picture        string    `json:"picture"`
 	SessionVersion int32     `json:"session_version"`
 	CreatedAt      time.Time `json:"created_at"`
 	LastLoginAt    time.Time `json:"last_login_at"`

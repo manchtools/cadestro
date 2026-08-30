@@ -69,6 +69,11 @@ func (service *Service) Register(ctx context.Context, request *connect.Request[c
 		}); err != nil {
 			return err
 		}
+		if token.MaxUses > 0 && token.CurrentUses+1 >= token.MaxUses {
+			if _, err := queries.DeleteRegistrationToken(ctx, token.ID); err != nil {
+				return err
+			}
+		}
 		return queries.CreateAuditEvent(ctx, db.CreateAuditEventParams{
 			ID: ulid.Make().String(), EventType: "device.registered", StreamType: "device", StreamID: deviceID,
 			ActorType: "registration_token", ActorID: token.ID, OccurredAt: now,

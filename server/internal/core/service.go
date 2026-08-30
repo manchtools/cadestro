@@ -129,6 +129,6 @@ func registrationTokenProto(token *db.RegistrationToken) *cadestrov1.Registratio
 	return &cadestrov1.RegistrationToken{
 		Id: &cadestrov1.RegistrationTokenId{Value: token.ID}, Name: token.Name,
 		MaxUses: int32(token.MaxUses), CurrentUses: int32(token.CurrentUses),
-		ExpiresAt: timestamppb.New(token.ExpiresAt), CreatedAt: timestamppb.New(token.CreatedAt), Disabled: token.Disabled,
+		ExpiresAt: timestamppb.New(token.ExpiresAt), CreatedAt: timestamppb.New(token.CreatedAt),
 	}
 }

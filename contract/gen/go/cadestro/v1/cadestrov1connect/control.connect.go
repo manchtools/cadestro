@@ -88,9 +88,6 @@ const (
 	// ControlServiceRenameTokenProcedure is the fully-qualified name of the ControlService's
 	// RenameToken RPC.
 	ControlServiceRenameTokenProcedure = "/cadestro.v1.ControlService/RenameToken"
-	// ControlServiceSetTokenDisabledProcedure is the fully-qualified name of the ControlService's
-	// SetTokenDisabled RPC.
-	ControlServiceSetTokenDisabledProcedure = "/cadestro.v1.ControlService/SetTokenDisabled"
 	// ControlServiceDeleteTokenProcedure is the fully-qualified name of the ControlService's
 	// DeleteToken RPC.
 	ControlServiceDeleteTokenProcedure = "/cadestro.v1.ControlService/DeleteToken"
@@ -215,7 +212,6 @@ type ControlServiceClient interface {
 	CreateToken(context.Context, *connect.Request[v1.CreateTokenRequest]) (*connect.Response[v1.CreateTokenResponse], error)
 	ListTokens(context.Context, *connect.Request[v1.ListTokensRequest]) (*connect.Response[v1.ListTokensResponse], error)
 	RenameToken(context.Context, *connect.Request[v1.RenameTokenRequest]) (*connect.Response[v1.UpdateTokenResponse], error)
-	SetTokenDisabled(context.Context, *connect.Request[v1.SetTokenDisabledRequest]) (*connect.Response[v1.UpdateTokenResponse], error)
 	DeleteToken(context.Context, *connect.Request[v1.DeleteTokenRequest]) (*connect.Response[v1.DeleteTokenResponse], error)
 	CreateAction(context.Context, *connect.Request[v1.CreateActionRequest]) (*connect.Response[v1.CreateActionResponse], error)
 	GetAction(context.Context, *connect.Request[v1.GetActionRequest]) (*connect.Response[v1.GetActionResponse], error)
@@ -375,12 +371,6 @@ func NewControlServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			httpClient,
 			baseURL+ControlServiceRenameTokenProcedure,
 			connect.WithSchema(controlServiceMethods.ByName("RenameToken")),
-			connect.WithClientOptions(opts...),
-		),
-		setTokenDisabled: connect.NewClient[v1.SetTokenDisabledRequest, v1.UpdateTokenResponse](
-			httpClient,
-			baseURL+ControlServiceSetTokenDisabledProcedure,
-			connect.WithSchema(controlServiceMethods.ByName("SetTokenDisabled")),
 			connect.WithClientOptions(opts...),
 		),
 		deleteToken: connect.NewClient[v1.DeleteTokenRequest, v1.DeleteTokenResponse](
@@ -611,7 +601,6 @@ type controlServiceClient struct {
 	createToken                  *connect.Client[v1.CreateTokenRequest, v1.CreateTokenResponse]
 	listTokens                   *connect.Client[v1.ListTokensRequest, v1.ListTokensResponse]
 	renameToken                  *connect.Client[v1.RenameTokenRequest, v1.UpdateTokenResponse]
-	setTokenDisabled             *connect.Client[v1.SetTokenDisabledRequest, v1.UpdateTokenResponse]
 	deleteToken                  *connect.Client[v1.DeleteTokenRequest, v1.DeleteTokenResponse]
 	createAction                 *connect.Client[v1.CreateActionRequest, v1.CreateActionResponse]
 	getAction                    *connect.Client[v1.GetActionRequest, v1.GetActionResponse]
@@ -741,11 +730,6 @@ func (c *controlServiceClient) ListTokens(ctx context.Context, req *connect.Requ
 // RenameToken calls cadestro.v1.ControlService.RenameToken.
 func (c *controlServiceClient) RenameToken(ctx context.Context, req *connect.Request[v1.RenameTokenRequest]) (*connect.Response[v1.UpdateTokenResponse], error) {
 	return c.renameToken.CallUnary(ctx, req)
-}
-
-// SetTokenDisabled calls cadestro.v1.ControlService.SetTokenDisabled.
-func (c *controlServiceClient) SetTokenDisabled(ctx context.Context, req *connect.Request[v1.SetTokenDisabledRequest]) (*connect.Response[v1.UpdateTokenResponse], error) {
-	return c.setTokenDisabled.CallUnary(ctx, req)
 }
 
 // DeleteToken calls cadestro.v1.ControlService.DeleteToken.
@@ -939,7 +923,6 @@ type ControlServiceHandler interface {
 	CreateToken(context.Context, *connect.Request[v1.CreateTokenRequest]) (*connect.Response[v1.CreateTokenResponse], error)
 	ListTokens(context.Context, *connect.Request[v1.ListTokensRequest]) (*connect.Response[v1.ListTokensResponse], error)
 	RenameToken(context.Context, *connect.Request[v1.RenameTokenRequest]) (*connect.Response[v1.UpdateTokenResponse], error)
-	SetTokenDisabled(context.Context, *connect.Request[v1.SetTokenDisabledRequest]) (*connect.Response[v1.UpdateTokenResponse], error)
 	DeleteToken(context.Context, *connect.Request[v1.DeleteTokenRequest]) (*connect.Response[v1.DeleteTokenResponse], error)
 	CreateAction(context.Context, *connect.Request[v1.CreateActionRequest]) (*connect.Response[v1.CreateActionResponse], error)
 	GetAction(context.Context, *connect.Request[v1.GetActionRequest]) (*connect.Response[v1.GetActionResponse], error)
@@ -1095,12 +1078,6 @@ func NewControlServiceHandler(svc ControlServiceHandler, opts ...connect.Handler
 		ControlServiceRenameTokenProcedure,
 		svc.RenameToken,
 		connect.WithSchema(controlServiceMethods.ByName("RenameToken")),
-		connect.WithHandlerOptions(opts...),
-	)
-	controlServiceSetTokenDisabledHandler := connect.NewUnaryHandler(
-		ControlServiceSetTokenDisabledProcedure,
-		svc.SetTokenDisabled,
-		connect.WithSchema(controlServiceMethods.ByName("SetTokenDisabled")),
 		connect.WithHandlerOptions(opts...),
 	)
 	controlServiceDeleteTokenHandler := connect.NewUnaryHandler(
@@ -1347,8 +1324,6 @@ func NewControlServiceHandler(svc ControlServiceHandler, opts ...connect.Handler
 			controlServiceListTokensHandler.ServeHTTP(w, r)
 		case ControlServiceRenameTokenProcedure:
 			controlServiceRenameTokenHandler.ServeHTTP(w, r)
-		case ControlServiceSetTokenDisabledProcedure:
-			controlServiceSetTokenDisabledHandler.ServeHTTP(w, r)
 		case ControlServiceDeleteTokenProcedure:
 			controlServiceDeleteTokenHandler.ServeHTTP(w, r)
 		case ControlServiceCreateActionProcedure:
@@ -1500,10 +1475,6 @@ func (UnimplementedControlServiceHandler) ListTokens(context.Context, *connect.R
 
 func (UnimplementedControlServiceHandler) RenameToken(context.Context, *connect.Request[v1.RenameTokenRequest]) (*connect.Response[v1.UpdateTokenResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.RenameToken is not implemented"))
-}
-
-func (UnimplementedControlServiceHandler) SetTokenDisabled(context.Context, *connect.Request[v1.SetTokenDisabledRequest]) (*connect.Response[v1.UpdateTokenResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.SetTokenDisabled is not implemented"))
 }
 
 func (UnimplementedControlServiceHandler) DeleteToken(context.Context, *connect.Request[v1.DeleteTokenRequest]) (*connect.Response[v1.DeleteTokenResponse], error) {

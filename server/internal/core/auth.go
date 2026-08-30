@@ -228,7 +228,7 @@ func (service *Service) linkIdentity(ctx context.Context, providerID string, cla
 		user, err := queries.GetIdentityUser(ctx, db.GetIdentityUserParams{ProviderID: providerID, Subject: claims.Subject})
 		if err == nil {
 			linked, err = queries.UpdateUserLogin(ctx, db.UpdateUserLoginParams{
-				Email: claims.Email, DisplayName: claims.Name, Picture: claims.Picture, LastLoginAt: service.now().UTC(), ID: user.ID,
+				Email: claims.Email, DisplayName: claims.Name, LastLoginAt: service.now().UTC(), ID: user.ID,
 			})
 			return err
 		}
@@ -242,7 +242,7 @@ func (service *Service) linkIdentity(ctx context.Context, providerID string, cla
 		}
 		linked, err = queries.CreateUser(ctx, db.CreateUserParams{
 			ID: ulid.Make().String(), Email: claims.Email, DisplayName: displayName,
-			Picture: claims.Picture, CreatedAt: now, LastLoginAt: now,
+			CreatedAt: now, LastLoginAt: now,
 		})
 		if err != nil {
 			return err
@@ -257,6 +257,11 @@ func (service *Service) linkIdentity(ctx context.Context, providerID string, cla
 		roleID := usersRoleID
 		if count == 1 {
 			roleID = administratorsRoleID
+		}
+		if _, err := queries.GetRole(ctx, roleID); store.IsNotFound(err) {
+			return nil
+		} else if err != nil {
+			return err
 		}
 		if err := queries.AssignRoleToUser(ctx, db.AssignRoleToUserParams{UserID: linked.ID, RoleID: roleID}); err != nil {
 			return err

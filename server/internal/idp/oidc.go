@@ -148,7 +148,6 @@ type UserClaims struct {
 	GivenName         string
 	FamilyName        string
 	PreferredUsername string
-	Picture           string
 	Locale            string
 	Groups            []string
 }
@@ -201,9 +200,6 @@ func (p *OIDCProvider) VerifyIDToken(ctx context.Context, rawIDToken, expectedNo
 	}
 	if v, ok := claimString(claims["preferred_username"]); ok {
 		userClaims.PreferredUsername = v
-	}
-	if v, ok := claimString(claims["picture"]); ok {
-		userClaims.Picture = v
 	}
 	if v, ok := claimString(claims["locale"]); ok {
 		userClaims.Locale = v

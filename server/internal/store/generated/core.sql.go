@@ -66,7 +66,7 @@ func (q *Queries) BumpSessionsForRole(ctx context.Context, roleID string) error 
 
 const consumeRegistrationToken = `-- name: ConsumeRegistrationToken :execrows
 UPDATE registration_tokens SET current_uses = current_uses + 1
-WHERE id = ? AND disabled = FALSE AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses)
+WHERE id = ? AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses)
 `
 
 type ConsumeRegistrationTokenParams struct {
@@ -128,11 +128,11 @@ func (q *Queries) CountIdentityProviders(ctx context.Context) (int64, error) {
 }
 
 const countRegistrationTokens = `-- name: CountRegistrationTokens :one
-SELECT COUNT(*) FROM registration_tokens WHERE (CAST(?1 AS BOOLEAN) OR disabled = FALSE)
+SELECT COUNT(*) FROM registration_tokens
 `
 
-func (q *Queries) CountRegistrationTokens(ctx context.Context, includeDisabled bool) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countRegistrationTokens, includeDisabled)
+func (q *Queries) CountRegistrationTokens(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countRegistrationTokens)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -144,17 +144,6 @@ SELECT COUNT(*) FROM users
 
 func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countUsers)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const countUsersWithRole = `-- name: CountUsersWithRole :one
-SELECT COUNT(*) FROM user_roles WHERE role_id = ?
-`
-
-func (q *Queries) CountUsersWithRole(ctx context.Context, roleID string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countUsersWithRole, roleID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -488,9 +477,9 @@ func (q *Queries) CreateIdentityProvider(ctx context.Context, arg CreateIdentity
 }
 
 const createRegistrationToken = `-- name: CreateRegistrationToken :one
-INSERT INTO registration_tokens (id, value_hash, name, max_uses, current_uses, expires_at, created_at, disabled)
-VALUES (?, ?, ?, ?, 0, ?, ?, FALSE)
-RETURNING id, value_hash, name, max_uses, current_uses, expires_at, created_at, disabled
+INSERT INTO registration_tokens (id, value_hash, name, max_uses, current_uses, expires_at, created_at)
+VALUES (?, ?, ?, ?, 0, ?, ?)
+RETURNING id, value_hash, name, max_uses, current_uses, expires_at, created_at
 `
 
 type CreateRegistrationTokenParams struct {
@@ -520,22 +509,20 @@ func (q *Queries) CreateRegistrationToken(ctx context.Context, arg CreateRegistr
 		&i.CurrentUses,
 		&i.ExpiresAt,
 		&i.CreatedAt,
-		&i.Disabled,
 	)
 	return &i, err
 }
 
 const createRole = `-- name: CreateRole :one
-INSERT INTO roles (id, name, description, is_system, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?)
-RETURNING id, name, description, is_system, created_at, updated_at
+INSERT INTO roles (id, name, description, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?)
+RETURNING id, name, description, created_at, updated_at
 `
 
 type CreateRoleParams struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
-	IsSystem    bool      `json:"is_system"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -545,7 +532,6 @@ func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (*Role, 
 		arg.ID,
 		arg.Name,
 		arg.Description,
-		arg.IsSystem,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -554,7 +540,6 @@ func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (*Role, 
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.IsSystem,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -562,16 +547,15 @@ func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (*Role, 
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, email, display_name, picture, session_version, created_at, last_login_at)
-VALUES (?, ?, ?, ?, 1, ?, ?)
-RETURNING id, email, display_name, picture, session_version, created_at, last_login_at
+INSERT INTO users (id, email, display_name, session_version, created_at, last_login_at)
+VALUES (?, ?, ?, 1, ?, ?)
+RETURNING id, email, display_name, session_version, created_at, last_login_at
 `
 
 type CreateUserParams struct {
 	ID          string    `json:"id"`
 	Email       string    `json:"email"`
 	DisplayName string    `json:"display_name"`
-	Picture     string    `json:"picture"`
 	CreatedAt   time.Time `json:"created_at"`
 	LastLoginAt time.Time `json:"last_login_at"`
 }
@@ -581,7 +565,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, 
 		arg.ID,
 		arg.Email,
 		arg.DisplayName,
-		arg.Picture,
 		arg.CreatedAt,
 		arg.LastLoginAt,
 	)
@@ -590,7 +573,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, 
 		&i.ID,
 		&i.Email,
 		&i.DisplayName,
-		&i.Picture,
 		&i.SessionVersion,
 		&i.CreatedAt,
 		&i.LastLoginAt,
@@ -887,7 +869,7 @@ func (q *Queries) GetIdentityProviderBySlug(ctx context.Context, slug string) (*
 }
 
 const getIdentityUser = `-- name: GetIdentityUser :one
-SELECT users.id, users.email, users.display_name, users.picture, users.session_version, users.created_at, users.last_login_at FROM identity_links
+SELECT users.id, users.email, users.display_name, users.session_version, users.created_at, users.last_login_at FROM identity_links
 JOIN users ON users.id = identity_links.user_id
 WHERE identity_links.provider_id = ? AND identity_links.subject = ?
 `
@@ -904,7 +886,6 @@ func (q *Queries) GetIdentityUser(ctx context.Context, arg GetIdentityUserParams
 		&i.ID,
 		&i.Email,
 		&i.DisplayName,
-		&i.Picture,
 		&i.SessionVersion,
 		&i.CreatedAt,
 		&i.LastLoginAt,
@@ -913,7 +894,7 @@ func (q *Queries) GetIdentityUser(ctx context.Context, arg GetIdentityUserParams
 }
 
 const getRegistrationToken = `-- name: GetRegistrationToken :one
-SELECT id, value_hash, name, max_uses, current_uses, expires_at, created_at, disabled FROM registration_tokens WHERE id = ?
+SELECT id, value_hash, name, max_uses, current_uses, expires_at, created_at FROM registration_tokens WHERE id = ?
 `
 
 func (q *Queries) GetRegistrationToken(ctx context.Context, id string) (*RegistrationToken, error) {
@@ -927,13 +908,12 @@ func (q *Queries) GetRegistrationToken(ctx context.Context, id string) (*Registr
 		&i.CurrentUses,
 		&i.ExpiresAt,
 		&i.CreatedAt,
-		&i.Disabled,
 	)
 	return &i, err
 }
 
 const getRole = `-- name: GetRole :one
-SELECT id, name, description, is_system, created_at, updated_at FROM roles WHERE id = ?
+SELECT id, name, description, created_at, updated_at FROM roles WHERE id = ?
 `
 
 func (q *Queries) GetRole(ctx context.Context, id string) (*Role, error) {
@@ -943,7 +923,6 @@ func (q *Queries) GetRole(ctx context.Context, id string) (*Role, error) {
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.IsSystem,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -951,7 +930,7 @@ func (q *Queries) GetRole(ctx context.Context, id string) (*Role, error) {
 }
 
 const getRoleByName = `-- name: GetRoleByName :one
-SELECT id, name, description, is_system, created_at, updated_at FROM roles WHERE name = ?
+SELECT id, name, description, created_at, updated_at FROM roles WHERE name = ?
 `
 
 func (q *Queries) GetRoleByName(ctx context.Context, name string) (*Role, error) {
@@ -961,7 +940,6 @@ func (q *Queries) GetRoleByName(ctx context.Context, name string) (*Role, error)
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.IsSystem,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -969,8 +947,8 @@ func (q *Queries) GetRoleByName(ctx context.Context, name string) (*Role, error)
 }
 
 const getUsableRegistrationToken = `-- name: GetUsableRegistrationToken :one
-SELECT id, value_hash, name, max_uses, current_uses, expires_at, created_at, disabled FROM registration_tokens
-WHERE value_hash = ? AND disabled = FALSE AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses)
+SELECT id, value_hash, name, max_uses, current_uses, expires_at, created_at FROM registration_tokens
+WHERE value_hash = ? AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses)
 `
 
 type GetUsableRegistrationTokenParams struct {
@@ -989,13 +967,12 @@ func (q *Queries) GetUsableRegistrationToken(ctx context.Context, arg GetUsableR
 		&i.CurrentUses,
 		&i.ExpiresAt,
 		&i.CreatedAt,
-		&i.Disabled,
 	)
 	return &i, err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, email, display_name, picture, session_version, created_at, last_login_at FROM users WHERE id = ?
+SELECT id, email, display_name, session_version, created_at, last_login_at FROM users WHERE id = ?
 `
 
 func (q *Queries) GetUser(ctx context.Context, id string) (*User, error) {
@@ -1005,7 +982,6 @@ func (q *Queries) GetUser(ctx context.Context, id string) (*User, error) {
 		&i.ID,
 		&i.Email,
 		&i.DisplayName,
-		&i.Picture,
 		&i.SessionVersion,
 		&i.CreatedAt,
 		&i.LastLoginAt,
@@ -1632,19 +1608,18 @@ func (q *Queries) ListIdentityProviders(ctx context.Context) ([]*IdentityProvide
 }
 
 const listRegistrationTokens = `-- name: ListRegistrationTokens :many
-SELECT id, value_hash, name, max_uses, current_uses, expires_at, created_at, disabled FROM registration_tokens
-WHERE (CAST(?1 AS BOOLEAN) OR disabled = FALSE) AND id > ?2
-ORDER BY id LIMIT ?3
+SELECT id, value_hash, name, max_uses, current_uses, expires_at, created_at FROM registration_tokens
+WHERE id > ?1
+ORDER BY id LIMIT ?2
 `
 
 type ListRegistrationTokensParams struct {
-	IncludeDisabled bool   `json:"include_disabled"`
-	AfterID         string `json:"after_id"`
-	PageLimit       int64  `json:"page_limit"`
+	AfterID   string `json:"after_id"`
+	PageLimit int64  `json:"page_limit"`
 }
 
 func (q *Queries) ListRegistrationTokens(ctx context.Context, arg ListRegistrationTokensParams) ([]*RegistrationToken, error) {
-	rows, err := q.db.QueryContext(ctx, listRegistrationTokens, arg.IncludeDisabled, arg.AfterID, arg.PageLimit)
+	rows, err := q.db.QueryContext(ctx, listRegistrationTokens, arg.AfterID, arg.PageLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -1660,7 +1635,6 @@ func (q *Queries) ListRegistrationTokens(ctx context.Context, arg ListRegistrati
 			&i.CurrentUses,
 			&i.ExpiresAt,
 			&i.CreatedAt,
-			&i.Disabled,
 		); err != nil {
 			return nil, err
 		}
@@ -1703,7 +1677,7 @@ func (q *Queries) ListRolePermissions(ctx context.Context, roleID string) ([]cad
 }
 
 const listRoles = `-- name: ListRoles :many
-SELECT id, name, description, is_system, created_at, updated_at FROM roles WHERE id > ? ORDER BY id LIMIT ?
+SELECT id, name, description, created_at, updated_at FROM roles WHERE id > ? ORDER BY id LIMIT ?
 `
 
 type ListRolesParams struct {
@@ -1724,7 +1698,6 @@ func (q *Queries) ListRoles(ctx context.Context, arg ListRolesParams) ([]*Role, 
 			&i.ID,
 			&i.Name,
 			&i.Description,
-			&i.IsSystem,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -1771,7 +1744,7 @@ func (q *Queries) ListUserPermissions(ctx context.Context, userID string) ([]cad
 }
 
 const listUserRoles = `-- name: ListUserRoles :many
-SELECT roles.id, roles.name, roles.description, roles.is_system, roles.created_at, roles.updated_at FROM user_roles JOIN roles ON roles.id = user_roles.role_id
+SELECT roles.id, roles.name, roles.description, roles.created_at, roles.updated_at FROM user_roles JOIN roles ON roles.id = user_roles.role_id
 WHERE user_roles.user_id = ? ORDER BY roles.id
 `
 
@@ -1788,7 +1761,6 @@ func (q *Queries) ListUserRoles(ctx context.Context, userID string) ([]*Role, er
 			&i.ID,
 			&i.Name,
 			&i.Description,
-			&i.IsSystem,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -1806,7 +1778,7 @@ func (q *Queries) ListUserRoles(ctx context.Context, userID string) ([]*Role, er
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, email, display_name, picture, session_version, created_at, last_login_at FROM users WHERE id > ? ORDER BY id LIMIT ?
+SELECT id, email, display_name, session_version, created_at, last_login_at FROM users WHERE id > ? ORDER BY id LIMIT ?
 `
 
 type ListUsersParams struct {
@@ -1827,7 +1799,6 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, 
 			&i.ID,
 			&i.Email,
 			&i.DisplayName,
-			&i.Picture,
 			&i.SessionVersion,
 			&i.CreatedAt,
 			&i.LastLoginAt,
@@ -1945,7 +1916,7 @@ func (q *Queries) RenameDeviceGroup(ctx context.Context, arg RenameDeviceGroupPa
 }
 
 const renameRegistrationToken = `-- name: RenameRegistrationToken :one
-UPDATE registration_tokens SET name = ? WHERE id = ? RETURNING id, value_hash, name, max_uses, current_uses, expires_at, created_at, disabled
+UPDATE registration_tokens SET name = ? WHERE id = ? RETURNING id, value_hash, name, max_uses, current_uses, expires_at, created_at
 `
 
 type RenameRegistrationTokenParams struct {
@@ -1964,7 +1935,6 @@ func (q *Queries) RenameRegistrationToken(ctx context.Context, arg RenameRegistr
 		&i.CurrentUses,
 		&i.ExpiresAt,
 		&i.CreatedAt,
-		&i.Disabled,
 	)
 	return &i, err
 }
@@ -1999,7 +1969,7 @@ const rotateUserSession = `-- name: RotateUserSession :one
 UPDATE users
 SET session_version = session_version + 1
 WHERE id = ? AND session_version = ?
-RETURNING id, email, display_name, picture, session_version, created_at, last_login_at
+RETURNING id, email, display_name, session_version, created_at, last_login_at
 `
 
 type RotateUserSessionParams struct {
@@ -2014,7 +1984,6 @@ func (q *Queries) RotateUserSession(ctx context.Context, arg RotateUserSessionPa
 		&i.ID,
 		&i.Email,
 		&i.DisplayName,
-		&i.Picture,
 		&i.SessionVersion,
 		&i.CreatedAt,
 		&i.LastLoginAt,
@@ -2023,7 +1992,7 @@ func (q *Queries) RotateUserSession(ctx context.Context, arg RotateUserSessionPa
 }
 
 const rotateUserSessionByID = `-- name: RotateUserSessionByID :one
-UPDATE users SET session_version = session_version + 1 WHERE id = ? RETURNING id, email, display_name, picture, session_version, created_at, last_login_at
+UPDATE users SET session_version = session_version + 1 WHERE id = ? RETURNING id, email, display_name, session_version, created_at, last_login_at
 `
 
 func (q *Queries) RotateUserSessionByID(ctx context.Context, id string) (*User, error) {
@@ -2033,7 +2002,6 @@ func (q *Queries) RotateUserSessionByID(ctx context.Context, id string) (*User, 
 		&i.ID,
 		&i.Email,
 		&i.DisplayName,
-		&i.Picture,
 		&i.SessionVersion,
 		&i.CreatedAt,
 		&i.LastLoginAt,
@@ -2067,31 +2035,6 @@ func (q *Queries) SetPendingDeviceCertificate(ctx context.Context, arg SetPendin
 		return 0, err
 	}
 	return result.RowsAffected()
-}
-
-const setRegistrationTokenDisabled = `-- name: SetRegistrationTokenDisabled :one
-UPDATE registration_tokens SET disabled = ? WHERE id = ? RETURNING id, value_hash, name, max_uses, current_uses, expires_at, created_at, disabled
-`
-
-type SetRegistrationTokenDisabledParams struct {
-	Disabled bool   `json:"disabled"`
-	ID       string `json:"id"`
-}
-
-func (q *Queries) SetRegistrationTokenDisabled(ctx context.Context, arg SetRegistrationTokenDisabledParams) (*RegistrationToken, error) {
-	row := q.db.QueryRowContext(ctx, setRegistrationTokenDisabled, arg.Disabled, arg.ID)
-	var i RegistrationToken
-	err := row.Scan(
-		&i.ID,
-		&i.ValueHash,
-		&i.Name,
-		&i.MaxUses,
-		&i.CurrentUses,
-		&i.ExpiresAt,
-		&i.CreatedAt,
-		&i.Disabled,
-	)
-	return &i, err
 }
 
 const touchDevice = `-- name: TouchDevice :exec
@@ -2285,7 +2228,7 @@ func (q *Queries) UpdateIdentityProvider(ctx context.Context, arg UpdateIdentity
 }
 
 const updateRole = `-- name: UpdateRole :one
-UPDATE roles SET name = ?, description = ?, updated_at = ? WHERE id = ? RETURNING id, name, description, is_system, created_at, updated_at
+UPDATE roles SET name = ?, description = ?, updated_at = ? WHERE id = ? RETURNING id, name, description, created_at, updated_at
 `
 
 type UpdateRoleParams struct {
@@ -2307,7 +2250,6 @@ func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (*Role, 
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.IsSystem,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -2316,15 +2258,14 @@ func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (*Role, 
 
 const updateUserLogin = `-- name: UpdateUserLogin :one
 UPDATE users
-SET email = ?, display_name = ?, picture = ?, session_version = session_version + 1, last_login_at = ?
+SET email = ?, display_name = ?, session_version = session_version + 1, last_login_at = ?
 WHERE id = ?
-RETURNING id, email, display_name, picture, session_version, created_at, last_login_at
+RETURNING id, email, display_name, session_version, created_at, last_login_at
 `
 
 type UpdateUserLoginParams struct {
 	Email       string    `json:"email"`
 	DisplayName string    `json:"display_name"`
-	Picture     string    `json:"picture"`
 	LastLoginAt time.Time `json:"last_login_at"`
 	ID          string    `json:"id"`
 }
@@ -2333,7 +2274,6 @@ func (q *Queries) UpdateUserLogin(ctx context.Context, arg UpdateUserLoginParams
 	row := q.db.QueryRowContext(ctx, updateUserLogin,
 		arg.Email,
 		arg.DisplayName,
-		arg.Picture,
 		arg.LastLoginAt,
 		arg.ID,
 	)
@@ -2342,7 +2282,6 @@ func (q *Queries) UpdateUserLogin(ctx context.Context, arg UpdateUserLoginParams
 		&i.ID,
 		&i.Email,
 		&i.DisplayName,
-		&i.Picture,
 		&i.SessionVersion,
 		&i.CreatedAt,
 		&i.LastLoginAt,
