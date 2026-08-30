@@ -71,3 +71,10 @@ the last administrator role. Registration tokens are revoked by deletion only;
 finite-use tokens are deleted on their final successful enrollment use.
 
 Action definitions may persist the existing concrete action proto message as a binary blob with the action type stored separately; do not create a parallel storage proto. This is a scoped exception for action definitions and does not repeal the general API/storage separation rule.
+
+OIDC/PKCE transaction state is held in an authenticated Secure HttpOnly cookie
+set by the control origin. Configured cross-origin web deployments use
+credentialed fetch plus exact-origin credentialed CORS; do not persist OIDC
+transaction state in auth_states. JavaScript cannot set document.cookie for
+another origin: the control response sends Set-Cookie, and browser fetch uses
+credentials: 'include'.

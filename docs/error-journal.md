@@ -69,3 +69,15 @@
 **Harness fix**: add a recorded operator ruling to root AGENTS.md that action definitions may persist the existing concrete action proto message as a binary blob with the action type stored separately; do not create a parallel storage proto.
 
 **Prevention**: trace the bounded payload/query surface and ask whether direct wire/storage coupling is the explicit ruling before proposing duplicate schema types.
+
+## 2026-08-30 Wrong bound: Treated cross-origin cookies as a blocking complication
+
+**What happened**: We treated cross-origin cookie transport as a blocking complication without tracing the already credentialed exact-origin CORS middleware and browser credential mode.
+
+**What the user said**: “The only complication is Cadestro’s configurable cross-origin control URL: cookie transport would then require credentials: include and credentialed CORS. With the default same-origin deployment, the cookie is the leaner design. -> Well the JS can set a cookie directly on the control URL instead of the weburl? If cors is correctly configured i dont see a probleme. Please implement my simplification”.
+
+**Root cause**: We failed to distinguish a control-origin Set-Cookie response from JavaScript setting another origin's cookie and treated a supported credentialed CORS deployment as a blocker.
+
+**Harness fix**: add the recorded OIDC control-origin cookie ruling to root AGENTS.md.
+
+**Prevention**: trace cookie origin, browser credential mode, and exact-origin CORS behavior before rejecting cookie-backed transaction state for cross-origin deployments.
