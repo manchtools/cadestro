@@ -42,20 +42,44 @@ func TestValidateActionRequiresComplianceDetection(t *testing.T) {
 }
 
 func TestStoredActionRoundTripAndRejectsInvalidMetadata(t *testing.T) {
-	value := &cadestrov1.Action{Id: &cadestrov1.ActionId{Value: "action-1"}, Type: cadestrov1.ActionType_ACTION_TYPE_SHELL, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT, Params: &cadestrov1.Action_Shell{Shell: &cadestrov1.ShellParams{Script: "true"}}}
-	blob, err := proto.Marshal(value)
-	if err != nil {
-		t.Fatal(err)
+	cases := []*cadestrov1.Action{
+		{Type: cadestrov1.ActionType_ACTION_TYPE_PACKAGE, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT, Params: &cadestrov1.Action_Package{Package: &cadestrov1.PackageParams{Name: "pkg", Version: "1"}}},
+		{Type: cadestrov1.ActionType_ACTION_TYPE_UPDATE, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT, Params: &cadestrov1.Action_Update{Update: &cadestrov1.UpdateParams{}}},
+		{Type: cadestrov1.ActionType_ACTION_TYPE_SHELL, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT, Params: &cadestrov1.Action_Shell{Shell: &cadestrov1.ShellParams{Script: "true"}}},
 	}
-	stored := &db.Action{ID: "action-1", Type: value.Type, ActionBlob: blob, CreatedAt: time.Unix(0, 0), UpdatedAt: time.Unix(0, 0)}
-	managed, err := actionProto(stored)
-	if err != nil {
-		t.Fatal(err)
+	var validBlob []byte
+	for _, value := range cases {
+		validated, err := validateAction(value.Type, value.DesiredState, value.TimeoutSeconds, value.Schedule, value.GetPackage(), value.GetUpdate(), value.GetShell())
+		if err != nil {
+			t.Fatal(err)
+		}
+		validated.Id = &cadestrov1.ActionId{Value: "action-1"}
+		value = validated
+		blob, err := proto.Marshal(value)
+		if err != nil {
+			t.Fatal(err)
+		}
+		stored := &db.Action{ID: value.GetId().GetValue(), Type: value.Type, ActionBlob: blob, CreatedAt: time.Unix(0, 0), UpdatedAt: time.Unix(0, 0)}
+		managed, err := actionProto(stored)
+		if err != nil {
+			t.Fatal(err)
+		}
+		executable, err := executableAction(stored)
+		if err != nil || !proto.Equal(value, executable) {
+			t.Fatalf("executable action = %v, err = %v", executable, err)
+		}
+		if managed.GetType() != value.Type {
+			t.Fatalf("managed action = %v", managed)
+		}
+		if value.Type == cadestrov1.ActionType_ACTION_TYPE_SHELL {
+			validBlob = blob
+		}
 	}
-	if managed.GetShell().GetScript() != "true" {
-		t.Fatalf("managed action = %v", managed)
-	}
-	for _, invalid := range []*db.Action{{ID: stored.ID, Type: stored.Type, ActionBlob: []byte("bad")}, {ID: stored.ID, Type: cadestrov1.ActionType_ACTION_TYPE_PACKAGE, ActionBlob: blob}} {
+	for _, invalid := range []*db.Action{
+		{ID: "action-1", Type: cadestrov1.ActionType_ACTION_TYPE_SHELL, ActionBlob: []byte("bad")},
+		{ID: "action-1", Type: cadestrov1.ActionType_ACTION_TYPE_PACKAGE, ActionBlob: validBlob},
+		{ID: "action-2", Type: cadestrov1.ActionType_ACTION_TYPE_SHELL, ActionBlob: validBlob},
+	} {
 		if _, err := actionProto(invalid); err == nil {
 			t.Fatalf("expected invalid stored action %v", invalid)
 		}
