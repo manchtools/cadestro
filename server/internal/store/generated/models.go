@@ -50,15 +50,6 @@ type AuditEvent struct {
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
-type AuthState struct {
-	State        string    `json:"state"`
-	ProviderID   string    `json:"provider_id"`
-	Nonce        string    `json:"nonce"`
-	CodeVerifier string    `json:"code_verifier"`
-	RedirectUrl  string    `json:"redirect_url"`
-	ExpiresAt    time.Time `json:"expires_at"`
-}
-
 type Device struct {
 	ID                    string     `json:"id"`
 	Hostname              string     `json:"hostname"`

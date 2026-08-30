@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -20,6 +21,7 @@ import (
 )
 
 const authStateTTL = 10 * time.Minute
+const oidcTransactionCookieName = "__Host-cadestro-oidc"
 
 type BootstrapProvider struct {
 	Name      string
@@ -160,43 +162,38 @@ func (service *Service) GetSSOLoginURL(ctx context.Context, request *connect.Req
 		return nil, service.internal("generate PKCE verifier", err)
 	}
 	now := service.now().UTC()
-	if err := service.store.Queries().DeleteExpiredAuthStates(ctx, now); err != nil {
-		return nil, service.internal("delete expired auth states", err)
+	transaction, err := service.jwt.SignOIDCTransaction(state, provider.ID, nonce, verifier, request.Msg.GetRedirectUrl(), now.Add(authStateTTL))
+	if err != nil {
+		return nil, service.internal("sign OIDC transaction", err)
 	}
-	if err := service.store.Queries().CreateAuthState(ctx, db.CreateAuthStateParams{
-		State: state, ProviderID: provider.ID, Nonce: nonce, CodeVerifier: verifier,
-		RedirectUrl: request.Msg.GetRedirectUrl(), ExpiresAt: now.Add(authStateTTL),
-	}); err != nil {
-		return nil, service.internal("store auth state", err)
-	}
-	return connect.NewResponse(&cadestrov1.GetSSOLoginURLResponse{LoginUrl: oidcProvider.AuthCodeURL(state, nonce, verifier)}), nil
+	response := connect.NewResponse(&cadestrov1.GetSSOLoginURLResponse{LoginUrl: oidcProvider.AuthCodeURL(state, nonce, verifier)})
+	response.Header().Add("Set-Cookie", oidcTransactionCookie(transaction, authStateTTL).String())
+	return response, nil
 }
 
 func (service *Service) SSOCallback(ctx context.Context, request *connect.Request[cadestrov1.SSOCallbackRequest]) (*connect.Response[cadestrov1.SSOCallbackResponse], error) {
-	state, err := service.store.Queries().GetAuthState(ctx, request.Msg.GetState())
-	if err != nil || !state.ExpiresAt.After(service.now()) {
+	cookie, err := (&http.Request{Header: request.Header()}).Cookie(oidcTransactionCookieName)
+	if err != nil {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("SSO state is invalid or expired"))
 	}
-	provider, err := service.store.Queries().GetIdentityProvider(ctx, state.ProviderID)
+	transaction, err := service.jwt.ValidateOIDCTransaction(cookie.Value)
+	if err != nil || transaction.State != request.Msg.GetState() {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("SSO state is invalid or expired"))
+	}
+	provider, err := service.store.Queries().GetIdentityProvider(ctx, transaction.ProviderID)
 	if err != nil || provider.Slug != request.Msg.GetSlug() || !provider.Enabled {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("SSO state is invalid or expired"))
 	}
-	deleted, err := service.store.Queries().DeleteAuthState(ctx, state.State)
-	if err != nil {
-		return nil, service.internal("consume auth state", err)
-	}
-	if deleted != 1 {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("SSO state is invalid or expired"))
-	}
-	oidcProvider, err := service.providerClient(ctx, provider, state.RedirectUrl)
+	clearOIDCTransactionCookie(ctx)
+	oidcProvider, err := service.providerClient(ctx, provider, transaction.RedirectURL)
 	if err != nil {
 		return nil, service.internal("initialize callback provider", err)
 	}
-	oauthToken, err := oidcProvider.ExchangeCode(ctx, request.Msg.GetCode(), state.CodeVerifier)
+	oauthToken, err := oidcProvider.ExchangeCode(ctx, request.Msg.GetCode(), transaction.CodeVerifier)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("SSO exchange failed"))
 	}
-	claims, err := oidcProvider.VerifyAndExtractClaims(ctx, oauthToken, state.Nonce)
+	claims, err := oidcProvider.VerifyAndExtractClaims(ctx, oauthToken, transaction.Nonce)
 	if err != nil || claims.Subject == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("SSO identity verification failed"))
 	}
@@ -220,6 +217,20 @@ func (service *Service) SSOCallback(ctx context.Context, request *connect.Reques
 		AccessToken: pair.AccessToken, RefreshToken: pair.RefreshToken,
 		ExpiresAt: timestamppb.New(pair.ExpiresAt), User: value,
 	}), nil
+}
+
+func oidcTransactionCookie(value string, maxAge time.Duration) *http.Cookie {
+	seconds := int(maxAge.Seconds())
+	if maxAge < 0 {
+		seconds = -1
+	}
+	return &http.Cookie{Name: oidcTransactionCookieName, Value: value, Path: "/", Secure: true, HttpOnly: true, SameSite: http.SameSiteNoneMode, MaxAge: seconds}
+}
+
+func clearOIDCTransactionCookie(ctx context.Context) {
+	if callInfo, ok := connect.CallInfoForHandlerContext(ctx); ok {
+		callInfo.ResponseHeader().Add("Set-Cookie", oidcTransactionCookie("", -1).String())
+	}
 }
 
 func (service *Service) linkIdentity(ctx context.Context, providerID string, claims *idp.UserClaims) (*db.User, error) {

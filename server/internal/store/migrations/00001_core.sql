@@ -86,16 +86,6 @@ CREATE TABLE identity_links (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE auth_states (
-    state TEXT PRIMARY KEY,
-    provider_id TEXT NOT NULL,
-    nonce TEXT NOT NULL,
-    code_verifier TEXT NOT NULL,
-    redirect_url TEXT NOT NULL,
-    expires_at DATETIME NOT NULL,
-    FOREIGN KEY (provider_id) REFERENCES identity_providers(id) ON DELETE CASCADE
-);
-
 CREATE TABLE registration_tokens (
     id TEXT PRIMARY KEY,
     value_hash TEXT NOT NULL UNIQUE,
@@ -211,7 +201,6 @@ DROP TABLE device_groups;
 DROP TABLE actions;
 DROP TABLE devices;
 DROP TABLE registration_tokens;
-DROP TABLE auth_states;
 DROP TABLE user_roles;
 DROP TABLE role_permissions;
 DROP TABLE roles;

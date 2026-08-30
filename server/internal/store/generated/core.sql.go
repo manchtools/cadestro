@@ -294,32 +294,6 @@ func (q *Queries) CreateAuditEvent(ctx context.Context, arg CreateAuditEventPara
 	return err
 }
 
-const createAuthState = `-- name: CreateAuthState :exec
-INSERT INTO auth_states (state, provider_id, nonce, code_verifier, redirect_url, expires_at)
-VALUES (?, ?, ?, ?, ?, ?)
-`
-
-type CreateAuthStateParams struct {
-	State        string    `json:"state"`
-	ProviderID   string    `json:"provider_id"`
-	Nonce        string    `json:"nonce"`
-	CodeVerifier string    `json:"code_verifier"`
-	RedirectUrl  string    `json:"redirect_url"`
-	ExpiresAt    time.Time `json:"expires_at"`
-}
-
-func (q *Queries) CreateAuthState(ctx context.Context, arg CreateAuthStateParams) error {
-	_, err := q.db.ExecContext(ctx, createAuthState,
-		arg.State,
-		arg.ProviderID,
-		arg.Nonce,
-		arg.CodeVerifier,
-		arg.RedirectUrl,
-		arg.ExpiresAt,
-	)
-	return err
-}
-
 const createDevice = `-- name: CreateDevice :one
 INSERT INTO devices (id, hostname, agent_version, identity_public_key, active_certificate_pem, active_cert_serial, cert_expires_at, registered_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -612,18 +586,6 @@ func (q *Queries) DeleteAssignment(ctx context.Context, id string) (int64, error
 	return result.RowsAffected()
 }
 
-const deleteAuthState = `-- name: DeleteAuthState :execrows
-DELETE FROM auth_states WHERE state = ?
-`
-
-func (q *Queries) DeleteAuthState(ctx context.Context, state string) (int64, error) {
-	result, err := q.db.ExecContext(ctx, deleteAuthState, state)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected()
-}
-
 const deleteDevice = `-- name: DeleteDevice :execrows
 DELETE FROM devices WHERE id = ?
 `
@@ -646,15 +608,6 @@ func (q *Queries) DeleteDeviceGroup(ctx context.Context, id string) (int64, erro
 		return 0, err
 	}
 	return result.RowsAffected()
-}
-
-const deleteExpiredAuthStates = `-- name: DeleteExpiredAuthStates :exec
-DELETE FROM auth_states WHERE expires_at <= ?
-`
-
-func (q *Queries) DeleteExpiredAuthStates(ctx context.Context, expiresAt time.Time) error {
-	_, err := q.db.ExecContext(ctx, deleteExpiredAuthStates, expiresAt)
-	return err
 }
 
 const deleteIdentityProvider = `-- name: DeleteIdentityProvider :execrows
@@ -761,24 +714,6 @@ func (q *Queries) GetAssignment(ctx context.Context, id string) (*Assignment, er
 		&i.TargetType,
 		&i.TargetID,
 		&i.CreatedAt,
-	)
-	return &i, err
-}
-
-const getAuthState = `-- name: GetAuthState :one
-SELECT state, provider_id, nonce, code_verifier, redirect_url, expires_at FROM auth_states WHERE state = ?
-`
-
-func (q *Queries) GetAuthState(ctx context.Context, state string) (*AuthState, error) {
-	row := q.db.QueryRowContext(ctx, getAuthState, state)
-	var i AuthState
-	err := row.Scan(
-		&i.State,
-		&i.ProviderID,
-		&i.Nonce,
-		&i.CodeVerifier,
-		&i.RedirectUrl,
-		&i.ExpiresAt,
 	)
 	return &i, err
 }

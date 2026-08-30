@@ -28,6 +28,15 @@ type Claims struct {
 	Permissions    []cadestrov1.Permission `json:"permissions,omitempty"`
 }
 
+type OIDCTransactionClaims struct {
+	jwt.RegisteredClaims
+	State        string `json:"state"`
+	ProviderID   string `json:"provider_id"`
+	Nonce        string `json:"nonce"`
+	CodeVerifier string `json:"code_verifier"`
+	RedirectURL  string `json:"redirect_url"`
+}
+
 type JWTConfig struct {
 	PrivateKey         ed25519.PrivateKey
 	AccessTokenExpiry  time.Duration
@@ -119,6 +128,40 @@ func (manager *JWTManager) ValidateToken(value string, tokenType TokenType) (*Cl
 	claims, ok := token.Claims.(*Claims)
 	if !ok || !token.Valid || claims.UserID == "" || claims.TokenType != tokenType {
 		return nil, errors.New("invalid token")
+	}
+	return claims, nil
+}
+
+func (manager *JWTManager) SignOIDCTransaction(state, providerID, nonce, codeVerifier, redirectURL string, expires time.Time) (string, error) {
+	if state == "" || providerID == "" || nonce == "" || codeVerifier == "" || redirectURL == "" {
+		return "", errors.New("invalid OIDC transaction claims")
+	}
+	now := manager.config.Now().UTC()
+	claims := &OIDCTransactionClaims{
+		RegisteredClaims: jwt.RegisteredClaims{Issuer: manager.config.Issuer, IssuedAt: jwt.NewNumericDate(now), ExpiresAt: jwt.NewNumericDate(expires)},
+		State:            state, ProviderID: providerID, Nonce: nonce, CodeVerifier: codeVerifier, RedirectURL: redirectURL,
+	}
+	value, err := jwt.NewWithClaims(jwt.SigningMethodEdDSA, claims).SignedString(manager.config.PrivateKey)
+	if err != nil {
+		return "", fmt.Errorf("sign OIDC transaction: %w", err)
+	}
+	return value, nil
+}
+
+func (manager *JWTManager) ValidateOIDCTransaction(value string) (*OIDCTransactionClaims, error) {
+	publicKey := manager.config.PrivateKey.Public().(ed25519.PublicKey)
+	token, err := jwt.ParseWithClaims(value, &OIDCTransactionClaims{}, func(token *jwt.Token) (any, error) {
+		if token.Method != jwt.SigningMethodEdDSA {
+			return nil, errors.New("unexpected signing method")
+		}
+		return publicKey, nil
+	}, jwt.WithValidMethods([]string{jwt.SigningMethodEdDSA.Alg()}), jwt.WithIssuer(manager.config.Issuer), jwt.WithExpirationRequired(), jwt.WithTimeFunc(manager.config.Now))
+	if err != nil {
+		return nil, fmt.Errorf("parse OIDC transaction: %w", err)
+	}
+	claims, ok := token.Claims.(*OIDCTransactionClaims)
+	if !ok || !token.Valid || claims.State == "" || claims.ProviderID == "" || claims.Nonce == "" || claims.CodeVerifier == "" || claims.RedirectURL == "" {
+		return nil, errors.New("invalid OIDC transaction")
 	}
 	return claims, nil
 }

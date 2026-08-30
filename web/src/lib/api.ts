@@ -9,7 +9,8 @@ function controlURL(): string {
 	return configured?.replace(/\/+$/, '') || window.location.origin;
 }
 
-const publicClient = createClient(ControlService, createConnectTransport({ baseUrl: controlURL() }));
+const credentialedFetch: typeof fetch = (input, init) => fetch(input, { ...init, credentials: 'include' });
+const publicClient = createClient(ControlService, createConnectTransport({ baseUrl: controlURL(), fetch: credentialedFetch }));
 let refreshInFlight: Promise<boolean> | null = null;
 
 async function refresh(): Promise<boolean> {
@@ -49,7 +50,7 @@ const authenticate: Interceptor = (next) => async (request) => {
 	}
 };
 
-export const api = createClient(ControlService, createConnectTransport({ baseUrl: controlURL(), interceptors: [authenticate] }));
+export const api = createClient(ControlService, createConnectTransport({ baseUrl: controlURL(), fetch: credentialedFetch, interceptors: [authenticate] }));
 export const publicAPI = publicClient;
 
 export async function logout(): Promise<void> {

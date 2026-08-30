@@ -27,19 +27,6 @@ RETURNING *;
 -- name: DeleteIdentityProvider :execrows
 DELETE FROM identity_providers WHERE id = ?;
 
--- name: CreateAuthState :exec
-INSERT INTO auth_states (state, provider_id, nonce, code_verifier, redirect_url, expires_at)
-VALUES (?, ?, ?, ?, ?, ?);
-
--- name: GetAuthState :one
-SELECT * FROM auth_states WHERE state = ?;
-
--- name: DeleteAuthState :execrows
-DELETE FROM auth_states WHERE state = ?;
-
--- name: DeleteExpiredAuthStates :exec
-DELETE FROM auth_states WHERE expires_at <= ?;
-
 -- name: GetUser :one
 SELECT * FROM users WHERE id = ?;
 
