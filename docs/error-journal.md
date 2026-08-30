@@ -153,3 +153,15 @@
 **Harness fix**: record the one-named-operation-per-administrative-RPC ruling in AGENTS.md.
 
 **Prevention**: enumerate every administrative mutation and verify that its RPC, request, response, SQL operation, permission mapping, and tests cover exactly one concern.
+
+## 2026-08-30 Wrong pattern: Named desired-policy delivery as generic sync state
+
+**What happened**: I retained `SyncState` for the server message that carries an agent's assigned-action policy snapshot, so the contract name described transport activity instead of its domain purpose.
+
+**What the user said**: "Okay SyncState is pretty bad naming and not really clear in what it does and what its used for"
+
+**Root cause**: the contract was named from the stream implementation rather than from the policy payload and the agent operation consuming it.
+
+**Harness fix**: added the AGENTS.md rule that agent-stream messages and SDK methods must name desired-policy delivery explicitly instead of using generic sync/state terminology.
+
+**Prevention**: inspect each stream message beside its producer and consumer and require its name to identify the domain operation or payload without reading its fields.
