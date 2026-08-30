@@ -331,7 +331,7 @@ func (s *Store) RecordOccurrenceResult(ctx context.Context, result *pb.ActionRes
 	if err != nil {
 		return "", false, err
 	}
-	if err := queries.InsertResultOutbox(ctx, generated.InsertResultOutboxParams{ID: id, Kind: "ACTION", Payload: payload, CreatedAt: now}); err != nil {
+	if err := queries.InsertResultOutbox(ctx, generated.InsertResultOutboxParams{ID: id, Kind: "ACTION", Payload: payload}); err != nil {
 		return "", false, err
 	}
 	if err := tx.Commit(); err != nil {
@@ -397,7 +397,7 @@ func (s *Store) recordResult(ctx context.Context, kind string, message proto.Mes
 			return "", err
 		}
 	}
-	if err := queries.InsertResultOutbox(ctx, generated.InsertResultOutboxParams{ID: id, Kind: kind, Payload: payload, CreatedAt: now}); err != nil {
+	if err := queries.InsertResultOutbox(ctx, generated.InsertResultOutboxParams{ID: id, Kind: kind, Payload: payload}); err != nil {
 		return "", err
 	}
 	return id, tx.Commit()
@@ -480,7 +480,7 @@ func (s *Store) RecoverInterruptedOccurrences(ctx context.Context) ([]PendingRes
 		if err != nil {
 			return nil, err
 		}
-		if err := queries.InsertRecoveredResult(ctx, generated.InsertRecoveredResultParams{ID: id, Payload: payload, CreatedAt: now}); err != nil {
+		if err := queries.InsertRecoveredResult(ctx, generated.InsertRecoveredResultParams{ID: id, Payload: payload}); err != nil {
 			return nil, err
 		}
 		state, err := occurrenceState(status)

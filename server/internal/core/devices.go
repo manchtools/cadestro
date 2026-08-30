@@ -135,7 +135,7 @@ func (service *Service) CreateToken(ctx context.Context, request *connect.Reques
 	}
 	token, err := service.store.Queries().CreateRegistrationToken(ctx, db.CreateRegistrationTokenParams{
 		ID: ulid.Make().String(), ValueHash: digest, Name: request.Msg.GetName(), MaxUses: int64(request.Msg.GetMaxUses()),
-		ExpiresAt: request.Msg.GetExpiresAt().AsTime(), CreatedAt: service.now().UTC(),
+		ExpiresAt: request.Msg.GetExpiresAt().AsTime(),
 	})
 	if err != nil {
 		return nil, service.internal("create registration token", err)
@@ -208,7 +208,7 @@ func groupProto(id, name, description string, memberCount int64, createdAt time.
 }
 
 func (service *Service) CreateDeviceGroup(ctx context.Context, request *connect.Request[cadestrov1.CreateDeviceGroupRequest]) (*connect.Response[cadestrov1.CreateDeviceGroupResponse], error) {
-	group, err := service.store.Queries().CreateDeviceGroup(ctx, db.CreateDeviceGroupParams{ID: ulid.Make().String(), Name: request.Msg.GetName(), Description: request.Msg.GetDescription(), CreatedAt: service.now().UTC()})
+	group, err := service.store.Queries().CreateDeviceGroup(ctx, db.CreateDeviceGroupParams{ID: ulid.Make().String(), Name: request.Msg.GetName(), Description: request.Msg.GetDescription()})
 	if err != nil {
 		if store.IsConflict(err) {
 			return nil, rpcConflict("device group")

@@ -50,6 +50,8 @@ type Device struct {
 	PendingCertExpiresAt  *time.Time `json:"pending_cert_expires_at"`
 	RegisteredAt          time.Time  `json:"registered_at"`
 	LastSeenAt            *time.Time `json:"last_seen_at"`
+	CreatedAt             time.Time  `json:"created_at"`
+	UpdatedAt             time.Time  `json:"updated_at"`
 }
 
 type DeviceGroup struct {
@@ -57,6 +59,7 @@ type DeviceGroup struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type DeviceGroupMember struct {
@@ -98,6 +101,7 @@ type RegistrationToken struct {
 	CurrentUses int64     `json:"current_uses"`
 	ExpiresAt   time.Time `json:"expires_at"`
 	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type Role struct {
@@ -119,6 +123,7 @@ type User struct {
 	DisplayName    string    `json:"display_name"`
 	SessionVersion int32     `json:"session_version"`
 	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 	LastLoginAt    time.Time `json:"last_login_at"`
 }
 

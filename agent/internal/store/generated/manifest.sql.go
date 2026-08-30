@@ -13,7 +13,7 @@ import (
 const beginScheduledRun = `-- name: BeginScheduledRun :exec
 UPDATE scheduled_work
 SET run_id = ?, last_executed_at = ?, next_execute_at = ?,
-    run_started_at = ?, run_in_progress = TRUE
+    run_started_at = ?, run_in_progress = TRUE, updated_at = CURRENT_TIMESTAMP
 WHERE work_id = ?
 `
 
@@ -37,7 +37,7 @@ func (q *Queries) BeginScheduledRun(ctx context.Context, arg BeginScheduledRunPa
 }
 
 const clearRunID = `-- name: ClearRunID :exec
-UPDATE scheduled_work SET run_id = NULL WHERE (work_id = ? OR COALESCE(run_id, '') = ?)
+UPDATE scheduled_work SET run_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE (work_id = ? OR COALESCE(run_id, '') = ?)
 `
 
 type ClearRunIDParams struct {
@@ -94,7 +94,8 @@ func (q *Queries) DeleteWork(ctx context.Context, workID string) error {
 
 const finishManifestRun = `-- name: FinishManifestRun :execrows
 UPDATE scheduled_work
-SET run_in_progress = FALSE, run_started_at = NULL
+SET run_in_progress = FALSE, run_started_at = NULL,
+    updated_at = CURRENT_TIMESTAMP
 WHERE (work_id = ? OR COALESCE(run_id, '') = ?) AND run_in_progress = TRUE
 `
 
@@ -349,8 +350,8 @@ func (q *Queries) GetStartedOccurrenceHash(ctx context.Context, arg GetStartedOc
 
 const insertOccurrence = `-- name: InsertOccurrence :exec
 INSERT INTO scheduled_work_occurrences
-    (work_id, occurrence_id, position, action_id)
-VALUES (?, ?, ?, ?)
+    (work_id, occurrence_id, position, action_id, created_at, updated_at)
+VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 `
 
 type InsertOccurrenceParams struct {
@@ -371,47 +372,40 @@ func (q *Queries) InsertOccurrence(ctx context.Context, arg InsertOccurrencePara
 }
 
 const insertRecoveredResult = `-- name: InsertRecoveredResult :exec
-INSERT INTO result_outbox (id, kind, payload, created_at)
-VALUES (?, 'ACTION', ?, ?)
+INSERT INTO result_outbox (id, kind, payload, created_at, updated_at)
+VALUES (?, 'ACTION', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 `
 
 type InsertRecoveredResultParams struct {
-	ID        string    `json:"id"`
-	Payload   []byte    `json:"payload"`
-	CreatedAt time.Time `json:"created_at"`
+	ID      string `json:"id"`
+	Payload []byte `json:"payload"`
 }
 
 func (q *Queries) InsertRecoveredResult(ctx context.Context, arg InsertRecoveredResultParams) error {
-	_, err := q.db.ExecContext(ctx, insertRecoveredResult, arg.ID, arg.Payload, arg.CreatedAt)
+	_, err := q.db.ExecContext(ctx, insertRecoveredResult, arg.ID, arg.Payload)
 	return err
 }
 
 const insertResultOutbox = `-- name: InsertResultOutbox :exec
-INSERT INTO result_outbox (id, kind, payload, created_at)
-VALUES (?, ?, ?, ?)
+INSERT INTO result_outbox (id, kind, payload, created_at, updated_at)
+VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 `
 
 type InsertResultOutboxParams struct {
-	ID        string    `json:"id"`
-	Kind      string    `json:"kind"`
-	Payload   []byte    `json:"payload"`
-	CreatedAt time.Time `json:"created_at"`
+	ID      string `json:"id"`
+	Kind    string `json:"kind"`
+	Payload []byte `json:"payload"`
 }
 
 func (q *Queries) InsertResultOutbox(ctx context.Context, arg InsertResultOutboxParams) error {
-	_, err := q.db.ExecContext(ctx, insertResultOutbox,
-		arg.ID,
-		arg.Kind,
-		arg.Payload,
-		arg.CreatedAt,
-	)
+	_, err := q.db.ExecContext(ctx, insertResultOutbox, arg.ID, arg.Kind, arg.Payload)
 	return err
 }
 
 const insertScheduledWork = `-- name: InsertScheduledWork :exec
 INSERT INTO scheduled_work
-    (work_id, run_id, manifest_blob, retired, received_at, next_execute_at)
-VALUES (?, ?, ?, FALSE, ?, ?)
+    (work_id, run_id, manifest_blob, retired, received_at, next_execute_at, created_at, updated_at)
+VALUES (?, ?, ?, FALSE, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 `
 
 type InsertScheduledWorkParams struct {
@@ -512,7 +506,7 @@ func (q *Queries) ListInterruptedOccurrences(ctx context.Context, state string) 
 
 const markOccurrenceStarted = `-- name: MarkOccurrenceStarted :execrows
 UPDATE scheduled_work_occurrences
-SET state = ?, started_at = ?, completed_at = NULL
+SET state = ?, started_at = ?, completed_at = NULL, updated_at = CURRENT_TIMESTAMP
 WHERE work_id = ? AND occurrence_id = ? AND state = ?
 `
 
@@ -539,7 +533,7 @@ func (q *Queries) MarkOccurrenceStarted(ctx context.Context, arg MarkOccurrenceS
 }
 
 const markPendingResultSynced = `-- name: MarkPendingResultSynced :exec
-UPDATE result_outbox SET synced = TRUE WHERE id = ?
+UPDATE result_outbox SET synced = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = ?
 `
 
 func (q *Queries) MarkPendingResultSynced(ctx context.Context, id string) error {
@@ -549,7 +543,8 @@ func (q *Queries) MarkPendingResultSynced(ctx context.Context, id string) error 
 
 const recordOccurrence = `-- name: RecordOccurrence :execrows
 UPDATE scheduled_work_occurrences
-SET state = ?, completed_at = ?, result_status = ?, result_error = ?, last_result_hash = ?
+SET state = ?, completed_at = ?, result_status = ?, result_error = ?, last_result_hash = ?,
+    updated_at = CURRENT_TIMESTAMP
 WHERE work_id = ? AND occurrence_id = ? AND state = ?
 `
 
@@ -583,7 +578,8 @@ func (q *Queries) RecordOccurrence(ctx context.Context, arg RecordOccurrencePara
 
 const recoverOccurrence = `-- name: RecoverOccurrence :exec
 UPDATE scheduled_work_occurrences
-SET state = ?, completed_at = ?, result_status = ?, result_error = ?
+SET state = ?, completed_at = ?, result_status = ?, result_error = ?,
+    updated_at = CURRENT_TIMESTAMP
 WHERE work_id = ? AND occurrence_id = ? AND state = ?
 `
 
@@ -613,7 +609,7 @@ func (q *Queries) RecoverOccurrence(ctx context.Context, arg RecoverOccurrencePa
 const resetOccurrences = `-- name: ResetOccurrences :exec
 UPDATE scheduled_work_occurrences
 SET state = ?, started_at = NULL, completed_at = NULL,
-    result_status = NULL, result_error = ''
+    result_status = NULL, result_error = '', updated_at = CURRENT_TIMESTAMP
 WHERE work_id = ?
 `
 
@@ -644,7 +640,7 @@ func (q *Queries) ResolveWorkID(ctx context.Context, arg ResolveWorkIDParams) (s
 }
 
 const retireWork = `-- name: RetireWork :exec
-UPDATE scheduled_work SET retired = TRUE WHERE work_id = ?
+UPDATE scheduled_work SET retired = TRUE, updated_at = CURRENT_TIMESTAMP WHERE work_id = ?
 `
 
 func (q *Queries) RetireWork(ctx context.Context, workID string) error {
@@ -653,7 +649,7 @@ func (q *Queries) RetireWork(ctx context.Context, workID string) error {
 }
 
 const reviveWork = `-- name: ReviveWork :exec
-UPDATE scheduled_work SET retired = FALSE WHERE work_id = ?
+UPDATE scheduled_work SET retired = FALSE, updated_at = CURRENT_TIMESTAMP WHERE work_id = ?
 `
 
 func (q *Queries) ReviveWork(ctx context.Context, workID string) error {
@@ -673,8 +669,8 @@ func (q *Queries) ScheduledWorkExists(ctx context.Context, workID string) (int64
 }
 
 const setAssignedPolicyRevision = `-- name: SetAssignedPolicyRevision :exec
-INSERT INTO settings (key, value) VALUES ('assigned_policy_revision', ?)
-ON CONFLICT(key) DO UPDATE SET value = excluded.value
+INSERT INTO settings (key, value, created_at, updated_at) VALUES ('assigned_policy_revision', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
 `
 
 func (q *Queries) SetAssignedPolicyRevision(ctx context.Context, value string) error {

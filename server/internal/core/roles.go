@@ -38,10 +38,9 @@ func roleProto(ctx context.Context, queries *db.Queries, role *db.Role) (*cadest
 func timestamp(value time.Time) *timestamppb.Timestamp { return timestamppb.New(value) }
 
 func (service *Service) CreateRole(ctx context.Context, request *connect.Request[cadestrov1.CreateRoleRequest]) (*connect.Response[cadestrov1.CreateRoleResponse], error) {
-	now := service.now().UTC()
 	id := ulid.Make().String()
 	if err := service.store.Transaction(ctx, func(queries *db.Queries) error {
-		if _, err := queries.CreateRole(ctx, db.CreateRoleParams{ID: id, Name: request.Msg.GetName(), Description: request.Msg.GetDescription(), CreatedAt: now, UpdatedAt: now}); err != nil {
+		if _, err := queries.CreateRole(ctx, db.CreateRoleParams{ID: id, Name: request.Msg.GetName(), Description: request.Msg.GetDescription()}); err != nil {
 			return err
 		}
 		for _, permission := range request.Msg.GetPermissions() {
@@ -106,7 +105,7 @@ func (service *Service) UpdateRole(ctx context.Context, request *connect.Request
 		if err != nil {
 			return err
 		}
-		if _, err := queries.UpdateRole(ctx, db.UpdateRoleParams{Name: request.Msg.GetName(), Description: request.Msg.GetDescription(), UpdatedAt: service.now().UTC(), ID: id}); err != nil {
+		if _, err := queries.UpdateRole(ctx, db.UpdateRoleParams{Name: request.Msg.GetName(), Description: request.Msg.GetDescription(), ID: id}); err != nil {
 			return err
 		}
 		if err := queries.ReplaceRolePermissions(ctx, id); err != nil {

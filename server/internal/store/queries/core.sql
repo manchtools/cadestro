@@ -3,7 +3,7 @@ SELECT COUNT(*) FROM identity_providers;
 
 -- name: CreateIdentityProvider :one
 INSERT INTO identity_providers (id, name, slug, enabled, client_id, issuer_url, scopes_json, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 RETURNING *;
 
 -- name: GetIdentityProvider :one
@@ -20,7 +20,7 @@ SELECT * FROM identity_providers WHERE enabled = TRUE ORDER BY name, id;
 
 -- name: UpdateIdentityProvider :one
 UPDATE identity_providers
-SET name = ?, enabled = ?, client_id = ?, issuer_url = ?, scopes_json = ?, updated_at = ?
+SET name = ?, enabled = ?, client_id = ?, issuer_url = ?, scopes_json = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 RETURNING *;
 
@@ -36,8 +36,8 @@ JOIN users ON users.id = identity_links.user_id
 WHERE identity_links.provider_id = ? AND identity_links.subject = ?;
 
 -- name: CreateUser :one
-INSERT INTO users (id, email, display_name, session_version, created_at, last_login_at)
-VALUES (?, ?, ?, 1, ?, ?)
+INSERT INTO users (id, email, display_name, session_version, created_at, updated_at, last_login_at)
+VALUES (?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?)
 RETURNING *;
 
 -- name: LinkIdentity :exec
@@ -45,19 +45,19 @@ INSERT INTO identity_links (provider_id, subject, user_id) VALUES (?, ?, ?);
 
 -- name: UpdateUserLogin :one
 UPDATE users
-SET email = ?, display_name = ?, session_version = session_version + 1, last_login_at = ?
+SET email = ?, display_name = ?, session_version = session_version + 1, last_login_at = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 RETURNING *;
 
 -- name: RotateUserSession :one
 UPDATE users
-SET session_version = session_version + 1
+SET session_version = session_version + 1, updated_at = CURRENT_TIMESTAMP
 WHERE id = ? AND session_version = ?
 RETURNING *;
 
 -- name: CreateRole :one
 INSERT INTO roles (id, name, description, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?)
+VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 RETURNING *;
 
 -- name: GetRole :one
@@ -70,7 +70,7 @@ SELECT * FROM roles WHERE name = ?;
 SELECT * FROM roles WHERE id > ? ORDER BY id LIMIT ?;
 
 -- name: UpdateRole :one
-UPDATE roles SET name = ?, description = ?, updated_at = ? WHERE id = ? RETURNING *;
+UPDATE roles SET name = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
 
 -- name: DeleteRole :execrows
 DELETE FROM roles WHERE id = ?;
@@ -100,11 +100,11 @@ INSERT INTO user_roles (user_id, role_id) VALUES (?, ?);
 DELETE FROM user_roles WHERE user_id = ? AND role_id = ?;
 
 -- name: BumpSessionsForRole :exec
-UPDATE users SET session_version = session_version + 1
+UPDATE users SET session_version = session_version + 1, updated_at = CURRENT_TIMESTAMP
 WHERE id IN (SELECT user_id FROM user_roles WHERE role_id = ?);
 
 -- name: RotateUserSessionByID :one
-UPDATE users SET session_version = session_version + 1 WHERE id = ? RETURNING *;
+UPDATE users SET session_version = session_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
 
 -- name: ListUsers :many
 SELECT * FROM users WHERE id > ? ORDER BY id LIMIT ?;
@@ -113,8 +113,8 @@ SELECT * FROM users WHERE id > ? ORDER BY id LIMIT ?;
 SELECT COUNT(*) FROM users;
 
 -- name: CreateRegistrationToken :one
-INSERT INTO registration_tokens (id, value_hash, name, max_uses, current_uses, expires_at, created_at)
-VALUES (?, ?, ?, ?, 0, ?, ?)
+INSERT INTO registration_tokens (id, value_hash, name, max_uses, current_uses, expires_at, created_at, updated_at)
+VALUES (?, ?, ?, ?, 0, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 RETURNING *;
 
 -- name: GetRegistrationToken :one
@@ -125,7 +125,7 @@ SELECT * FROM registration_tokens
 WHERE value_hash = ? AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses);
 
 -- name: ConsumeRegistrationToken :one
-UPDATE registration_tokens SET current_uses = current_uses + 1
+UPDATE registration_tokens SET current_uses = current_uses + 1, updated_at = CURRENT_TIMESTAMP
 WHERE id = ? AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses)
 RETURNING *;
 
@@ -138,14 +138,14 @@ ORDER BY id LIMIT sqlc.arg(page_limit);
 SELECT COUNT(*) FROM registration_tokens;
 
 -- name: RenameRegistrationToken :one
-UPDATE registration_tokens SET name = ? WHERE id = ? RETURNING *;
+UPDATE registration_tokens SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
 
 -- name: DeleteRegistrationToken :execrows
 DELETE FROM registration_tokens WHERE id = ?;
 
 -- name: CreateDevice :one
-INSERT INTO devices (id, hostname, agent_version, identity_public_key, active_certificate_pem, active_cert_serial, cert_expires_at, registered_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO devices (id, hostname, agent_version, identity_public_key, active_certificate_pem, active_cert_serial, cert_expires_at, registered_at, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 RETURNING *;
 
 -- name: GetDevice :one
@@ -156,7 +156,8 @@ SELECT * FROM devices WHERE identity_public_key = ?;
 
 -- name: SetPendingDeviceCertificate :execrows
 UPDATE devices
-SET pending_certificate_pem = ?, pending_cert_serial = ?, pending_cert_expires_at = ?
+SET pending_certificate_pem = ?, pending_cert_serial = ?, pending_cert_expires_at = ?,
+    updated_at = CURRENT_TIMESTAMP
 WHERE id = ? AND active_cert_serial = ?;
 
 -- name: PromotePendingDeviceCertificate :execrows
@@ -166,11 +167,12 @@ SET active_certificate_pem = pending_certificate_pem,
     cert_expires_at = pending_cert_expires_at,
     pending_certificate_pem = NULL,
     pending_cert_serial = NULL,
-    pending_cert_expires_at = NULL
+    pending_cert_expires_at = NULL,
+    updated_at = CURRENT_TIMESTAMP
 WHERE id = ? AND pending_cert_serial = ?;
 
 -- name: TouchDevice :exec
-UPDATE devices SET hostname = ?, agent_version = ?, last_seen_at = ? WHERE id = ?;
+UPDATE devices SET hostname = ?, agent_version = ?, last_seen_at = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;
 
 -- name: ListDevices :many
 SELECT * FROM devices WHERE id > ? ORDER BY id LIMIT ?;
@@ -183,7 +185,7 @@ DELETE FROM devices WHERE id = ?;
 
 -- name: CreateAction :one
 INSERT INTO actions (id, name, description, action_blob, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 RETURNING *;
 
 -- name: GetAction :one
@@ -198,20 +200,20 @@ ORDER BY id LIMIT sqlc.arg(page_limit);
 SELECT COUNT(*) FROM actions;
 
 -- name: RenameAction :one
-UPDATE actions SET name = ?, updated_at = ? WHERE id = ? RETURNING *;
+UPDATE actions SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
 
 -- name: UpdateActionDescription :one
-UPDATE actions SET description = ?, updated_at = ? WHERE id = ? RETURNING *;
+UPDATE actions SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
 
 -- name: UpdateActionParams :one
-UPDATE actions SET action_blob = ?, updated_at = ?
+UPDATE actions SET action_blob = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ? RETURNING *;
 
 -- name: DeleteAction :execrows
 DELETE FROM actions WHERE id = ?;
 
 -- name: CreateDeviceGroup :one
-INSERT INTO device_groups (id, name, description, created_at) VALUES (?, ?, ?, ?) RETURNING *;
+INSERT INTO device_groups (id, name, description, created_at, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING *;
 
 -- name: GetDeviceGroup :one
 SELECT device_groups.*, COUNT(device_group_members.device_id) AS member_count
@@ -238,10 +240,10 @@ SELECT devices.* FROM device_group_members JOIN devices ON devices.id = device_g
 WHERE device_group_members.group_id = ? ORDER BY devices.hostname, devices.id;
 
 -- name: RenameDeviceGroup :one
-UPDATE device_groups SET name = ? WHERE id = ? RETURNING *;
+UPDATE device_groups SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
 
 -- name: UpdateDeviceGroupDescription :one
-UPDATE device_groups SET description = ? WHERE id = ? RETURNING *;
+UPDATE device_groups SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
 
 -- name: DeleteDeviceGroup :execrows
 DELETE FROM device_groups WHERE id = ?;
@@ -253,7 +255,7 @@ INSERT INTO device_group_members (group_id, device_id) VALUES (?, ?);
 DELETE FROM device_group_members WHERE group_id = ? AND device_id = ?;
 
 -- name: CreateAssignment :one
-INSERT INTO assignments (id, action_id, target_type, target_id, created_at) VALUES (?, ?, ?, ?, ?) RETURNING *;
+INSERT INTO assignments (id, action_id, target_type, target_id, created_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) RETURNING *;
 
 -- name: GetAssignment :one
 SELECT * FROM assignments WHERE id = ?;

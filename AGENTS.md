@@ -50,6 +50,11 @@ device/action linking, and ordering; compliance classification comes only from
 the linked action concrete oneof; no result-kind discriminator or flattened
 status/error/output/detection/compliance columns.
 
+Lifecycle timestamps for mutable tables are owned by the database: every
+insertion sets created_at and updated_at from the same CURRENT_TIMESTAMP, every
+mutation advances updated_at in SQL, and application code does not supply those
+lifecycle values. Caller-supplied domain timestamps remain distinct event facts.
+
 Access tokens carry their effective permissions and authorize without a
 per-request database lookup; role, permission, logout, and session-version
 changes invalidate refresh-token generations immediately but already-issued

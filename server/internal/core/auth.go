@@ -53,10 +53,9 @@ func (service *Service) EnsureBootstrapProvider(ctx context.Context, config Boot
 	if err != nil {
 		return err
 	}
-	now := service.now().UTC()
 	_, err = service.store.Queries().CreateIdentityProvider(ctx, db.CreateIdentityProviderParams{
 		ID: id, Name: config.Name, Slug: config.Slug, Enabled: true, ClientID: config.ClientID,
-		IssuerUrl: config.IssuerURL, ScopesJson: string(scopes), CreatedAt: now, UpdatedAt: now,
+		IssuerUrl: config.IssuerURL, ScopesJson: string(scopes),
 	})
 	return err
 }
@@ -253,7 +252,7 @@ func (service *Service) linkIdentity(ctx context.Context, providerID string, cla
 		}
 		linked, err = queries.CreateUser(ctx, db.CreateUserParams{
 			ID: ulid.Make().String(), Email: claims.Email, DisplayName: displayName,
-			CreatedAt: now, LastLoginAt: now,
+			LastLoginAt: now,
 		})
 		if err != nil {
 			return err
@@ -291,11 +290,10 @@ func (service *Service) CreateIdentityProvider(ctx context.Context, request *con
 	if err != nil {
 		return nil, service.internal("encode provider scopes", err)
 	}
-	now := service.now().UTC()
 	provider, err := service.store.Queries().CreateIdentityProvider(ctx, db.CreateIdentityProviderParams{
 		ID: id, Name: request.Msg.GetName(), Slug: request.Msg.GetSlug(), Enabled: true,
 		ClientID: request.Msg.GetClientId().GetValue(), IssuerUrl: request.Msg.GetIssuerUrl(),
-		ScopesJson: string(scopes), CreatedAt: now, UpdatedAt: now,
+		ScopesJson: string(scopes),
 	})
 	if err != nil {
 		if store.IsConflict(err) {
@@ -363,7 +361,7 @@ func (service *Service) UpdateIdentityProvider(ctx context.Context, request *con
 	provider, err := service.store.Queries().UpdateIdentityProvider(ctx, db.UpdateIdentityProviderParams{
 		Name: request.Msg.GetName(), Enabled: request.Msg.GetEnabled(), ClientID: request.Msg.GetClientId().GetValue(),
 		IssuerUrl: request.Msg.GetIssuerUrl(), ScopesJson: string(scopes),
-		UpdatedAt: service.now().UTC(), ID: id,
+		ID: id,
 	})
 	if err != nil {
 		return nil, service.internal("update identity provider", err)

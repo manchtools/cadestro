@@ -64,7 +64,7 @@ func (service *Service) CreateAssignment(ctx context.Context, request *connect.R
 		return nil, err
 	}
 	assignment, err := service.store.Queries().CreateAssignment(ctx, db.CreateAssignmentParams{
-		ID: ulid.Make().String(), ActionID: actionID, TargetType: int64(request.Msg.GetTargetType()), TargetID: targetID, CreatedAt: service.now().UTC(),
+		ID: ulid.Make().String(), ActionID: actionID, TargetType: int64(request.Msg.GetTargetType()), TargetID: targetID,
 	})
 	if err != nil {
 		if store.IsConflict(err) {

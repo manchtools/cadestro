@@ -55,7 +55,7 @@ func (q *Queries) AssignRoleToUser(ctx context.Context, arg AssignRoleToUserPara
 }
 
 const bumpSessionsForRole = `-- name: BumpSessionsForRole :exec
-UPDATE users SET session_version = session_version + 1
+UPDATE users SET session_version = session_version + 1, updated_at = CURRENT_TIMESTAMP
 WHERE id IN (SELECT user_id FROM user_roles WHERE role_id = ?)
 `
 
@@ -65,9 +65,9 @@ func (q *Queries) BumpSessionsForRole(ctx context.Context, roleID string) error 
 }
 
 const consumeRegistrationToken = `-- name: ConsumeRegistrationToken :one
-UPDATE registration_tokens SET current_uses = current_uses + 1
+UPDATE registration_tokens SET current_uses = current_uses + 1, updated_at = CURRENT_TIMESTAMP
 WHERE id = ? AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses)
-RETURNING id, value_hash, name, max_uses, current_uses, expires_at, created_at
+RETURNING id, value_hash, name, max_uses, current_uses, expires_at, created_at, updated_at
 `
 
 type ConsumeRegistrationTokenParams struct {
@@ -86,6 +86,7 @@ func (q *Queries) ConsumeRegistrationToken(ctx context.Context, arg ConsumeRegis
 		&i.CurrentUses,
 		&i.ExpiresAt,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return &i, err
 }
@@ -158,17 +159,15 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 
 const createAction = `-- name: CreateAction :one
 INSERT INTO actions (id, name, description, action_blob, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 RETURNING id, name, description, action_blob, created_at, updated_at
 `
 
 type CreateActionParams struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	ActionBlob  []byte    `json:"action_blob"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	ActionBlob  []byte `json:"action_blob"`
 }
 
 func (q *Queries) CreateAction(ctx context.Context, arg CreateActionParams) (*Action, error) {
@@ -177,8 +176,6 @@ func (q *Queries) CreateAction(ctx context.Context, arg CreateActionParams) (*Ac
 		arg.Name,
 		arg.Description,
 		arg.ActionBlob,
-		arg.CreatedAt,
-		arg.UpdatedAt,
 	)
 	var i Action
 	err := row.Scan(
@@ -193,15 +190,14 @@ func (q *Queries) CreateAction(ctx context.Context, arg CreateActionParams) (*Ac
 }
 
 const createAssignment = `-- name: CreateAssignment :one
-INSERT INTO assignments (id, action_id, target_type, target_id, created_at) VALUES (?, ?, ?, ?, ?) RETURNING id, action_id, target_type, target_id, created_at
+INSERT INTO assignments (id, action_id, target_type, target_id, created_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) RETURNING id, action_id, target_type, target_id, created_at
 `
 
 type CreateAssignmentParams struct {
-	ID         string    `json:"id"`
-	ActionID   string    `json:"action_id"`
-	TargetType int64     `json:"target_type"`
-	TargetID   string    `json:"target_id"`
-	CreatedAt  time.Time `json:"created_at"`
+	ID         string `json:"id"`
+	ActionID   string `json:"action_id"`
+	TargetType int64  `json:"target_type"`
+	TargetID   string `json:"target_id"`
 }
 
 func (q *Queries) CreateAssignment(ctx context.Context, arg CreateAssignmentParams) (*Assignment, error) {
@@ -210,7 +206,6 @@ func (q *Queries) CreateAssignment(ctx context.Context, arg CreateAssignmentPara
 		arg.ActionID,
 		arg.TargetType,
 		arg.TargetID,
-		arg.CreatedAt,
 	)
 	var i Assignment
 	err := row.Scan(
@@ -252,9 +247,9 @@ func (q *Queries) CreateAuditEvent(ctx context.Context, arg CreateAuditEventPara
 }
 
 const createDevice = `-- name: CreateDevice :one
-INSERT INTO devices (id, hostname, agent_version, identity_public_key, active_certificate_pem, active_cert_serial, cert_expires_at, registered_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-RETURNING id, hostname, agent_version, identity_public_key, active_certificate_pem, active_cert_serial, cert_expires_at, pending_certificate_pem, pending_cert_serial, pending_cert_expires_at, registered_at, last_seen_at
+INSERT INTO devices (id, hostname, agent_version, identity_public_key, active_certificate_pem, active_cert_serial, cert_expires_at, registered_at, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+RETURNING id, hostname, agent_version, identity_public_key, active_certificate_pem, active_cert_serial, cert_expires_at, pending_certificate_pem, pending_cert_serial, pending_cert_expires_at, registered_at, last_seen_at, created_at, updated_at
 `
 
 type CreateDeviceParams struct {
@@ -293,34 +288,31 @@ func (q *Queries) CreateDevice(ctx context.Context, arg CreateDeviceParams) (*De
 		&i.PendingCertExpiresAt,
 		&i.RegisteredAt,
 		&i.LastSeenAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return &i, err
 }
 
 const createDeviceGroup = `-- name: CreateDeviceGroup :one
-INSERT INTO device_groups (id, name, description, created_at) VALUES (?, ?, ?, ?) RETURNING id, name, description, created_at
+INSERT INTO device_groups (id, name, description, created_at, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id, name, description, created_at, updated_at
 `
 
 type CreateDeviceGroupParams struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 func (q *Queries) CreateDeviceGroup(ctx context.Context, arg CreateDeviceGroupParams) (*DeviceGroup, error) {
-	row := q.db.QueryRowContext(ctx, createDeviceGroup,
-		arg.ID,
-		arg.Name,
-		arg.Description,
-		arg.CreatedAt,
-	)
+	row := q.db.QueryRowContext(ctx, createDeviceGroup, arg.ID, arg.Name, arg.Description)
 	var i DeviceGroup
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Description,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return &i, err
 }
@@ -353,20 +345,18 @@ func (q *Queries) CreateExecutionResult(ctx context.Context, arg CreateExecution
 
 const createIdentityProvider = `-- name: CreateIdentityProvider :one
 INSERT INTO identity_providers (id, name, slug, enabled, client_id, issuer_url, scopes_json, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 RETURNING id, name, slug, enabled, client_id, issuer_url, scopes_json, created_at, updated_at
 `
 
 type CreateIdentityProviderParams struct {
-	ID         string    `json:"id"`
-	Name       string    `json:"name"`
-	Slug       string    `json:"slug"`
-	Enabled    bool      `json:"enabled"`
-	ClientID   string    `json:"client_id"`
-	IssuerUrl  string    `json:"issuer_url"`
-	ScopesJson string    `json:"scopes_json"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	Slug       string `json:"slug"`
+	Enabled    bool   `json:"enabled"`
+	ClientID   string `json:"client_id"`
+	IssuerUrl  string `json:"issuer_url"`
+	ScopesJson string `json:"scopes_json"`
 }
 
 func (q *Queries) CreateIdentityProvider(ctx context.Context, arg CreateIdentityProviderParams) (*IdentityProvider, error) {
@@ -378,8 +368,6 @@ func (q *Queries) CreateIdentityProvider(ctx context.Context, arg CreateIdentity
 		arg.ClientID,
 		arg.IssuerUrl,
 		arg.ScopesJson,
-		arg.CreatedAt,
-		arg.UpdatedAt,
 	)
 	var i IdentityProvider
 	err := row.Scan(
@@ -397,9 +385,9 @@ func (q *Queries) CreateIdentityProvider(ctx context.Context, arg CreateIdentity
 }
 
 const createRegistrationToken = `-- name: CreateRegistrationToken :one
-INSERT INTO registration_tokens (id, value_hash, name, max_uses, current_uses, expires_at, created_at)
-VALUES (?, ?, ?, ?, 0, ?, ?)
-RETURNING id, value_hash, name, max_uses, current_uses, expires_at, created_at
+INSERT INTO registration_tokens (id, value_hash, name, max_uses, current_uses, expires_at, created_at, updated_at)
+VALUES (?, ?, ?, ?, 0, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+RETURNING id, value_hash, name, max_uses, current_uses, expires_at, created_at, updated_at
 `
 
 type CreateRegistrationTokenParams struct {
@@ -408,7 +396,6 @@ type CreateRegistrationTokenParams struct {
 	Name      string    `json:"name"`
 	MaxUses   int64     `json:"max_uses"`
 	ExpiresAt time.Time `json:"expires_at"`
-	CreatedAt time.Time `json:"created_at"`
 }
 
 func (q *Queries) CreateRegistrationToken(ctx context.Context, arg CreateRegistrationTokenParams) (*RegistrationToken, error) {
@@ -418,7 +405,6 @@ func (q *Queries) CreateRegistrationToken(ctx context.Context, arg CreateRegistr
 		arg.Name,
 		arg.MaxUses,
 		arg.ExpiresAt,
-		arg.CreatedAt,
 	)
 	var i RegistrationToken
 	err := row.Scan(
@@ -429,32 +415,25 @@ func (q *Queries) CreateRegistrationToken(ctx context.Context, arg CreateRegistr
 		&i.CurrentUses,
 		&i.ExpiresAt,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return &i, err
 }
 
 const createRole = `-- name: CreateRole :one
 INSERT INTO roles (id, name, description, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?)
+VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 RETURNING id, name, description, created_at, updated_at
 `
 
 type CreateRoleParams struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (*Role, error) {
-	row := q.db.QueryRowContext(ctx, createRole,
-		arg.ID,
-		arg.Name,
-		arg.Description,
-		arg.CreatedAt,
-		arg.UpdatedAt,
-	)
+	row := q.db.QueryRowContext(ctx, createRole, arg.ID, arg.Name, arg.Description)
 	var i Role
 	err := row.Scan(
 		&i.ID,
@@ -467,16 +446,15 @@ func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (*Role, 
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, email, display_name, session_version, created_at, last_login_at)
-VALUES (?, ?, ?, 1, ?, ?)
-RETURNING id, email, display_name, session_version, created_at, last_login_at
+INSERT INTO users (id, email, display_name, session_version, created_at, updated_at, last_login_at)
+VALUES (?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?)
+RETURNING id, email, display_name, session_version, created_at, updated_at, last_login_at
 `
 
 type CreateUserParams struct {
 	ID          string    `json:"id"`
 	Email       string    `json:"email"`
 	DisplayName string    `json:"display_name"`
-	CreatedAt   time.Time `json:"created_at"`
 	LastLoginAt time.Time `json:"last_login_at"`
 }
 
@@ -485,7 +463,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, 
 		arg.ID,
 		arg.Email,
 		arg.DisplayName,
-		arg.CreatedAt,
 		arg.LastLoginAt,
 	)
 	var i User
@@ -495,6 +472,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, 
 		&i.DisplayName,
 		&i.SessionVersion,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.LastLoginAt,
 	)
 	return &i, err
@@ -585,7 +563,7 @@ func (q *Queries) DeleteRole(ctx context.Context, id string) (int64, error) {
 }
 
 const findDeviceByIdentityKey = `-- name: FindDeviceByIdentityKey :one
-SELECT id, hostname, agent_version, identity_public_key, active_certificate_pem, active_cert_serial, cert_expires_at, pending_certificate_pem, pending_cert_serial, pending_cert_expires_at, registered_at, last_seen_at FROM devices WHERE identity_public_key = ?
+SELECT id, hostname, agent_version, identity_public_key, active_certificate_pem, active_cert_serial, cert_expires_at, pending_certificate_pem, pending_cert_serial, pending_cert_expires_at, registered_at, last_seen_at, created_at, updated_at FROM devices WHERE identity_public_key = ?
 `
 
 func (q *Queries) FindDeviceByIdentityKey(ctx context.Context, identityPublicKey []byte) (*Device, error) {
@@ -604,6 +582,8 @@ func (q *Queries) FindDeviceByIdentityKey(ctx context.Context, identityPublicKey
 		&i.PendingCertExpiresAt,
 		&i.RegisteredAt,
 		&i.LastSeenAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return &i, err
 }
@@ -644,7 +624,7 @@ func (q *Queries) GetAssignment(ctx context.Context, id string) (*Assignment, er
 }
 
 const getDevice = `-- name: GetDevice :one
-SELECT id, hostname, agent_version, identity_public_key, active_certificate_pem, active_cert_serial, cert_expires_at, pending_certificate_pem, pending_cert_serial, pending_cert_expires_at, registered_at, last_seen_at FROM devices WHERE id = ?
+SELECT id, hostname, agent_version, identity_public_key, active_certificate_pem, active_cert_serial, cert_expires_at, pending_certificate_pem, pending_cert_serial, pending_cert_expires_at, registered_at, last_seen_at, created_at, updated_at FROM devices WHERE id = ?
 `
 
 func (q *Queries) GetDevice(ctx context.Context, id string) (*Device, error) {
@@ -663,12 +643,14 @@ func (q *Queries) GetDevice(ctx context.Context, id string) (*Device, error) {
 		&i.PendingCertExpiresAt,
 		&i.RegisteredAt,
 		&i.LastSeenAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return &i, err
 }
 
 const getDeviceGroup = `-- name: GetDeviceGroup :one
-SELECT device_groups.id, device_groups.name, device_groups.description, device_groups.created_at, COUNT(device_group_members.device_id) AS member_count
+SELECT device_groups.id, device_groups.name, device_groups.description, device_groups.created_at, device_groups.updated_at, COUNT(device_group_members.device_id) AS member_count
 FROM device_groups LEFT JOIN device_group_members ON device_group_members.group_id = device_groups.id
 WHERE device_groups.id = ? GROUP BY device_groups.id
 `
@@ -678,6 +660,7 @@ type GetDeviceGroupRow struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 	MemberCount int64     `json:"member_count"`
 }
 
@@ -689,6 +672,7 @@ func (q *Queries) GetDeviceGroup(ctx context.Context, id string) (*GetDeviceGrou
 		&i.Name,
 		&i.Description,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.MemberCount,
 	)
 	return &i, err
@@ -737,7 +721,7 @@ func (q *Queries) GetIdentityProviderBySlug(ctx context.Context, slug string) (*
 }
 
 const getIdentityUser = `-- name: GetIdentityUser :one
-SELECT users.id, users.email, users.display_name, users.session_version, users.created_at, users.last_login_at FROM identity_links
+SELECT users.id, users.email, users.display_name, users.session_version, users.created_at, users.updated_at, users.last_login_at FROM identity_links
 JOIN users ON users.id = identity_links.user_id
 WHERE identity_links.provider_id = ? AND identity_links.subject = ?
 `
@@ -756,13 +740,14 @@ func (q *Queries) GetIdentityUser(ctx context.Context, arg GetIdentityUserParams
 		&i.DisplayName,
 		&i.SessionVersion,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.LastLoginAt,
 	)
 	return &i, err
 }
 
 const getRegistrationToken = `-- name: GetRegistrationToken :one
-SELECT id, value_hash, name, max_uses, current_uses, expires_at, created_at FROM registration_tokens WHERE id = ?
+SELECT id, value_hash, name, max_uses, current_uses, expires_at, created_at, updated_at FROM registration_tokens WHERE id = ?
 `
 
 func (q *Queries) GetRegistrationToken(ctx context.Context, id string) (*RegistrationToken, error) {
@@ -776,6 +761,7 @@ func (q *Queries) GetRegistrationToken(ctx context.Context, id string) (*Registr
 		&i.CurrentUses,
 		&i.ExpiresAt,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return &i, err
 }
@@ -815,7 +801,7 @@ func (q *Queries) GetRoleByName(ctx context.Context, name string) (*Role, error)
 }
 
 const getUsableRegistrationToken = `-- name: GetUsableRegistrationToken :one
-SELECT id, value_hash, name, max_uses, current_uses, expires_at, created_at FROM registration_tokens
+SELECT id, value_hash, name, max_uses, current_uses, expires_at, created_at, updated_at FROM registration_tokens
 WHERE value_hash = ? AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses)
 `
 
@@ -835,12 +821,13 @@ func (q *Queries) GetUsableRegistrationToken(ctx context.Context, arg GetUsableR
 		&i.CurrentUses,
 		&i.ExpiresAt,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return &i, err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, email, display_name, session_version, created_at, last_login_at FROM users WHERE id = ?
+SELECT id, email, display_name, session_version, created_at, updated_at, last_login_at FROM users WHERE id = ?
 `
 
 func (q *Queries) GetUser(ctx context.Context, id string) (*User, error) {
@@ -852,6 +839,7 @@ func (q *Queries) GetUser(ctx context.Context, id string) (*User, error) {
 		&i.DisplayName,
 		&i.SessionVersion,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.LastLoginAt,
 	)
 	return &i, err
@@ -1110,7 +1098,7 @@ func (q *Queries) ListComplianceResults(ctx context.Context, deviceID string) ([
 }
 
 const listDeviceGroupMembers = `-- name: ListDeviceGroupMembers :many
-SELECT devices.id, devices.hostname, devices.agent_version, devices.identity_public_key, devices.active_certificate_pem, devices.active_cert_serial, devices.cert_expires_at, devices.pending_certificate_pem, devices.pending_cert_serial, devices.pending_cert_expires_at, devices.registered_at, devices.last_seen_at FROM device_group_members JOIN devices ON devices.id = device_group_members.device_id
+SELECT devices.id, devices.hostname, devices.agent_version, devices.identity_public_key, devices.active_certificate_pem, devices.active_cert_serial, devices.cert_expires_at, devices.pending_certificate_pem, devices.pending_cert_serial, devices.pending_cert_expires_at, devices.registered_at, devices.last_seen_at, devices.created_at, devices.updated_at FROM device_group_members JOIN devices ON devices.id = device_group_members.device_id
 WHERE device_group_members.group_id = ? ORDER BY devices.hostname, devices.id
 `
 
@@ -1136,6 +1124,8 @@ func (q *Queries) ListDeviceGroupMembers(ctx context.Context, groupID string) ([
 			&i.PendingCertExpiresAt,
 			&i.RegisteredAt,
 			&i.LastSeenAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1151,7 +1141,7 @@ func (q *Queries) ListDeviceGroupMembers(ctx context.Context, groupID string) ([
 }
 
 const listDeviceGroups = `-- name: ListDeviceGroups :many
-SELECT device_groups.id, device_groups.name, device_groups.description, device_groups.created_at, COUNT(device_group_members.device_id) AS member_count
+SELECT device_groups.id, device_groups.name, device_groups.description, device_groups.created_at, device_groups.updated_at, COUNT(device_group_members.device_id) AS member_count
 FROM device_groups LEFT JOIN device_group_members ON device_group_members.group_id = device_groups.id
 WHERE device_groups.id > ? GROUP BY device_groups.id ORDER BY device_groups.id LIMIT ?
 `
@@ -1166,6 +1156,7 @@ type ListDeviceGroupsRow struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 	MemberCount int64     `json:"member_count"`
 }
 
@@ -1183,6 +1174,7 @@ func (q *Queries) ListDeviceGroups(ctx context.Context, arg ListDeviceGroupsPara
 			&i.Name,
 			&i.Description,
 			&i.CreatedAt,
+			&i.UpdatedAt,
 			&i.MemberCount,
 		); err != nil {
 			return nil, err
@@ -1199,7 +1191,7 @@ func (q *Queries) ListDeviceGroups(ctx context.Context, arg ListDeviceGroupsPara
 }
 
 const listDeviceGroupsForDevice = `-- name: ListDeviceGroupsForDevice :many
-SELECT device_groups.id, device_groups.name, device_groups.description, device_groups.created_at, COUNT(all_members.device_id) AS member_count
+SELECT device_groups.id, device_groups.name, device_groups.description, device_groups.created_at, device_groups.updated_at, COUNT(all_members.device_id) AS member_count
 FROM device_groups
 JOIN device_group_members selected ON selected.group_id = device_groups.id AND selected.device_id = ?
 LEFT JOIN device_group_members all_members ON all_members.group_id = device_groups.id
@@ -1211,6 +1203,7 @@ type ListDeviceGroupsForDeviceRow struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 	MemberCount int64     `json:"member_count"`
 }
 
@@ -1228,6 +1221,7 @@ func (q *Queries) ListDeviceGroupsForDevice(ctx context.Context, deviceID string
 			&i.Name,
 			&i.Description,
 			&i.CreatedAt,
+			&i.UpdatedAt,
 			&i.MemberCount,
 		); err != nil {
 			return nil, err
@@ -1244,7 +1238,7 @@ func (q *Queries) ListDeviceGroupsForDevice(ctx context.Context, deviceID string
 }
 
 const listDevices = `-- name: ListDevices :many
-SELECT id, hostname, agent_version, identity_public_key, active_certificate_pem, active_cert_serial, cert_expires_at, pending_certificate_pem, pending_cert_serial, pending_cert_expires_at, registered_at, last_seen_at FROM devices WHERE id > ? ORDER BY id LIMIT ?
+SELECT id, hostname, agent_version, identity_public_key, active_certificate_pem, active_cert_serial, cert_expires_at, pending_certificate_pem, pending_cert_serial, pending_cert_expires_at, registered_at, last_seen_at, created_at, updated_at FROM devices WHERE id > ? ORDER BY id LIMIT ?
 `
 
 type ListDevicesParams struct {
@@ -1274,6 +1268,8 @@ func (q *Queries) ListDevices(ctx context.Context, arg ListDevicesParams) ([]*De
 			&i.PendingCertExpiresAt,
 			&i.RegisteredAt,
 			&i.LastSeenAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1413,7 +1409,7 @@ func (q *Queries) ListIdentityProviders(ctx context.Context) ([]*IdentityProvide
 }
 
 const listRegistrationTokens = `-- name: ListRegistrationTokens :many
-SELECT id, value_hash, name, max_uses, current_uses, expires_at, created_at FROM registration_tokens
+SELECT id, value_hash, name, max_uses, current_uses, expires_at, created_at, updated_at FROM registration_tokens
 WHERE id > ?1
 ORDER BY id LIMIT ?2
 `
@@ -1440,6 +1436,7 @@ func (q *Queries) ListRegistrationTokens(ctx context.Context, arg ListRegistrati
 			&i.CurrentUses,
 			&i.ExpiresAt,
 			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1583,7 +1580,7 @@ func (q *Queries) ListUserRoles(ctx context.Context, userID string) ([]*Role, er
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, email, display_name, session_version, created_at, last_login_at FROM users WHERE id > ? ORDER BY id LIMIT ?
+SELECT id, email, display_name, session_version, created_at, updated_at, last_login_at FROM users WHERE id > ? ORDER BY id LIMIT ?
 `
 
 type ListUsersParams struct {
@@ -1606,6 +1603,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, 
 			&i.DisplayName,
 			&i.SessionVersion,
 			&i.CreatedAt,
+			&i.UpdatedAt,
 			&i.LastLoginAt,
 		); err != nil {
 			return nil, err
@@ -1628,7 +1626,8 @@ SET active_certificate_pem = pending_certificate_pem,
     cert_expires_at = pending_cert_expires_at,
     pending_certificate_pem = NULL,
     pending_cert_serial = NULL,
-    pending_cert_expires_at = NULL
+    pending_cert_expires_at = NULL,
+    updated_at = CURRENT_TIMESTAMP
 WHERE id = ? AND pending_cert_serial = ?
 `
 
@@ -1663,17 +1662,16 @@ func (q *Queries) RemoveDeviceFromGroup(ctx context.Context, arg RemoveDeviceFro
 }
 
 const renameAction = `-- name: RenameAction :one
-UPDATE actions SET name = ?, updated_at = ? WHERE id = ? RETURNING id, name, description, action_blob, created_at, updated_at
+UPDATE actions SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, name, description, action_blob, created_at, updated_at
 `
 
 type RenameActionParams struct {
-	Name      string    `json:"name"`
-	UpdatedAt time.Time `json:"updated_at"`
-	ID        string    `json:"id"`
+	Name string `json:"name"`
+	ID   string `json:"id"`
 }
 
 func (q *Queries) RenameAction(ctx context.Context, arg RenameActionParams) (*Action, error) {
-	row := q.db.QueryRowContext(ctx, renameAction, arg.Name, arg.UpdatedAt, arg.ID)
+	row := q.db.QueryRowContext(ctx, renameAction, arg.Name, arg.ID)
 	var i Action
 	err := row.Scan(
 		&i.ID,
@@ -1687,7 +1685,7 @@ func (q *Queries) RenameAction(ctx context.Context, arg RenameActionParams) (*Ac
 }
 
 const renameDeviceGroup = `-- name: RenameDeviceGroup :one
-UPDATE device_groups SET name = ? WHERE id = ? RETURNING id, name, description, created_at
+UPDATE device_groups SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, name, description, created_at, updated_at
 `
 
 type RenameDeviceGroupParams struct {
@@ -1703,12 +1701,13 @@ func (q *Queries) RenameDeviceGroup(ctx context.Context, arg RenameDeviceGroupPa
 		&i.Name,
 		&i.Description,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return &i, err
 }
 
 const renameRegistrationToken = `-- name: RenameRegistrationToken :one
-UPDATE registration_tokens SET name = ? WHERE id = ? RETURNING id, value_hash, name, max_uses, current_uses, expires_at, created_at
+UPDATE registration_tokens SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, value_hash, name, max_uses, current_uses, expires_at, created_at, updated_at
 `
 
 type RenameRegistrationTokenParams struct {
@@ -1727,6 +1726,7 @@ func (q *Queries) RenameRegistrationToken(ctx context.Context, arg RenameRegistr
 		&i.CurrentUses,
 		&i.ExpiresAt,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return &i, err
 }
@@ -1759,9 +1759,9 @@ func (q *Queries) RevokeRoleFromUser(ctx context.Context, arg RevokeRoleFromUser
 
 const rotateUserSession = `-- name: RotateUserSession :one
 UPDATE users
-SET session_version = session_version + 1
+SET session_version = session_version + 1, updated_at = CURRENT_TIMESTAMP
 WHERE id = ? AND session_version = ?
-RETURNING id, email, display_name, session_version, created_at, last_login_at
+RETURNING id, email, display_name, session_version, created_at, updated_at, last_login_at
 `
 
 type RotateUserSessionParams struct {
@@ -1778,13 +1778,14 @@ func (q *Queries) RotateUserSession(ctx context.Context, arg RotateUserSessionPa
 		&i.DisplayName,
 		&i.SessionVersion,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.LastLoginAt,
 	)
 	return &i, err
 }
 
 const rotateUserSessionByID = `-- name: RotateUserSessionByID :one
-UPDATE users SET session_version = session_version + 1 WHERE id = ? RETURNING id, email, display_name, session_version, created_at, last_login_at
+UPDATE users SET session_version = session_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, email, display_name, session_version, created_at, updated_at, last_login_at
 `
 
 func (q *Queries) RotateUserSessionByID(ctx context.Context, id string) (*User, error) {
@@ -1796,6 +1797,7 @@ func (q *Queries) RotateUserSessionByID(ctx context.Context, id string) (*User, 
 		&i.DisplayName,
 		&i.SessionVersion,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.LastLoginAt,
 	)
 	return &i, err
@@ -1803,7 +1805,8 @@ func (q *Queries) RotateUserSessionByID(ctx context.Context, id string) (*User, 
 
 const setPendingDeviceCertificate = `-- name: SetPendingDeviceCertificate :execrows
 UPDATE devices
-SET pending_certificate_pem = ?, pending_cert_serial = ?, pending_cert_expires_at = ?
+SET pending_certificate_pem = ?, pending_cert_serial = ?, pending_cert_expires_at = ?,
+    updated_at = CURRENT_TIMESTAMP
 WHERE id = ? AND active_cert_serial = ?
 `
 
@@ -1830,7 +1833,7 @@ func (q *Queries) SetPendingDeviceCertificate(ctx context.Context, arg SetPendin
 }
 
 const touchDevice = `-- name: TouchDevice :exec
-UPDATE devices SET hostname = ?, agent_version = ?, last_seen_at = ? WHERE id = ?
+UPDATE devices SET hostname = ?, agent_version = ?, last_seen_at = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
 `
 
 type TouchDeviceParams struct {
@@ -1851,17 +1854,16 @@ func (q *Queries) TouchDevice(ctx context.Context, arg TouchDeviceParams) error 
 }
 
 const updateActionDescription = `-- name: UpdateActionDescription :one
-UPDATE actions SET description = ?, updated_at = ? WHERE id = ? RETURNING id, name, description, action_blob, created_at, updated_at
+UPDATE actions SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, name, description, action_blob, created_at, updated_at
 `
 
 type UpdateActionDescriptionParams struct {
-	Description string    `json:"description"`
-	UpdatedAt   time.Time `json:"updated_at"`
-	ID          string    `json:"id"`
+	Description string `json:"description"`
+	ID          string `json:"id"`
 }
 
 func (q *Queries) UpdateActionDescription(ctx context.Context, arg UpdateActionDescriptionParams) (*Action, error) {
-	row := q.db.QueryRowContext(ctx, updateActionDescription, arg.Description, arg.UpdatedAt, arg.ID)
+	row := q.db.QueryRowContext(ctx, updateActionDescription, arg.Description, arg.ID)
 	var i Action
 	err := row.Scan(
 		&i.ID,
@@ -1875,18 +1877,17 @@ func (q *Queries) UpdateActionDescription(ctx context.Context, arg UpdateActionD
 }
 
 const updateActionParams = `-- name: UpdateActionParams :one
-UPDATE actions SET action_blob = ?, updated_at = ?
+UPDATE actions SET action_blob = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ? RETURNING id, name, description, action_blob, created_at, updated_at
 `
 
 type UpdateActionParamsParams struct {
-	ActionBlob []byte    `json:"action_blob"`
-	UpdatedAt  time.Time `json:"updated_at"`
-	ID         string    `json:"id"`
+	ActionBlob []byte `json:"action_blob"`
+	ID         string `json:"id"`
 }
 
 func (q *Queries) UpdateActionParams(ctx context.Context, arg UpdateActionParamsParams) (*Action, error) {
-	row := q.db.QueryRowContext(ctx, updateActionParams, arg.ActionBlob, arg.UpdatedAt, arg.ID)
+	row := q.db.QueryRowContext(ctx, updateActionParams, arg.ActionBlob, arg.ID)
 	var i Action
 	err := row.Scan(
 		&i.ID,
@@ -1900,7 +1901,7 @@ func (q *Queries) UpdateActionParams(ctx context.Context, arg UpdateActionParams
 }
 
 const updateDeviceGroupDescription = `-- name: UpdateDeviceGroupDescription :one
-UPDATE device_groups SET description = ? WHERE id = ? RETURNING id, name, description, created_at
+UPDATE device_groups SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, name, description, created_at, updated_at
 `
 
 type UpdateDeviceGroupDescriptionParams struct {
@@ -1916,25 +1917,25 @@ func (q *Queries) UpdateDeviceGroupDescription(ctx context.Context, arg UpdateDe
 		&i.Name,
 		&i.Description,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return &i, err
 }
 
 const updateIdentityProvider = `-- name: UpdateIdentityProvider :one
 UPDATE identity_providers
-SET name = ?, enabled = ?, client_id = ?, issuer_url = ?, scopes_json = ?, updated_at = ?
+SET name = ?, enabled = ?, client_id = ?, issuer_url = ?, scopes_json = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 RETURNING id, name, slug, enabled, client_id, issuer_url, scopes_json, created_at, updated_at
 `
 
 type UpdateIdentityProviderParams struct {
-	Name       string    `json:"name"`
-	Enabled    bool      `json:"enabled"`
-	ClientID   string    `json:"client_id"`
-	IssuerUrl  string    `json:"issuer_url"`
-	ScopesJson string    `json:"scopes_json"`
-	UpdatedAt  time.Time `json:"updated_at"`
-	ID         string    `json:"id"`
+	Name       string `json:"name"`
+	Enabled    bool   `json:"enabled"`
+	ClientID   string `json:"client_id"`
+	IssuerUrl  string `json:"issuer_url"`
+	ScopesJson string `json:"scopes_json"`
+	ID         string `json:"id"`
 }
 
 func (q *Queries) UpdateIdentityProvider(ctx context.Context, arg UpdateIdentityProviderParams) (*IdentityProvider, error) {
@@ -1944,7 +1945,6 @@ func (q *Queries) UpdateIdentityProvider(ctx context.Context, arg UpdateIdentity
 		arg.ClientID,
 		arg.IssuerUrl,
 		arg.ScopesJson,
-		arg.UpdatedAt,
 		arg.ID,
 	)
 	var i IdentityProvider
@@ -1963,23 +1963,17 @@ func (q *Queries) UpdateIdentityProvider(ctx context.Context, arg UpdateIdentity
 }
 
 const updateRole = `-- name: UpdateRole :one
-UPDATE roles SET name = ?, description = ?, updated_at = ? WHERE id = ? RETURNING id, name, description, created_at, updated_at
+UPDATE roles SET name = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, name, description, created_at, updated_at
 `
 
 type UpdateRoleParams struct {
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	UpdatedAt   time.Time `json:"updated_at"`
-	ID          string    `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	ID          string `json:"id"`
 }
 
 func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (*Role, error) {
-	row := q.db.QueryRowContext(ctx, updateRole,
-		arg.Name,
-		arg.Description,
-		arg.UpdatedAt,
-		arg.ID,
-	)
+	row := q.db.QueryRowContext(ctx, updateRole, arg.Name, arg.Description, arg.ID)
 	var i Role
 	err := row.Scan(
 		&i.ID,
@@ -1993,9 +1987,9 @@ func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (*Role, 
 
 const updateUserLogin = `-- name: UpdateUserLogin :one
 UPDATE users
-SET email = ?, display_name = ?, session_version = session_version + 1, last_login_at = ?
+SET email = ?, display_name = ?, session_version = session_version + 1, last_login_at = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
-RETURNING id, email, display_name, session_version, created_at, last_login_at
+RETURNING id, email, display_name, session_version, created_at, updated_at, last_login_at
 `
 
 type UpdateUserLoginParams struct {
@@ -2019,6 +2013,7 @@ func (q *Queries) UpdateUserLogin(ctx context.Context, arg UpdateUserLoginParams
 		&i.DisplayName,
 		&i.SessionVersion,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.LastLoginAt,
 	)
 	return &i, err

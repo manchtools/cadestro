@@ -10,7 +10,7 @@ FROM scheduled_work
 WHERE retired = FALSE;
 
 -- name: RetireWork :exec
-UPDATE scheduled_work SET retired = TRUE WHERE work_id = ?;
+UPDATE scheduled_work SET retired = TRUE, updated_at = CURRENT_TIMESTAMP WHERE work_id = ?;
 
 -- name: DeleteWork :exec
 DELETE FROM scheduled_work WHERE work_id = ?;
@@ -19,21 +19,21 @@ DELETE FROM scheduled_work WHERE work_id = ?;
 SELECT 1 FROM scheduled_work WHERE work_id = ?;
 
 -- name: ReviveWork :exec
-UPDATE scheduled_work SET retired = FALSE WHERE work_id = ?;
+UPDATE scheduled_work SET retired = FALSE, updated_at = CURRENT_TIMESTAMP WHERE work_id = ?;
 
 -- name: InsertScheduledWork :exec
 INSERT INTO scheduled_work
-    (work_id, run_id, manifest_blob, retired, received_at, next_execute_at)
-VALUES (?, ?, ?, FALSE, ?, ?);
+    (work_id, run_id, manifest_blob, retired, received_at, next_execute_at, created_at, updated_at)
+VALUES (?, ?, ?, FALSE, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- name: InsertOccurrence :exec
 INSERT INTO scheduled_work_occurrences
-    (work_id, occurrence_id, position, action_id)
-VALUES (?, ?, ?, ?);
+    (work_id, occurrence_id, position, action_id, created_at, updated_at)
+VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- name: SetAssignedPolicyRevision :exec
-INSERT INTO settings (key, value) VALUES ('assigned_policy_revision', ?)
-ON CONFLICT(key) DO UPDATE SET value = excluded.value;
+INSERT INTO settings (key, value, created_at, updated_at) VALUES ('assigned_policy_revision', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP;
 
 -- name: GetDueScheduledWork :many
 SELECT work_id, COALESCE(run_id, ''), manifest_blob,
@@ -64,18 +64,18 @@ WHERE work_id = ? AND state = ?;
 -- name: ResetOccurrences :exec
 UPDATE scheduled_work_occurrences
 SET state = ?, started_at = NULL, completed_at = NULL,
-    result_status = NULL, result_error = ''
+    result_status = NULL, result_error = '', updated_at = CURRENT_TIMESTAMP
 WHERE work_id = ?;
 
 -- name: BeginScheduledRun :exec
 UPDATE scheduled_work
 SET run_id = ?, last_executed_at = ?, next_execute_at = ?,
-    run_started_at = ?, run_in_progress = TRUE
+    run_started_at = ?, run_in_progress = TRUE, updated_at = CURRENT_TIMESTAMP
 WHERE work_id = ?;
 
 -- name: MarkOccurrenceStarted :execrows
 UPDATE scheduled_work_occurrences
-SET state = ?, started_at = ?, completed_at = NULL
+SET state = ?, started_at = ?, completed_at = NULL, updated_at = CURRENT_TIMESTAMP
 WHERE work_id = ? AND occurrence_id = ? AND state = ?;
 
 -- name: GetOccurrenceStates :many
@@ -91,12 +91,14 @@ WHERE work_id = ? AND occurrence_id = ? AND state = ?;
 
 -- name: RecordOccurrence :execrows
 UPDATE scheduled_work_occurrences
-SET state = ?, completed_at = ?, result_status = ?, result_error = ?, last_result_hash = ?
+SET state = ?, completed_at = ?, result_status = ?, result_error = ?, last_result_hash = ?,
+    updated_at = CURRENT_TIMESTAMP
 WHERE work_id = ? AND occurrence_id = ? AND state = ?;
 
 -- name: FinishManifestRun :execrows
 UPDATE scheduled_work
-SET run_in_progress = FALSE, run_started_at = NULL
+SET run_in_progress = FALSE, run_started_at = NULL,
+    updated_at = CURRENT_TIMESTAMP
 WHERE (work_id = ? OR COALESCE(run_id, '') = ?) AND run_in_progress = TRUE;
 
 -- name: DeleteRetiredWork :exec
@@ -104,11 +106,11 @@ DELETE FROM scheduled_work
 WHERE (work_id = ? OR COALESCE(run_id, '') = ?) AND retired = TRUE;
 
 -- name: ClearRunID :exec
-UPDATE scheduled_work SET run_id = NULL WHERE (work_id = ? OR COALESCE(run_id, '') = ?);
+UPDATE scheduled_work SET run_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE (work_id = ? OR COALESCE(run_id, '') = ?);
 
 -- name: InsertResultOutbox :exec
-INSERT INTO result_outbox (id, kind, payload, created_at)
-VALUES (?, ?, ?, ?);
+INSERT INTO result_outbox (id, kind, payload, created_at, updated_at)
+VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- name: GetPendingResults :many
 SELECT id, kind, payload
@@ -117,7 +119,7 @@ WHERE synced = FALSE
 ORDER BY sequence;
 
 -- name: MarkPendingResultSynced :exec
-UPDATE result_outbox SET synced = TRUE WHERE id = ?;
+UPDATE result_outbox SET synced = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = ?;
 
 -- name: ListInterruptedOccurrences :many
 SELECT COALESCE(sw.run_id, o.work_id), o.work_id, o.occurrence_id, o.action_id
@@ -127,10 +129,11 @@ WHERE o.state = ?
 ORDER BY o.work_id, o.position;
 
 -- name: InsertRecoveredResult :exec
-INSERT INTO result_outbox (id, kind, payload, created_at)
-VALUES (?, 'ACTION', ?, ?);
+INSERT INTO result_outbox (id, kind, payload, created_at, updated_at)
+VALUES (?, 'ACTION', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- name: RecoverOccurrence :exec
 UPDATE scheduled_work_occurrences
-SET state = ?, completed_at = ?, result_status = ?, result_error = ?
+SET state = ?, completed_at = ?, result_status = ?, result_error = ?,
+    updated_at = CURRENT_TIMESTAMP
 WHERE work_id = ? AND occurrence_id = ? AND state = ?;

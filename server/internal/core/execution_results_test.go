@@ -23,11 +23,11 @@ func TestExecutionResultPersistsSerializedPayload(t *testing.T) {
 	}
 	blob, err := proto.Marshal(action)
 	require.NoError(t, err)
-	_, err = service.store.Queries().CreateAction(ctx, db.CreateActionParams{ID: actionID, Name: "shell", ActionBlob: blob, CreatedAt: now, UpdatedAt: now})
+	_, err = service.store.Queries().CreateAction(ctx, db.CreateActionParams{ID: actionID, Name: "shell", ActionBlob: blob})
 	require.NoError(t, err)
 	_, err = service.store.Queries().CreateDevice(ctx, db.CreateDeviceParams{ID: deviceID, Hostname: "host", AgentVersion: "test", IdentityPublicKey: []byte{1}, ActiveCertificatePem: []byte{1}, ActiveCertSerial: "serial", CertExpiresAt: now.Add(time.Hour), RegisteredAt: now})
 	require.NoError(t, err)
-	_, err = service.store.Queries().CreateAssignment(ctx, db.CreateAssignmentParams{ID: "01K00000000000000000000003", ActionID: actionID, TargetType: 1, TargetID: deviceID, CreatedAt: now})
+	_, err = service.store.Queries().CreateAssignment(ctx, db.CreateAssignmentParams{ID: "01K00000000000000000000003", ActionID: actionID, TargetType: 1, TargetID: deviceID})
 	require.NoError(t, err)
 	result := &cadestrov1.ActionResult{
 		ActionId: &cadestrov1.ActionId{Value: actionID}, Status: cadestrov1.ExecutionStatus_EXECUTION_STATUS_FAILED, Error: "failed",
@@ -60,7 +60,7 @@ func TestDeviceComplianceUsesLinkedShellAction(t *testing.T) {
 	} {
 		blob, err := proto.Marshal(action)
 		require.NoError(t, err)
-		_, err = service.store.Queries().CreateAction(ctx, db.CreateActionParams{ID: action.GetId().GetValue(), Name: action.GetId().GetValue(), ActionBlob: blob, CreatedAt: now, UpdatedAt: now})
+		_, err = service.store.Queries().CreateAction(ctx, db.CreateActionParams{ID: action.GetId().GetValue(), Name: action.GetId().GetValue(), ActionBlob: blob})
 		require.NoError(t, err)
 	}
 	for _, result := range []*cadestrov1.ActionResult{
@@ -102,7 +102,7 @@ func TestListExecutionResultsRejectsCorruptBlobAndMetadata(t *testing.T) {
 			deviceID := "01K00000000000000000000022"
 			actionBlob, err := proto.Marshal(&cadestrov1.Action{Id: &cadestrov1.ActionId{Value: actionID}, Params: &cadestrov1.Action_Shell{Shell: &cadestrov1.ShellActionParams{Script: "true"}}})
 			require.NoError(t, err)
-			_, err = service.store.Queries().CreateAction(ctx, db.CreateActionParams{ID: actionID, Name: "shell", ActionBlob: actionBlob, CreatedAt: now, UpdatedAt: now})
+			_, err = service.store.Queries().CreateAction(ctx, db.CreateActionParams{ID: actionID, Name: "shell", ActionBlob: actionBlob})
 			require.NoError(t, err)
 			_, err = service.store.Queries().CreateDevice(ctx, db.CreateDeviceParams{ID: deviceID, Hostname: "host", AgentVersion: "test", IdentityPublicKey: []byte{1}, ActiveCertificatePem: []byte{1}, ActiveCertSerial: "serial", CertExpiresAt: now.Add(time.Hour), RegisteredAt: now})
 			require.NoError(t, err)

@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"errors"
-	"time"
 
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
@@ -105,13 +104,13 @@ func sameActionKind(left, right *cadestrov1.Action) bool {
 	}
 }
 
-func createActionParams(request *cadestrov1.CreateActionRequest, action *cadestrov1.Action, now time.Time) (db.CreateActionParams, error) {
+func createActionParams(request *cadestrov1.CreateActionRequest, action *cadestrov1.Action) (db.CreateActionParams, error) {
 	action.Id = &cadestrov1.ActionId{Value: ulid.Make().String()}
 	blob, err := proto.Marshal(action)
 	if err != nil {
 		return db.CreateActionParams{}, err
 	}
-	return db.CreateActionParams{ID: action.Id.GetValue(), Name: request.GetName(), Description: request.GetDescription(), ActionBlob: blob, CreatedAt: now, UpdatedAt: now}, nil
+	return db.CreateActionParams{ID: action.Id.GetValue(), Name: request.GetName(), Description: request.GetDescription(), ActionBlob: blob}, nil
 }
 
 func (service *Service) CreateAction(ctx context.Context, request *connect.Request[cadestrov1.CreateActionRequest]) (*connect.Response[cadestrov1.CreateActionResponse], error) {
@@ -119,7 +118,7 @@ func (service *Service) CreateAction(ctx context.Context, request *connect.Reque
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
-	params, err := createActionParams(request.Msg, actionValue, service.now().UTC())
+	params, err := createActionParams(request.Msg, actionValue)
 	if err != nil {
 		return nil, service.internal("encode action", err)
 	}
@@ -177,12 +176,12 @@ func (service *Service) ListActions(ctx context.Context, request *connect.Reques
 }
 
 func (service *Service) RenameAction(ctx context.Context, request *connect.Request[cadestrov1.RenameActionRequest]) (*connect.Response[cadestrov1.UpdateActionResponse], error) {
-	action, err := service.store.Queries().RenameAction(ctx, db.RenameActionParams{Name: request.Msg.GetName(), UpdatedAt: service.now().UTC(), ID: request.Msg.GetId().GetValue()})
+	action, err := service.store.Queries().RenameAction(ctx, db.RenameActionParams{Name: request.Msg.GetName(), ID: request.Msg.GetId().GetValue()})
 	return service.actionUpdateResponse(ctx, "rename action", action, err)
 }
 
 func (service *Service) UpdateActionDescription(ctx context.Context, request *connect.Request[cadestrov1.UpdateActionDescriptionRequest]) (*connect.Response[cadestrov1.UpdateActionResponse], error) {
-	action, err := service.store.Queries().UpdateActionDescription(ctx, db.UpdateActionDescriptionParams{Description: request.Msg.GetDescription(), UpdatedAt: service.now().UTC(), ID: request.Msg.GetId().GetValue()})
+	action, err := service.store.Queries().UpdateActionDescription(ctx, db.UpdateActionDescriptionParams{Description: request.Msg.GetDescription(), ID: request.Msg.GetId().GetValue()})
 	return service.actionUpdateResponse(ctx, "update action description", action, err)
 }
 
@@ -211,7 +210,7 @@ func (service *Service) UpdateActionParams(ctx context.Context, request *connect
 		return nil, service.internal("encode action parameters", err)
 	}
 	action, err := service.store.Queries().UpdateActionParams(ctx, db.UpdateActionParamsParams{
-		ActionBlob: blob, UpdatedAt: service.now().UTC(), ID: current.ID,
+		ActionBlob: blob, ID: current.ID,
 	})
 	return service.actionUpdateResponse(ctx, "update action parameters", action, err)
 }

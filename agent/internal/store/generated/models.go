@@ -14,6 +14,7 @@ type ResultOutbox struct {
 	Kind      string    `json:"kind"`
 	Payload   []byte    `json:"payload"`
 	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 	Synced    bool      `json:"synced"`
 }
 
@@ -27,6 +28,8 @@ type ScheduledWork struct {
 	NextExecuteAt  time.Time  `json:"next_execute_at"`
 	RunStartedAt   *time.Time `json:"run_started_at"`
 	RunInProgress  bool       `json:"run_in_progress"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
 }
 
 type ScheduledWorkOccurrence struct {
@@ -40,9 +43,13 @@ type ScheduledWorkOccurrence struct {
 	ResultStatus   *int32     `json:"result_status"`
 	ResultError    string     `json:"result_error"`
 	LastResultHash string     `json:"last_result_hash"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
 }
 
 type Setting struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+	Key       string    `json:"key"`
+	Value     string    `json:"value"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

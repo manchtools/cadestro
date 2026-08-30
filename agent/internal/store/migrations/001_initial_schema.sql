@@ -2,7 +2,9 @@
 
 CREATE TABLE settings (
     key TEXT PRIMARY KEY,
-    value TEXT NOT NULL
+    value TEXT NOT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL
 );
 
 CREATE TABLE scheduled_work (
@@ -14,7 +16,9 @@ CREATE TABLE scheduled_work (
     last_executed_at DATETIME,
     next_execute_at DATETIME NOT NULL,
     run_started_at DATETIME,
-    run_in_progress BOOLEAN NOT NULL DEFAULT FALSE
+    run_in_progress BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL
 );
 
 CREATE INDEX idx_scheduled_work_due ON scheduled_work(next_execute_at);
@@ -31,6 +35,8 @@ CREATE TABLE scheduled_work_occurrences (
     result_status INTEGER,
     result_error TEXT NOT NULL DEFAULT '',
     last_result_hash TEXT NOT NULL DEFAULT '',
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
     PRIMARY KEY (work_id, occurrence_id),
     UNIQUE (work_id, position),
     FOREIGN KEY (work_id) REFERENCES scheduled_work(work_id) ON DELETE CASCADE
@@ -42,6 +48,7 @@ CREATE TABLE result_outbox (
     kind TEXT NOT NULL CHECK (kind IN ('ACTION', 'MANIFEST')),
     payload BLOB NOT NULL,
     created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
     synced BOOLEAN NOT NULL DEFAULT FALSE
 );
 

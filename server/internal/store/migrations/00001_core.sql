@@ -18,6 +18,7 @@ CREATE TABLE users (
     display_name TEXT NOT NULL DEFAULT '',
     session_version INTEGER NOT NULL DEFAULT 1,
     created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
     last_login_at DATETIME NOT NULL
 );
 
@@ -38,8 +39,8 @@ CREATE TABLE role_permissions (
 
 INSERT INTO roles (id, name, description, created_at, updated_at)
 VALUES
-    ('01J00000000000000000000001', 'Administrators', 'Full control-plane access', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z'),
-    ('01J00000000000000000000002', 'Users', 'Read current user', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z');
+    ('01J00000000000000000000001', 'Administrators', 'Full control-plane access', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('01J00000000000000000000002', 'Users', 'Read current user', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 INSERT INTO role_permissions (role_id, permission) VALUES
     ('01J00000000000000000000001', 1), ('01J00000000000000000000001', 2),
@@ -93,7 +94,8 @@ CREATE TABLE registration_tokens (
     max_uses INTEGER NOT NULL DEFAULT 0,
     current_uses INTEGER NOT NULL DEFAULT 0,
     expires_at DATETIME NOT NULL,
-    created_at DATETIME NOT NULL
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL
 );
 
 CREATE TABLE devices (
@@ -108,7 +110,9 @@ CREATE TABLE devices (
     pending_cert_serial TEXT,
     pending_cert_expires_at DATETIME,
     registered_at DATETIME NOT NULL,
-    last_seen_at DATETIME
+    last_seen_at DATETIME,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL
 );
 
 CREATE TABLE actions (
@@ -124,7 +128,8 @@ CREATE TABLE device_groups (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     description TEXT NOT NULL DEFAULT '',
-    created_at DATETIME NOT NULL
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL
 );
 
 CREATE TABLE device_group_members (

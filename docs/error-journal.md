@@ -117,3 +117,15 @@
 **Harness fix**: promote the operator ruling in AGENTS.md that ActionResult binary storage is the sole execution payload, with compliance inferred from the linked action's concrete oneof.
 
 **Prevention**: when a protobuf already carries a complete outcome, inspect its descriptor and retain only relational metadata needed for identity, foreign-key linking, and ordering; derive every other value from the blob or its linked action.
+
+## 2026-08-30 Wrong pattern: Let application code own lifecycle timestamps
+
+**What happened**: lifecycle timestamps were inconsistently caller-supplied and several mutable tables/updates lacked updated_at.
+
+**What the user said**: "also the SQL UPDATE queries dont always update the \"updated_at\" field. Same for the INSERT. It should populate the current time inside the query and not take the time as input. Please make sure that applied and each insertion also sets the created_at and updated_at to the same date."
+
+**Root cause**: no schema-wide distinction between database-owned lifecycle timestamps and caller-owned domain event times.
+
+**Harness fix**: recorded AGENTS ruling.
+
+**Prevention**: enumerate every mutable table and every INSERT/UPDATE in both sqlc backends, then prove no lifecycle timestamp bind parameters remain.
