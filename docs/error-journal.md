@@ -81,3 +81,15 @@
 **Harness fix**: add the recorded OIDC control-origin cookie ruling to root AGENTS.md.
 
 **Prevention**: trace cookie origin, browser credential mode, and exact-origin CORS behavior before rejecting cookie-backed transaction state for cross-origin deployments.
+
+## 2026-08-30 Ignored project rule: Preserved a redundant action type discriminator
+
+**What happened**: During the action-blob refactor, we preserved `Action.type`, `ManagedAction.type`, and `CreateActionRequest.type` even though each already has a concrete `oneof params` whose selected arm is the authoritative action kind.
+
+**What the user said**: "I see, but why is the action type of the Action message not beeing infered by what is passed to params?"
+
+**Root cause**: We carried the old relational discriminator through the storage refactor instead of reapplying Stallion proto §11 (`oneof` of concrete messages beats an enum kind plus parameters) to the entire contract class.
+
+**Harness fix**: None; the binding Stallion proto rule already prohibits this redundant shape.
+
+**Prevention**: whenever a proto gains or retains a concrete oneof, query the descriptor for sibling enum discriminators in every message using that oneof and remove them unless they encode independent state.
