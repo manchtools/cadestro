@@ -39,12 +39,15 @@ func timestamp(value time.Time) *timestamppb.Timestamp { return timestamppb.New(
 
 func (service *Service) CreateRole(ctx context.Context, request *connect.Request[cadestrov1.CreateRoleRequest]) (*connect.Response[cadestrov1.CreateRoleResponse], error) {
 	id := ulid.Make().String()
+	var role *db.Role
 	if err := service.store.Transaction(ctx, func(queries *db.Queries) error {
-		if _, err := queries.CreateRole(ctx, db.CreateRoleParams{ID: id, Name: request.Msg.GetName(), Description: request.Msg.GetDescription()}); err != nil {
+		var err error
+		role, err = queries.CreateRole(ctx, db.CreateRoleParams{ID: id, Name: request.Msg.GetName(), Description: request.Msg.GetDescription()})
+		if err != nil {
 			return err
 		}
 		for _, permission := range request.Msg.GetPermissions() {
-			if err := queries.GrantRolePermission(ctx, db.GrantRolePermissionParams{RoleID: id, Permission: permission}); err != nil {
+			if _, err := queries.GrantRolePermission(ctx, db.GrantRolePermissionParams{RoleID: id, Permission: permission}); err != nil {
 				return err
 			}
 		}
@@ -54,10 +57,6 @@ func (service *Service) CreateRole(ctx context.Context, request *connect.Request
 			return nil, rpcConflict("role name")
 		}
 		return nil, service.internal("set role permissions", err)
-	}
-	role, err := service.store.Queries().GetRole(ctx, id)
-	if err != nil {
-		return nil, service.internal("read role", err)
 	}
 	value, err := roleProto(ctx, service.store.Queries(), role)
 	if err != nil {
@@ -100,9 +99,8 @@ func (service *Service) ListRoles(ctx context.Context, request *connect.Request[
 
 func (service *Service) RenameRole(ctx context.Context, request *connect.Request[cadestrov1.RenameRoleRequest]) (*connect.Response[cadestrov1.RenameRoleResponse], error) {
 	id := request.Msg.GetId().GetValue()
-	role, err := service.roleMutation(ctx, id, "rename role", func(queries *db.Queries) error {
-		_, err := queries.RenameRole(ctx, db.RenameRoleParams{Name: request.Msg.GetName(), ID: id})
-		return err
+	role, err := service.roleMutation(ctx, id, "rename role", func(queries *db.Queries) (*db.Role, error) {
+		return queries.RenameRole(ctx, db.RenameRoleParams{Name: request.Msg.GetName(), ID: id})
 	})
 	if err != nil {
 		return nil, err
@@ -112,9 +110,8 @@ func (service *Service) RenameRole(ctx context.Context, request *connect.Request
 
 func (service *Service) SetRoleDescription(ctx context.Context, request *connect.Request[cadestrov1.SetRoleDescriptionRequest]) (*connect.Response[cadestrov1.SetRoleDescriptionResponse], error) {
 	id := request.Msg.GetId().GetValue()
-	role, err := service.roleMutation(ctx, id, "set role description", func(queries *db.Queries) error {
-		_, err := queries.SetRoleDescription(ctx, db.SetRoleDescriptionParams{Description: request.Msg.GetDescription(), ID: id})
-		return err
+	role, err := service.roleMutation(ctx, id, "set role description", func(queries *db.Queries) (*db.Role, error) {
+		return queries.SetRoleDescription(ctx, db.SetRoleDescriptionParams{Description: request.Msg.GetDescription(), ID: id})
 	})
 	if err != nil {
 		return nil, err
@@ -124,9 +121,9 @@ func (service *Service) SetRoleDescription(ctx context.Context, request *connect
 
 func (service *Service) GrantRolePermission(ctx context.Context, request *connect.Request[cadestrov1.GrantRolePermissionRequest]) (*connect.Response[cadestrov1.GrantRolePermissionResponse], error) {
 	id := request.Msg.GetId().GetValue()
-	role, err := service.roleMutation(ctx, id, "grant role permission", func(queries *db.Queries) error {
-		if err := queries.GrantRolePermission(ctx, db.GrantRolePermissionParams{RoleID: id, Permission: request.Msg.GetPermission()}); err != nil {
-			return err
+	role, err := service.roleMutation(ctx, id, "grant role permission", func(queries *db.Queries) (*db.Role, error) {
+		if _, err := queries.GrantRolePermission(ctx, db.GrantRolePermissionParams{RoleID: id, Permission: request.Msg.GetPermission()}); err != nil {
+			return nil, err
 		}
 		return queries.TouchRole(ctx, id)
 	})
@@ -138,13 +135,13 @@ func (service *Service) GrantRolePermission(ctx context.Context, request *connec
 
 func (service *Service) RevokeRolePermission(ctx context.Context, request *connect.Request[cadestrov1.RevokeRolePermissionRequest]) (*connect.Response[cadestrov1.RevokeRolePermissionResponse], error) {
 	id := request.Msg.GetId().GetValue()
-	role, err := service.roleMutation(ctx, id, "revoke role permission", func(queries *db.Queries) error {
+	role, err := service.roleMutation(ctx, id, "revoke role permission", func(queries *db.Queries) (*db.Role, error) {
 		rows, err := queries.RevokeRolePermission(ctx, db.RevokeRolePermissionParams{RoleID: id, Permission: request.Msg.GetPermission()})
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if rows != 1 {
-			return sql.ErrNoRows
+			return nil, sql.ErrNoRows
 		}
 		return queries.TouchRole(ctx, id)
 	})
@@ -154,15 +151,18 @@ func (service *Service) RevokeRolePermission(ctx context.Context, request *conne
 	return connect.NewResponse(&cadestrov1.RevokeRolePermissionResponse{Role: role}), nil
 }
 
-func (service *Service) roleMutation(ctx context.Context, id, operation string, mutate func(*db.Queries) error) (*cadestrov1.Role, error) {
+func (service *Service) roleMutation(ctx context.Context, id, operation string, mutate func(*db.Queries) (*db.Role, error)) (*cadestrov1.Role, error) {
+	var role *db.Role
 	if err := service.store.Transaction(ctx, func(queries *db.Queries) error {
-		if _, err := queries.GetRole(ctx, id); err != nil {
+		var err error
+		role, err = mutate(queries)
+		if err != nil {
 			return err
 		}
-		if err := mutate(queries); err != nil {
+		if err := queries.BumpSessionsForRole(ctx, id); err != nil {
 			return err
 		}
-		return queries.BumpSessionsForRole(ctx, id)
+		return nil
 	}); err != nil {
 		if store.IsNotFound(err) {
 			return nil, rpcNotFound("role")
@@ -175,10 +175,6 @@ func (service *Service) roleMutation(ctx context.Context, id, operation string, 
 		}
 		return nil, service.internal(operation, err)
 	}
-	role, err := service.store.Queries().GetRole(ctx, id)
-	if err != nil {
-		return nil, service.internal("read updated role", err)
-	}
 	value, err := roleProto(ctx, service.store.Queries(), role)
 	if err != nil {
 		return nil, service.internal("read role permissions", err)
@@ -189,10 +185,6 @@ func (service *Service) roleMutation(ctx context.Context, id, operation string, 
 func (service *Service) DeleteRole(ctx context.Context, request *connect.Request[cadestrov1.DeleteRoleRequest]) (*connect.Response[cadestrov1.DeleteRoleResponse], error) {
 	id := request.Msg.GetId().GetValue()
 	err := service.store.Transaction(ctx, func(queries *db.Queries) error {
-		_, err := queries.GetRole(ctx, id)
-		if err != nil {
-			return err
-		}
 		if err := queries.BumpSessionsForRole(ctx, id); err != nil {
 			return err
 		}
@@ -216,13 +208,7 @@ func (service *Service) DeleteRole(ctx context.Context, request *connect.Request
 
 func (service *Service) AssignRoleToUser(ctx context.Context, request *connect.Request[cadestrov1.AssignRoleToUserRequest]) (*connect.Response[cadestrov1.AssignRoleToUserResponse], error) {
 	err := service.store.Transaction(ctx, func(queries *db.Queries) error {
-		if _, err := queries.GetUser(ctx, request.Msg.GetUserId().GetValue()); err != nil {
-			return err
-		}
-		if _, err := queries.GetRole(ctx, request.Msg.GetRoleId().GetValue()); err != nil {
-			return err
-		}
-		if err := queries.AssignRoleToUser(ctx, db.AssignRoleToUserParams{UserID: request.Msg.GetUserId().GetValue(), RoleID: request.Msg.GetRoleId().GetValue()}); err != nil {
+		if _, err := queries.AssignRoleToUser(ctx, db.AssignRoleToUserParams{UserID: request.Msg.GetUserId().GetValue(), RoleID: request.Msg.GetRoleId().GetValue()}); err != nil {
 			return err
 		}
 		_, err := queries.RotateUserSessionByID(ctx, request.Msg.GetUserId().GetValue())
@@ -242,12 +228,6 @@ func (service *Service) AssignRoleToUser(ctx context.Context, request *connect.R
 
 func (service *Service) RevokeRoleFromUser(ctx context.Context, request *connect.Request[cadestrov1.RevokeRoleFromUserRequest]) (*connect.Response[cadestrov1.RevokeRoleFromUserResponse], error) {
 	err := service.store.Transaction(ctx, func(queries *db.Queries) error {
-		if _, err := queries.GetUser(ctx, request.Msg.GetUserId().GetValue()); err != nil {
-			return err
-		}
-		if _, err := queries.GetRole(ctx, request.Msg.GetRoleId().GetValue()); err != nil {
-			return err
-		}
 		rows, err := queries.RevokeRoleFromUser(ctx, db.RevokeRoleFromUserParams{UserID: request.Msg.GetUserId().GetValue(), RoleID: request.Msg.GetRoleId().GetValue()})
 		if err != nil {
 			return err

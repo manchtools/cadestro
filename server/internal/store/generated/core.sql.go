@@ -26,8 +26,32 @@ func (q *Queries) AddDeviceToGroup(ctx context.Context, arg AddDeviceToGroupPara
 	return err
 }
 
-const assignRoleToUser = `-- name: AssignRoleToUser :exec
-INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)
+const assignInitialRole = `-- name: AssignInitialRole :exec
+INSERT INTO user_roles (user_id, role_id)
+SELECT ?1, roles.id AS role_id
+FROM roles
+WHERE roles.id = (
+    SELECT CASE WHEN COUNT(*) = 1 THEN ?2 ELSE ?3 END AS role_id FROM users
+)
+`
+
+type AssignInitialRoleParams struct {
+	UserID               string `json:"user_id"`
+	AdministratorsRoleID string `json:"administrators_role_id"`
+	UsersRoleID          string `json:"users_role_id"`
+}
+
+func (q *Queries) AssignInitialRole(ctx context.Context, arg AssignInitialRoleParams) error {
+	_, err := q.db.ExecContext(ctx, assignInitialRole, arg.UserID, arg.AdministratorsRoleID, arg.UsersRoleID)
+	return err
+}
+
+const assignRoleToUser = `-- name: AssignRoleToUser :one
+INSERT INTO user_roles (user_id, role_id)
+SELECT users.id, roles.id
+FROM users JOIN roles
+WHERE users.id = ?1 AND roles.id = ?2
+RETURNING user_id
 `
 
 type AssignRoleToUserParams struct {
@@ -35,9 +59,11 @@ type AssignRoleToUserParams struct {
 	RoleID string `json:"role_id"`
 }
 
-func (q *Queries) AssignRoleToUser(ctx context.Context, arg AssignRoleToUserParams) error {
-	_, err := q.db.ExecContext(ctx, assignRoleToUser, arg.UserID, arg.RoleID)
-	return err
+func (q *Queries) AssignRoleToUser(ctx context.Context, arg AssignRoleToUserParams) (string, error) {
+	row := q.db.QueryRowContext(ctx, assignRoleToUser, arg.UserID, arg.RoleID)
+	var user_id string
+	err := row.Scan(&user_id)
+	return user_id, err
 }
 
 const bumpSessionsForRole = `-- name: BumpSessionsForRole :exec
@@ -104,6 +130,35 @@ func (q *Queries) ConfigureIdentityProvider(ctx context.Context, arg ConfigureId
 		&i.ClientID,
 		&i.IssuerUrl,
 		&i.ScopesJson,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const consumeFinalRegistrationToken = `-- name: ConsumeFinalRegistrationToken :one
+DELETE FROM registration_tokens
+WHERE id = ? AND expires_at > ?
+  AND (max_uses = 0 OR current_uses < max_uses)
+  AND max_uses > 0 AND current_uses + 1 >= max_uses
+RETURNING id, value_hash, name, max_uses, current_uses, expires_at, created_at, updated_at
+`
+
+type ConsumeFinalRegistrationTokenParams struct {
+	ID        string    `json:"id"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
+func (q *Queries) ConsumeFinalRegistrationToken(ctx context.Context, arg ConsumeFinalRegistrationTokenParams) (*RegistrationToken, error) {
+	row := q.db.QueryRowContext(ctx, consumeFinalRegistrationToken, arg.ID, arg.ExpiresAt)
+	var i RegistrationToken
+	err := row.Scan(
+		&i.ID,
+		&i.ValueHash,
+		&i.Name,
+		&i.MaxUses,
+		&i.CurrentUses,
+		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -187,17 +242,6 @@ SELECT COUNT(*) FROM registration_tokens
 
 func (q *Queries) CountRegistrationTokens(ctx context.Context) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countRegistrationTokens)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const countUsers = `-- name: CountUsers :one
-SELECT COUNT(*) FROM users
-`
-
-func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countUsers)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -808,32 +852,6 @@ func (q *Queries) GetIdentityProviderBySlug(ctx context.Context, slug string) (*
 	return &i, err
 }
 
-const getIdentityUser = `-- name: GetIdentityUser :one
-SELECT users.id, users.email, users.display_name, users.session_version, users.created_at, users.updated_at, users.last_login_at FROM identity_links
-JOIN users ON users.id = identity_links.user_id
-WHERE identity_links.provider_id = ? AND identity_links.subject = ?
-`
-
-type GetIdentityUserParams struct {
-	ProviderID string `json:"provider_id"`
-	Subject    string `json:"subject"`
-}
-
-func (q *Queries) GetIdentityUser(ctx context.Context, arg GetIdentityUserParams) (*User, error) {
-	row := q.db.QueryRowContext(ctx, getIdentityUser, arg.ProviderID, arg.Subject)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.DisplayName,
-		&i.SessionVersion,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.LastLoginAt,
-	)
-	return &i, err
-}
-
 const getRegistrationToken = `-- name: GetRegistrationToken :one
 SELECT id, value_hash, name, max_uses, current_uses, expires_at, created_at, updated_at FROM registration_tokens WHERE id = ?
 `
@@ -933,18 +951,23 @@ func (q *Queries) GetUser(ctx context.Context, id string) (*User, error) {
 	return &i, err
 }
 
-const grantRolePermission = `-- name: GrantRolePermission :exec
-INSERT INTO role_permissions (role_id, permission) VALUES (?, ?)
+const grantRolePermission = `-- name: GrantRolePermission :one
+INSERT INTO role_permissions (role_id, permission)
+SELECT roles.id, ?1 FROM roles
+WHERE roles.id = ?2
+RETURNING role_id
 `
 
 type GrantRolePermissionParams struct {
-	RoleID     string                `json:"role_id"`
 	Permission cadestrov1.Permission `json:"permission"`
+	RoleID     string                `json:"role_id"`
 }
 
-func (q *Queries) GrantRolePermission(ctx context.Context, arg GrantRolePermissionParams) error {
-	_, err := q.db.ExecContext(ctx, grantRolePermission, arg.RoleID, arg.Permission)
-	return err
+func (q *Queries) GrantRolePermission(ctx context.Context, arg GrantRolePermissionParams) (string, error) {
+	row := q.db.QueryRowContext(ctx, grantRolePermission, arg.Permission, arg.RoleID)
+	var role_id string
+	err := row.Scan(&role_id)
+	return role_id, err
 }
 
 const linkIdentity = `-- name: LinkIdentity :exec
@@ -2080,35 +2103,48 @@ func (q *Queries) TouchDevice(ctx context.Context, arg TouchDeviceParams) error 
 	return err
 }
 
-const touchRole = `-- name: TouchRole :exec
-UPDATE roles SET updated_at = CURRENT_TIMESTAMP WHERE id = ?
+const touchRole = `-- name: TouchRole :one
+UPDATE roles SET updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, name, description, created_at, updated_at
 `
 
-func (q *Queries) TouchRole(ctx context.Context, id string) error {
-	_, err := q.db.ExecContext(ctx, touchRole, id)
-	return err
+func (q *Queries) TouchRole(ctx context.Context, id string) (*Role, error) {
+	row := q.db.QueryRowContext(ctx, touchRole, id)
+	var i Role
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
 }
 
-const updateUserLogin = `-- name: UpdateUserLogin :one
+const updateIdentityUserLogin = `-- name: UpdateIdentityUserLogin :one
 UPDATE users
 SET email = ?, display_name = ?, session_version = session_version + 1, last_login_at = ?, updated_at = CURRENT_TIMESTAMP
-WHERE id = ?
+WHERE users.id = (
+    SELECT identity_links.user_id FROM identity_links
+    WHERE identity_links.provider_id = ? AND identity_links.subject = ?
+)
 RETURNING id, email, display_name, session_version, created_at, updated_at, last_login_at
 `
 
-type UpdateUserLoginParams struct {
+type UpdateIdentityUserLoginParams struct {
 	Email       string    `json:"email"`
 	DisplayName string    `json:"display_name"`
 	LastLoginAt time.Time `json:"last_login_at"`
-	ID          string    `json:"id"`
+	ProviderID  string    `json:"provider_id"`
+	Subject     string    `json:"subject"`
 }
 
-func (q *Queries) UpdateUserLogin(ctx context.Context, arg UpdateUserLoginParams) (*User, error) {
-	row := q.db.QueryRowContext(ctx, updateUserLogin,
+func (q *Queries) UpdateIdentityUserLogin(ctx context.Context, arg UpdateIdentityUserLoginParams) (*User, error) {
+	row := q.db.QueryRowContext(ctx, updateIdentityUserLogin,
 		arg.Email,
 		arg.DisplayName,
 		arg.LastLoginAt,
-		arg.ID,
+		arg.ProviderID,
+		arg.Subject,
 	)
 	var i User
 	err := row.Scan(

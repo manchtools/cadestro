@@ -235,12 +235,12 @@ func clearOIDCTransactionCookie(ctx context.Context) {
 func (service *Service) linkIdentity(ctx context.Context, providerID string, claims *idp.UserClaims) (*db.User, error) {
 	var linked *db.User
 	err := service.store.Transaction(ctx, func(queries *db.Queries) error {
-		user, err := queries.GetIdentityUser(ctx, db.GetIdentityUserParams{ProviderID: providerID, Subject: claims.Subject})
+		var err error
+		linked, err = queries.UpdateIdentityUserLogin(ctx, db.UpdateIdentityUserLoginParams{
+			Email: claims.Email, DisplayName: claims.Name, LastLoginAt: service.now().UTC(), ProviderID: providerID, Subject: claims.Subject,
+		})
 		if err == nil {
-			linked, err = queries.UpdateUserLogin(ctx, db.UpdateUserLoginParams{
-				Email: claims.Email, DisplayName: claims.Name, LastLoginAt: service.now().UTC(), ID: user.ID,
-			})
-			return err
+			return nil
 		}
 		if !store.IsNotFound(err) {
 			return err
@@ -260,20 +260,9 @@ func (service *Service) linkIdentity(ctx context.Context, providerID string, cla
 		if err := queries.LinkIdentity(ctx, db.LinkIdentityParams{ProviderID: providerID, Subject: claims.Subject, UserID: linked.ID}); err != nil {
 			return err
 		}
-		count, err := queries.CountUsers(ctx)
-		if err != nil {
-			return err
-		}
-		roleID := usersRoleID
-		if count == 1 {
-			roleID = administratorsRoleID
-		}
-		if _, err := queries.GetRole(ctx, roleID); store.IsNotFound(err) {
-			return nil
-		} else if err != nil {
-			return err
-		}
-		if err := queries.AssignRoleToUser(ctx, db.AssignRoleToUserParams{UserID: linked.ID, RoleID: roleID}); err != nil {
+		if err := queries.AssignInitialRole(ctx, db.AssignInitialRoleParams{
+			UserID: linked.ID, AdministratorsRoleID: administratorsRoleID, UsersRoleID: usersRoleID,
+		}); err != nil {
 			return err
 		}
 		return nil

@@ -39,11 +39,6 @@ DELETE FROM identity_providers WHERE id = ?;
 -- name: GetUser :one
 SELECT * FROM users WHERE id = ?;
 
--- name: GetIdentityUser :one
-SELECT users.* FROM identity_links
-JOIN users ON users.id = identity_links.user_id
-WHERE identity_links.provider_id = ? AND identity_links.subject = ?;
-
 -- name: CreateUser :one
 INSERT INTO users (id, email, display_name, session_version, created_at, updated_at, last_login_at)
 VALUES (?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?)
@@ -52,10 +47,13 @@ RETURNING *;
 -- name: LinkIdentity :exec
 INSERT INTO identity_links (provider_id, subject, user_id) VALUES (?, ?, ?);
 
--- name: UpdateUserLogin :one
+-- name: UpdateIdentityUserLogin :one
 UPDATE users
 SET email = ?, display_name = ?, session_version = session_version + 1, last_login_at = ?, updated_at = CURRENT_TIMESTAMP
-WHERE id = ?
+WHERE users.id = (
+    SELECT identity_links.user_id FROM identity_links
+    WHERE identity_links.provider_id = ? AND identity_links.subject = ?
+)
 RETURNING *;
 
 -- name: RotateUserSession :one
@@ -87,14 +85,17 @@ UPDATE roles SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RE
 -- name: DeleteRole :execrows
 DELETE FROM roles WHERE id = ?;
 
--- name: GrantRolePermission :exec
-INSERT INTO role_permissions (role_id, permission) VALUES (?, ?);
+-- name: GrantRolePermission :one
+INSERT INTO role_permissions (role_id, permission)
+SELECT roles.id, sqlc.arg(permission) FROM roles
+WHERE roles.id = sqlc.arg(role_id)
+RETURNING role_id;
 
 -- name: RevokeRolePermission :execrows
 DELETE FROM role_permissions WHERE role_id = ? AND permission = ?;
 
--- name: TouchRole :exec
-UPDATE roles SET updated_at = CURRENT_TIMESTAMP WHERE id = ?;
+-- name: TouchRole :one
+UPDATE roles SET updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
 
 -- name: ListRolePermissions :many
 SELECT permission FROM role_permissions WHERE role_id = ? ORDER BY permission;
@@ -108,8 +109,20 @@ SELECT DISTINCT role_permissions.permission
 FROM user_roles JOIN role_permissions ON role_permissions.role_id = user_roles.role_id
 WHERE user_roles.user_id = ? ORDER BY role_permissions.permission;
 
--- name: AssignRoleToUser :exec
-INSERT INTO user_roles (user_id, role_id) VALUES (?, ?);
+-- name: AssignInitialRole :exec
+INSERT INTO user_roles (user_id, role_id)
+SELECT sqlc.arg(user_id), roles.id AS role_id
+FROM roles
+WHERE roles.id = (
+    SELECT CASE WHEN COUNT(*) = 1 THEN sqlc.arg(administrators_role_id) ELSE sqlc.arg(users_role_id) END AS role_id FROM users
+);
+
+-- name: AssignRoleToUser :one
+INSERT INTO user_roles (user_id, role_id)
+SELECT users.id, roles.id
+FROM users JOIN roles
+WHERE users.id = sqlc.arg(user_id) AND roles.id = sqlc.arg(role_id)
+RETURNING user_id;
 
 -- name: RevokeRoleFromUser :execrows
 DELETE FROM user_roles WHERE user_id = ? AND role_id = ?;
@@ -123,9 +136,6 @@ UPDATE users SET session_version = session_version + 1, updated_at = CURRENT_TIM
 
 -- name: ListUsers :many
 SELECT * FROM users WHERE id > ? ORDER BY id LIMIT ?;
-
--- name: CountUsers :one
-SELECT COUNT(*) FROM users;
 
 -- name: CreateRegistrationToken :one
 INSERT INTO registration_tokens (id, value_hash, name, max_uses, current_uses, expires_at, created_at, updated_at)
@@ -142,6 +152,13 @@ WHERE value_hash = ? AND expires_at > ? AND (max_uses = 0 OR current_uses < max_
 -- name: ConsumeRegistrationToken :one
 UPDATE registration_tokens SET current_uses = current_uses + 1, updated_at = CURRENT_TIMESTAMP
 WHERE id = ? AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses)
+RETURNING *;
+
+-- name: ConsumeFinalRegistrationToken :one
+DELETE FROM registration_tokens
+WHERE id = ? AND expires_at > ?
+  AND (max_uses = 0 OR current_uses < max_uses)
+  AND max_uses > 0 AND current_uses + 1 >= max_uses
 RETURNING *;
 
 -- name: ListRegistrationTokens :many

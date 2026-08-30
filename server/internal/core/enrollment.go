@@ -84,6 +84,17 @@ func (service *Service) Register(ctx context.Context, request *connect.Request[c
 }
 
 func consumeRegistrationToken(ctx context.Context, queries *db.Queries, token *db.RegistrationToken, now time.Time) (*db.RegistrationToken, error) {
+	if token.MaxUses > 0 && token.CurrentUses+1 >= token.MaxUses {
+		consumed, err := queries.ConsumeFinalRegistrationToken(ctx, db.ConsumeFinalRegistrationTokenParams{ID: token.ID, ExpiresAt: now})
+		if store.IsNotFound(err) {
+			return nil, errors.New("registration token was consumed concurrently")
+		}
+		if err != nil {
+			return nil, err
+		}
+		consumed.CurrentUses++
+		return consumed, nil
+	}
 	consumed, err := queries.ConsumeRegistrationToken(ctx, db.ConsumeRegistrationTokenParams{ID: token.ID, ExpiresAt: now})
 	if store.IsNotFound(err) {
 		return nil, errors.New("registration token was consumed concurrently")
