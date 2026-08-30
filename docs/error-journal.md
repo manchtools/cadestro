@@ -129,3 +129,27 @@
 **Harness fix**: recorded AGENTS ruling.
 
 **Prevention**: enumerate every mutable table and every INSERT/UPDATE in both sqlc backends, then prove no lifecycle timestamp bind parameters remain.
+
+## 2026-08-30 Wrong pattern: Trusted client outcome state
+
+**What happened**: I treated client-reported outcome fields as authoritative instead of treating ActionResult as observations and deriving compliance on the server from the linked action and observed outputs.
+
+**What the user said**: "The Action Result Proto needs reworking. if we have the Command Output, we dont need a top level error on the ActionResult itself. It can be extracted from the output or detection output. We also dont need a compliant bool flad, as compliance should be calculated by the server based on the result and not reported by the client. The proto services are very \"crud'y\". Id like it to be descriptive because UpdateRole could mean anything, chaging description or name, adding/removing a permission. Same for the other Update requests. They should bascially be grouped by location operations a admin might do. Thats why we use Protobuf and not CRUD"
+
+**Root cause**: I let a wire-level convenience field define server policy rather than tracing the linked action and validating the observed result before computing compliance.
+
+**Harness fix**: record the ActionResult observation-only and server-derived-compliance ruling in AGENTS.md.
+
+**Prevention**: for every client-reported outcome, identify the authoritative linked resource and derive policy values from validated observations before mapping any response.
+
+## 2026-08-30 Wrong pattern: Kept broad CRUD update RPCs
+
+**What happened**: I retained generic update RPCs that combined unrelated administrative mutations instead of giving each operation its own request, response, authorization boundary, and handler.
+
+**What the user said**: "The Action Result Proto needs reworking. if we have the Command Output, we dont need a top level error on the ActionResult itself. It can be extracted from the output or detection output. We also dont need a compliant bool flad, as compliance should be calculated by the server based on the result and not reported by the client. The proto services are very \"crud'y\". Id like it to be descriptive because UpdateRole could mean anything, chaging description or name, adding/removing a permission. Same for the other Update requests. They should bascially be grouped by location operations a admin might do. Thats why we use Protobuf and not CRUD"
+
+**Root cause**: I optimized for shared CRUD plumbing and reused broad response types without modeling the distinct behavior and authorization of rename, description, configuration, enable/disable, and permission operations.
+
+**Harness fix**: record the one-named-operation-per-administrative-RPC ruling in AGENTS.md.
+
+**Prevention**: enumerate every administrative mutation and verify that its RPC, request, response, SQL operation, permission mapping, and tests cover exactly one concern.

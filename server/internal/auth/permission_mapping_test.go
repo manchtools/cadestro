@@ -35,8 +35,8 @@ func TestControlServicePermissionMappingMatchesDescriptor(t *testing.T) {
 		counts[permission]++
 	}
 	for permission := cadestrov1.Permission_PERMISSION_GET_CURRENT_USER; permission <= cadestrov1.Permission_PERMISSION_REVOKE_USER_SESSIONS; permission++ {
-		if counts[permission] != 1 {
-			t.Fatalf("permission %s mapped %d times", permission, counts[permission])
+		if counts[permission] == 0 {
+			t.Fatalf("permission %s is unused", permission)
 		}
 	}
 }

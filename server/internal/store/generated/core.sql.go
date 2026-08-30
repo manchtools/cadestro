@@ -26,20 +26,6 @@ func (q *Queries) AddDeviceToGroup(ctx context.Context, arg AddDeviceToGroupPara
 	return err
 }
 
-const addRolePermission = `-- name: AddRolePermission :exec
-INSERT INTO role_permissions (role_id, permission) VALUES (?, ?)
-`
-
-type AddRolePermissionParams struct {
-	RoleID     string                `json:"role_id"`
-	Permission cadestrov1.Permission `json:"permission"`
-}
-
-func (q *Queries) AddRolePermission(ctx context.Context, arg AddRolePermissionParams) error {
-	_, err := q.db.ExecContext(ctx, addRolePermission, arg.RoleID, arg.Permission)
-	return err
-}
-
 const assignRoleToUser = `-- name: AssignRoleToUser :exec
 INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)
 `
@@ -62,6 +48,66 @@ WHERE id IN (SELECT user_id FROM user_roles WHERE role_id = ?)
 func (q *Queries) BumpSessionsForRole(ctx context.Context, roleID string) error {
 	_, err := q.db.ExecContext(ctx, bumpSessionsForRole, roleID)
 	return err
+}
+
+const configureAction = `-- name: ConfigureAction :one
+UPDATE actions SET action_blob = ?, updated_at = CURRENT_TIMESTAMP
+WHERE id = ? RETURNING id, name, description, action_blob, created_at, updated_at
+`
+
+type ConfigureActionParams struct {
+	ActionBlob []byte `json:"action_blob"`
+	ID         string `json:"id"`
+}
+
+func (q *Queries) ConfigureAction(ctx context.Context, arg ConfigureActionParams) (*Action, error) {
+	row := q.db.QueryRowContext(ctx, configureAction, arg.ActionBlob, arg.ID)
+	var i Action
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.ActionBlob,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const configureIdentityProvider = `-- name: ConfigureIdentityProvider :one
+UPDATE identity_providers
+SET client_id = ?, issuer_url = ?, scopes_json = ?, updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+RETURNING id, name, slug, enabled, client_id, issuer_url, scopes_json, created_at, updated_at
+`
+
+type ConfigureIdentityProviderParams struct {
+	ClientID   string `json:"client_id"`
+	IssuerUrl  string `json:"issuer_url"`
+	ScopesJson string `json:"scopes_json"`
+	ID         string `json:"id"`
+}
+
+func (q *Queries) ConfigureIdentityProvider(ctx context.Context, arg ConfigureIdentityProviderParams) (*IdentityProvider, error) {
+	row := q.db.QueryRowContext(ctx, configureIdentityProvider,
+		arg.ClientID,
+		arg.IssuerUrl,
+		arg.ScopesJson,
+		arg.ID,
+	)
+	var i IdentityProvider
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.Enabled,
+		&i.ClientID,
+		&i.IssuerUrl,
+		&i.ScopesJson,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
 }
 
 const consumeRegistrationToken = `-- name: ConsumeRegistrationToken :one
@@ -562,6 +608,48 @@ func (q *Queries) DeleteRole(ctx context.Context, id string) (int64, error) {
 	return result.RowsAffected()
 }
 
+const disableIdentityProvider = `-- name: DisableIdentityProvider :one
+UPDATE identity_providers SET enabled = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, name, slug, enabled, client_id, issuer_url, scopes_json, created_at, updated_at
+`
+
+func (q *Queries) DisableIdentityProvider(ctx context.Context, id string) (*IdentityProvider, error) {
+	row := q.db.QueryRowContext(ctx, disableIdentityProvider, id)
+	var i IdentityProvider
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.Enabled,
+		&i.ClientID,
+		&i.IssuerUrl,
+		&i.ScopesJson,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const enableIdentityProvider = `-- name: EnableIdentityProvider :one
+UPDATE identity_providers SET enabled = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, name, slug, enabled, client_id, issuer_url, scopes_json, created_at, updated_at
+`
+
+func (q *Queries) EnableIdentityProvider(ctx context.Context, id string) (*IdentityProvider, error) {
+	row := q.db.QueryRowContext(ctx, enableIdentityProvider, id)
+	var i IdentityProvider
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.Enabled,
+		&i.ClientID,
+		&i.IssuerUrl,
+		&i.ScopesJson,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
 const findDeviceByIdentityKey = `-- name: FindDeviceByIdentityKey :one
 SELECT id, hostname, agent_version, identity_public_key, active_certificate_pem, active_cert_serial, cert_expires_at, pending_certificate_pem, pending_cert_serial, pending_cert_expires_at, registered_at, last_seen_at, created_at, updated_at FROM devices WHERE identity_public_key = ?
 `
@@ -843,6 +931,20 @@ func (q *Queries) GetUser(ctx context.Context, id string) (*User, error) {
 		&i.LastLoginAt,
 	)
 	return &i, err
+}
+
+const grantRolePermission = `-- name: GrantRolePermission :exec
+INSERT INTO role_permissions (role_id, permission) VALUES (?, ?)
+`
+
+type GrantRolePermissionParams struct {
+	RoleID     string                `json:"role_id"`
+	Permission cadestrov1.Permission `json:"permission"`
+}
+
+func (q *Queries) GrantRolePermission(ctx context.Context, arg GrantRolePermissionParams) error {
+	_, err := q.db.ExecContext(ctx, grantRolePermission, arg.RoleID, arg.Permission)
+	return err
 }
 
 const linkIdentity = `-- name: LinkIdentity :exec
@@ -1322,7 +1424,7 @@ func (q *Queries) ListEnabledIdentityProviders(ctx context.Context) ([]*Identity
 }
 
 const listExecutionResults = `-- name: ListExecutionResults :many
-SELECT execution_results.run_id, execution_results.device_id, execution_results.action_id, execution_results.completed_at, execution_results.result_blob, actions.name AS action_name FROM execution_results
+SELECT execution_results.run_id, execution_results.device_id, execution_results.action_id, execution_results.completed_at, execution_results.result_blob, actions.name AS action_name, actions.action_blob FROM execution_results
 JOIN actions ON actions.id = execution_results.action_id
 WHERE execution_results.device_id = ? ORDER BY execution_results.completed_at DESC LIMIT ?
 `
@@ -1339,6 +1441,7 @@ type ListExecutionResultsRow struct {
 	CompletedAt time.Time `json:"completed_at"`
 	ResultBlob  []byte    `json:"result_blob"`
 	ActionName  string    `json:"action_name"`
+	ActionBlob  []byte    `json:"action_blob"`
 }
 
 func (q *Queries) ListExecutionResults(ctx context.Context, arg ListExecutionResultsParams) ([]*ListExecutionResultsRow, error) {
@@ -1357,6 +1460,7 @@ func (q *Queries) ListExecutionResults(ctx context.Context, arg ListExecutionRes
 			&i.CompletedAt,
 			&i.ResultBlob,
 			&i.ActionName,
+			&i.ActionBlob,
 		); err != nil {
 			return nil, err
 		}
@@ -1706,6 +1810,32 @@ func (q *Queries) RenameDeviceGroup(ctx context.Context, arg RenameDeviceGroupPa
 	return &i, err
 }
 
+const renameIdentityProvider = `-- name: RenameIdentityProvider :one
+UPDATE identity_providers SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, name, slug, enabled, client_id, issuer_url, scopes_json, created_at, updated_at
+`
+
+type RenameIdentityProviderParams struct {
+	Name string `json:"name"`
+	ID   string `json:"id"`
+}
+
+func (q *Queries) RenameIdentityProvider(ctx context.Context, arg RenameIdentityProviderParams) (*IdentityProvider, error) {
+	row := q.db.QueryRowContext(ctx, renameIdentityProvider, arg.Name, arg.ID)
+	var i IdentityProvider
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.Enabled,
+		&i.ClientID,
+		&i.IssuerUrl,
+		&i.ScopesJson,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
 const renameRegistrationToken = `-- name: RenameRegistrationToken :one
 UPDATE registration_tokens SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, value_hash, name, max_uses, current_uses, expires_at, created_at, updated_at
 `
@@ -1731,13 +1861,26 @@ func (q *Queries) RenameRegistrationToken(ctx context.Context, arg RenameRegistr
 	return &i, err
 }
 
-const replaceRolePermissions = `-- name: ReplaceRolePermissions :exec
-DELETE FROM role_permissions WHERE role_id = ?
+const renameRole = `-- name: RenameRole :one
+UPDATE roles SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, name, description, created_at, updated_at
 `
 
-func (q *Queries) ReplaceRolePermissions(ctx context.Context, roleID string) error {
-	_, err := q.db.ExecContext(ctx, replaceRolePermissions, roleID)
-	return err
+type RenameRoleParams struct {
+	Name string `json:"name"`
+	ID   string `json:"id"`
+}
+
+func (q *Queries) RenameRole(ctx context.Context, arg RenameRoleParams) (*Role, error) {
+	row := q.db.QueryRowContext(ctx, renameRole, arg.Name, arg.ID)
+	var i Role
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
 }
 
 const revokeRoleFromUser = `-- name: RevokeRoleFromUser :execrows
@@ -1751,6 +1894,23 @@ type RevokeRoleFromUserParams struct {
 
 func (q *Queries) RevokeRoleFromUser(ctx context.Context, arg RevokeRoleFromUserParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, revokeRoleFromUser, arg.UserID, arg.RoleID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const revokeRolePermission = `-- name: RevokeRolePermission :execrows
+DELETE FROM role_permissions WHERE role_id = ? AND permission = ?
+`
+
+type RevokeRolePermissionParams struct {
+	RoleID     string                `json:"role_id"`
+	Permission cadestrov1.Permission `json:"permission"`
+}
+
+func (q *Queries) RevokeRolePermission(ctx context.Context, arg RevokeRolePermissionParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, revokeRolePermission, arg.RoleID, arg.Permission)
 	if err != nil {
 		return 0, err
 	}
@@ -1803,6 +1963,51 @@ func (q *Queries) RotateUserSessionByID(ctx context.Context, id string) (*User, 
 	return &i, err
 }
 
+const setActionDescription = `-- name: SetActionDescription :one
+UPDATE actions SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, name, description, action_blob, created_at, updated_at
+`
+
+type SetActionDescriptionParams struct {
+	Description string `json:"description"`
+	ID          string `json:"id"`
+}
+
+func (q *Queries) SetActionDescription(ctx context.Context, arg SetActionDescriptionParams) (*Action, error) {
+	row := q.db.QueryRowContext(ctx, setActionDescription, arg.Description, arg.ID)
+	var i Action
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.ActionBlob,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const setDeviceGroupDescription = `-- name: SetDeviceGroupDescription :one
+UPDATE device_groups SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, name, description, created_at, updated_at
+`
+
+type SetDeviceGroupDescriptionParams struct {
+	Description string `json:"description"`
+	ID          string `json:"id"`
+}
+
+func (q *Queries) SetDeviceGroupDescription(ctx context.Context, arg SetDeviceGroupDescriptionParams) (*DeviceGroup, error) {
+	row := q.db.QueryRowContext(ctx, setDeviceGroupDescription, arg.Description, arg.ID)
+	var i DeviceGroup
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
 const setPendingDeviceCertificate = `-- name: SetPendingDeviceCertificate :execrows
 UPDATE devices
 SET pending_certificate_pem = ?, pending_cert_serial = ?, pending_cert_expires_at = ?,
@@ -1832,6 +2037,28 @@ func (q *Queries) SetPendingDeviceCertificate(ctx context.Context, arg SetPendin
 	return result.RowsAffected()
 }
 
+const setRoleDescription = `-- name: SetRoleDescription :one
+UPDATE roles SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, name, description, created_at, updated_at
+`
+
+type SetRoleDescriptionParams struct {
+	Description string `json:"description"`
+	ID          string `json:"id"`
+}
+
+func (q *Queries) SetRoleDescription(ctx context.Context, arg SetRoleDescriptionParams) (*Role, error) {
+	row := q.db.QueryRowContext(ctx, setRoleDescription, arg.Description, arg.ID)
+	var i Role
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
 const touchDevice = `-- name: TouchDevice :exec
 UPDATE devices SET hostname = ?, agent_version = ?, last_seen_at = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
 `
@@ -1853,136 +2080,13 @@ func (q *Queries) TouchDevice(ctx context.Context, arg TouchDeviceParams) error 
 	return err
 }
 
-const updateActionDescription = `-- name: UpdateActionDescription :one
-UPDATE actions SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, name, description, action_blob, created_at, updated_at
+const touchRole = `-- name: TouchRole :exec
+UPDATE roles SET updated_at = CURRENT_TIMESTAMP WHERE id = ?
 `
 
-type UpdateActionDescriptionParams struct {
-	Description string `json:"description"`
-	ID          string `json:"id"`
-}
-
-func (q *Queries) UpdateActionDescription(ctx context.Context, arg UpdateActionDescriptionParams) (*Action, error) {
-	row := q.db.QueryRowContext(ctx, updateActionDescription, arg.Description, arg.ID)
-	var i Action
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Description,
-		&i.ActionBlob,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return &i, err
-}
-
-const updateActionParams = `-- name: UpdateActionParams :one
-UPDATE actions SET action_blob = ?, updated_at = CURRENT_TIMESTAMP
-WHERE id = ? RETURNING id, name, description, action_blob, created_at, updated_at
-`
-
-type UpdateActionParamsParams struct {
-	ActionBlob []byte `json:"action_blob"`
-	ID         string `json:"id"`
-}
-
-func (q *Queries) UpdateActionParams(ctx context.Context, arg UpdateActionParamsParams) (*Action, error) {
-	row := q.db.QueryRowContext(ctx, updateActionParams, arg.ActionBlob, arg.ID)
-	var i Action
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Description,
-		&i.ActionBlob,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return &i, err
-}
-
-const updateDeviceGroupDescription = `-- name: UpdateDeviceGroupDescription :one
-UPDATE device_groups SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, name, description, created_at, updated_at
-`
-
-type UpdateDeviceGroupDescriptionParams struct {
-	Description string `json:"description"`
-	ID          string `json:"id"`
-}
-
-func (q *Queries) UpdateDeviceGroupDescription(ctx context.Context, arg UpdateDeviceGroupDescriptionParams) (*DeviceGroup, error) {
-	row := q.db.QueryRowContext(ctx, updateDeviceGroupDescription, arg.Description, arg.ID)
-	var i DeviceGroup
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Description,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return &i, err
-}
-
-const updateIdentityProvider = `-- name: UpdateIdentityProvider :one
-UPDATE identity_providers
-SET name = ?, enabled = ?, client_id = ?, issuer_url = ?, scopes_json = ?, updated_at = CURRENT_TIMESTAMP
-WHERE id = ?
-RETURNING id, name, slug, enabled, client_id, issuer_url, scopes_json, created_at, updated_at
-`
-
-type UpdateIdentityProviderParams struct {
-	Name       string `json:"name"`
-	Enabled    bool   `json:"enabled"`
-	ClientID   string `json:"client_id"`
-	IssuerUrl  string `json:"issuer_url"`
-	ScopesJson string `json:"scopes_json"`
-	ID         string `json:"id"`
-}
-
-func (q *Queries) UpdateIdentityProvider(ctx context.Context, arg UpdateIdentityProviderParams) (*IdentityProvider, error) {
-	row := q.db.QueryRowContext(ctx, updateIdentityProvider,
-		arg.Name,
-		arg.Enabled,
-		arg.ClientID,
-		arg.IssuerUrl,
-		arg.ScopesJson,
-		arg.ID,
-	)
-	var i IdentityProvider
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Slug,
-		&i.Enabled,
-		&i.ClientID,
-		&i.IssuerUrl,
-		&i.ScopesJson,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return &i, err
-}
-
-const updateRole = `-- name: UpdateRole :one
-UPDATE roles SET name = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING id, name, description, created_at, updated_at
-`
-
-type UpdateRoleParams struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	ID          string `json:"id"`
-}
-
-func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (*Role, error) {
-	row := q.db.QueryRowContext(ctx, updateRole, arg.Name, arg.Description, arg.ID)
-	var i Role
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Description,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return &i, err
+func (q *Queries) TouchRole(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, touchRole, id)
+	return err
 }
 
 const updateUserLogin = `-- name: UpdateUserLogin :one

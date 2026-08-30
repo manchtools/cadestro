@@ -29,7 +29,7 @@ func TestDatabaseOwnsLifecycleTimestamps(t *testing.T) {
 	require.WithinDuration(t, time.Now().UTC(), role.CreatedAt, 10*time.Second)
 	require.Equal(t, role.CreatedAt, role.UpdatedAt)
 	time.Sleep(1100 * time.Millisecond)
-	role, err = database.Queries().UpdateRole(ctx, generated.UpdateRoleParams{ID: role.ID, Name: role.Name, Description: role.Description})
+	role, err = database.Queries().SetRoleDescription(ctx, generated.SetRoleDescriptionParams{ID: role.ID, Description: role.Description})
 	require.NoError(t, err)
 	require.True(t, role.UpdatedAt.After(role.CreatedAt))
 }

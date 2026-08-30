@@ -50,6 +50,15 @@ device/action linking, and ordering; compliance classification comes only from
 the linked action concrete oneof; no result-kind discriminator or flattened
 status/error/output/detection/compliance columns.
 
+ActionResult is an observation-only agent payload. The server derives
+compliance from the linked concrete action and observed status and outputs; it
+never trusts a client-supplied compliance or error outcome.
+
+Administrative mutations each model one named operation with its own RPC and
+response. Do not preserve broad CRUD update endpoints when rename,
+description, configuration, enable/disable, or permission operations have
+distinct authorization and behavior.
+
 Lifecycle timestamps for mutable tables are owned by the database: every
 insertion sets created_at and updated_at from the same CURRENT_TIMESTAMP, every
 mutation advances updated_at in SQL, and application code does not supply those

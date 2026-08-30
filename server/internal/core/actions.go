@@ -175,17 +175,25 @@ func (service *Service) ListActions(ctx context.Context, request *connect.Reques
 	return connect.NewResponse(response), nil
 }
 
-func (service *Service) RenameAction(ctx context.Context, request *connect.Request[cadestrov1.RenameActionRequest]) (*connect.Response[cadestrov1.UpdateActionResponse], error) {
+func (service *Service) RenameAction(ctx context.Context, request *connect.Request[cadestrov1.RenameActionRequest]) (*connect.Response[cadestrov1.RenameActionResponse], error) {
 	action, err := service.store.Queries().RenameAction(ctx, db.RenameActionParams{Name: request.Msg.GetName(), ID: request.Msg.GetId().GetValue()})
-	return service.actionUpdateResponse(ctx, "rename action", action, err)
+	mapped, err := service.actionUpdateResponse(ctx, "rename action", action, err)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&cadestrov1.RenameActionResponse{Action: mapped}), nil
 }
 
-func (service *Service) UpdateActionDescription(ctx context.Context, request *connect.Request[cadestrov1.UpdateActionDescriptionRequest]) (*connect.Response[cadestrov1.UpdateActionResponse], error) {
-	action, err := service.store.Queries().UpdateActionDescription(ctx, db.UpdateActionDescriptionParams{Description: request.Msg.GetDescription(), ID: request.Msg.GetId().GetValue()})
-	return service.actionUpdateResponse(ctx, "update action description", action, err)
+func (service *Service) SetActionDescription(ctx context.Context, request *connect.Request[cadestrov1.SetActionDescriptionRequest]) (*connect.Response[cadestrov1.SetActionDescriptionResponse], error) {
+	action, err := service.store.Queries().SetActionDescription(ctx, db.SetActionDescriptionParams{Description: request.Msg.GetDescription(), ID: request.Msg.GetId().GetValue()})
+	mapped, err := service.actionUpdateResponse(ctx, "set action description", action, err)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&cadestrov1.SetActionDescriptionResponse{Action: mapped}), nil
 }
 
-func (service *Service) UpdateActionParams(ctx context.Context, request *connect.Request[cadestrov1.UpdateActionParamsRequest]) (*connect.Response[cadestrov1.UpdateActionResponse], error) {
+func (service *Service) ConfigureAction(ctx context.Context, request *connect.Request[cadestrov1.ConfigureActionRequest]) (*connect.Response[cadestrov1.ConfigureActionResponse], error) {
 	current, err := service.store.Queries().GetAction(ctx, request.Msg.GetId().GetValue())
 	if err != nil {
 		if store.IsNotFound(err) {
@@ -209,13 +217,17 @@ func (service *Service) UpdateActionParams(ctx context.Context, request *connect
 	if err != nil {
 		return nil, service.internal("encode action parameters", err)
 	}
-	action, err := service.store.Queries().UpdateActionParams(ctx, db.UpdateActionParamsParams{
+	action, err := service.store.Queries().ConfigureAction(ctx, db.ConfigureActionParams{
 		ActionBlob: blob, ID: current.ID,
 	})
-	return service.actionUpdateResponse(ctx, "update action parameters", action, err)
+	mapped, err := service.actionUpdateResponse(ctx, "configure action", action, err)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&cadestrov1.ConfigureActionResponse{Action: mapped}), nil
 }
 
-func (service *Service) actionUpdateResponse(ctx context.Context, operation string, action *db.Action, err error) (*connect.Response[cadestrov1.UpdateActionResponse], error) {
+func (service *Service) actionUpdateResponse(ctx context.Context, operation string, action *db.Action, err error) (*cadestrov1.ManagedAction, error) {
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, rpcNotFound("action")
@@ -232,7 +244,7 @@ func (service *Service) actionUpdateResponse(ctx context.Context, operation stri
 	if err != nil {
 		return nil, service.internal("map action", err)
 	}
-	return connect.NewResponse(&cadestrov1.UpdateActionResponse{Action: mapped}), nil
+	return mapped, nil
 }
 
 func (service *Service) DeleteAction(ctx context.Context, request *connect.Request[cadestrov1.DeleteActionRequest]) (*connect.Response[cadestrov1.DeleteActionResponse], error) {

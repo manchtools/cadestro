@@ -312,7 +312,7 @@ func (s *Store) RecordOccurrenceResult(ctx context.Context, result *pb.ActionRes
 	}
 	status := int32(result.GetStatus())
 	updated, err := queries.RecordOccurrence(ctx, generated.RecordOccurrenceParams{
-		State: state, CompletedAt: timePtr(now), ResultStatus: &status, ResultError: result.GetError(), LastResultHash: resultHash,
+		State: state, CompletedAt: timePtr(now), ResultStatus: &status, LastResultHash: resultHash,
 		WorkID: workID, OccurrenceID: result.GetOccurrenceId().GetValue(), State_2: OccurrenceStarted,
 	})
 	if err != nil {
@@ -469,7 +469,7 @@ func (s *Store) RecoverInterruptedOccurrences(ctx context.Context) ([]PendingRes
 			RunId:        &pb.RunId{Value: item.runID},
 			OccurrenceId: &pb.OccurrenceId{Value: item.occurrenceID},
 			Status:       status,
-			Error:        message,
+			Output:       &pb.CommandOutput{Stderr: message},
 			CompletedAt:  timestamppb.New(now),
 		}
 		payload, err := marshalStoredProto(result)
@@ -489,7 +489,7 @@ func (s *Store) RecoverInterruptedOccurrences(ctx context.Context) ([]PendingRes
 		}
 		statusValue := int32(status)
 		if err := queries.RecoverOccurrence(ctx, generated.RecoverOccurrenceParams{
-			State: state, CompletedAt: timePtr(now), ResultStatus: &statusValue, ResultError: message,
+			State: state, CompletedAt: timePtr(now), ResultStatus: &statusValue,
 			WorkID: item.workID, OccurrenceID: item.occurrenceID, State_2: OccurrenceStarted,
 		}); err != nil {
 			return nil, err

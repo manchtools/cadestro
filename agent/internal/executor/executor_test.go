@@ -89,12 +89,45 @@ func TestComplianceShellOnlyDetects(t *testing.T) {
 			DetectionScript: "test -f /etc/example", IsCompliance: true,
 		}},
 	})
-	if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS || result.GetCompliant() {
-		t.Fatalf("result = %s compliant=%v, want success and non-compliant", result.GetStatus(), result.GetCompliant())
+	if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS {
+		t.Fatalf("result = %s, want success", result.GetStatus())
 	}
 	if len(runner.commands) != 1 {
 		t.Fatalf("commands = %d, want one detection command", len(runner.commands))
 	}
+}
+
+func TestShellErrorsUseRelevantOutput(t *testing.T) {
+	t.Run("detection", func(t *testing.T) {
+		runner := &fakeRunner{errors: []error{errors.New("detection failed")}}
+		result := NewExecutor(runner).ExecuteAction(context.Background(), &pb.Action{
+			Id:     &pb.ActionId{Value: "01J0000000000000000000000A"},
+			Params: &pb.Action_Shell{Shell: &pb.ShellActionParams{DetectionScript: "check", Script: "fix"}},
+		})
+		if result.GetDetectionOutput().GetStderr() != "run shell: detection failed" || result.GetOutput() != nil {
+			t.Fatalf("result outputs = %#v, want detection stderr only", result)
+		}
+	})
+	t.Run("verification", func(t *testing.T) {
+		runner := &fakeRunner{results: []sysexec.Result{{ExitCode: 1}, {}, {}}, errors: []error{nil, nil, errors.New("verification failed")}}
+		result := NewExecutor(runner).ExecuteAction(context.Background(), &pb.Action{
+			Id:     &pb.ActionId{Value: "01J0000000000000000000000A"},
+			Params: &pb.Action_Shell{Shell: &pb.ShellActionParams{DetectionScript: "check", Script: "fix"}},
+		})
+		if result.GetDetectionOutput().GetStderr() != "run shell: verification failed" || result.GetOutput().GetStderr() != "" {
+			t.Fatalf("result outputs = %#v, want verification stderr only", result)
+		}
+	})
+	t.Run("ordinary", func(t *testing.T) {
+		runner := &fakeRunner{results: []sysexec.Result{{Stderr: "command stderr"}}, errors: []error{errors.New("command failed")}}
+		result := NewExecutor(runner).ExecuteAction(context.Background(), &pb.Action{
+			Id:     &pb.ActionId{Value: "01J0000000000000000000000A"},
+			Params: &pb.Action_Shell{Shell: &pb.ShellActionParams{Script: "fix"}},
+		})
+		if result.GetOutput().GetStderr() != "command stderr" || result.GetDetectionOutput() != nil {
+			t.Fatalf("result outputs = %#v, want ordinary output stderr", result)
+		}
+	})
 }
 
 func TestShellRemediatesAndVerifies(t *testing.T) {
@@ -107,8 +140,8 @@ func TestShellRemediatesAndVerifies(t *testing.T) {
 			DetectionScript: "test -f /etc/example", Script: "touch /etc/example",
 		}},
 	})
-	if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS || !result.GetChanged() || !result.GetCompliant() {
-		t.Fatalf("result = %s changed=%v compliant=%v", result.GetStatus(), result.GetChanged(), result.GetCompliant())
+	if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS || !result.GetChanged() {
+		t.Fatalf("result = %s changed=%v", result.GetStatus(), result.GetChanged())
 	}
 	if len(runner.commands) != 3 {
 		t.Fatalf("commands = %d, want detect, remediate, verify", len(runner.commands))

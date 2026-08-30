@@ -86,9 +86,9 @@ func TestUpdateActionParamsRejectsKindChange(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = service.UpdateActionParams(ctx, connect.NewRequest(&cadestrov1.UpdateActionParamsRequest{
+	_, err = service.ConfigureAction(ctx, connect.NewRequest(&cadestrov1.ConfigureActionRequest{
 		Id: created.Msg.Action.Id, DesiredState: cadestrov1.DesiredState_DESIRED_STATE_PRESENT,
-		Params: &cadestrov1.UpdateActionParamsRequest_Shell{Shell: &cadestrov1.ShellActionParams{Script: "true"}},
+		Params: &cadestrov1.ConfigureActionRequest_Shell{Shell: &cadestrov1.ShellActionParams{Script: "true"}},
 	}))
 	if connect.CodeOf(err) != connect.CodeInvalidArgument {
 		t.Fatalf("UpdateActionParams() error = %v", err)

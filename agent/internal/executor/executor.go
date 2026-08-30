@@ -46,7 +46,7 @@ func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.Act
 	started := e.now()
 	result := &pb.ActionResult{Status: pb.ExecutionStatus_EXECUTION_STATUS_FAILED}
 	if action == nil || action.GetId() == nil {
-		result.Error = "action is required"
+		result.Output = &pb.CommandOutput{Stderr: "action is required"}
 		return e.finish(result, started)
 	}
 	result.ActionId = action.GetId()
@@ -65,7 +65,7 @@ func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.Act
 	case *pb.Action_Update:
 		output, changed, err = e.executeUpdate(ctx, params.Update)
 	case *pb.Action_Shell:
-		output, result.DetectionOutput, result.Compliant, changed, err = e.executeShell(ctx, params.Shell)
+		output, result.DetectionOutput, changed, err = e.executeShell(ctx, params.Shell)
 	default:
 		err = errors.New("unsupported action parameters")
 	}
@@ -75,11 +75,26 @@ func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.Act
 		result.Status = pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS
 	} else if errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		result.Status = pb.ExecutionStatus_EXECUTION_STATUS_TIMEOUT
-		result.Error = "action timed out"
+		ensureResultError(result, "action timed out")
 	} else {
-		result.Error = err.Error()
+		ensureResultError(result, err.Error())
 	}
 	return e.finish(result, started)
+}
+
+func ensureResultError(result *pb.ActionResult, message string) {
+	if result.GetOutput().GetStderr() != "" || result.GetDetectionOutput().GetStderr() != "" {
+		return
+	}
+	output := result.Output
+	if output == nil {
+		output = result.DetectionOutput
+	}
+	if output == nil {
+		output = &pb.CommandOutput{}
+		result.Output = output
+	}
+	output.Stderr = message
 }
 
 func (e *Executor) finish(result *pb.ActionResult, started time.Time) *pb.ActionResult {
@@ -89,48 +104,63 @@ func (e *Executor) finish(result *pb.ActionResult, started time.Time) *pb.Action
 	return result
 }
 
-func (e *Executor) executeShell(ctx context.Context, params *pb.ShellActionParams) (*pb.CommandOutput, *pb.CommandOutput, bool, bool, error) {
+func (e *Executor) executeShell(ctx context.Context, params *pb.ShellActionParams) (*pb.CommandOutput, *pb.CommandOutput, bool, error) {
 	if params == nil {
-		return nil, nil, false, false, errors.New("shell params required")
+		return nil, nil, false, errors.New("shell params required")
 	}
 	if params.GetIsCompliance() && params.GetDetectionScript() == "" {
-		return nil, nil, false, false, errors.New("compliance shell action requires a detection script")
+		return nil, nil, false, errors.New("compliance shell action requires a detection script")
 	}
 	var detection *pb.CommandOutput
 	if params.GetDetectionScript() != "" {
 		var err error
 		detection, err = e.runShell(ctx, params, params.GetDetectionScript())
 		if err != nil {
-			return nil, detection, false, false, err
+			detection = outputWithError(detection, err)
+			return nil, detection, false, err
 		}
 		if detection.GetExitCode() == 0 {
-			return detection, detection, true, false, nil
+			return nil, detection, false, nil
 		}
 		if params.GetIsCompliance() {
-			return detection, detection, false, false, nil
+			return nil, detection, false, nil
 		}
 	}
 	if params.GetScript() == "" {
-		return nil, detection, false, false, errors.New("shell action requires a script")
+		return nil, detection, false, errors.New("shell action requires a script")
 	}
 	output, err := e.runShell(ctx, params, params.GetScript())
 	if err != nil || output.GetExitCode() != 0 {
 		if err == nil {
 			err = fmt.Errorf("shell exited with status %d", output.GetExitCode())
 		}
-		return output, detection, false, false, err
+		output = outputWithError(output, err)
+		return output, detection, false, err
 	}
 	if params.GetDetectionScript() == "" {
-		return output, nil, false, true, nil
+		return output, nil, true, nil
 	}
 	verified, err := e.runShell(ctx, params, params.GetDetectionScript())
 	if err != nil {
-		return output, verified, false, true, err
+		verified = outputWithError(verified, err)
+		return output, verified, true, err
 	}
 	if verified.GetExitCode() != 0 {
-		return output, verified, false, true, fmt.Errorf("shell remediation verification exited with status %d", verified.GetExitCode())
+		err := fmt.Errorf("shell remediation verification exited with status %d", verified.GetExitCode())
+		verified = outputWithError(verified, err)
+		return output, verified, true, err
 	}
-	return output, verified, true, true, nil
+	return output, verified, true, nil
+}
+
+func outputWithError(output *pb.CommandOutput, err error) *pb.CommandOutput {
+	if output == nil {
+		output = &pb.CommandOutput{}
+	}
+	if output.GetStderr() == "" {
+		output.Stderr = err.Error()
+	}
+	return output
 }
 
 func (e *Executor) runShell(ctx context.Context, params *pb.ShellActionParams, script string) (*pb.CommandOutput, error) {

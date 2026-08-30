@@ -342,14 +342,30 @@ func (service *Service) ListIdentityProviders(ctx context.Context, _ *connect.Re
 	return connect.NewResponse(response), nil
 }
 
-func (service *Service) UpdateIdentityProvider(ctx context.Context, request *connect.Request[cadestrov1.UpdateIdentityProviderRequest]) (*connect.Response[cadestrov1.UpdateIdentityProviderResponse], error) {
+func (service *Service) RenameIdentityProvider(ctx context.Context, request *connect.Request[cadestrov1.RenameIdentityProviderRequest]) (*connect.Response[cadestrov1.RenameIdentityProviderResponse], error) {
 	id := request.Msg.GetId().GetValue()
-	_, err := service.store.Queries().GetIdentityProvider(ctx, id)
+	provider, err := service.store.Queries().RenameIdentityProvider(ctx, db.RenameIdentityProviderParams{Name: request.Msg.GetName(), ID: id})
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, rpcNotFound("identity provider")
 		}
-		return nil, service.internal("get provider for update", err)
+		return nil, service.internal("rename identity provider", err)
+	}
+	mapped, err := providerProto(provider)
+	if err != nil {
+		return nil, service.internal("map identity provider", err)
+	}
+	return connect.NewResponse(&cadestrov1.RenameIdentityProviderResponse{Provider: mapped}), nil
+}
+
+func (service *Service) ConfigureIdentityProvider(ctx context.Context, request *connect.Request[cadestrov1.ConfigureIdentityProviderRequest]) (*connect.Response[cadestrov1.ConfigureIdentityProviderResponse], error) {
+	id := request.Msg.GetId().GetValue()
+	provider, err := service.store.Queries().GetIdentityProvider(ctx, id)
+	if err != nil {
+		if store.IsNotFound(err) {
+			return nil, rpcNotFound("identity provider")
+		}
+		return nil, service.internal("get provider for configure", err)
 	}
 	if _, err := service.newOIDCProvider(ctx, request.Msg.GetClientId().GetValue(), request.Msg.GetIssuerUrl(), request.Msg.GetScopes(), service.publicBaseURL); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("identity provider discovery failed"))
@@ -358,19 +374,64 @@ func (service *Service) UpdateIdentityProvider(ctx context.Context, request *con
 	if err != nil {
 		return nil, service.internal("encode provider scopes", err)
 	}
-	provider, err := service.store.Queries().UpdateIdentityProvider(ctx, db.UpdateIdentityProviderParams{
-		Name: request.Msg.GetName(), Enabled: request.Msg.GetEnabled(), ClientID: request.Msg.GetClientId().GetValue(),
+	provider, err = service.store.Queries().ConfigureIdentityProvider(ctx, db.ConfigureIdentityProviderParams{
+		ClientID:  request.Msg.GetClientId().GetValue(),
 		IssuerUrl: request.Msg.GetIssuerUrl(), ScopesJson: string(scopes),
 		ID: id,
 	})
 	if err != nil {
-		return nil, service.internal("update identity provider", err)
+		return nil, service.internal("configure identity provider", err)
 	}
 	mapped, err := providerProto(provider)
 	if err != nil {
 		return nil, service.internal("map identity provider", err)
 	}
-	return connect.NewResponse(&cadestrov1.UpdateIdentityProviderResponse{Provider: mapped}), nil
+	return connect.NewResponse(&cadestrov1.ConfigureIdentityProviderResponse{Provider: mapped}), nil
+}
+
+func (service *Service) EnableIdentityProvider(ctx context.Context, request *connect.Request[cadestrov1.EnableIdentityProviderRequest]) (*connect.Response[cadestrov1.EnableIdentityProviderResponse], error) {
+	id := request.Msg.GetId().GetValue()
+	current, err := service.store.Queries().GetIdentityProvider(ctx, id)
+	if err != nil {
+		if store.IsNotFound(err) {
+			return nil, rpcNotFound("identity provider")
+		}
+		return nil, service.internal("get provider for enable", err)
+	}
+	var scopes []string
+	if err := json.Unmarshal([]byte(current.ScopesJson), &scopes); err != nil {
+		return nil, service.internal("decode provider scopes", err)
+	}
+	if _, err := service.newOIDCProvider(ctx, current.ClientID, current.IssuerUrl, scopes, service.publicBaseURL); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("identity provider discovery failed"))
+	}
+	provider, err := service.store.Queries().EnableIdentityProvider(ctx, id)
+	if err != nil {
+		if store.IsNotFound(err) {
+			return nil, rpcNotFound("identity provider")
+		}
+		return nil, service.internal("enable identity provider", err)
+	}
+	mapped, err := providerProto(provider)
+	if err != nil {
+		return nil, service.internal("map identity provider", err)
+	}
+	return connect.NewResponse(&cadestrov1.EnableIdentityProviderResponse{Provider: mapped}), nil
+}
+
+func (service *Service) DisableIdentityProvider(ctx context.Context, request *connect.Request[cadestrov1.DisableIdentityProviderRequest]) (*connect.Response[cadestrov1.DisableIdentityProviderResponse], error) {
+	provider, err := service.store.Queries().DisableIdentityProvider(ctx, request.Msg.GetId().GetValue())
+	if err != nil {
+		if store.IsNotFound(err) {
+			return nil, rpcNotFound("identity provider")
+		}
+		return nil, service.internal("disable identity provider", err)
+	}
+	mapped, err := providerProto(provider)
+	if err != nil {
+		return nil, service.internal("map identity provider", err)
+	}
+	return connect.NewResponse(&cadestrov1.DisableIdentityProviderResponse{Provider: mapped}), nil
 }
 
 func (service *Service) DeleteIdentityProvider(ctx context.Context, request *connect.Request[cadestrov1.DeleteIdentityProviderRequest]) (*connect.Response[cadestrov1.DeleteIdentityProviderResponse], error) {

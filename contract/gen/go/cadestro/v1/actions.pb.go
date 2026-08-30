@@ -390,15 +390,13 @@ type ActionResult struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	ActionId        *ActionId              `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	Status          ExecutionStatus        `protobuf:"varint,2,opt,name=status,proto3,enum=cadestro.v1.ExecutionStatus" json:"status,omitempty"`
-	Error           string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
-	Output          *CommandOutput         `protobuf:"bytes,4,opt,name=output,proto3" json:"output,omitempty"`
+	Output          *CommandOutput         `protobuf:"bytes,3,opt,name=output,proto3" json:"output,omitempty"`
+	DetectionOutput *CommandOutput         `protobuf:"bytes,4,opt,name=detection_output,json=detectionOutput,proto3" json:"detection_output,omitempty"`
 	CompletedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
 	Duration        *durationpb.Duration   `protobuf:"bytes,6,opt,name=duration,proto3" json:"duration,omitempty"`
 	Changed         bool                   `protobuf:"varint,7,opt,name=changed,proto3" json:"changed,omitempty"`
-	Compliant       bool                   `protobuf:"varint,8,opt,name=compliant,proto3" json:"compliant,omitempty"`
-	DetectionOutput *CommandOutput         `protobuf:"bytes,9,opt,name=detection_output,json=detectionOutput,proto3" json:"detection_output,omitempty"`
-	RunId           *RunId                 `protobuf:"bytes,10,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	OccurrenceId    *OccurrenceId          `protobuf:"bytes,11,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`
+	RunId           *RunId                 `protobuf:"bytes,8,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	OccurrenceId    *OccurrenceId          `protobuf:"bytes,9,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -447,16 +445,16 @@ func (x *ActionResult) GetStatus() ExecutionStatus {
 	return ExecutionStatus_EXECUTION_STATUS_UNSPECIFIED
 }
 
-func (x *ActionResult) GetError() string {
-	if x != nil {
-		return x.Error
-	}
-	return ""
-}
-
 func (x *ActionResult) GetOutput() *CommandOutput {
 	if x != nil {
 		return x.Output
+	}
+	return nil
+}
+
+func (x *ActionResult) GetDetectionOutput() *CommandOutput {
+	if x != nil {
+		return x.DetectionOutput
 	}
 	return nil
 }
@@ -480,20 +478,6 @@ func (x *ActionResult) GetChanged() bool {
 		return x.Changed
 	}
 	return false
-}
-
-func (x *ActionResult) GetCompliant() bool {
-	if x != nil {
-		return x.Compliant
-	}
-	return false
-}
-
-func (x *ActionResult) GetDetectionOutput() *CommandOutput {
-	if x != nil {
-		return x.DetectionOutput
-	}
-	return nil
 }
 
 func (x *ActionResult) GetRunId() *RunId {
@@ -544,20 +528,17 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\ris_compliance\x18\x06 \x01(\bR\fisCompliance\x1a>\n" +
 	"\x10EnvironmentEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd9\x04\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x98\x04\n" +
 	"\fActionResult\x12:\n" +
 	"\taction_id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\bactionId\x12<\n" +
-	"\x06status\x18\x02 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusB\x06\xbaH\x03\xc8\x01\x01R\x06status\x12!\n" +
-	"\x05error\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\x05error\x122\n" +
-	"\x06output\x18\x04 \x01(\v2\x1a.cadestro.v1.CommandOutputR\x06output\x12=\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusB\x06\xbaH\x03\xc8\x01\x01R\x06status\x122\n" +
+	"\x06output\x18\x03 \x01(\v2\x1a.cadestro.v1.CommandOutputR\x06output\x12E\n" +
+	"\x10detection_output\x18\x04 \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x12=\n" +
 	"\fcompleted_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12?\n" +
 	"\bduration\x18\x06 \x01(\v2\x19.google.protobuf.DurationB\b\xbaH\x05\xaa\x01\x022\x00R\bduration\x12\x18\n" +
-	"\achanged\x18\a \x01(\bR\achanged\x12\x1c\n" +
-	"\tcompliant\x18\b \x01(\bR\tcompliant\x12E\n" +
-	"\x10detection_output\x18\t \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x121\n" +
-	"\x06run_id\x18\n" +
-	" \x01(\v2\x12.cadestro.v1.RunIdB\x06\xbaH\x03\xc8\x01\x01R\x05runId\x12F\n" +
-	"\roccurrence_id\x18\v \x01(\v2\x19.cadestro.v1.OccurrenceIdB\x06\xbaH\x03\xc8\x01\x01R\foccurrenceIdBGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
+	"\achanged\x18\a \x01(\bR\achanged\x121\n" +
+	"\x06run_id\x18\b \x01(\v2\x12.cadestro.v1.RunIdB\x06\xbaH\x03\xc8\x01\x01R\x05runId\x12F\n" +
+	"\roccurrence_id\x18\t \x01(\v2\x19.cadestro.v1.OccurrenceIdB\x06\xbaH\x03\xc8\x01\x01R\foccurrenceIdBGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
 
 var (
 	file_cadestro_v1_actions_proto_rawDescOnce sync.Once
@@ -600,9 +581,9 @@ var file_cadestro_v1_actions_proto_depIdxs = []int32{
 	7,  // 7: cadestro.v1.ActionResult.action_id:type_name -> cadestro.v1.ActionId
 	9,  // 8: cadestro.v1.ActionResult.status:type_name -> cadestro.v1.ExecutionStatus
 	10, // 9: cadestro.v1.ActionResult.output:type_name -> cadestro.v1.CommandOutput
-	11, // 10: cadestro.v1.ActionResult.completed_at:type_name -> google.protobuf.Timestamp
-	12, // 11: cadestro.v1.ActionResult.duration:type_name -> google.protobuf.Duration
-	10, // 12: cadestro.v1.ActionResult.detection_output:type_name -> cadestro.v1.CommandOutput
+	10, // 10: cadestro.v1.ActionResult.detection_output:type_name -> cadestro.v1.CommandOutput
+	11, // 11: cadestro.v1.ActionResult.completed_at:type_name -> google.protobuf.Timestamp
+	12, // 12: cadestro.v1.ActionResult.duration:type_name -> google.protobuf.Duration
 	13, // 13: cadestro.v1.ActionResult.run_id:type_name -> cadestro.v1.RunId
 	14, // 14: cadestro.v1.ActionResult.occurrence_id:type_name -> cadestro.v1.OccurrenceId
 	15, // [15:15] is the sub-list for method output_type

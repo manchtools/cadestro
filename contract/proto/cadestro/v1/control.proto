@@ -10,6 +10,68 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1";
 
+service ControlService {
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+  rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse);
+  rpc ListAuthMethods(ListAuthMethodsRequest) returns (ListAuthMethodsResponse);
+  rpc GetSSOLoginURL(GetSSOLoginURLRequest) returns (GetSSOLoginURLResponse);
+  rpc SSOCallback(SSOCallbackRequest) returns (SSOCallbackResponse);
+  rpc CreateIdentityProvider(CreateIdentityProviderRequest) returns (CreateIdentityProviderResponse);
+  rpc GetIdentityProvider(GetIdentityProviderRequest) returns (GetIdentityProviderResponse);
+  rpc ListIdentityProviders(ListIdentityProvidersRequest) returns (ListIdentityProvidersResponse);
+  rpc RenameIdentityProvider(RenameIdentityProviderRequest) returns (RenameIdentityProviderResponse);
+  rpc ConfigureIdentityProvider(ConfigureIdentityProviderRequest) returns (ConfigureIdentityProviderResponse);
+  rpc EnableIdentityProvider(EnableIdentityProviderRequest) returns (EnableIdentityProviderResponse);
+  rpc DisableIdentityProvider(DisableIdentityProviderRequest) returns (DisableIdentityProviderResponse);
+  rpc DeleteIdentityProvider(DeleteIdentityProviderRequest) returns (DeleteIdentityProviderResponse);
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc RenewCertificate(RenewCertificateRequest) returns (RenewCertificateResponse);
+  rpc ListDevices(ListDevicesRequest) returns (ListDevicesResponse);
+  rpc GetDevice(GetDeviceRequest) returns (GetDeviceResponse);
+  rpc DeleteDevice(DeleteDeviceRequest) returns (DeleteDeviceResponse);
+  rpc CreateToken(CreateTokenRequest) returns (CreateTokenResponse);
+  rpc ListTokens(ListTokensRequest) returns (ListTokensResponse);
+  rpc RenameToken(RenameTokenRequest) returns (RenameTokenResponse);
+  rpc DeleteToken(DeleteTokenRequest) returns (DeleteTokenResponse);
+  rpc CreateAction(CreateActionRequest) returns (CreateActionResponse);
+  rpc GetAction(GetActionRequest) returns (GetActionResponse);
+  rpc ListActions(ListActionsRequest) returns (ListActionsResponse);
+  rpc RenameAction(RenameActionRequest) returns (RenameActionResponse);
+  rpc SetActionDescription(SetActionDescriptionRequest) returns (SetActionDescriptionResponse);
+  rpc ConfigureAction(ConfigureActionRequest) returns (ConfigureActionResponse);
+  rpc DeleteAction(DeleteActionRequest) returns (DeleteActionResponse);
+  rpc CreateDeviceGroup(CreateDeviceGroupRequest) returns (CreateDeviceGroupResponse);
+  rpc GetDeviceGroup(GetDeviceGroupRequest) returns (GetDeviceGroupResponse);
+  rpc ListDeviceGroups(ListDeviceGroupsRequest) returns (ListDeviceGroupsResponse);
+  rpc ListDeviceGroupsForDevice(ListDeviceGroupsForDeviceRequest) returns (ListDeviceGroupsForDeviceResponse);
+  rpc RenameDeviceGroup(RenameDeviceGroupRequest) returns (RenameDeviceGroupResponse);
+  rpc SetDeviceGroupDescription(SetDeviceGroupDescriptionRequest) returns (SetDeviceGroupDescriptionResponse);
+  rpc DeleteDeviceGroup(DeleteDeviceGroupRequest) returns (DeleteDeviceGroupResponse);
+  rpc AddDeviceToGroup(AddDeviceToGroupRequest) returns (AddDeviceToGroupResponse);
+  rpc RemoveDeviceFromGroup(RemoveDeviceFromGroupRequest) returns (RemoveDeviceFromGroupResponse);
+  rpc CreateAssignment(CreateAssignmentRequest) returns (CreateAssignmentResponse);
+  rpc DeleteAssignment(DeleteAssignmentRequest) returns (DeleteAssignmentResponse);
+  rpc ListAssignments(ListAssignmentsRequest) returns (ListAssignmentsResponse);
+  rpc GetDeviceAssignments(GetDeviceAssignmentsRequest) returns (GetDeviceAssignmentsResponse);
+  rpc GetDeviceCompliance(GetDeviceComplianceRequest) returns (GetDeviceComplianceResponse);
+  rpc ListExecutionResults(ListExecutionResultsRequest) returns (ListExecutionResultsResponse);
+  rpc ListAuditEvents(ListAuditEventsRequest) returns (ListAuditEventsResponse);
+  rpc CreateRole(CreateRoleRequest) returns (CreateRoleResponse);
+  rpc GetRole(GetRoleRequest) returns (GetRoleResponse);
+  rpc ListRoles(ListRolesRequest) returns (ListRolesResponse);
+  rpc RenameRole(RenameRoleRequest) returns (RenameRoleResponse);
+  rpc SetRoleDescription(SetRoleDescriptionRequest) returns (SetRoleDescriptionResponse);
+  rpc GrantRolePermission(GrantRolePermissionRequest) returns (GrantRolePermissionResponse);
+  rpc RevokeRolePermission(RevokeRolePermissionRequest) returns (RevokeRolePermissionResponse);
+  rpc DeleteRole(DeleteRoleRequest) returns (DeleteRoleResponse);
+  rpc AssignRoleToUser(AssignRoleToUserRequest) returns (AssignRoleToUserResponse);
+  rpc RevokeRoleFromUser(RevokeRoleFromUserRequest) returns (RevokeRoleFromUserResponse);
+  rpc ListPermissions(ListPermissionsRequest) returns (ListPermissionsResponse);
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+  rpc RevokeUserSessions(RevokeUserSessionsRequest) returns (RevokeUserSessionsResponse);
+}
+
 enum Permission {
   PERMISSION_UNSPECIFIED = 0;
   PERMISSION_GET_CURRENT_USER = 1;
@@ -178,20 +240,42 @@ message ListRolesResponse {
   repeated Role roles = 1;
   string next_page_token = 2;
 }
-message UpdateRoleRequest {
+message RenameRoleRequest {
   RoleId id = 1 [(buf.validate.field).required = true];
   string name = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 128
   ];
-  string description = 3 [(buf.validate.field).string.max_len = 1024];
-  repeated Permission permissions = 4 [(buf.validate.field).repeated.items.enum = {
+}
+message RenameRoleResponse {
+  Role role = 1 [(buf.validate.field).required = true];
+}
+message SetRoleDescriptionRequest {
+  RoleId id = 1 [(buf.validate.field).required = true];
+  string description = 2 [(buf.validate.field).string.max_len = 1024];
+}
+message SetRoleDescriptionResponse {
+  Role role = 1 [(buf.validate.field).required = true];
+}
+message GrantRolePermissionRequest {
+  RoleId id = 1 [(buf.validate.field).required = true];
+  Permission permission = 2 [(buf.validate.field).enum = {
     defined_only: true
     not_in: [0]
   }];
 }
-message UpdateRoleResponse {
+message GrantRolePermissionResponse {
+  Role role = 1 [(buf.validate.field).required = true];
+}
+message RevokeRolePermissionRequest {
+  RoleId id = 1 [(buf.validate.field).required = true];
+  Permission permission = 2 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+}
+message RevokeRolePermissionResponse {
   Role role = 1 [(buf.validate.field).required = true];
 }
 message DeleteRoleRequest {
@@ -332,23 +416,39 @@ message ListIdentityProvidersResponse {
   repeated IdentityProvider providers = 1;
 }
 
-message UpdateIdentityProviderRequest {
+message RenameIdentityProviderRequest {
   IdentityProviderId id = 1 [(buf.validate.field).required = true];
   string name = 2 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 64
   ];
-  bool enabled = 3;
-  OidcClientId client_id = 4 [(buf.validate.field).required = true];
-  string issuer_url = 5 [
+}
+message RenameIdentityProviderResponse {
+  IdentityProvider provider = 1 [(buf.validate.field).required = true];
+}
+message ConfigureIdentityProviderRequest {
+  IdentityProviderId id = 1 [(buf.validate.field).required = true];
+  OidcClientId client_id = 2 [(buf.validate.field).required = true];
+  string issuer_url = 3 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.uri = true
   ];
-  repeated string scopes = 6 [(buf.validate.field).repeated.items.string.max_len = 255];
+  repeated string scopes = 4 [(buf.validate.field).repeated.items.string.max_len = 255];
 }
-
-message UpdateIdentityProviderResponse {
+message ConfigureIdentityProviderResponse {
+  IdentityProvider provider = 1 [(buf.validate.field).required = true];
+}
+message EnableIdentityProviderRequest {
+  IdentityProviderId id = 1 [(buf.validate.field).required = true];
+}
+message EnableIdentityProviderResponse {
+  IdentityProvider provider = 1 [(buf.validate.field).required = true];
+}
+message DisableIdentityProviderRequest {
+  IdentityProviderId id = 1 [(buf.validate.field).required = true];
+}
+message DisableIdentityProviderResponse {
   IdentityProvider provider = 1 [(buf.validate.field).required = true];
 }
 
@@ -456,7 +556,7 @@ message RenameTokenRequest {
   ];
 }
 
-message UpdateTokenResponse {
+message RenameTokenResponse {
   RegistrationToken token = 1 [(buf.validate.field).required = true];
 }
 
@@ -544,7 +644,7 @@ message RenameActionRequest {
   ];
 }
 
-message UpdateActionDescriptionRequest {
+message SetActionDescriptionRequest {
   ActionId id = 1 [(buf.validate.field).required = true];
   string description = 2 [
     (buf.validate.field).string.max_len = 1024,
@@ -552,7 +652,7 @@ message UpdateActionDescriptionRequest {
   ];
 }
 
-message UpdateActionParamsRequest {
+message ConfigureActionRequest {
   ActionId id = 1 [(buf.validate.field).required = true];
   DesiredState desired_state = 2 [(buf.validate.field).required = true];
   int32 timeout_seconds = 3 [
@@ -569,7 +669,13 @@ message UpdateActionParamsRequest {
   }
 }
 
-message UpdateActionResponse {
+message RenameActionResponse {
+  ManagedAction action = 1 [(buf.validate.field).required = true];
+}
+message SetActionDescriptionResponse {
+  ManagedAction action = 1 [(buf.validate.field).required = true];
+}
+message ConfigureActionResponse {
   ManagedAction action = 1 [(buf.validate.field).required = true];
 }
 
@@ -651,7 +757,7 @@ message RenameDeviceGroupRequest {
   ];
 }
 
-message UpdateDeviceGroupDescriptionRequest {
+message SetDeviceGroupDescriptionRequest {
   DeviceGroupId id = 1 [(buf.validate.field).required = true];
   string description = 2 [
     (buf.validate.field).string.max_len = 1024,
@@ -659,7 +765,10 @@ message UpdateDeviceGroupDescriptionRequest {
   ];
 }
 
-message UpdateDeviceGroupResponse {
+message RenameDeviceGroupResponse {
+  DeviceGroup group = 1 [(buf.validate.field).required = true];
+}
+message SetDeviceGroupDescriptionResponse {
   DeviceGroup group = 1 [(buf.validate.field).required = true];
 }
 
@@ -764,11 +873,10 @@ message ExecutionResult {
   ActionId action_id = 2 [(buf.validate.field).required = true];
   string action_name = 3;
   ExecutionStatus status = 4;
-  string error = 5;
-  CommandOutput output = 6;
-  google.protobuf.Timestamp completed_at = 7;
-  bool compliant = 8;
-  CommandOutput detection_output = 9;
+  CommandOutput output = 5;
+  google.protobuf.Timestamp completed_at = 6;
+  bool compliant = 7;
+  CommandOutput detection_output = 8;
 }
 
 message ListExecutionResultsRequest {
@@ -809,60 +917,4 @@ message ListAuditEventsRequest {
 message ListAuditEventsResponse {
   repeated AuditEvent events = 1;
   string next_page_token = 2;
-}
-
-service ControlService {
-  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
-  rpc Logout(LogoutRequest) returns (LogoutResponse);
-  rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse);
-  rpc ListAuthMethods(ListAuthMethodsRequest) returns (ListAuthMethodsResponse);
-  rpc GetSSOLoginURL(GetSSOLoginURLRequest) returns (GetSSOLoginURLResponse);
-  rpc SSOCallback(SSOCallbackRequest) returns (SSOCallbackResponse);
-  rpc CreateIdentityProvider(CreateIdentityProviderRequest) returns (CreateIdentityProviderResponse);
-  rpc GetIdentityProvider(GetIdentityProviderRequest) returns (GetIdentityProviderResponse);
-  rpc ListIdentityProviders(ListIdentityProvidersRequest) returns (ListIdentityProvidersResponse);
-  rpc UpdateIdentityProvider(UpdateIdentityProviderRequest) returns (UpdateIdentityProviderResponse);
-  rpc DeleteIdentityProvider(DeleteIdentityProviderRequest) returns (DeleteIdentityProviderResponse);
-  rpc Register(RegisterRequest) returns (RegisterResponse);
-  rpc RenewCertificate(RenewCertificateRequest) returns (RenewCertificateResponse);
-  rpc ListDevices(ListDevicesRequest) returns (ListDevicesResponse);
-  rpc GetDevice(GetDeviceRequest) returns (GetDeviceResponse);
-  rpc DeleteDevice(DeleteDeviceRequest) returns (DeleteDeviceResponse);
-  rpc CreateToken(CreateTokenRequest) returns (CreateTokenResponse);
-  rpc ListTokens(ListTokensRequest) returns (ListTokensResponse);
-  rpc RenameToken(RenameTokenRequest) returns (UpdateTokenResponse);
-  rpc DeleteToken(DeleteTokenRequest) returns (DeleteTokenResponse);
-  rpc CreateAction(CreateActionRequest) returns (CreateActionResponse);
-  rpc GetAction(GetActionRequest) returns (GetActionResponse);
-  rpc ListActions(ListActionsRequest) returns (ListActionsResponse);
-  rpc RenameAction(RenameActionRequest) returns (UpdateActionResponse);
-  rpc UpdateActionDescription(UpdateActionDescriptionRequest) returns (UpdateActionResponse);
-  rpc UpdateActionParams(UpdateActionParamsRequest) returns (UpdateActionResponse);
-  rpc DeleteAction(DeleteActionRequest) returns (DeleteActionResponse);
-  rpc CreateDeviceGroup(CreateDeviceGroupRequest) returns (CreateDeviceGroupResponse);
-  rpc GetDeviceGroup(GetDeviceGroupRequest) returns (GetDeviceGroupResponse);
-  rpc ListDeviceGroups(ListDeviceGroupsRequest) returns (ListDeviceGroupsResponse);
-  rpc ListDeviceGroupsForDevice(ListDeviceGroupsForDeviceRequest) returns (ListDeviceGroupsForDeviceResponse);
-  rpc RenameDeviceGroup(RenameDeviceGroupRequest) returns (UpdateDeviceGroupResponse);
-  rpc UpdateDeviceGroupDescription(UpdateDeviceGroupDescriptionRequest) returns (UpdateDeviceGroupResponse);
-  rpc DeleteDeviceGroup(DeleteDeviceGroupRequest) returns (DeleteDeviceGroupResponse);
-  rpc AddDeviceToGroup(AddDeviceToGroupRequest) returns (AddDeviceToGroupResponse);
-  rpc RemoveDeviceFromGroup(RemoveDeviceFromGroupRequest) returns (RemoveDeviceFromGroupResponse);
-  rpc CreateAssignment(CreateAssignmentRequest) returns (CreateAssignmentResponse);
-  rpc DeleteAssignment(DeleteAssignmentRequest) returns (DeleteAssignmentResponse);
-  rpc ListAssignments(ListAssignmentsRequest) returns (ListAssignmentsResponse);
-  rpc GetDeviceAssignments(GetDeviceAssignmentsRequest) returns (GetDeviceAssignmentsResponse);
-  rpc GetDeviceCompliance(GetDeviceComplianceRequest) returns (GetDeviceComplianceResponse);
-  rpc ListExecutionResults(ListExecutionResultsRequest) returns (ListExecutionResultsResponse);
-  rpc ListAuditEvents(ListAuditEventsRequest) returns (ListAuditEventsResponse);
-  rpc CreateRole(CreateRoleRequest) returns (CreateRoleResponse);
-  rpc GetRole(GetRoleRequest) returns (GetRoleResponse);
-  rpc ListRoles(ListRolesRequest) returns (ListRolesResponse);
-  rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse);
-  rpc DeleteRole(DeleteRoleRequest) returns (DeleteRoleResponse);
-  rpc AssignRoleToUser(AssignRoleToUserRequest) returns (AssignRoleToUserResponse);
-  rpc RevokeRoleFromUser(RevokeRoleFromUserRequest) returns (RevokeRoleFromUserResponse);
-  rpc ListPermissions(ListPermissionsRequest) returns (ListPermissionsResponse);
-  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
-  rpc RevokeUserSessions(RevokeUserSessionsRequest) returns (RevokeUserSessionsResponse);
 }

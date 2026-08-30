@@ -34,15 +34,16 @@ func (service *Service) deviceProto(ctx context.Context, device *db.Device) (*ca
 	passing := int32(0)
 	complianceCount := int32(0)
 	for _, check := range checks {
-		result, ok, err := complianceResult(check)
+		action, result, err := complianceResult(check)
 		if err != nil {
 			return nil, err
 		}
-		if !ok {
+		if !isComplianceAction(action) {
 			continue
 		}
+		ok := complianceValue(action, result)
 		complianceCount++
-		if result.GetCompliant() {
+		if ok {
 			passing++
 		}
 	}
@@ -167,12 +168,12 @@ func (service *Service) ListTokens(ctx context.Context, request *connect.Request
 	return connect.NewResponse(response), nil
 }
 
-func (service *Service) RenameToken(ctx context.Context, request *connect.Request[cadestrov1.RenameTokenRequest]) (*connect.Response[cadestrov1.UpdateTokenResponse], error) {
+func (service *Service) RenameToken(ctx context.Context, request *connect.Request[cadestrov1.RenameTokenRequest]) (*connect.Response[cadestrov1.RenameTokenResponse], error) {
 	token, err := service.store.Queries().RenameRegistrationToken(ctx, db.RenameRegistrationTokenParams{Name: request.Msg.GetName(), ID: request.Msg.GetId().GetValue()})
 	return service.tokenUpdateResponse(ctx, "rename registration token", token, err)
 }
 
-func (service *Service) tokenUpdateResponse(ctx context.Context, operation string, token *db.RegistrationToken, err error) (*connect.Response[cadestrov1.UpdateTokenResponse], error) {
+func (service *Service) tokenUpdateResponse(ctx context.Context, operation string, token *db.RegistrationToken, err error) (*connect.Response[cadestrov1.RenameTokenResponse], error) {
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, rpcNotFound("registration token")
@@ -182,7 +183,7 @@ func (service *Service) tokenUpdateResponse(ctx context.Context, operation strin
 	if err := service.audit(ctx, "registration_token.updated", "registration_token", token.ID, "user", ""); err != nil {
 		return nil, service.internal("audit registration token update", err)
 	}
-	return connect.NewResponse(&cadestrov1.UpdateTokenResponse{Token: registrationTokenProto(token)}), nil
+	return connect.NewResponse(&cadestrov1.RenameTokenResponse{Token: registrationTokenProto(token)}), nil
 }
 
 func (service *Service) DeleteToken(ctx context.Context, request *connect.Request[cadestrov1.DeleteTokenRequest]) (*connect.Response[cadestrov1.DeleteTokenResponse], error) {
@@ -274,17 +275,25 @@ func (service *Service) ListDeviceGroupsForDevice(ctx context.Context, request *
 	return connect.NewResponse(response), nil
 }
 
-func (service *Service) RenameDeviceGroup(ctx context.Context, request *connect.Request[cadestrov1.RenameDeviceGroupRequest]) (*connect.Response[cadestrov1.UpdateDeviceGroupResponse], error) {
+func (service *Service) RenameDeviceGroup(ctx context.Context, request *connect.Request[cadestrov1.RenameDeviceGroupRequest]) (*connect.Response[cadestrov1.RenameDeviceGroupResponse], error) {
 	group, err := service.store.Queries().RenameDeviceGroup(ctx, db.RenameDeviceGroupParams{Name: request.Msg.GetName(), ID: request.Msg.GetId().GetValue()})
-	return service.groupUpdateResponse(ctx, "rename device group", group, err)
+	current, err := service.groupUpdateResponse(ctx, "rename device group", group, err)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&cadestrov1.RenameDeviceGroupResponse{Group: current}), nil
 }
 
-func (service *Service) UpdateDeviceGroupDescription(ctx context.Context, request *connect.Request[cadestrov1.UpdateDeviceGroupDescriptionRequest]) (*connect.Response[cadestrov1.UpdateDeviceGroupResponse], error) {
-	group, err := service.store.Queries().UpdateDeviceGroupDescription(ctx, db.UpdateDeviceGroupDescriptionParams{Description: request.Msg.GetDescription(), ID: request.Msg.GetId().GetValue()})
-	return service.groupUpdateResponse(ctx, "update device group description", group, err)
+func (service *Service) SetDeviceGroupDescription(ctx context.Context, request *connect.Request[cadestrov1.SetDeviceGroupDescriptionRequest]) (*connect.Response[cadestrov1.SetDeviceGroupDescriptionResponse], error) {
+	group, err := service.store.Queries().SetDeviceGroupDescription(ctx, db.SetDeviceGroupDescriptionParams{Description: request.Msg.GetDescription(), ID: request.Msg.GetId().GetValue()})
+	current, err := service.groupUpdateResponse(ctx, "set device group description", group, err)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&cadestrov1.SetDeviceGroupDescriptionResponse{Group: current}), nil
 }
 
-func (service *Service) groupUpdateResponse(ctx context.Context, operation string, group *db.DeviceGroup, err error) (*connect.Response[cadestrov1.UpdateDeviceGroupResponse], error) {
+func (service *Service) groupUpdateResponse(ctx context.Context, operation string, group *db.DeviceGroup, err error) (*cadestrov1.DeviceGroup, error) {
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, rpcNotFound("device group")
@@ -301,7 +310,7 @@ func (service *Service) groupUpdateResponse(ctx context.Context, operation strin
 	if err := service.audit(ctx, "device_group.updated", "device_group", group.ID, "user", ""); err != nil {
 		return nil, service.internal("audit device group update", err)
 	}
-	return connect.NewResponse(&cadestrov1.UpdateDeviceGroupResponse{Group: groupProto(current.ID, current.Name, current.Description, current.MemberCount, current.CreatedAt)}), nil
+	return groupProto(current.ID, current.Name, current.Description, current.MemberCount, current.CreatedAt), nil
 }
 
 func (service *Service) DeleteDeviceGroup(ctx context.Context, request *connect.Request[cadestrov1.DeleteDeviceGroupRequest]) (*connect.Response[cadestrov1.DeleteDeviceGroupResponse], error) {

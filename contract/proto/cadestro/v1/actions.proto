@@ -77,16 +77,11 @@ message ShellActionParams {
 message ActionResult {
   ActionId action_id = 1 [(buf.validate.field).required = true];
   ExecutionStatus status = 2 [(buf.validate.field).required = true];
-  string error = 3 [
-    (buf.validate.field).string.max_len = 4096,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
-  CommandOutput output = 4;
+  CommandOutput output = 3;
+  CommandOutput detection_output = 4;
   google.protobuf.Timestamp completed_at = 5;
   google.protobuf.Duration duration = 6 [(buf.validate.field).duration.gte = {}];
   bool changed = 7;
-  bool compliant = 8;
-  CommandOutput detection_output = 9;
-  RunId run_id = 10 [(buf.validate.field).required = true];
-  OccurrenceId occurrence_id = 11 [(buf.validate.field).required = true];
+  RunId run_id = 8 [(buf.validate.field).required = true];
+  OccurrenceId occurrence_id = 9 [(buf.validate.field).required = true];
 }

@@ -18,11 +18,20 @@ SELECT * FROM identity_providers ORDER BY name, id;
 -- name: ListEnabledIdentityProviders :many
 SELECT * FROM identity_providers WHERE enabled = TRUE ORDER BY name, id;
 
--- name: UpdateIdentityProvider :one
+-- name: ConfigureIdentityProvider :one
 UPDATE identity_providers
-SET name = ?, enabled = ?, client_id = ?, issuer_url = ?, scopes_json = ?, updated_at = CURRENT_TIMESTAMP
+SET client_id = ?, issuer_url = ?, scopes_json = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 RETURNING *;
+
+-- name: RenameIdentityProvider :one
+UPDATE identity_providers SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
+
+-- name: EnableIdentityProvider :one
+UPDATE identity_providers SET enabled = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
+
+-- name: DisableIdentityProvider :one
+UPDATE identity_providers SET enabled = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
 
 -- name: DeleteIdentityProvider :execrows
 DELETE FROM identity_providers WHERE id = ?;
@@ -69,17 +78,23 @@ SELECT * FROM roles WHERE name = ?;
 -- name: ListRoles :many
 SELECT * FROM roles WHERE id > ? ORDER BY id LIMIT ?;
 
--- name: UpdateRole :one
-UPDATE roles SET name = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
+-- name: RenameRole :one
+UPDATE roles SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
+
+-- name: SetRoleDescription :one
+UPDATE roles SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
 
 -- name: DeleteRole :execrows
 DELETE FROM roles WHERE id = ?;
 
--- name: ReplaceRolePermissions :exec
-DELETE FROM role_permissions WHERE role_id = ?;
-
--- name: AddRolePermission :exec
+-- name: GrantRolePermission :exec
 INSERT INTO role_permissions (role_id, permission) VALUES (?, ?);
+
+-- name: RevokeRolePermission :execrows
+DELETE FROM role_permissions WHERE role_id = ? AND permission = ?;
+
+-- name: TouchRole :exec
+UPDATE roles SET updated_at = CURRENT_TIMESTAMP WHERE id = ?;
 
 -- name: ListRolePermissions :many
 SELECT permission FROM role_permissions WHERE role_id = ? ORDER BY permission;
@@ -202,10 +217,10 @@ SELECT COUNT(*) FROM actions;
 -- name: RenameAction :one
 UPDATE actions SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
 
--- name: UpdateActionDescription :one
+-- name: SetActionDescription :one
 UPDATE actions SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
 
--- name: UpdateActionParams :one
+-- name: ConfigureAction :one
 UPDATE actions SET action_blob = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ? RETURNING *;
 
@@ -242,7 +257,7 @@ WHERE device_group_members.group_id = ? ORDER BY devices.hostname, devices.id;
 -- name: RenameDeviceGroup :one
 UPDATE device_groups SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
 
--- name: UpdateDeviceGroupDescription :one
+-- name: SetDeviceGroupDescription :one
 UPDATE device_groups SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
 
 -- name: DeleteDeviceGroup :execrows
@@ -291,7 +306,7 @@ INSERT INTO execution_results (
 ON CONFLICT(run_id) DO NOTHING;
 
 -- name: ListExecutionResults :many
-SELECT execution_results.*, actions.name AS action_name FROM execution_results
+SELECT execution_results.*, actions.name AS action_name, actions.action_blob FROM execution_results
 JOIN actions ON actions.id = execution_results.action_id
 WHERE execution_results.device_id = ? ORDER BY execution_results.completed_at DESC LIMIT ?;
 

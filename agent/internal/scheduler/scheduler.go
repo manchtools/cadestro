@@ -188,7 +188,7 @@ func (s *Scheduler) executeManifest(ctx context.Context, work store.ScheduledWor
 
 	manifestResult := &pb.ManifestResult{
 		RunId: &pb.RunId{Value: work.RunID}, ManifestId: manifest.GetManifestId(), Status: result.GetStatus(),
-		CompletedAt: timestamppb.New(finished), Duration: durationpb.New(finished.Sub(started)), Error: result.GetError(),
+		CompletedAt: timestamppb.New(finished), Duration: durationpb.New(finished.Sub(started)),
 	}
 	manifestResultID, err := s.store.RecordManifestResult(ctx, manifestResult)
 	if err != nil {

@@ -704,7 +704,6 @@ type ManifestResult struct {
 	Status        ExecutionStatus        `protobuf:"varint,3,opt,name=status,proto3,enum=cadestro.v1.ExecutionStatus" json:"status,omitempty"`
 	CompletedAt   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
 	Duration      *durationpb.Duration   `protobuf:"bytes,5,opt,name=duration,proto3" json:"duration,omitempty"`
-	Error         string                 `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -772,13 +771,6 @@ func (x *ManifestResult) GetDuration() *durationpb.Duration {
 		return x.Duration
 	}
 	return nil
-}
-
-func (x *ManifestResult) GetError() string {
-	if x != nil {
-		return x.Error
-	}
-	return ""
 }
 
 type ResultAck struct {
@@ -917,15 +909,14 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"manifestId\x12F\n" +
 	"\roccurrence_id\x18\x02 \x01(\v2\x19.cadestro.v1.OccurrenceIdB\x06\xbaH\x03\xc8\x01\x01R\foccurrenceId\x123\n" +
 	"\x06action\x18\x03 \x01(\v2\x13.cadestro.v1.ActionB\x06\xbaH\x03\xc8\x01\x01R\x06action\x12?\n" +
-	"\bschedule\x18\x04 \x01(\v2\x1b.cadestro.v1.ActionScheduleB\x06\xbaH\x03\xc8\x01\x01R\bschedule\"\xe6\x02\n" +
+	"\bschedule\x18\x04 \x01(\v2\x1b.cadestro.v1.ActionScheduleB\x06\xbaH\x03\xc8\x01\x01R\bschedule\"\xc3\x02\n" +
 	"\x0eManifestResult\x121\n" +
 	"\x06run_id\x18\x01 \x01(\v2\x12.cadestro.v1.RunIdB\x06\xbaH\x03\xc8\x01\x01R\x05runId\x12@\n" +
 	"\vmanifest_id\x18\x02 \x01(\v2\x17.cadestro.v1.ManifestIdB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"manifestId\x12<\n" +
 	"\x06status\x18\x03 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusB\x06\xbaH\x03\xc8\x01\x01R\x06status\x12=\n" +
 	"\fcompleted_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12?\n" +
-	"\bduration\x18\x05 \x01(\v2\x19.google.protobuf.DurationB\b\xbaH\x05\xaa\x01\x022\x00R\bduration\x12!\n" +
-	"\x05error\x18\x06 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80 R\x05error\"C\n" +
+	"\bduration\x18\x05 \x01(\v2\x19.google.protobuf.DurationB\b\xbaH\x05\xaa\x01\x022\x00R\bduration\"C\n" +
 	"\tResultAck\x126\n" +
 	"\x04code\x18\x01 \x01(\x0e2\x1a.cadestro.v1.ResultAckCodeB\x06\xbaH\x03\xc8\x01\x01R\x04code\"0\n" +
 	"\x05Error\x12'\n" +

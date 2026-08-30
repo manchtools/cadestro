@@ -221,7 +221,7 @@ func (q *Queries) GetManifestActions(ctx context.Context) ([]GetManifestActionsR
 }
 
 const getOccurrenceStates = `-- name: GetOccurrenceStates :many
-SELECT occurrence_id, state, result_status, result_error
+SELECT occurrence_id, state, result_status
 FROM scheduled_work_occurrences
 WHERE work_id = ?
 ORDER BY position
@@ -231,7 +231,6 @@ type GetOccurrenceStatesRow struct {
 	OccurrenceID string `json:"occurrence_id"`
 	State        string `json:"state"`
 	ResultStatus *int32 `json:"result_status"`
-	ResultError  string `json:"result_error"`
 }
 
 func (q *Queries) GetOccurrenceStates(ctx context.Context, workID string) ([]GetOccurrenceStatesRow, error) {
@@ -243,12 +242,7 @@ func (q *Queries) GetOccurrenceStates(ctx context.Context, workID string) ([]Get
 	items := []GetOccurrenceStatesRow{}
 	for rows.Next() {
 		var i GetOccurrenceStatesRow
-		if err := rows.Scan(
-			&i.OccurrenceID,
-			&i.State,
-			&i.ResultStatus,
-			&i.ResultError,
-		); err != nil {
+		if err := rows.Scan(&i.OccurrenceID, &i.State, &i.ResultStatus); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -543,7 +537,7 @@ func (q *Queries) MarkPendingResultSynced(ctx context.Context, id string) error 
 
 const recordOccurrence = `-- name: RecordOccurrence :execrows
 UPDATE scheduled_work_occurrences
-SET state = ?, completed_at = ?, result_status = ?, result_error = ?, last_result_hash = ?,
+SET state = ?, completed_at = ?, result_status = ?, last_result_hash = ?,
     updated_at = CURRENT_TIMESTAMP
 WHERE work_id = ? AND occurrence_id = ? AND state = ?
 `
@@ -552,7 +546,6 @@ type RecordOccurrenceParams struct {
 	State          string     `json:"state"`
 	CompletedAt    *time.Time `json:"completed_at"`
 	ResultStatus   *int32     `json:"result_status"`
-	ResultError    string     `json:"result_error"`
 	LastResultHash string     `json:"last_result_hash"`
 	WorkID         string     `json:"work_id"`
 	OccurrenceID   string     `json:"occurrence_id"`
@@ -564,7 +557,6 @@ func (q *Queries) RecordOccurrence(ctx context.Context, arg RecordOccurrencePara
 		arg.State,
 		arg.CompletedAt,
 		arg.ResultStatus,
-		arg.ResultError,
 		arg.LastResultHash,
 		arg.WorkID,
 		arg.OccurrenceID,
@@ -578,7 +570,7 @@ func (q *Queries) RecordOccurrence(ctx context.Context, arg RecordOccurrencePara
 
 const recoverOccurrence = `-- name: RecoverOccurrence :exec
 UPDATE scheduled_work_occurrences
-SET state = ?, completed_at = ?, result_status = ?, result_error = ?,
+SET state = ?, completed_at = ?, result_status = ?,
     updated_at = CURRENT_TIMESTAMP
 WHERE work_id = ? AND occurrence_id = ? AND state = ?
 `
@@ -587,7 +579,6 @@ type RecoverOccurrenceParams struct {
 	State        string     `json:"state"`
 	CompletedAt  *time.Time `json:"completed_at"`
 	ResultStatus *int32     `json:"result_status"`
-	ResultError  string     `json:"result_error"`
 	WorkID       string     `json:"work_id"`
 	OccurrenceID string     `json:"occurrence_id"`
 	State_2      string     `json:"state_2"`
@@ -598,7 +589,6 @@ func (q *Queries) RecoverOccurrence(ctx context.Context, arg RecoverOccurrencePa
 		arg.State,
 		arg.CompletedAt,
 		arg.ResultStatus,
-		arg.ResultError,
 		arg.WorkID,
 		arg.OccurrenceID,
 		arg.State_2,
@@ -609,7 +599,7 @@ func (q *Queries) RecoverOccurrence(ctx context.Context, arg RecoverOccurrencePa
 const resetOccurrences = `-- name: ResetOccurrences :exec
 UPDATE scheduled_work_occurrences
 SET state = ?, started_at = NULL, completed_at = NULL,
-    result_status = NULL, result_error = '', updated_at = CURRENT_TIMESTAMP
+    result_status = NULL, updated_at = CURRENT_TIMESTAMP
 WHERE work_id = ?
 `
 

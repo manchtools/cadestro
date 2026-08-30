@@ -33,7 +33,6 @@ CREATE TABLE scheduled_work_occurrences (
     started_at DATETIME,
     completed_at DATETIME,
     result_status INTEGER,
-    result_error TEXT NOT NULL DEFAULT '',
     last_result_hash TEXT NOT NULL DEFAULT '',
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,

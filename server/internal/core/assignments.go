@@ -149,19 +149,20 @@ func (service *Service) GetDeviceCompliance(ctx context.Context, request *connec
 	response := &cadestrov1.GetDeviceComplianceResponse{Status: cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_UNSPECIFIED}
 	compliant := false
 	for _, check := range checks {
-		result, ok, err := complianceResult(check)
+		action, result, err := complianceResult(check)
 		if err != nil {
 			return nil, service.internal("decode compliance result", err)
 		}
-		if !ok {
+		if !isComplianceAction(action) {
 			continue
 		}
+		ok := complianceValue(action, result)
 		if len(response.Checks) == 0 {
 			compliant = true
 		}
-		compliant = compliant && result.GetCompliant()
+		compliant = compliant && ok
 		response.Checks = append(response.Checks, &cadestrov1.ComplianceCheckResult{
-			ActionId: &cadestrov1.ActionId{Value: check.ActionID}, ActionName: check.ActionName, Compliant: result.GetCompliant(),
+			ActionId: &cadestrov1.ActionId{Value: check.ActionID}, ActionName: check.ActionName, Compliant: ok,
 			DetectionOutput: result.GetDetectionOutput(), CheckedAt: result.GetCompletedAt(),
 		})
 	}
@@ -185,10 +186,15 @@ func (service *Service) ListExecutionResults(ctx context.Context, request *conne
 		if err != nil {
 			return nil, service.internal("decode execution result", err)
 		}
+		action, err := executableAction(&db.Action{ID: result.ActionID, ActionBlob: result.ActionBlob})
+		if err != nil {
+			return nil, service.internal("decode execution action", err)
+		}
+		compliant := complianceValue(action, payload)
 		response.Results = append(response.Results, &cadestrov1.ExecutionResult{
 			RunId: payload.GetRunId(), ActionId: payload.GetActionId(), ActionName: result.ActionName,
-			Status: payload.GetStatus(), Error: payload.GetError(), Output: payload.GetOutput(), CompletedAt: payload.GetCompletedAt(),
-			Compliant: payload.GetCompliant(), DetectionOutput: payload.GetDetectionOutput(),
+			Status: payload.GetStatus(), Output: payload.GetOutput(), CompletedAt: payload.GetCompletedAt(),
+			Compliant: compliant, DetectionOutput: payload.GetDetectionOutput(),
 		})
 	}
 	return connect.NewResponse(response), nil
@@ -205,20 +211,25 @@ func executionResultProto(runID, actionID string, completedAt time.Time, resultB
 	return result, nil
 }
 
-func complianceResult(row *db.ListComplianceResultsRow) (*cadestrov1.ActionResult, bool, error) {
+func complianceResult(row *db.ListComplianceResultsRow) (*cadestrov1.Action, *cadestrov1.ActionResult, error) {
 	action, err := executableAction(&db.Action{ID: row.ActionID, ActionBlob: row.ActionBlob})
 	if err != nil {
-		return nil, false, err
-	}
-	shell, ok := action.GetParams().(*cadestrov1.Action_Shell)
-	if !ok || !shell.Shell.GetIsCompliance() {
-		return nil, false, nil
+		return nil, nil, err
 	}
 	result, err := executionResultProto(row.RunID, row.ActionID, row.CompletedAt, row.ResultBlob)
 	if err != nil {
-		return nil, false, err
+		return nil, nil, err
 	}
-	return result, true, nil
+	return action, result, nil
+}
+
+func isComplianceAction(action *cadestrov1.Action) bool {
+	shell, ok := action.GetParams().(*cadestrov1.Action_Shell)
+	return ok && shell.Shell.GetIsCompliance()
+}
+
+func complianceValue(action *cadestrov1.Action, result *cadestrov1.ActionResult) bool {
+	return isComplianceAction(action) && result.GetStatus() == cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS && result.GetDetectionOutput() != nil && result.GetDetectionOutput().GetExitCode() == 0
 }
 
 func (service *Service) ListAuditEvents(ctx context.Context, request *connect.Request[cadestrov1.ListAuditEventsRequest]) (*connect.Response[cadestrov1.ListAuditEventsResponse], error) {

@@ -41,7 +41,6 @@ type ScheduledWorkOccurrence struct {
 	StartedAt      *time.Time `json:"started_at"`
 	CompletedAt    *time.Time `json:"completed_at"`
 	ResultStatus   *int32     `json:"result_status"`
-	ResultError    string     `json:"result_error"`
 	LastResultHash string     `json:"last_result_hash"`
 	CreatedAt      time.Time  `json:"created_at"`
 	UpdatedAt      time.Time  `json:"updated_at"`

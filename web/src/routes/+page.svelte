@@ -25,7 +25,10 @@
 		ListRolesRequestSchema,
 		ListPermissionsRequestSchema,
 		CreateRoleRequestSchema,
-		UpdateRoleRequestSchema,
+		RenameRoleRequestSchema,
+		SetRoleDescriptionRequestSchema,
+		GrantRolePermissionRequestSchema,
+		RevokeRolePermissionRequestSchema,
 		DeleteRoleRequestSchema,
 		AssignRoleToUserRequestSchema,
 		RevokeRoleFromUserRequestSchema,
@@ -249,7 +252,12 @@
 	async function updateRole() {
 		const id = editingRole?.id;
 		if (!id) return;
-		await run(() => api.updateRole(create(UpdateRoleRequestSchema, { id, name: roleName, description: roleDescription, permissions: rolePermissions })));
+		await run(async () => {
+			if (editingRole?.name !== roleName) await api.renameRole(create(RenameRoleRequestSchema, { id, name: roleName }));
+			if (editingRole?.description !== roleDescription) await api.setRoleDescription(create(SetRoleDescriptionRequestSchema, { id, description: roleDescription }));
+			for (const permission of rolePermissions.filter((value) => !editingRole?.permissions.includes(value))) await api.grantRolePermission(create(GrantRolePermissionRequestSchema, { id, permission }));
+			for (const permission of editingRole?.permissions.filter((value) => !rolePermissions.includes(value)) ?? []) await api.revokeRolePermission(create(RevokeRolePermissionRequestSchema, { id, permission }));
+		});
 		editingRole = undefined;
 	}
 
@@ -301,7 +309,7 @@
 		{#if selectedDevice}
 			<div class="detail-grid">
 				{#if can(Permission.GET_DEVICE_COMPLIANCE)}<div><h3>Compliance</h3>{#if compliance.length === 0}<p>No compliance results.</p>{:else}<ul>{#each compliance as check}<li><strong>{check.actionName}</strong> — {check.compliant ? 'passing' : 'failing'} at {formatDate(check.checkedAt)}</li>{/each}</ul>{/if}</div>{/if}
-				{#if can(Permission.LIST_EXECUTION_RESULTS)}<div><h3>Execution history</h3>{#if results.length === 0}<p>No execution results.</p>{:else}<ul>{#each results as result}<li><strong>{result.actionName}</strong> — {result.status} at {formatDate(result.completedAt)}{#if result.error}: {result.error}{/if}</li>{/each}</ul>{/if}</div>{/if}
+				{#if can(Permission.LIST_EXECUTION_RESULTS)}<div><h3>Execution history</h3>{#if results.length === 0}<p>No execution results.</p>{:else}<ul>{#each results as result}<li><strong>{result.actionName}</strong> — {result.status} at {formatDate(result.completedAt)}{#if result.output?.stderr}: {result.output.stderr}{/if}</li>{/each}</ul>{/if}</div>{/if}
 			</div>
 		{/if}
 	</section>

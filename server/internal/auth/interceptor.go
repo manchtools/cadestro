@@ -60,7 +60,10 @@ func PermissionForProcedure(procedure string) (cadestrov1.Permission, bool) {
 		return cadestrov1.Permission_PERMISSION_GET_IDENTITY_PROVIDER, true
 	case cadestrov1connect.ControlServiceListIdentityProvidersProcedure:
 		return cadestrov1.Permission_PERMISSION_LIST_IDENTITY_PROVIDERS, true
-	case cadestrov1connect.ControlServiceUpdateIdentityProviderProcedure:
+	case cadestrov1connect.ControlServiceRenameIdentityProviderProcedure,
+		cadestrov1connect.ControlServiceConfigureIdentityProviderProcedure,
+		cadestrov1connect.ControlServiceEnableIdentityProviderProcedure,
+		cadestrov1connect.ControlServiceDisableIdentityProviderProcedure:
 		return cadestrov1.Permission_PERMISSION_UPDATE_IDENTITY_PROVIDER, true
 	case cadestrov1connect.ControlServiceDeleteIdentityProviderProcedure:
 		return cadestrov1.Permission_PERMISSION_DELETE_IDENTITY_PROVIDER, true
@@ -86,9 +89,9 @@ func PermissionForProcedure(procedure string) (cadestrov1.Permission, bool) {
 		return cadestrov1.Permission_PERMISSION_LIST_ACTIONS, true
 	case cadestrov1connect.ControlServiceRenameActionProcedure:
 		return cadestrov1.Permission_PERMISSION_RENAME_ACTION, true
-	case cadestrov1connect.ControlServiceUpdateActionDescriptionProcedure:
+	case cadestrov1connect.ControlServiceSetActionDescriptionProcedure:
 		return cadestrov1.Permission_PERMISSION_UPDATE_ACTION_DESCRIPTION, true
-	case cadestrov1connect.ControlServiceUpdateActionParamsProcedure:
+	case cadestrov1connect.ControlServiceConfigureActionProcedure:
 		return cadestrov1.Permission_PERMISSION_UPDATE_ACTION_PARAMS, true
 	case cadestrov1connect.ControlServiceDeleteActionProcedure:
 		return cadestrov1.Permission_PERMISSION_DELETE_ACTION, true
@@ -102,7 +105,7 @@ func PermissionForProcedure(procedure string) (cadestrov1.Permission, bool) {
 		return cadestrov1.Permission_PERMISSION_LIST_DEVICE_GROUPS_FOR_DEVICE, true
 	case cadestrov1connect.ControlServiceRenameDeviceGroupProcedure:
 		return cadestrov1.Permission_PERMISSION_RENAME_DEVICE_GROUP, true
-	case cadestrov1connect.ControlServiceUpdateDeviceGroupDescriptionProcedure:
+	case cadestrov1connect.ControlServiceSetDeviceGroupDescriptionProcedure:
 		return cadestrov1.Permission_PERMISSION_UPDATE_DEVICE_GROUP_DESCRIPTION, true
 	case cadestrov1connect.ControlServiceDeleteDeviceGroupProcedure:
 		return cadestrov1.Permission_PERMISSION_DELETE_DEVICE_GROUP, true
@@ -130,7 +133,10 @@ func PermissionForProcedure(procedure string) (cadestrov1.Permission, bool) {
 		return cadestrov1.Permission_PERMISSION_GET_ROLE, true
 	case cadestrov1connect.ControlServiceListRolesProcedure:
 		return cadestrov1.Permission_PERMISSION_LIST_ROLES, true
-	case cadestrov1connect.ControlServiceUpdateRoleProcedure:
+	case cadestrov1connect.ControlServiceRenameRoleProcedure,
+		cadestrov1connect.ControlServiceSetRoleDescriptionProcedure,
+		cadestrov1connect.ControlServiceGrantRolePermissionProcedure,
+		cadestrov1connect.ControlServiceRevokeRolePermissionProcedure:
 		return cadestrov1.Permission_PERMISSION_UPDATE_ROLE, true
 	case cadestrov1connect.ControlServiceDeleteRoleProcedure:
 		return cadestrov1.Permission_PERMISSION_DELETE_ROLE, true

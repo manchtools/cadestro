@@ -59,9 +59,18 @@ const (
 	// ControlServiceListIdentityProvidersProcedure is the fully-qualified name of the ControlService's
 	// ListIdentityProviders RPC.
 	ControlServiceListIdentityProvidersProcedure = "/cadestro.v1.ControlService/ListIdentityProviders"
-	// ControlServiceUpdateIdentityProviderProcedure is the fully-qualified name of the ControlService's
-	// UpdateIdentityProvider RPC.
-	ControlServiceUpdateIdentityProviderProcedure = "/cadestro.v1.ControlService/UpdateIdentityProvider"
+	// ControlServiceRenameIdentityProviderProcedure is the fully-qualified name of the ControlService's
+	// RenameIdentityProvider RPC.
+	ControlServiceRenameIdentityProviderProcedure = "/cadestro.v1.ControlService/RenameIdentityProvider"
+	// ControlServiceConfigureIdentityProviderProcedure is the fully-qualified name of the
+	// ControlService's ConfigureIdentityProvider RPC.
+	ControlServiceConfigureIdentityProviderProcedure = "/cadestro.v1.ControlService/ConfigureIdentityProvider"
+	// ControlServiceEnableIdentityProviderProcedure is the fully-qualified name of the ControlService's
+	// EnableIdentityProvider RPC.
+	ControlServiceEnableIdentityProviderProcedure = "/cadestro.v1.ControlService/EnableIdentityProvider"
+	// ControlServiceDisableIdentityProviderProcedure is the fully-qualified name of the
+	// ControlService's DisableIdentityProvider RPC.
+	ControlServiceDisableIdentityProviderProcedure = "/cadestro.v1.ControlService/DisableIdentityProvider"
 	// ControlServiceDeleteIdentityProviderProcedure is the fully-qualified name of the ControlService's
 	// DeleteIdentityProvider RPC.
 	ControlServiceDeleteIdentityProviderProcedure = "/cadestro.v1.ControlService/DeleteIdentityProvider"
@@ -103,12 +112,12 @@ const (
 	// ControlServiceRenameActionProcedure is the fully-qualified name of the ControlService's
 	// RenameAction RPC.
 	ControlServiceRenameActionProcedure = "/cadestro.v1.ControlService/RenameAction"
-	// ControlServiceUpdateActionDescriptionProcedure is the fully-qualified name of the
-	// ControlService's UpdateActionDescription RPC.
-	ControlServiceUpdateActionDescriptionProcedure = "/cadestro.v1.ControlService/UpdateActionDescription"
-	// ControlServiceUpdateActionParamsProcedure is the fully-qualified name of the ControlService's
-	// UpdateActionParams RPC.
-	ControlServiceUpdateActionParamsProcedure = "/cadestro.v1.ControlService/UpdateActionParams"
+	// ControlServiceSetActionDescriptionProcedure is the fully-qualified name of the ControlService's
+	// SetActionDescription RPC.
+	ControlServiceSetActionDescriptionProcedure = "/cadestro.v1.ControlService/SetActionDescription"
+	// ControlServiceConfigureActionProcedure is the fully-qualified name of the ControlService's
+	// ConfigureAction RPC.
+	ControlServiceConfigureActionProcedure = "/cadestro.v1.ControlService/ConfigureAction"
 	// ControlServiceDeleteActionProcedure is the fully-qualified name of the ControlService's
 	// DeleteAction RPC.
 	ControlServiceDeleteActionProcedure = "/cadestro.v1.ControlService/DeleteAction"
@@ -127,9 +136,9 @@ const (
 	// ControlServiceRenameDeviceGroupProcedure is the fully-qualified name of the ControlService's
 	// RenameDeviceGroup RPC.
 	ControlServiceRenameDeviceGroupProcedure = "/cadestro.v1.ControlService/RenameDeviceGroup"
-	// ControlServiceUpdateDeviceGroupDescriptionProcedure is the fully-qualified name of the
-	// ControlService's UpdateDeviceGroupDescription RPC.
-	ControlServiceUpdateDeviceGroupDescriptionProcedure = "/cadestro.v1.ControlService/UpdateDeviceGroupDescription"
+	// ControlServiceSetDeviceGroupDescriptionProcedure is the fully-qualified name of the
+	// ControlService's SetDeviceGroupDescription RPC.
+	ControlServiceSetDeviceGroupDescriptionProcedure = "/cadestro.v1.ControlService/SetDeviceGroupDescription"
 	// ControlServiceDeleteDeviceGroupProcedure is the fully-qualified name of the ControlService's
 	// DeleteDeviceGroup RPC.
 	ControlServiceDeleteDeviceGroupProcedure = "/cadestro.v1.ControlService/DeleteDeviceGroup"
@@ -168,9 +177,18 @@ const (
 	// ControlServiceListRolesProcedure is the fully-qualified name of the ControlService's ListRoles
 	// RPC.
 	ControlServiceListRolesProcedure = "/cadestro.v1.ControlService/ListRoles"
-	// ControlServiceUpdateRoleProcedure is the fully-qualified name of the ControlService's UpdateRole
+	// ControlServiceRenameRoleProcedure is the fully-qualified name of the ControlService's RenameRole
 	// RPC.
-	ControlServiceUpdateRoleProcedure = "/cadestro.v1.ControlService/UpdateRole"
+	ControlServiceRenameRoleProcedure = "/cadestro.v1.ControlService/RenameRole"
+	// ControlServiceSetRoleDescriptionProcedure is the fully-qualified name of the ControlService's
+	// SetRoleDescription RPC.
+	ControlServiceSetRoleDescriptionProcedure = "/cadestro.v1.ControlService/SetRoleDescription"
+	// ControlServiceGrantRolePermissionProcedure is the fully-qualified name of the ControlService's
+	// GrantRolePermission RPC.
+	ControlServiceGrantRolePermissionProcedure = "/cadestro.v1.ControlService/GrantRolePermission"
+	// ControlServiceRevokeRolePermissionProcedure is the fully-qualified name of the ControlService's
+	// RevokeRolePermission RPC.
+	ControlServiceRevokeRolePermissionProcedure = "/cadestro.v1.ControlService/RevokeRolePermission"
 	// ControlServiceDeleteRoleProcedure is the fully-qualified name of the ControlService's DeleteRole
 	// RPC.
 	ControlServiceDeleteRoleProcedure = "/cadestro.v1.ControlService/DeleteRole"
@@ -202,7 +220,10 @@ type ControlServiceClient interface {
 	CreateIdentityProvider(context.Context, *connect.Request[v1.CreateIdentityProviderRequest]) (*connect.Response[v1.CreateIdentityProviderResponse], error)
 	GetIdentityProvider(context.Context, *connect.Request[v1.GetIdentityProviderRequest]) (*connect.Response[v1.GetIdentityProviderResponse], error)
 	ListIdentityProviders(context.Context, *connect.Request[v1.ListIdentityProvidersRequest]) (*connect.Response[v1.ListIdentityProvidersResponse], error)
-	UpdateIdentityProvider(context.Context, *connect.Request[v1.UpdateIdentityProviderRequest]) (*connect.Response[v1.UpdateIdentityProviderResponse], error)
+	RenameIdentityProvider(context.Context, *connect.Request[v1.RenameIdentityProviderRequest]) (*connect.Response[v1.RenameIdentityProviderResponse], error)
+	ConfigureIdentityProvider(context.Context, *connect.Request[v1.ConfigureIdentityProviderRequest]) (*connect.Response[v1.ConfigureIdentityProviderResponse], error)
+	EnableIdentityProvider(context.Context, *connect.Request[v1.EnableIdentityProviderRequest]) (*connect.Response[v1.EnableIdentityProviderResponse], error)
+	DisableIdentityProvider(context.Context, *connect.Request[v1.DisableIdentityProviderRequest]) (*connect.Response[v1.DisableIdentityProviderResponse], error)
 	DeleteIdentityProvider(context.Context, *connect.Request[v1.DeleteIdentityProviderRequest]) (*connect.Response[v1.DeleteIdentityProviderResponse], error)
 	Register(context.Context, *connect.Request[v1.RegisterRequest]) (*connect.Response[v1.RegisterResponse], error)
 	RenewCertificate(context.Context, *connect.Request[v1.RenewCertificateRequest]) (*connect.Response[v1.RenewCertificateResponse], error)
@@ -211,21 +232,21 @@ type ControlServiceClient interface {
 	DeleteDevice(context.Context, *connect.Request[v1.DeleteDeviceRequest]) (*connect.Response[v1.DeleteDeviceResponse], error)
 	CreateToken(context.Context, *connect.Request[v1.CreateTokenRequest]) (*connect.Response[v1.CreateTokenResponse], error)
 	ListTokens(context.Context, *connect.Request[v1.ListTokensRequest]) (*connect.Response[v1.ListTokensResponse], error)
-	RenameToken(context.Context, *connect.Request[v1.RenameTokenRequest]) (*connect.Response[v1.UpdateTokenResponse], error)
+	RenameToken(context.Context, *connect.Request[v1.RenameTokenRequest]) (*connect.Response[v1.RenameTokenResponse], error)
 	DeleteToken(context.Context, *connect.Request[v1.DeleteTokenRequest]) (*connect.Response[v1.DeleteTokenResponse], error)
 	CreateAction(context.Context, *connect.Request[v1.CreateActionRequest]) (*connect.Response[v1.CreateActionResponse], error)
 	GetAction(context.Context, *connect.Request[v1.GetActionRequest]) (*connect.Response[v1.GetActionResponse], error)
 	ListActions(context.Context, *connect.Request[v1.ListActionsRequest]) (*connect.Response[v1.ListActionsResponse], error)
-	RenameAction(context.Context, *connect.Request[v1.RenameActionRequest]) (*connect.Response[v1.UpdateActionResponse], error)
-	UpdateActionDescription(context.Context, *connect.Request[v1.UpdateActionDescriptionRequest]) (*connect.Response[v1.UpdateActionResponse], error)
-	UpdateActionParams(context.Context, *connect.Request[v1.UpdateActionParamsRequest]) (*connect.Response[v1.UpdateActionResponse], error)
+	RenameAction(context.Context, *connect.Request[v1.RenameActionRequest]) (*connect.Response[v1.RenameActionResponse], error)
+	SetActionDescription(context.Context, *connect.Request[v1.SetActionDescriptionRequest]) (*connect.Response[v1.SetActionDescriptionResponse], error)
+	ConfigureAction(context.Context, *connect.Request[v1.ConfigureActionRequest]) (*connect.Response[v1.ConfigureActionResponse], error)
 	DeleteAction(context.Context, *connect.Request[v1.DeleteActionRequest]) (*connect.Response[v1.DeleteActionResponse], error)
 	CreateDeviceGroup(context.Context, *connect.Request[v1.CreateDeviceGroupRequest]) (*connect.Response[v1.CreateDeviceGroupResponse], error)
 	GetDeviceGroup(context.Context, *connect.Request[v1.GetDeviceGroupRequest]) (*connect.Response[v1.GetDeviceGroupResponse], error)
 	ListDeviceGroups(context.Context, *connect.Request[v1.ListDeviceGroupsRequest]) (*connect.Response[v1.ListDeviceGroupsResponse], error)
 	ListDeviceGroupsForDevice(context.Context, *connect.Request[v1.ListDeviceGroupsForDeviceRequest]) (*connect.Response[v1.ListDeviceGroupsForDeviceResponse], error)
-	RenameDeviceGroup(context.Context, *connect.Request[v1.RenameDeviceGroupRequest]) (*connect.Response[v1.UpdateDeviceGroupResponse], error)
-	UpdateDeviceGroupDescription(context.Context, *connect.Request[v1.UpdateDeviceGroupDescriptionRequest]) (*connect.Response[v1.UpdateDeviceGroupResponse], error)
+	RenameDeviceGroup(context.Context, *connect.Request[v1.RenameDeviceGroupRequest]) (*connect.Response[v1.RenameDeviceGroupResponse], error)
+	SetDeviceGroupDescription(context.Context, *connect.Request[v1.SetDeviceGroupDescriptionRequest]) (*connect.Response[v1.SetDeviceGroupDescriptionResponse], error)
 	DeleteDeviceGroup(context.Context, *connect.Request[v1.DeleteDeviceGroupRequest]) (*connect.Response[v1.DeleteDeviceGroupResponse], error)
 	AddDeviceToGroup(context.Context, *connect.Request[v1.AddDeviceToGroupRequest]) (*connect.Response[v1.AddDeviceToGroupResponse], error)
 	RemoveDeviceFromGroup(context.Context, *connect.Request[v1.RemoveDeviceFromGroupRequest]) (*connect.Response[v1.RemoveDeviceFromGroupResponse], error)
@@ -239,7 +260,10 @@ type ControlServiceClient interface {
 	CreateRole(context.Context, *connect.Request[v1.CreateRoleRequest]) (*connect.Response[v1.CreateRoleResponse], error)
 	GetRole(context.Context, *connect.Request[v1.GetRoleRequest]) (*connect.Response[v1.GetRoleResponse], error)
 	ListRoles(context.Context, *connect.Request[v1.ListRolesRequest]) (*connect.Response[v1.ListRolesResponse], error)
-	UpdateRole(context.Context, *connect.Request[v1.UpdateRoleRequest]) (*connect.Response[v1.UpdateRoleResponse], error)
+	RenameRole(context.Context, *connect.Request[v1.RenameRoleRequest]) (*connect.Response[v1.RenameRoleResponse], error)
+	SetRoleDescription(context.Context, *connect.Request[v1.SetRoleDescriptionRequest]) (*connect.Response[v1.SetRoleDescriptionResponse], error)
+	GrantRolePermission(context.Context, *connect.Request[v1.GrantRolePermissionRequest]) (*connect.Response[v1.GrantRolePermissionResponse], error)
+	RevokeRolePermission(context.Context, *connect.Request[v1.RevokeRolePermissionRequest]) (*connect.Response[v1.RevokeRolePermissionResponse], error)
 	DeleteRole(context.Context, *connect.Request[v1.DeleteRoleRequest]) (*connect.Response[v1.DeleteRoleResponse], error)
 	AssignRoleToUser(context.Context, *connect.Request[v1.AssignRoleToUserRequest]) (*connect.Response[v1.AssignRoleToUserResponse], error)
 	RevokeRoleFromUser(context.Context, *connect.Request[v1.RevokeRoleFromUserRequest]) (*connect.Response[v1.RevokeRoleFromUserResponse], error)
@@ -313,10 +337,28 @@ func NewControlServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(controlServiceMethods.ByName("ListIdentityProviders")),
 			connect.WithClientOptions(opts...),
 		),
-		updateIdentityProvider: connect.NewClient[v1.UpdateIdentityProviderRequest, v1.UpdateIdentityProviderResponse](
+		renameIdentityProvider: connect.NewClient[v1.RenameIdentityProviderRequest, v1.RenameIdentityProviderResponse](
 			httpClient,
-			baseURL+ControlServiceUpdateIdentityProviderProcedure,
-			connect.WithSchema(controlServiceMethods.ByName("UpdateIdentityProvider")),
+			baseURL+ControlServiceRenameIdentityProviderProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("RenameIdentityProvider")),
+			connect.WithClientOptions(opts...),
+		),
+		configureIdentityProvider: connect.NewClient[v1.ConfigureIdentityProviderRequest, v1.ConfigureIdentityProviderResponse](
+			httpClient,
+			baseURL+ControlServiceConfigureIdentityProviderProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("ConfigureIdentityProvider")),
+			connect.WithClientOptions(opts...),
+		),
+		enableIdentityProvider: connect.NewClient[v1.EnableIdentityProviderRequest, v1.EnableIdentityProviderResponse](
+			httpClient,
+			baseURL+ControlServiceEnableIdentityProviderProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("EnableIdentityProvider")),
+			connect.WithClientOptions(opts...),
+		),
+		disableIdentityProvider: connect.NewClient[v1.DisableIdentityProviderRequest, v1.DisableIdentityProviderResponse](
+			httpClient,
+			baseURL+ControlServiceDisableIdentityProviderProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("DisableIdentityProvider")),
 			connect.WithClientOptions(opts...),
 		),
 		deleteIdentityProvider: connect.NewClient[v1.DeleteIdentityProviderRequest, v1.DeleteIdentityProviderResponse](
@@ -367,7 +409,7 @@ func NewControlServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(controlServiceMethods.ByName("ListTokens")),
 			connect.WithClientOptions(opts...),
 		),
-		renameToken: connect.NewClient[v1.RenameTokenRequest, v1.UpdateTokenResponse](
+		renameToken: connect.NewClient[v1.RenameTokenRequest, v1.RenameTokenResponse](
 			httpClient,
 			baseURL+ControlServiceRenameTokenProcedure,
 			connect.WithSchema(controlServiceMethods.ByName("RenameToken")),
@@ -397,22 +439,22 @@ func NewControlServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(controlServiceMethods.ByName("ListActions")),
 			connect.WithClientOptions(opts...),
 		),
-		renameAction: connect.NewClient[v1.RenameActionRequest, v1.UpdateActionResponse](
+		renameAction: connect.NewClient[v1.RenameActionRequest, v1.RenameActionResponse](
 			httpClient,
 			baseURL+ControlServiceRenameActionProcedure,
 			connect.WithSchema(controlServiceMethods.ByName("RenameAction")),
 			connect.WithClientOptions(opts...),
 		),
-		updateActionDescription: connect.NewClient[v1.UpdateActionDescriptionRequest, v1.UpdateActionResponse](
+		setActionDescription: connect.NewClient[v1.SetActionDescriptionRequest, v1.SetActionDescriptionResponse](
 			httpClient,
-			baseURL+ControlServiceUpdateActionDescriptionProcedure,
-			connect.WithSchema(controlServiceMethods.ByName("UpdateActionDescription")),
+			baseURL+ControlServiceSetActionDescriptionProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("SetActionDescription")),
 			connect.WithClientOptions(opts...),
 		),
-		updateActionParams: connect.NewClient[v1.UpdateActionParamsRequest, v1.UpdateActionResponse](
+		configureAction: connect.NewClient[v1.ConfigureActionRequest, v1.ConfigureActionResponse](
 			httpClient,
-			baseURL+ControlServiceUpdateActionParamsProcedure,
-			connect.WithSchema(controlServiceMethods.ByName("UpdateActionParams")),
+			baseURL+ControlServiceConfigureActionProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("ConfigureAction")),
 			connect.WithClientOptions(opts...),
 		),
 		deleteAction: connect.NewClient[v1.DeleteActionRequest, v1.DeleteActionResponse](
@@ -445,16 +487,16 @@ func NewControlServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(controlServiceMethods.ByName("ListDeviceGroupsForDevice")),
 			connect.WithClientOptions(opts...),
 		),
-		renameDeviceGroup: connect.NewClient[v1.RenameDeviceGroupRequest, v1.UpdateDeviceGroupResponse](
+		renameDeviceGroup: connect.NewClient[v1.RenameDeviceGroupRequest, v1.RenameDeviceGroupResponse](
 			httpClient,
 			baseURL+ControlServiceRenameDeviceGroupProcedure,
 			connect.WithSchema(controlServiceMethods.ByName("RenameDeviceGroup")),
 			connect.WithClientOptions(opts...),
 		),
-		updateDeviceGroupDescription: connect.NewClient[v1.UpdateDeviceGroupDescriptionRequest, v1.UpdateDeviceGroupResponse](
+		setDeviceGroupDescription: connect.NewClient[v1.SetDeviceGroupDescriptionRequest, v1.SetDeviceGroupDescriptionResponse](
 			httpClient,
-			baseURL+ControlServiceUpdateDeviceGroupDescriptionProcedure,
-			connect.WithSchema(controlServiceMethods.ByName("UpdateDeviceGroupDescription")),
+			baseURL+ControlServiceSetDeviceGroupDescriptionProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("SetDeviceGroupDescription")),
 			connect.WithClientOptions(opts...),
 		),
 		deleteDeviceGroup: connect.NewClient[v1.DeleteDeviceGroupRequest, v1.DeleteDeviceGroupResponse](
@@ -535,10 +577,28 @@ func NewControlServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(controlServiceMethods.ByName("ListRoles")),
 			connect.WithClientOptions(opts...),
 		),
-		updateRole: connect.NewClient[v1.UpdateRoleRequest, v1.UpdateRoleResponse](
+		renameRole: connect.NewClient[v1.RenameRoleRequest, v1.RenameRoleResponse](
 			httpClient,
-			baseURL+ControlServiceUpdateRoleProcedure,
-			connect.WithSchema(controlServiceMethods.ByName("UpdateRole")),
+			baseURL+ControlServiceRenameRoleProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("RenameRole")),
+			connect.WithClientOptions(opts...),
+		),
+		setRoleDescription: connect.NewClient[v1.SetRoleDescriptionRequest, v1.SetRoleDescriptionResponse](
+			httpClient,
+			baseURL+ControlServiceSetRoleDescriptionProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("SetRoleDescription")),
+			connect.WithClientOptions(opts...),
+		),
+		grantRolePermission: connect.NewClient[v1.GrantRolePermissionRequest, v1.GrantRolePermissionResponse](
+			httpClient,
+			baseURL+ControlServiceGrantRolePermissionProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("GrantRolePermission")),
+			connect.WithClientOptions(opts...),
+		),
+		revokeRolePermission: connect.NewClient[v1.RevokeRolePermissionRequest, v1.RevokeRolePermissionResponse](
+			httpClient,
+			baseURL+ControlServiceRevokeRolePermissionProcedure,
+			connect.WithSchema(controlServiceMethods.ByName("RevokeRolePermission")),
 			connect.WithClientOptions(opts...),
 		),
 		deleteRole: connect.NewClient[v1.DeleteRoleRequest, v1.DeleteRoleResponse](
@@ -582,59 +642,65 @@ func NewControlServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 
 // controlServiceClient implements ControlServiceClient.
 type controlServiceClient struct {
-	refreshToken                 *connect.Client[v1.RefreshTokenRequest, v1.RefreshTokenResponse]
-	logout                       *connect.Client[v1.LogoutRequest, v1.LogoutResponse]
-	getCurrentUser               *connect.Client[v1.GetCurrentUserRequest, v1.GetCurrentUserResponse]
-	listAuthMethods              *connect.Client[v1.ListAuthMethodsRequest, v1.ListAuthMethodsResponse]
-	getSSOLoginURL               *connect.Client[v1.GetSSOLoginURLRequest, v1.GetSSOLoginURLResponse]
-	sSOCallback                  *connect.Client[v1.SSOCallbackRequest, v1.SSOCallbackResponse]
-	createIdentityProvider       *connect.Client[v1.CreateIdentityProviderRequest, v1.CreateIdentityProviderResponse]
-	getIdentityProvider          *connect.Client[v1.GetIdentityProviderRequest, v1.GetIdentityProviderResponse]
-	listIdentityProviders        *connect.Client[v1.ListIdentityProvidersRequest, v1.ListIdentityProvidersResponse]
-	updateIdentityProvider       *connect.Client[v1.UpdateIdentityProviderRequest, v1.UpdateIdentityProviderResponse]
-	deleteIdentityProvider       *connect.Client[v1.DeleteIdentityProviderRequest, v1.DeleteIdentityProviderResponse]
-	register                     *connect.Client[v1.RegisterRequest, v1.RegisterResponse]
-	renewCertificate             *connect.Client[v1.RenewCertificateRequest, v1.RenewCertificateResponse]
-	listDevices                  *connect.Client[v1.ListDevicesRequest, v1.ListDevicesResponse]
-	getDevice                    *connect.Client[v1.GetDeviceRequest, v1.GetDeviceResponse]
-	deleteDevice                 *connect.Client[v1.DeleteDeviceRequest, v1.DeleteDeviceResponse]
-	createToken                  *connect.Client[v1.CreateTokenRequest, v1.CreateTokenResponse]
-	listTokens                   *connect.Client[v1.ListTokensRequest, v1.ListTokensResponse]
-	renameToken                  *connect.Client[v1.RenameTokenRequest, v1.UpdateTokenResponse]
-	deleteToken                  *connect.Client[v1.DeleteTokenRequest, v1.DeleteTokenResponse]
-	createAction                 *connect.Client[v1.CreateActionRequest, v1.CreateActionResponse]
-	getAction                    *connect.Client[v1.GetActionRequest, v1.GetActionResponse]
-	listActions                  *connect.Client[v1.ListActionsRequest, v1.ListActionsResponse]
-	renameAction                 *connect.Client[v1.RenameActionRequest, v1.UpdateActionResponse]
-	updateActionDescription      *connect.Client[v1.UpdateActionDescriptionRequest, v1.UpdateActionResponse]
-	updateActionParams           *connect.Client[v1.UpdateActionParamsRequest, v1.UpdateActionResponse]
-	deleteAction                 *connect.Client[v1.DeleteActionRequest, v1.DeleteActionResponse]
-	createDeviceGroup            *connect.Client[v1.CreateDeviceGroupRequest, v1.CreateDeviceGroupResponse]
-	getDeviceGroup               *connect.Client[v1.GetDeviceGroupRequest, v1.GetDeviceGroupResponse]
-	listDeviceGroups             *connect.Client[v1.ListDeviceGroupsRequest, v1.ListDeviceGroupsResponse]
-	listDeviceGroupsForDevice    *connect.Client[v1.ListDeviceGroupsForDeviceRequest, v1.ListDeviceGroupsForDeviceResponse]
-	renameDeviceGroup            *connect.Client[v1.RenameDeviceGroupRequest, v1.UpdateDeviceGroupResponse]
-	updateDeviceGroupDescription *connect.Client[v1.UpdateDeviceGroupDescriptionRequest, v1.UpdateDeviceGroupResponse]
-	deleteDeviceGroup            *connect.Client[v1.DeleteDeviceGroupRequest, v1.DeleteDeviceGroupResponse]
-	addDeviceToGroup             *connect.Client[v1.AddDeviceToGroupRequest, v1.AddDeviceToGroupResponse]
-	removeDeviceFromGroup        *connect.Client[v1.RemoveDeviceFromGroupRequest, v1.RemoveDeviceFromGroupResponse]
-	createAssignment             *connect.Client[v1.CreateAssignmentRequest, v1.CreateAssignmentResponse]
-	deleteAssignment             *connect.Client[v1.DeleteAssignmentRequest, v1.DeleteAssignmentResponse]
-	listAssignments              *connect.Client[v1.ListAssignmentsRequest, v1.ListAssignmentsResponse]
-	getDeviceAssignments         *connect.Client[v1.GetDeviceAssignmentsRequest, v1.GetDeviceAssignmentsResponse]
-	getDeviceCompliance          *connect.Client[v1.GetDeviceComplianceRequest, v1.GetDeviceComplianceResponse]
-	listExecutionResults         *connect.Client[v1.ListExecutionResultsRequest, v1.ListExecutionResultsResponse]
-	listAuditEvents              *connect.Client[v1.ListAuditEventsRequest, v1.ListAuditEventsResponse]
-	createRole                   *connect.Client[v1.CreateRoleRequest, v1.CreateRoleResponse]
-	getRole                      *connect.Client[v1.GetRoleRequest, v1.GetRoleResponse]
-	listRoles                    *connect.Client[v1.ListRolesRequest, v1.ListRolesResponse]
-	updateRole                   *connect.Client[v1.UpdateRoleRequest, v1.UpdateRoleResponse]
-	deleteRole                   *connect.Client[v1.DeleteRoleRequest, v1.DeleteRoleResponse]
-	assignRoleToUser             *connect.Client[v1.AssignRoleToUserRequest, v1.AssignRoleToUserResponse]
-	revokeRoleFromUser           *connect.Client[v1.RevokeRoleFromUserRequest, v1.RevokeRoleFromUserResponse]
-	listPermissions              *connect.Client[v1.ListPermissionsRequest, v1.ListPermissionsResponse]
-	listUsers                    *connect.Client[v1.ListUsersRequest, v1.ListUsersResponse]
-	revokeUserSessions           *connect.Client[v1.RevokeUserSessionsRequest, v1.RevokeUserSessionsResponse]
+	refreshToken              *connect.Client[v1.RefreshTokenRequest, v1.RefreshTokenResponse]
+	logout                    *connect.Client[v1.LogoutRequest, v1.LogoutResponse]
+	getCurrentUser            *connect.Client[v1.GetCurrentUserRequest, v1.GetCurrentUserResponse]
+	listAuthMethods           *connect.Client[v1.ListAuthMethodsRequest, v1.ListAuthMethodsResponse]
+	getSSOLoginURL            *connect.Client[v1.GetSSOLoginURLRequest, v1.GetSSOLoginURLResponse]
+	sSOCallback               *connect.Client[v1.SSOCallbackRequest, v1.SSOCallbackResponse]
+	createIdentityProvider    *connect.Client[v1.CreateIdentityProviderRequest, v1.CreateIdentityProviderResponse]
+	getIdentityProvider       *connect.Client[v1.GetIdentityProviderRequest, v1.GetIdentityProviderResponse]
+	listIdentityProviders     *connect.Client[v1.ListIdentityProvidersRequest, v1.ListIdentityProvidersResponse]
+	renameIdentityProvider    *connect.Client[v1.RenameIdentityProviderRequest, v1.RenameIdentityProviderResponse]
+	configureIdentityProvider *connect.Client[v1.ConfigureIdentityProviderRequest, v1.ConfigureIdentityProviderResponse]
+	enableIdentityProvider    *connect.Client[v1.EnableIdentityProviderRequest, v1.EnableIdentityProviderResponse]
+	disableIdentityProvider   *connect.Client[v1.DisableIdentityProviderRequest, v1.DisableIdentityProviderResponse]
+	deleteIdentityProvider    *connect.Client[v1.DeleteIdentityProviderRequest, v1.DeleteIdentityProviderResponse]
+	register                  *connect.Client[v1.RegisterRequest, v1.RegisterResponse]
+	renewCertificate          *connect.Client[v1.RenewCertificateRequest, v1.RenewCertificateResponse]
+	listDevices               *connect.Client[v1.ListDevicesRequest, v1.ListDevicesResponse]
+	getDevice                 *connect.Client[v1.GetDeviceRequest, v1.GetDeviceResponse]
+	deleteDevice              *connect.Client[v1.DeleteDeviceRequest, v1.DeleteDeviceResponse]
+	createToken               *connect.Client[v1.CreateTokenRequest, v1.CreateTokenResponse]
+	listTokens                *connect.Client[v1.ListTokensRequest, v1.ListTokensResponse]
+	renameToken               *connect.Client[v1.RenameTokenRequest, v1.RenameTokenResponse]
+	deleteToken               *connect.Client[v1.DeleteTokenRequest, v1.DeleteTokenResponse]
+	createAction              *connect.Client[v1.CreateActionRequest, v1.CreateActionResponse]
+	getAction                 *connect.Client[v1.GetActionRequest, v1.GetActionResponse]
+	listActions               *connect.Client[v1.ListActionsRequest, v1.ListActionsResponse]
+	renameAction              *connect.Client[v1.RenameActionRequest, v1.RenameActionResponse]
+	setActionDescription      *connect.Client[v1.SetActionDescriptionRequest, v1.SetActionDescriptionResponse]
+	configureAction           *connect.Client[v1.ConfigureActionRequest, v1.ConfigureActionResponse]
+	deleteAction              *connect.Client[v1.DeleteActionRequest, v1.DeleteActionResponse]
+	createDeviceGroup         *connect.Client[v1.CreateDeviceGroupRequest, v1.CreateDeviceGroupResponse]
+	getDeviceGroup            *connect.Client[v1.GetDeviceGroupRequest, v1.GetDeviceGroupResponse]
+	listDeviceGroups          *connect.Client[v1.ListDeviceGroupsRequest, v1.ListDeviceGroupsResponse]
+	listDeviceGroupsForDevice *connect.Client[v1.ListDeviceGroupsForDeviceRequest, v1.ListDeviceGroupsForDeviceResponse]
+	renameDeviceGroup         *connect.Client[v1.RenameDeviceGroupRequest, v1.RenameDeviceGroupResponse]
+	setDeviceGroupDescription *connect.Client[v1.SetDeviceGroupDescriptionRequest, v1.SetDeviceGroupDescriptionResponse]
+	deleteDeviceGroup         *connect.Client[v1.DeleteDeviceGroupRequest, v1.DeleteDeviceGroupResponse]
+	addDeviceToGroup          *connect.Client[v1.AddDeviceToGroupRequest, v1.AddDeviceToGroupResponse]
+	removeDeviceFromGroup     *connect.Client[v1.RemoveDeviceFromGroupRequest, v1.RemoveDeviceFromGroupResponse]
+	createAssignment          *connect.Client[v1.CreateAssignmentRequest, v1.CreateAssignmentResponse]
+	deleteAssignment          *connect.Client[v1.DeleteAssignmentRequest, v1.DeleteAssignmentResponse]
+	listAssignments           *connect.Client[v1.ListAssignmentsRequest, v1.ListAssignmentsResponse]
+	getDeviceAssignments      *connect.Client[v1.GetDeviceAssignmentsRequest, v1.GetDeviceAssignmentsResponse]
+	getDeviceCompliance       *connect.Client[v1.GetDeviceComplianceRequest, v1.GetDeviceComplianceResponse]
+	listExecutionResults      *connect.Client[v1.ListExecutionResultsRequest, v1.ListExecutionResultsResponse]
+	listAuditEvents           *connect.Client[v1.ListAuditEventsRequest, v1.ListAuditEventsResponse]
+	createRole                *connect.Client[v1.CreateRoleRequest, v1.CreateRoleResponse]
+	getRole                   *connect.Client[v1.GetRoleRequest, v1.GetRoleResponse]
+	listRoles                 *connect.Client[v1.ListRolesRequest, v1.ListRolesResponse]
+	renameRole                *connect.Client[v1.RenameRoleRequest, v1.RenameRoleResponse]
+	setRoleDescription        *connect.Client[v1.SetRoleDescriptionRequest, v1.SetRoleDescriptionResponse]
+	grantRolePermission       *connect.Client[v1.GrantRolePermissionRequest, v1.GrantRolePermissionResponse]
+	revokeRolePermission      *connect.Client[v1.RevokeRolePermissionRequest, v1.RevokeRolePermissionResponse]
+	deleteRole                *connect.Client[v1.DeleteRoleRequest, v1.DeleteRoleResponse]
+	assignRoleToUser          *connect.Client[v1.AssignRoleToUserRequest, v1.AssignRoleToUserResponse]
+	revokeRoleFromUser        *connect.Client[v1.RevokeRoleFromUserRequest, v1.RevokeRoleFromUserResponse]
+	listPermissions           *connect.Client[v1.ListPermissionsRequest, v1.ListPermissionsResponse]
+	listUsers                 *connect.Client[v1.ListUsersRequest, v1.ListUsersResponse]
+	revokeUserSessions        *connect.Client[v1.RevokeUserSessionsRequest, v1.RevokeUserSessionsResponse]
 }
 
 // RefreshToken calls cadestro.v1.ControlService.RefreshToken.
@@ -682,9 +748,24 @@ func (c *controlServiceClient) ListIdentityProviders(ctx context.Context, req *c
 	return c.listIdentityProviders.CallUnary(ctx, req)
 }
 
-// UpdateIdentityProvider calls cadestro.v1.ControlService.UpdateIdentityProvider.
-func (c *controlServiceClient) UpdateIdentityProvider(ctx context.Context, req *connect.Request[v1.UpdateIdentityProviderRequest]) (*connect.Response[v1.UpdateIdentityProviderResponse], error) {
-	return c.updateIdentityProvider.CallUnary(ctx, req)
+// RenameIdentityProvider calls cadestro.v1.ControlService.RenameIdentityProvider.
+func (c *controlServiceClient) RenameIdentityProvider(ctx context.Context, req *connect.Request[v1.RenameIdentityProviderRequest]) (*connect.Response[v1.RenameIdentityProviderResponse], error) {
+	return c.renameIdentityProvider.CallUnary(ctx, req)
+}
+
+// ConfigureIdentityProvider calls cadestro.v1.ControlService.ConfigureIdentityProvider.
+func (c *controlServiceClient) ConfigureIdentityProvider(ctx context.Context, req *connect.Request[v1.ConfigureIdentityProviderRequest]) (*connect.Response[v1.ConfigureIdentityProviderResponse], error) {
+	return c.configureIdentityProvider.CallUnary(ctx, req)
+}
+
+// EnableIdentityProvider calls cadestro.v1.ControlService.EnableIdentityProvider.
+func (c *controlServiceClient) EnableIdentityProvider(ctx context.Context, req *connect.Request[v1.EnableIdentityProviderRequest]) (*connect.Response[v1.EnableIdentityProviderResponse], error) {
+	return c.enableIdentityProvider.CallUnary(ctx, req)
+}
+
+// DisableIdentityProvider calls cadestro.v1.ControlService.DisableIdentityProvider.
+func (c *controlServiceClient) DisableIdentityProvider(ctx context.Context, req *connect.Request[v1.DisableIdentityProviderRequest]) (*connect.Response[v1.DisableIdentityProviderResponse], error) {
+	return c.disableIdentityProvider.CallUnary(ctx, req)
 }
 
 // DeleteIdentityProvider calls cadestro.v1.ControlService.DeleteIdentityProvider.
@@ -728,7 +809,7 @@ func (c *controlServiceClient) ListTokens(ctx context.Context, req *connect.Requ
 }
 
 // RenameToken calls cadestro.v1.ControlService.RenameToken.
-func (c *controlServiceClient) RenameToken(ctx context.Context, req *connect.Request[v1.RenameTokenRequest]) (*connect.Response[v1.UpdateTokenResponse], error) {
+func (c *controlServiceClient) RenameToken(ctx context.Context, req *connect.Request[v1.RenameTokenRequest]) (*connect.Response[v1.RenameTokenResponse], error) {
 	return c.renameToken.CallUnary(ctx, req)
 }
 
@@ -753,18 +834,18 @@ func (c *controlServiceClient) ListActions(ctx context.Context, req *connect.Req
 }
 
 // RenameAction calls cadestro.v1.ControlService.RenameAction.
-func (c *controlServiceClient) RenameAction(ctx context.Context, req *connect.Request[v1.RenameActionRequest]) (*connect.Response[v1.UpdateActionResponse], error) {
+func (c *controlServiceClient) RenameAction(ctx context.Context, req *connect.Request[v1.RenameActionRequest]) (*connect.Response[v1.RenameActionResponse], error) {
 	return c.renameAction.CallUnary(ctx, req)
 }
 
-// UpdateActionDescription calls cadestro.v1.ControlService.UpdateActionDescription.
-func (c *controlServiceClient) UpdateActionDescription(ctx context.Context, req *connect.Request[v1.UpdateActionDescriptionRequest]) (*connect.Response[v1.UpdateActionResponse], error) {
-	return c.updateActionDescription.CallUnary(ctx, req)
+// SetActionDescription calls cadestro.v1.ControlService.SetActionDescription.
+func (c *controlServiceClient) SetActionDescription(ctx context.Context, req *connect.Request[v1.SetActionDescriptionRequest]) (*connect.Response[v1.SetActionDescriptionResponse], error) {
+	return c.setActionDescription.CallUnary(ctx, req)
 }
 
-// UpdateActionParams calls cadestro.v1.ControlService.UpdateActionParams.
-func (c *controlServiceClient) UpdateActionParams(ctx context.Context, req *connect.Request[v1.UpdateActionParamsRequest]) (*connect.Response[v1.UpdateActionResponse], error) {
-	return c.updateActionParams.CallUnary(ctx, req)
+// ConfigureAction calls cadestro.v1.ControlService.ConfigureAction.
+func (c *controlServiceClient) ConfigureAction(ctx context.Context, req *connect.Request[v1.ConfigureActionRequest]) (*connect.Response[v1.ConfigureActionResponse], error) {
+	return c.configureAction.CallUnary(ctx, req)
 }
 
 // DeleteAction calls cadestro.v1.ControlService.DeleteAction.
@@ -793,13 +874,13 @@ func (c *controlServiceClient) ListDeviceGroupsForDevice(ctx context.Context, re
 }
 
 // RenameDeviceGroup calls cadestro.v1.ControlService.RenameDeviceGroup.
-func (c *controlServiceClient) RenameDeviceGroup(ctx context.Context, req *connect.Request[v1.RenameDeviceGroupRequest]) (*connect.Response[v1.UpdateDeviceGroupResponse], error) {
+func (c *controlServiceClient) RenameDeviceGroup(ctx context.Context, req *connect.Request[v1.RenameDeviceGroupRequest]) (*connect.Response[v1.RenameDeviceGroupResponse], error) {
 	return c.renameDeviceGroup.CallUnary(ctx, req)
 }
 
-// UpdateDeviceGroupDescription calls cadestro.v1.ControlService.UpdateDeviceGroupDescription.
-func (c *controlServiceClient) UpdateDeviceGroupDescription(ctx context.Context, req *connect.Request[v1.UpdateDeviceGroupDescriptionRequest]) (*connect.Response[v1.UpdateDeviceGroupResponse], error) {
-	return c.updateDeviceGroupDescription.CallUnary(ctx, req)
+// SetDeviceGroupDescription calls cadestro.v1.ControlService.SetDeviceGroupDescription.
+func (c *controlServiceClient) SetDeviceGroupDescription(ctx context.Context, req *connect.Request[v1.SetDeviceGroupDescriptionRequest]) (*connect.Response[v1.SetDeviceGroupDescriptionResponse], error) {
+	return c.setDeviceGroupDescription.CallUnary(ctx, req)
 }
 
 // DeleteDeviceGroup calls cadestro.v1.ControlService.DeleteDeviceGroup.
@@ -867,9 +948,24 @@ func (c *controlServiceClient) ListRoles(ctx context.Context, req *connect.Reque
 	return c.listRoles.CallUnary(ctx, req)
 }
 
-// UpdateRole calls cadestro.v1.ControlService.UpdateRole.
-func (c *controlServiceClient) UpdateRole(ctx context.Context, req *connect.Request[v1.UpdateRoleRequest]) (*connect.Response[v1.UpdateRoleResponse], error) {
-	return c.updateRole.CallUnary(ctx, req)
+// RenameRole calls cadestro.v1.ControlService.RenameRole.
+func (c *controlServiceClient) RenameRole(ctx context.Context, req *connect.Request[v1.RenameRoleRequest]) (*connect.Response[v1.RenameRoleResponse], error) {
+	return c.renameRole.CallUnary(ctx, req)
+}
+
+// SetRoleDescription calls cadestro.v1.ControlService.SetRoleDescription.
+func (c *controlServiceClient) SetRoleDescription(ctx context.Context, req *connect.Request[v1.SetRoleDescriptionRequest]) (*connect.Response[v1.SetRoleDescriptionResponse], error) {
+	return c.setRoleDescription.CallUnary(ctx, req)
+}
+
+// GrantRolePermission calls cadestro.v1.ControlService.GrantRolePermission.
+func (c *controlServiceClient) GrantRolePermission(ctx context.Context, req *connect.Request[v1.GrantRolePermissionRequest]) (*connect.Response[v1.GrantRolePermissionResponse], error) {
+	return c.grantRolePermission.CallUnary(ctx, req)
+}
+
+// RevokeRolePermission calls cadestro.v1.ControlService.RevokeRolePermission.
+func (c *controlServiceClient) RevokeRolePermission(ctx context.Context, req *connect.Request[v1.RevokeRolePermissionRequest]) (*connect.Response[v1.RevokeRolePermissionResponse], error) {
+	return c.revokeRolePermission.CallUnary(ctx, req)
 }
 
 // DeleteRole calls cadestro.v1.ControlService.DeleteRole.
@@ -913,7 +1009,10 @@ type ControlServiceHandler interface {
 	CreateIdentityProvider(context.Context, *connect.Request[v1.CreateIdentityProviderRequest]) (*connect.Response[v1.CreateIdentityProviderResponse], error)
 	GetIdentityProvider(context.Context, *connect.Request[v1.GetIdentityProviderRequest]) (*connect.Response[v1.GetIdentityProviderResponse], error)
 	ListIdentityProviders(context.Context, *connect.Request[v1.ListIdentityProvidersRequest]) (*connect.Response[v1.ListIdentityProvidersResponse], error)
-	UpdateIdentityProvider(context.Context, *connect.Request[v1.UpdateIdentityProviderRequest]) (*connect.Response[v1.UpdateIdentityProviderResponse], error)
+	RenameIdentityProvider(context.Context, *connect.Request[v1.RenameIdentityProviderRequest]) (*connect.Response[v1.RenameIdentityProviderResponse], error)
+	ConfigureIdentityProvider(context.Context, *connect.Request[v1.ConfigureIdentityProviderRequest]) (*connect.Response[v1.ConfigureIdentityProviderResponse], error)
+	EnableIdentityProvider(context.Context, *connect.Request[v1.EnableIdentityProviderRequest]) (*connect.Response[v1.EnableIdentityProviderResponse], error)
+	DisableIdentityProvider(context.Context, *connect.Request[v1.DisableIdentityProviderRequest]) (*connect.Response[v1.DisableIdentityProviderResponse], error)
 	DeleteIdentityProvider(context.Context, *connect.Request[v1.DeleteIdentityProviderRequest]) (*connect.Response[v1.DeleteIdentityProviderResponse], error)
 	Register(context.Context, *connect.Request[v1.RegisterRequest]) (*connect.Response[v1.RegisterResponse], error)
 	RenewCertificate(context.Context, *connect.Request[v1.RenewCertificateRequest]) (*connect.Response[v1.RenewCertificateResponse], error)
@@ -922,21 +1021,21 @@ type ControlServiceHandler interface {
 	DeleteDevice(context.Context, *connect.Request[v1.DeleteDeviceRequest]) (*connect.Response[v1.DeleteDeviceResponse], error)
 	CreateToken(context.Context, *connect.Request[v1.CreateTokenRequest]) (*connect.Response[v1.CreateTokenResponse], error)
 	ListTokens(context.Context, *connect.Request[v1.ListTokensRequest]) (*connect.Response[v1.ListTokensResponse], error)
-	RenameToken(context.Context, *connect.Request[v1.RenameTokenRequest]) (*connect.Response[v1.UpdateTokenResponse], error)
+	RenameToken(context.Context, *connect.Request[v1.RenameTokenRequest]) (*connect.Response[v1.RenameTokenResponse], error)
 	DeleteToken(context.Context, *connect.Request[v1.DeleteTokenRequest]) (*connect.Response[v1.DeleteTokenResponse], error)
 	CreateAction(context.Context, *connect.Request[v1.CreateActionRequest]) (*connect.Response[v1.CreateActionResponse], error)
 	GetAction(context.Context, *connect.Request[v1.GetActionRequest]) (*connect.Response[v1.GetActionResponse], error)
 	ListActions(context.Context, *connect.Request[v1.ListActionsRequest]) (*connect.Response[v1.ListActionsResponse], error)
-	RenameAction(context.Context, *connect.Request[v1.RenameActionRequest]) (*connect.Response[v1.UpdateActionResponse], error)
-	UpdateActionDescription(context.Context, *connect.Request[v1.UpdateActionDescriptionRequest]) (*connect.Response[v1.UpdateActionResponse], error)
-	UpdateActionParams(context.Context, *connect.Request[v1.UpdateActionParamsRequest]) (*connect.Response[v1.UpdateActionResponse], error)
+	RenameAction(context.Context, *connect.Request[v1.RenameActionRequest]) (*connect.Response[v1.RenameActionResponse], error)
+	SetActionDescription(context.Context, *connect.Request[v1.SetActionDescriptionRequest]) (*connect.Response[v1.SetActionDescriptionResponse], error)
+	ConfigureAction(context.Context, *connect.Request[v1.ConfigureActionRequest]) (*connect.Response[v1.ConfigureActionResponse], error)
 	DeleteAction(context.Context, *connect.Request[v1.DeleteActionRequest]) (*connect.Response[v1.DeleteActionResponse], error)
 	CreateDeviceGroup(context.Context, *connect.Request[v1.CreateDeviceGroupRequest]) (*connect.Response[v1.CreateDeviceGroupResponse], error)
 	GetDeviceGroup(context.Context, *connect.Request[v1.GetDeviceGroupRequest]) (*connect.Response[v1.GetDeviceGroupResponse], error)
 	ListDeviceGroups(context.Context, *connect.Request[v1.ListDeviceGroupsRequest]) (*connect.Response[v1.ListDeviceGroupsResponse], error)
 	ListDeviceGroupsForDevice(context.Context, *connect.Request[v1.ListDeviceGroupsForDeviceRequest]) (*connect.Response[v1.ListDeviceGroupsForDeviceResponse], error)
-	RenameDeviceGroup(context.Context, *connect.Request[v1.RenameDeviceGroupRequest]) (*connect.Response[v1.UpdateDeviceGroupResponse], error)
-	UpdateDeviceGroupDescription(context.Context, *connect.Request[v1.UpdateDeviceGroupDescriptionRequest]) (*connect.Response[v1.UpdateDeviceGroupResponse], error)
+	RenameDeviceGroup(context.Context, *connect.Request[v1.RenameDeviceGroupRequest]) (*connect.Response[v1.RenameDeviceGroupResponse], error)
+	SetDeviceGroupDescription(context.Context, *connect.Request[v1.SetDeviceGroupDescriptionRequest]) (*connect.Response[v1.SetDeviceGroupDescriptionResponse], error)
 	DeleteDeviceGroup(context.Context, *connect.Request[v1.DeleteDeviceGroupRequest]) (*connect.Response[v1.DeleteDeviceGroupResponse], error)
 	AddDeviceToGroup(context.Context, *connect.Request[v1.AddDeviceToGroupRequest]) (*connect.Response[v1.AddDeviceToGroupResponse], error)
 	RemoveDeviceFromGroup(context.Context, *connect.Request[v1.RemoveDeviceFromGroupRequest]) (*connect.Response[v1.RemoveDeviceFromGroupResponse], error)
@@ -950,7 +1049,10 @@ type ControlServiceHandler interface {
 	CreateRole(context.Context, *connect.Request[v1.CreateRoleRequest]) (*connect.Response[v1.CreateRoleResponse], error)
 	GetRole(context.Context, *connect.Request[v1.GetRoleRequest]) (*connect.Response[v1.GetRoleResponse], error)
 	ListRoles(context.Context, *connect.Request[v1.ListRolesRequest]) (*connect.Response[v1.ListRolesResponse], error)
-	UpdateRole(context.Context, *connect.Request[v1.UpdateRoleRequest]) (*connect.Response[v1.UpdateRoleResponse], error)
+	RenameRole(context.Context, *connect.Request[v1.RenameRoleRequest]) (*connect.Response[v1.RenameRoleResponse], error)
+	SetRoleDescription(context.Context, *connect.Request[v1.SetRoleDescriptionRequest]) (*connect.Response[v1.SetRoleDescriptionResponse], error)
+	GrantRolePermission(context.Context, *connect.Request[v1.GrantRolePermissionRequest]) (*connect.Response[v1.GrantRolePermissionResponse], error)
+	RevokeRolePermission(context.Context, *connect.Request[v1.RevokeRolePermissionRequest]) (*connect.Response[v1.RevokeRolePermissionResponse], error)
 	DeleteRole(context.Context, *connect.Request[v1.DeleteRoleRequest]) (*connect.Response[v1.DeleteRoleResponse], error)
 	AssignRoleToUser(context.Context, *connect.Request[v1.AssignRoleToUserRequest]) (*connect.Response[v1.AssignRoleToUserResponse], error)
 	RevokeRoleFromUser(context.Context, *connect.Request[v1.RevokeRoleFromUserRequest]) (*connect.Response[v1.RevokeRoleFromUserResponse], error)
@@ -1020,10 +1122,28 @@ func NewControlServiceHandler(svc ControlServiceHandler, opts ...connect.Handler
 		connect.WithSchema(controlServiceMethods.ByName("ListIdentityProviders")),
 		connect.WithHandlerOptions(opts...),
 	)
-	controlServiceUpdateIdentityProviderHandler := connect.NewUnaryHandler(
-		ControlServiceUpdateIdentityProviderProcedure,
-		svc.UpdateIdentityProvider,
-		connect.WithSchema(controlServiceMethods.ByName("UpdateIdentityProvider")),
+	controlServiceRenameIdentityProviderHandler := connect.NewUnaryHandler(
+		ControlServiceRenameIdentityProviderProcedure,
+		svc.RenameIdentityProvider,
+		connect.WithSchema(controlServiceMethods.ByName("RenameIdentityProvider")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceConfigureIdentityProviderHandler := connect.NewUnaryHandler(
+		ControlServiceConfigureIdentityProviderProcedure,
+		svc.ConfigureIdentityProvider,
+		connect.WithSchema(controlServiceMethods.ByName("ConfigureIdentityProvider")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceEnableIdentityProviderHandler := connect.NewUnaryHandler(
+		ControlServiceEnableIdentityProviderProcedure,
+		svc.EnableIdentityProvider,
+		connect.WithSchema(controlServiceMethods.ByName("EnableIdentityProvider")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceDisableIdentityProviderHandler := connect.NewUnaryHandler(
+		ControlServiceDisableIdentityProviderProcedure,
+		svc.DisableIdentityProvider,
+		connect.WithSchema(controlServiceMethods.ByName("DisableIdentityProvider")),
 		connect.WithHandlerOptions(opts...),
 	)
 	controlServiceDeleteIdentityProviderHandler := connect.NewUnaryHandler(
@@ -1110,16 +1230,16 @@ func NewControlServiceHandler(svc ControlServiceHandler, opts ...connect.Handler
 		connect.WithSchema(controlServiceMethods.ByName("RenameAction")),
 		connect.WithHandlerOptions(opts...),
 	)
-	controlServiceUpdateActionDescriptionHandler := connect.NewUnaryHandler(
-		ControlServiceUpdateActionDescriptionProcedure,
-		svc.UpdateActionDescription,
-		connect.WithSchema(controlServiceMethods.ByName("UpdateActionDescription")),
+	controlServiceSetActionDescriptionHandler := connect.NewUnaryHandler(
+		ControlServiceSetActionDescriptionProcedure,
+		svc.SetActionDescription,
+		connect.WithSchema(controlServiceMethods.ByName("SetActionDescription")),
 		connect.WithHandlerOptions(opts...),
 	)
-	controlServiceUpdateActionParamsHandler := connect.NewUnaryHandler(
-		ControlServiceUpdateActionParamsProcedure,
-		svc.UpdateActionParams,
-		connect.WithSchema(controlServiceMethods.ByName("UpdateActionParams")),
+	controlServiceConfigureActionHandler := connect.NewUnaryHandler(
+		ControlServiceConfigureActionProcedure,
+		svc.ConfigureAction,
+		connect.WithSchema(controlServiceMethods.ByName("ConfigureAction")),
 		connect.WithHandlerOptions(opts...),
 	)
 	controlServiceDeleteActionHandler := connect.NewUnaryHandler(
@@ -1158,10 +1278,10 @@ func NewControlServiceHandler(svc ControlServiceHandler, opts ...connect.Handler
 		connect.WithSchema(controlServiceMethods.ByName("RenameDeviceGroup")),
 		connect.WithHandlerOptions(opts...),
 	)
-	controlServiceUpdateDeviceGroupDescriptionHandler := connect.NewUnaryHandler(
-		ControlServiceUpdateDeviceGroupDescriptionProcedure,
-		svc.UpdateDeviceGroupDescription,
-		connect.WithSchema(controlServiceMethods.ByName("UpdateDeviceGroupDescription")),
+	controlServiceSetDeviceGroupDescriptionHandler := connect.NewUnaryHandler(
+		ControlServiceSetDeviceGroupDescriptionProcedure,
+		svc.SetDeviceGroupDescription,
+		connect.WithSchema(controlServiceMethods.ByName("SetDeviceGroupDescription")),
 		connect.WithHandlerOptions(opts...),
 	)
 	controlServiceDeleteDeviceGroupHandler := connect.NewUnaryHandler(
@@ -1242,10 +1362,28 @@ func NewControlServiceHandler(svc ControlServiceHandler, opts ...connect.Handler
 		connect.WithSchema(controlServiceMethods.ByName("ListRoles")),
 		connect.WithHandlerOptions(opts...),
 	)
-	controlServiceUpdateRoleHandler := connect.NewUnaryHandler(
-		ControlServiceUpdateRoleProcedure,
-		svc.UpdateRole,
-		connect.WithSchema(controlServiceMethods.ByName("UpdateRole")),
+	controlServiceRenameRoleHandler := connect.NewUnaryHandler(
+		ControlServiceRenameRoleProcedure,
+		svc.RenameRole,
+		connect.WithSchema(controlServiceMethods.ByName("RenameRole")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceSetRoleDescriptionHandler := connect.NewUnaryHandler(
+		ControlServiceSetRoleDescriptionProcedure,
+		svc.SetRoleDescription,
+		connect.WithSchema(controlServiceMethods.ByName("SetRoleDescription")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceGrantRolePermissionHandler := connect.NewUnaryHandler(
+		ControlServiceGrantRolePermissionProcedure,
+		svc.GrantRolePermission,
+		connect.WithSchema(controlServiceMethods.ByName("GrantRolePermission")),
+		connect.WithHandlerOptions(opts...),
+	)
+	controlServiceRevokeRolePermissionHandler := connect.NewUnaryHandler(
+		ControlServiceRevokeRolePermissionProcedure,
+		svc.RevokeRolePermission,
+		connect.WithSchema(controlServiceMethods.ByName("RevokeRolePermission")),
 		connect.WithHandlerOptions(opts...),
 	)
 	controlServiceDeleteRoleHandler := connect.NewUnaryHandler(
@@ -1304,8 +1442,14 @@ func NewControlServiceHandler(svc ControlServiceHandler, opts ...connect.Handler
 			controlServiceGetIdentityProviderHandler.ServeHTTP(w, r)
 		case ControlServiceListIdentityProvidersProcedure:
 			controlServiceListIdentityProvidersHandler.ServeHTTP(w, r)
-		case ControlServiceUpdateIdentityProviderProcedure:
-			controlServiceUpdateIdentityProviderHandler.ServeHTTP(w, r)
+		case ControlServiceRenameIdentityProviderProcedure:
+			controlServiceRenameIdentityProviderHandler.ServeHTTP(w, r)
+		case ControlServiceConfigureIdentityProviderProcedure:
+			controlServiceConfigureIdentityProviderHandler.ServeHTTP(w, r)
+		case ControlServiceEnableIdentityProviderProcedure:
+			controlServiceEnableIdentityProviderHandler.ServeHTTP(w, r)
+		case ControlServiceDisableIdentityProviderProcedure:
+			controlServiceDisableIdentityProviderHandler.ServeHTTP(w, r)
 		case ControlServiceDeleteIdentityProviderProcedure:
 			controlServiceDeleteIdentityProviderHandler.ServeHTTP(w, r)
 		case ControlServiceRegisterProcedure:
@@ -1334,10 +1478,10 @@ func NewControlServiceHandler(svc ControlServiceHandler, opts ...connect.Handler
 			controlServiceListActionsHandler.ServeHTTP(w, r)
 		case ControlServiceRenameActionProcedure:
 			controlServiceRenameActionHandler.ServeHTTP(w, r)
-		case ControlServiceUpdateActionDescriptionProcedure:
-			controlServiceUpdateActionDescriptionHandler.ServeHTTP(w, r)
-		case ControlServiceUpdateActionParamsProcedure:
-			controlServiceUpdateActionParamsHandler.ServeHTTP(w, r)
+		case ControlServiceSetActionDescriptionProcedure:
+			controlServiceSetActionDescriptionHandler.ServeHTTP(w, r)
+		case ControlServiceConfigureActionProcedure:
+			controlServiceConfigureActionHandler.ServeHTTP(w, r)
 		case ControlServiceDeleteActionProcedure:
 			controlServiceDeleteActionHandler.ServeHTTP(w, r)
 		case ControlServiceCreateDeviceGroupProcedure:
@@ -1350,8 +1494,8 @@ func NewControlServiceHandler(svc ControlServiceHandler, opts ...connect.Handler
 			controlServiceListDeviceGroupsForDeviceHandler.ServeHTTP(w, r)
 		case ControlServiceRenameDeviceGroupProcedure:
 			controlServiceRenameDeviceGroupHandler.ServeHTTP(w, r)
-		case ControlServiceUpdateDeviceGroupDescriptionProcedure:
-			controlServiceUpdateDeviceGroupDescriptionHandler.ServeHTTP(w, r)
+		case ControlServiceSetDeviceGroupDescriptionProcedure:
+			controlServiceSetDeviceGroupDescriptionHandler.ServeHTTP(w, r)
 		case ControlServiceDeleteDeviceGroupProcedure:
 			controlServiceDeleteDeviceGroupHandler.ServeHTTP(w, r)
 		case ControlServiceAddDeviceToGroupProcedure:
@@ -1378,8 +1522,14 @@ func NewControlServiceHandler(svc ControlServiceHandler, opts ...connect.Handler
 			controlServiceGetRoleHandler.ServeHTTP(w, r)
 		case ControlServiceListRolesProcedure:
 			controlServiceListRolesHandler.ServeHTTP(w, r)
-		case ControlServiceUpdateRoleProcedure:
-			controlServiceUpdateRoleHandler.ServeHTTP(w, r)
+		case ControlServiceRenameRoleProcedure:
+			controlServiceRenameRoleHandler.ServeHTTP(w, r)
+		case ControlServiceSetRoleDescriptionProcedure:
+			controlServiceSetRoleDescriptionHandler.ServeHTTP(w, r)
+		case ControlServiceGrantRolePermissionProcedure:
+			controlServiceGrantRolePermissionHandler.ServeHTTP(w, r)
+		case ControlServiceRevokeRolePermissionProcedure:
+			controlServiceRevokeRolePermissionHandler.ServeHTTP(w, r)
 		case ControlServiceDeleteRoleProcedure:
 			controlServiceDeleteRoleHandler.ServeHTTP(w, r)
 		case ControlServiceAssignRoleToUserProcedure:
@@ -1437,8 +1587,20 @@ func (UnimplementedControlServiceHandler) ListIdentityProviders(context.Context,
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.ListIdentityProviders is not implemented"))
 }
 
-func (UnimplementedControlServiceHandler) UpdateIdentityProvider(context.Context, *connect.Request[v1.UpdateIdentityProviderRequest]) (*connect.Response[v1.UpdateIdentityProviderResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.UpdateIdentityProvider is not implemented"))
+func (UnimplementedControlServiceHandler) RenameIdentityProvider(context.Context, *connect.Request[v1.RenameIdentityProviderRequest]) (*connect.Response[v1.RenameIdentityProviderResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.RenameIdentityProvider is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) ConfigureIdentityProvider(context.Context, *connect.Request[v1.ConfigureIdentityProviderRequest]) (*connect.Response[v1.ConfigureIdentityProviderResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.ConfigureIdentityProvider is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) EnableIdentityProvider(context.Context, *connect.Request[v1.EnableIdentityProviderRequest]) (*connect.Response[v1.EnableIdentityProviderResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.EnableIdentityProvider is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) DisableIdentityProvider(context.Context, *connect.Request[v1.DisableIdentityProviderRequest]) (*connect.Response[v1.DisableIdentityProviderResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.DisableIdentityProvider is not implemented"))
 }
 
 func (UnimplementedControlServiceHandler) DeleteIdentityProvider(context.Context, *connect.Request[v1.DeleteIdentityProviderRequest]) (*connect.Response[v1.DeleteIdentityProviderResponse], error) {
@@ -1473,7 +1635,7 @@ func (UnimplementedControlServiceHandler) ListTokens(context.Context, *connect.R
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.ListTokens is not implemented"))
 }
 
-func (UnimplementedControlServiceHandler) RenameToken(context.Context, *connect.Request[v1.RenameTokenRequest]) (*connect.Response[v1.UpdateTokenResponse], error) {
+func (UnimplementedControlServiceHandler) RenameToken(context.Context, *connect.Request[v1.RenameTokenRequest]) (*connect.Response[v1.RenameTokenResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.RenameToken is not implemented"))
 }
 
@@ -1493,16 +1655,16 @@ func (UnimplementedControlServiceHandler) ListActions(context.Context, *connect.
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.ListActions is not implemented"))
 }
 
-func (UnimplementedControlServiceHandler) RenameAction(context.Context, *connect.Request[v1.RenameActionRequest]) (*connect.Response[v1.UpdateActionResponse], error) {
+func (UnimplementedControlServiceHandler) RenameAction(context.Context, *connect.Request[v1.RenameActionRequest]) (*connect.Response[v1.RenameActionResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.RenameAction is not implemented"))
 }
 
-func (UnimplementedControlServiceHandler) UpdateActionDescription(context.Context, *connect.Request[v1.UpdateActionDescriptionRequest]) (*connect.Response[v1.UpdateActionResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.UpdateActionDescription is not implemented"))
+func (UnimplementedControlServiceHandler) SetActionDescription(context.Context, *connect.Request[v1.SetActionDescriptionRequest]) (*connect.Response[v1.SetActionDescriptionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.SetActionDescription is not implemented"))
 }
 
-func (UnimplementedControlServiceHandler) UpdateActionParams(context.Context, *connect.Request[v1.UpdateActionParamsRequest]) (*connect.Response[v1.UpdateActionResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.UpdateActionParams is not implemented"))
+func (UnimplementedControlServiceHandler) ConfigureAction(context.Context, *connect.Request[v1.ConfigureActionRequest]) (*connect.Response[v1.ConfigureActionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.ConfigureAction is not implemented"))
 }
 
 func (UnimplementedControlServiceHandler) DeleteAction(context.Context, *connect.Request[v1.DeleteActionRequest]) (*connect.Response[v1.DeleteActionResponse], error) {
@@ -1525,12 +1687,12 @@ func (UnimplementedControlServiceHandler) ListDeviceGroupsForDevice(context.Cont
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.ListDeviceGroupsForDevice is not implemented"))
 }
 
-func (UnimplementedControlServiceHandler) RenameDeviceGroup(context.Context, *connect.Request[v1.RenameDeviceGroupRequest]) (*connect.Response[v1.UpdateDeviceGroupResponse], error) {
+func (UnimplementedControlServiceHandler) RenameDeviceGroup(context.Context, *connect.Request[v1.RenameDeviceGroupRequest]) (*connect.Response[v1.RenameDeviceGroupResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.RenameDeviceGroup is not implemented"))
 }
 
-func (UnimplementedControlServiceHandler) UpdateDeviceGroupDescription(context.Context, *connect.Request[v1.UpdateDeviceGroupDescriptionRequest]) (*connect.Response[v1.UpdateDeviceGroupResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.UpdateDeviceGroupDescription is not implemented"))
+func (UnimplementedControlServiceHandler) SetDeviceGroupDescription(context.Context, *connect.Request[v1.SetDeviceGroupDescriptionRequest]) (*connect.Response[v1.SetDeviceGroupDescriptionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.SetDeviceGroupDescription is not implemented"))
 }
 
 func (UnimplementedControlServiceHandler) DeleteDeviceGroup(context.Context, *connect.Request[v1.DeleteDeviceGroupRequest]) (*connect.Response[v1.DeleteDeviceGroupResponse], error) {
@@ -1585,8 +1747,20 @@ func (UnimplementedControlServiceHandler) ListRoles(context.Context, *connect.Re
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.ListRoles is not implemented"))
 }
 
-func (UnimplementedControlServiceHandler) UpdateRole(context.Context, *connect.Request[v1.UpdateRoleRequest]) (*connect.Response[v1.UpdateRoleResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.UpdateRole is not implemented"))
+func (UnimplementedControlServiceHandler) RenameRole(context.Context, *connect.Request[v1.RenameRoleRequest]) (*connect.Response[v1.RenameRoleResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.RenameRole is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) SetRoleDescription(context.Context, *connect.Request[v1.SetRoleDescriptionRequest]) (*connect.Response[v1.SetRoleDescriptionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.SetRoleDescription is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) GrantRolePermission(context.Context, *connect.Request[v1.GrantRolePermissionRequest]) (*connect.Response[v1.GrantRolePermissionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.GrantRolePermission is not implemented"))
+}
+
+func (UnimplementedControlServiceHandler) RevokeRolePermission(context.Context, *connect.Request[v1.RevokeRolePermissionRequest]) (*connect.Response[v1.RevokeRolePermissionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cadestro.v1.ControlService.RevokeRolePermission is not implemented"))
 }
 
 func (UnimplementedControlServiceHandler) DeleteRole(context.Context, *connect.Request[v1.DeleteRoleRequest]) (*connect.Response[v1.DeleteRoleResponse], error) {

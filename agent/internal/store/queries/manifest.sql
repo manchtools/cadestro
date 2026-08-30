@@ -64,7 +64,7 @@ WHERE work_id = ? AND state = ?;
 -- name: ResetOccurrences :exec
 UPDATE scheduled_work_occurrences
 SET state = ?, started_at = NULL, completed_at = NULL,
-    result_status = NULL, result_error = '', updated_at = CURRENT_TIMESTAMP
+    result_status = NULL, updated_at = CURRENT_TIMESTAMP
 WHERE work_id = ?;
 
 -- name: BeginScheduledRun :exec
@@ -79,7 +79,7 @@ SET state = ?, started_at = ?, completed_at = NULL, updated_at = CURRENT_TIMESTA
 WHERE work_id = ? AND occurrence_id = ? AND state = ?;
 
 -- name: GetOccurrenceStates :many
-SELECT occurrence_id, state, result_status, result_error
+SELECT occurrence_id, state, result_status
 FROM scheduled_work_occurrences
 WHERE work_id = ?
 ORDER BY position;
@@ -91,7 +91,7 @@ WHERE work_id = ? AND occurrence_id = ? AND state = ?;
 
 -- name: RecordOccurrence :execrows
 UPDATE scheduled_work_occurrences
-SET state = ?, completed_at = ?, result_status = ?, result_error = ?, last_result_hash = ?,
+SET state = ?, completed_at = ?, result_status = ?, last_result_hash = ?,
     updated_at = CURRENT_TIMESTAMP
 WHERE work_id = ? AND occurrence_id = ? AND state = ?;
 
@@ -134,6 +134,6 @@ VALUES (?, 'ACTION', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- name: RecoverOccurrence :exec
 UPDATE scheduled_work_occurrences
-SET state = ?, completed_at = ?, result_status = ?, result_error = ?,
+SET state = ?, completed_at = ?, result_status = ?,
     updated_at = CURRENT_TIMESTAMP
 WHERE work_id = ? AND occurrence_id = ? AND state = ?;
