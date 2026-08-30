@@ -1,6 +1,3 @@
--- name: ResolveWorkID :one
-SELECT work_id FROM scheduled_work WHERE work_id = ? OR COALESCE(run_id, '') = ?;
-
 -- name: GetAssignedPolicyRevision :one
 SELECT value FROM settings WHERE key = 'assigned_policy_revision';
 
@@ -53,13 +50,8 @@ ORDER BY received_at, work_id;
 -- name: GetScheduledRun :one
 SELECT work_id, COALESCE(run_id, ''), run_in_progress, run_started_at
 FROM scheduled_work
-WHERE (work_id = ? OR COALESCE(run_id, '') = ?)
+WHERE (work_id = ? OR run_id = ?)
   AND (retired = FALSE OR run_in_progress = TRUE);
-
--- name: CountStartedOccurrences :one
-SELECT COUNT(*)
-FROM scheduled_work_occurrences
-WHERE work_id = ? AND state = ?;
 
 -- name: ResetOccurrences :exec
 UPDATE scheduled_work_occurrences
@@ -67,16 +59,23 @@ SET state = ?, started_at = NULL, completed_at = NULL,
     result_status = NULL, updated_at = CURRENT_TIMESTAMP
 WHERE work_id = ?;
 
--- name: BeginScheduledRun :exec
+-- name: BeginScheduledRun :execrows
 UPDATE scheduled_work
 SET run_id = ?, last_executed_at = ?, next_execute_at = ?,
     run_started_at = ?, run_in_progress = TRUE, updated_at = CURRENT_TIMESTAMP
-WHERE work_id = ?;
+WHERE scheduled_work.work_id = ?
+  AND NOT EXISTS (
+      SELECT 1 FROM scheduled_work_occurrences
+      WHERE scheduled_work_occurrences.work_id = scheduled_work.work_id
+        AND scheduled_work_occurrences.state = ?
+  );
 
 -- name: MarkOccurrenceStarted :execrows
 UPDATE scheduled_work_occurrences
 SET state = ?, started_at = ?, completed_at = NULL, updated_at = CURRENT_TIMESTAMP
-WHERE work_id = ? AND occurrence_id = ? AND state = ?;
+WHERE scheduled_work_occurrences.work_id = (
+    SELECT scheduled_work.work_id FROM scheduled_work WHERE scheduled_work.work_id = ? OR scheduled_work.run_id = ?
+  ) AND occurrence_id = ? AND state = ?;
 
 -- name: GetOccurrenceStates :many
 SELECT occurrence_id, state, result_status
@@ -84,29 +83,38 @@ FROM scheduled_work_occurrences
 WHERE work_id = ?
 ORDER BY position;
 
--- name: GetStartedOccurrenceHash :one
-SELECT last_result_hash
-FROM scheduled_work_occurrences
-WHERE work_id = ? AND occurrence_id = ? AND state = ?;
-
 -- name: RecordOccurrence :execrows
 UPDATE scheduled_work_occurrences
 SET state = ?, completed_at = ?, result_status = ?, last_result_hash = ?,
     updated_at = CURRENT_TIMESTAMP
-WHERE work_id = ? AND occurrence_id = ? AND state = ?;
+WHERE scheduled_work_occurrences.work_id = (
+    SELECT scheduled_work.work_id FROM scheduled_work WHERE scheduled_work.work_id = ? OR scheduled_work.run_id = ?
+  ) AND occurrence_id = ? AND state = ?;
 
--- name: FinishManifestRun :execrows
+-- name: InsertActionResultOutboxIfChanged :execrows
+INSERT INTO result_outbox (id, kind, payload, created_at, updated_at)
+SELECT ?, 'ACTION', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+WHERE EXISTS (
+    SELECT 1 FROM scheduled_work_occurrences
+    WHERE scheduled_work_occurrences.work_id = (
+        SELECT scheduled_work.work_id FROM scheduled_work WHERE scheduled_work.work_id = ? OR scheduled_work.run_id = ?
+      ) AND occurrence_id = ? AND state = ?
+      AND (CAST(sqlc.arg(suppress_unchanged) AS BOOLEAN) = FALSE
+           OR last_result_hash = ''
+           OR last_result_hash <> sqlc.arg(last_result_hash))
+);
+
+-- name: FinishManifestRun :one
 UPDATE scheduled_work
 SET run_in_progress = FALSE, run_started_at = NULL,
+    run_id = CASE WHEN retired THEN run_id ELSE NULL END,
     updated_at = CURRENT_TIMESTAMP
-WHERE (work_id = ? OR COALESCE(run_id, '') = ?) AND run_in_progress = TRUE;
+WHERE (work_id = ? OR run_id = ?) AND run_in_progress = TRUE
+RETURNING retired;
 
 -- name: DeleteRetiredWork :exec
 DELETE FROM scheduled_work
-WHERE (work_id = ? OR COALESCE(run_id, '') = ?) AND retired = TRUE;
-
--- name: ClearRunID :exec
-UPDATE scheduled_work SET run_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE (work_id = ? OR COALESCE(run_id, '') = ?);
+WHERE (work_id = ? OR run_id = ?) AND retired = TRUE;
 
 -- name: InsertResultOutbox :exec
 INSERT INTO result_outbox (id, kind, payload, created_at, updated_at)

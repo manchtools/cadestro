@@ -47,10 +47,6 @@ type PendingResult struct {
 	ManifestResult *pb.ManifestResult
 }
 
-func (s *Store) resolveWorkID(ctx context.Context, id string) (string, error) {
-	return s.queries.ResolveWorkID(ctx, generated.ResolveWorkIDParams{WorkID: id, RunID: stringPtr(id)})
-}
-
 func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) error {
 	if policy == nil {
 		return errors.New("reconcile policy: missing snapshot")
@@ -229,24 +225,21 @@ func (s *Store) BeginManifestRun(ctx context.Context, work *ScheduledWork, start
 		}
 		return priorStarted.UTC(), nil
 	}
-	started, err := queries.CountStartedOccurrences(ctx, generated.CountStartedOccurrencesParams{WorkID: workID, State: OccurrenceStarted})
-	if err != nil {
-		return time.Time{}, err
-	}
-	if started != 0 {
-		return time.Time{}, fmt.Errorf("begin manifest run: work %s has interrupted occurrences", work.WorkID)
-	}
-	if err := queries.ResetOccurrences(ctx, generated.ResetOccurrencesParams{State: OccurrencePending, WorkID: workID}); err != nil {
-		return time.Time{}, err
-	}
 	startedAt = startedAt.UTC()
 	next := calculateNextExecuteFromSchedule(work.Manifest.GetSchedule(), &startedAt, false, s.now())
 	if runID == "" || runID == workID {
 		runID = ulid.Make().String()
 	}
-	if err := queries.BeginScheduledRun(ctx, generated.BeginScheduledRunParams{
-		RunID: &runID, LastExecutedAt: &startedAt, NextExecuteAt: next, RunStartedAt: &startedAt, WorkID: workID,
-	}); err != nil {
+	updated, err := queries.BeginScheduledRun(ctx, generated.BeginScheduledRunParams{
+		RunID: &runID, LastExecutedAt: &startedAt, NextExecuteAt: next, RunStartedAt: &startedAt, WorkID: workID, State: OccurrenceStarted,
+	})
+	if err != nil {
+		return time.Time{}, err
+	}
+	if updated != 1 {
+		return time.Time{}, fmt.Errorf("begin manifest run: work %s has interrupted occurrences", work.WorkID)
+	}
+	if err := queries.ResetOccurrences(ctx, generated.ResetOccurrencesParams{State: OccurrencePending, WorkID: workID}); err != nil {
 		return time.Time{}, err
 	}
 	if err := tx.Commit(); err != nil {
@@ -257,14 +250,10 @@ func (s *Store) BeginManifestRun(ctx context.Context, work *ScheduledWork, start
 }
 
 func (s *Store) MarkOccurrenceStarted(ctx context.Context, workID, occurrenceID string, startedAt time.Time) error {
-	workID, err := s.resolveWorkID(ctx, workID)
-	if err != nil {
-		return err
-	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	changed, err := s.queries.MarkOccurrenceStarted(ctx, generated.MarkOccurrenceStartedParams{
-		State: OccurrenceStarted, StartedAt: timePtr(startedAt.UTC()), WorkID: workID, OccurrenceID: occurrenceID, State_2: OccurrencePending,
+		State: OccurrenceStarted, StartedAt: timePtr(startedAt.UTC()), WorkID: workID, RunID: stringPtr(workID), OccurrenceID: occurrenceID, State_2: OccurrencePending,
 	})
 	if err != nil {
 		return err
@@ -291,10 +280,6 @@ func (s *Store) RecordOccurrenceResult(ctx context.Context, result *pb.ActionRes
 	if err != nil {
 		return "", false, err
 	}
-	workID, err := s.resolveWorkID(ctx, result.GetRunId().GetValue())
-	if err != nil {
-		return "", false, err
-	}
 	now := s.now().UTC()
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -304,8 +289,14 @@ func (s *Store) RecordOccurrenceResult(ctx context.Context, result *pb.ActionRes
 	}
 	defer tx.Rollback()
 	queries := s.queries.WithTx(tx)
-	previousHash, err := queries.GetStartedOccurrenceHash(ctx, generated.GetStartedOccurrenceHashParams{
-		WorkID: workID, OccurrenceID: result.GetOccurrenceId().GetValue(), State: OccurrenceStarted,
+	id, err := randomResultID("ACTION", now)
+	if err != nil {
+		return "", false, err
+	}
+	inserted, err := queries.InsertActionResultOutboxIfChanged(ctx, generated.InsertActionResultOutboxIfChangedParams{
+		ID: id, Payload: payload, WorkID: result.GetRunId().GetValue(), RunID: stringPtr(result.GetRunId().GetValue()),
+		OccurrenceID: result.GetOccurrenceId().GetValue(), State: OccurrenceStarted,
+		SuppressUnchanged: suppressUnchanged, LastResultHash: resultHash,
 	})
 	if err != nil {
 		return "", false, err
@@ -313,7 +304,7 @@ func (s *Store) RecordOccurrenceResult(ctx context.Context, result *pb.ActionRes
 	status := int32(result.GetStatus())
 	updated, err := queries.RecordOccurrence(ctx, generated.RecordOccurrenceParams{
 		State: state, CompletedAt: timePtr(now), ResultStatus: &status, LastResultHash: resultHash,
-		WorkID: workID, OccurrenceID: result.GetOccurrenceId().GetValue(), State_2: OccurrenceStarted,
+		WorkID: result.GetRunId().GetValue(), RunID: stringPtr(result.GetRunId().GetValue()), OccurrenceID: result.GetOccurrenceId().GetValue(), State_2: OccurrenceStarted,
 	})
 	if err != nil {
 		return "", false, err
@@ -321,18 +312,11 @@ func (s *Store) RecordOccurrenceResult(ctx context.Context, result *pb.ActionRes
 	if updated != 1 {
 		return "", false, errors.New("record occurrence result: occurrence was not STARTED")
 	}
-	if suppressUnchanged && previousHash != "" && previousHash == resultHash {
+	if inserted == 0 {
 		if err := tx.Commit(); err != nil {
 			return "", false, err
 		}
 		return "", true, nil
-	}
-	id, err := randomResultID("ACTION", now)
-	if err != nil {
-		return "", false, err
-	}
-	if err := queries.InsertResultOutbox(ctx, generated.InsertResultOutboxParams{ID: id, Kind: "ACTION", Payload: payload}); err != nil {
-		return "", false, err
 	}
 	if err := tx.Commit(); err != nil {
 		return "", false, err
@@ -360,17 +344,20 @@ func (s *Store) RecordManifestResult(ctx context.Context, result *pb.ManifestRes
 	}
 	return s.recordResult(ctx, "MANIFEST", result, func(ctx context.Context, queries *generated.Queries, _ time.Time) error {
 		runID := result.GetRunId().GetValue()
-		rows, err := queries.FinishManifestRun(ctx, generated.FinishManifestRunParams{WorkID: runID, RunID: stringPtr(runID)})
+		retired, err := queries.FinishManifestRun(ctx, generated.FinishManifestRunParams{WorkID: runID, RunID: stringPtr(runID)})
 		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return errors.New("record manifest result: manifest run is not active")
+			}
 			return err
 		}
-		if rows != 1 {
-			return errors.New("record manifest result: manifest run is not active")
+		if !retired {
+			return nil
 		}
 		if err := queries.DeleteRetiredWork(ctx, generated.DeleteRetiredWorkParams{WorkID: runID, RunID: stringPtr(runID)}); err != nil {
 			return err
 		}
-		return queries.ClearRunID(ctx, generated.ClearRunIDParams{WorkID: runID, RunID: stringPtr(runID)})
+		return nil
 	})
 }
 

@@ -10,11 +10,16 @@ import (
 	"time"
 )
 
-const beginScheduledRun = `-- name: BeginScheduledRun :exec
+const beginScheduledRun = `-- name: BeginScheduledRun :execrows
 UPDATE scheduled_work
 SET run_id = ?, last_executed_at = ?, next_execute_at = ?,
     run_started_at = ?, run_in_progress = TRUE, updated_at = CURRENT_TIMESTAMP
-WHERE work_id = ?
+WHERE scheduled_work.work_id = ?
+  AND NOT EXISTS (
+      SELECT 1 FROM scheduled_work_occurrences
+      WHERE scheduled_work_occurrences.work_id = scheduled_work.work_id
+        AND scheduled_work_occurrences.state = ?
+  )
 `
 
 type BeginScheduledRunParams struct {
@@ -23,54 +28,27 @@ type BeginScheduledRunParams struct {
 	NextExecuteAt  time.Time  `json:"next_execute_at"`
 	RunStartedAt   *time.Time `json:"run_started_at"`
 	WorkID         string     `json:"work_id"`
+	State          string     `json:"state"`
 }
 
-func (q *Queries) BeginScheduledRun(ctx context.Context, arg BeginScheduledRunParams) error {
-	_, err := q.db.ExecContext(ctx, beginScheduledRun,
+func (q *Queries) BeginScheduledRun(ctx context.Context, arg BeginScheduledRunParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, beginScheduledRun,
 		arg.RunID,
 		arg.LastExecutedAt,
 		arg.NextExecuteAt,
 		arg.RunStartedAt,
 		arg.WorkID,
+		arg.State,
 	)
-	return err
-}
-
-const clearRunID = `-- name: ClearRunID :exec
-UPDATE scheduled_work SET run_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE (work_id = ? OR COALESCE(run_id, '') = ?)
-`
-
-type ClearRunIDParams struct {
-	WorkID string  `json:"work_id"`
-	RunID  *string `json:"run_id"`
-}
-
-func (q *Queries) ClearRunID(ctx context.Context, arg ClearRunIDParams) error {
-	_, err := q.db.ExecContext(ctx, clearRunID, arg.WorkID, arg.RunID)
-	return err
-}
-
-const countStartedOccurrences = `-- name: CountStartedOccurrences :one
-SELECT COUNT(*)
-FROM scheduled_work_occurrences
-WHERE work_id = ? AND state = ?
-`
-
-type CountStartedOccurrencesParams struct {
-	WorkID string `json:"work_id"`
-	State  string `json:"state"`
-}
-
-func (q *Queries) CountStartedOccurrences(ctx context.Context, arg CountStartedOccurrencesParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countStartedOccurrences, arg.WorkID, arg.State)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
 const deleteRetiredWork = `-- name: DeleteRetiredWork :exec
 DELETE FROM scheduled_work
-WHERE (work_id = ? OR COALESCE(run_id, '') = ?) AND retired = TRUE
+WHERE (work_id = ? OR run_id = ?) AND retired = TRUE
 `
 
 type DeleteRetiredWorkParams struct {
@@ -92,11 +70,13 @@ func (q *Queries) DeleteWork(ctx context.Context, workID string) error {
 	return err
 }
 
-const finishManifestRun = `-- name: FinishManifestRun :execrows
+const finishManifestRun = `-- name: FinishManifestRun :one
 UPDATE scheduled_work
 SET run_in_progress = FALSE, run_started_at = NULL,
+    run_id = CASE WHEN retired THEN run_id ELSE NULL END,
     updated_at = CURRENT_TIMESTAMP
-WHERE (work_id = ? OR COALESCE(run_id, '') = ?) AND run_in_progress = TRUE
+WHERE (work_id = ? OR run_id = ?) AND run_in_progress = TRUE
+RETURNING retired
 `
 
 type FinishManifestRunParams struct {
@@ -104,12 +84,11 @@ type FinishManifestRunParams struct {
 	RunID  *string `json:"run_id"`
 }
 
-func (q *Queries) FinishManifestRun(ctx context.Context, arg FinishManifestRunParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, finishManifestRun, arg.WorkID, arg.RunID)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected()
+func (q *Queries) FinishManifestRun(ctx context.Context, arg FinishManifestRunParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, finishManifestRun, arg.WorkID, arg.RunID)
+	var retired bool
+	err := row.Scan(&retired)
+	return retired, err
 }
 
 const getAssignedPolicyRevision = `-- name: GetAssignedPolicyRevision :one
@@ -295,7 +274,7 @@ func (q *Queries) GetPendingResults(ctx context.Context) ([]GetPendingResultsRow
 const getScheduledRun = `-- name: GetScheduledRun :one
 SELECT work_id, COALESCE(run_id, ''), run_in_progress, run_started_at
 FROM scheduled_work
-WHERE (work_id = ? OR COALESCE(run_id, '') = ?)
+WHERE (work_id = ? OR run_id = ?)
   AND (retired = FALSE OR run_in_progress = TRUE)
 `
 
@@ -323,23 +302,46 @@ func (q *Queries) GetScheduledRun(ctx context.Context, arg GetScheduledRunParams
 	return i, err
 }
 
-const getStartedOccurrenceHash = `-- name: GetStartedOccurrenceHash :one
-SELECT last_result_hash
-FROM scheduled_work_occurrences
-WHERE work_id = ? AND occurrence_id = ? AND state = ?
+const insertActionResultOutboxIfChanged = `-- name: InsertActionResultOutboxIfChanged :execrows
+INSERT INTO result_outbox (id, kind, payload, created_at, updated_at)
+SELECT ?, 'ACTION', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+WHERE EXISTS (
+    SELECT 1 FROM scheduled_work_occurrences
+    WHERE scheduled_work_occurrences.work_id = (
+        SELECT scheduled_work.work_id FROM scheduled_work WHERE scheduled_work.work_id = ? OR scheduled_work.run_id = ?
+      ) AND occurrence_id = ? AND state = ?
+      AND (CAST(?7 AS BOOLEAN) = FALSE
+           OR last_result_hash = ''
+           OR last_result_hash <> ?8)
+)
 `
 
-type GetStartedOccurrenceHashParams struct {
-	WorkID       string `json:"work_id"`
-	OccurrenceID string `json:"occurrence_id"`
-	State        string `json:"state"`
+type InsertActionResultOutboxIfChangedParams struct {
+	ID                string  `json:"id"`
+	Payload           []byte  `json:"payload"`
+	WorkID            string  `json:"work_id"`
+	RunID             *string `json:"run_id"`
+	OccurrenceID      string  `json:"occurrence_id"`
+	State             string  `json:"state"`
+	SuppressUnchanged bool    `json:"suppress_unchanged"`
+	LastResultHash    string  `json:"last_result_hash"`
 }
 
-func (q *Queries) GetStartedOccurrenceHash(ctx context.Context, arg GetStartedOccurrenceHashParams) (string, error) {
-	row := q.db.QueryRowContext(ctx, getStartedOccurrenceHash, arg.WorkID, arg.OccurrenceID, arg.State)
-	var last_result_hash string
-	err := row.Scan(&last_result_hash)
-	return last_result_hash, err
+func (q *Queries) InsertActionResultOutboxIfChanged(ctx context.Context, arg InsertActionResultOutboxIfChangedParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, insertActionResultOutboxIfChanged,
+		arg.ID,
+		arg.Payload,
+		arg.WorkID,
+		arg.RunID,
+		arg.OccurrenceID,
+		arg.State,
+		arg.SuppressUnchanged,
+		arg.LastResultHash,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
 const insertOccurrence = `-- name: InsertOccurrence :exec
@@ -501,13 +503,16 @@ func (q *Queries) ListInterruptedOccurrences(ctx context.Context, state string) 
 const markOccurrenceStarted = `-- name: MarkOccurrenceStarted :execrows
 UPDATE scheduled_work_occurrences
 SET state = ?, started_at = ?, completed_at = NULL, updated_at = CURRENT_TIMESTAMP
-WHERE work_id = ? AND occurrence_id = ? AND state = ?
+WHERE scheduled_work_occurrences.work_id = (
+    SELECT scheduled_work.work_id FROM scheduled_work WHERE scheduled_work.work_id = ? OR scheduled_work.run_id = ?
+  ) AND occurrence_id = ? AND state = ?
 `
 
 type MarkOccurrenceStartedParams struct {
 	State        string     `json:"state"`
 	StartedAt    *time.Time `json:"started_at"`
 	WorkID       string     `json:"work_id"`
+	RunID        *string    `json:"run_id"`
 	OccurrenceID string     `json:"occurrence_id"`
 	State_2      string     `json:"state_2"`
 }
@@ -517,6 +522,7 @@ func (q *Queries) MarkOccurrenceStarted(ctx context.Context, arg MarkOccurrenceS
 		arg.State,
 		arg.StartedAt,
 		arg.WorkID,
+		arg.RunID,
 		arg.OccurrenceID,
 		arg.State_2,
 	)
@@ -539,7 +545,9 @@ const recordOccurrence = `-- name: RecordOccurrence :execrows
 UPDATE scheduled_work_occurrences
 SET state = ?, completed_at = ?, result_status = ?, last_result_hash = ?,
     updated_at = CURRENT_TIMESTAMP
-WHERE work_id = ? AND occurrence_id = ? AND state = ?
+WHERE scheduled_work_occurrences.work_id = (
+    SELECT scheduled_work.work_id FROM scheduled_work WHERE scheduled_work.work_id = ? OR scheduled_work.run_id = ?
+  ) AND occurrence_id = ? AND state = ?
 `
 
 type RecordOccurrenceParams struct {
@@ -548,6 +556,7 @@ type RecordOccurrenceParams struct {
 	ResultStatus   *int32     `json:"result_status"`
 	LastResultHash string     `json:"last_result_hash"`
 	WorkID         string     `json:"work_id"`
+	RunID          *string    `json:"run_id"`
 	OccurrenceID   string     `json:"occurrence_id"`
 	State_2        string     `json:"state_2"`
 }
@@ -559,6 +568,7 @@ func (q *Queries) RecordOccurrence(ctx context.Context, arg RecordOccurrencePara
 		arg.ResultStatus,
 		arg.LastResultHash,
 		arg.WorkID,
+		arg.RunID,
 		arg.OccurrenceID,
 		arg.State_2,
 	)
@@ -611,22 +621,6 @@ type ResetOccurrencesParams struct {
 func (q *Queries) ResetOccurrences(ctx context.Context, arg ResetOccurrencesParams) error {
 	_, err := q.db.ExecContext(ctx, resetOccurrences, arg.State, arg.WorkID)
 	return err
-}
-
-const resolveWorkID = `-- name: ResolveWorkID :one
-SELECT work_id FROM scheduled_work WHERE work_id = ? OR COALESCE(run_id, '') = ?
-`
-
-type ResolveWorkIDParams struct {
-	WorkID string  `json:"work_id"`
-	RunID  *string `json:"run_id"`
-}
-
-func (q *Queries) ResolveWorkID(ctx context.Context, arg ResolveWorkIDParams) (string, error) {
-	row := q.db.QueryRowContext(ctx, resolveWorkID, arg.WorkID, arg.RunID)
-	var work_id string
-	err := row.Scan(&work_id)
-	return work_id, err
 }
 
 const retireWork = `-- name: RetireWork :exec
