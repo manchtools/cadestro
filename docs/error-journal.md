@@ -93,3 +93,15 @@
 **Harness fix**: None; the binding Stallion proto rule already prohibits this redundant shape.
 
 **Prevention**: whenever a proto gains or retains a concrete oneof, query the descriptor for sibling enum discriminators in every message using that oneof and remove them unless they encode independent state.
+
+## 2026-08-30 Ignored project rule: Invented an update-time need for ActionType
+
+**What happened**: I claimed the redundant `ActionType` could remain useful for detecting an attempt to change an existing action's parameter kind, despite the update path already loading the stored action before writing it.
+
+**What the user said**: "The only thing i can see ActionType enum beeing usefull for is detecting a param change to an already existing action. But we could also just pull the dataset before updating to check that."
+
+**Root cause**: I justified a stored discriminator from a derived invariant without tracing the existing read-before-update flow or applying the rule that the concrete `oneof` arm is authoritative.
+
+**Harness fix**: None; Stallion's ladder and proto rules already require checking the existing flow and removing an enum discriminator duplicated by a concrete `oneof`.
+
+**Prevention**: Before preserving derived metadata for validation, trace the full mutation path and compare authoritative values already available there; add separate storage only when it enables a retained query that cannot reasonably use the authoritative value.
