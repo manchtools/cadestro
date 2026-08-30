@@ -103,3 +103,19 @@ func TestDeletedEnrollmentTokenCannotRegister(t *testing.T) {
 	_, err = service.Register(ctx, connect.NewRequest(&cadestrov1.RegisterRequest{Token: tokenValue, Hostname: "agent", AgentVersion: "test", Csr: testEnrollmentCSR(t)}))
 	require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 }
+
+func TestFinalUseDeletionUsesDatabaseState(t *testing.T) {
+	service, ctx, now, _ := testService(t)
+	tokenValue := createEnrollmentToken(t, service, ctx, now, 2)
+	snapshot, err := service.store.Queries().GetUsableRegistrationToken(ctx, db.GetUsableRegistrationTokenParams{ValueHash: tokenHash(tokenValue), ExpiresAt: now})
+	require.NoError(t, err)
+	for range 2 {
+		err = service.store.Transaction(ctx, func(queries *db.Queries) error {
+			_, err := consumeRegistrationToken(ctx, queries, snapshot, now)
+			return err
+		})
+		require.NoError(t, err)
+	}
+	_, err = service.store.Queries().GetRegistrationToken(ctx, snapshot.ID)
+	require.ErrorIs(t, err, sql.ErrNoRows)
+}

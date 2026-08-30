@@ -57,3 +57,15 @@
 **Harness fix**: record the operator ruling in AGENTS.md.
 
 **Prevention**: treat seeded defaults as ordinary deletable data and use deletion as the sole registration-token revocation state unless the operator explicitly rules otherwise.
+
+## 2026-08-30 Silent failure: Used a stale registration-token snapshot for final-use deletion
+
+**What happened**: I based finite-token deletion on the token row read before the enrollment transaction, so a concurrent final use could increment the database row to its limit without deleting it.
+
+**What the user said**: "Register decides final-use deletion from the stale token snapshot loaded before the transaction."
+
+**Root cause**: I did not make the conditional mutation return the post-update row before applying the exhaustion invariant.
+
+**Harness fix**: none; the existing SQL generation and transaction rules were sufficient, but the invariant was not tested against a stale snapshot.
+
+**Prevention**: mutation queries that drive state-dependent follow-up work must return the authoritative post-mutation row, and a regression test must reuse a pre-mutation snapshot across sequential transactions.

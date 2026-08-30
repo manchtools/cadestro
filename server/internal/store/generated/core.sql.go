@@ -64,9 +64,10 @@ func (q *Queries) BumpSessionsForRole(ctx context.Context, roleID string) error 
 	return err
 }
 
-const consumeRegistrationToken = `-- name: ConsumeRegistrationToken :execrows
+const consumeRegistrationToken = `-- name: ConsumeRegistrationToken :one
 UPDATE registration_tokens SET current_uses = current_uses + 1
 WHERE id = ? AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses)
+RETURNING id, value_hash, name, max_uses, current_uses, expires_at, created_at
 `
 
 type ConsumeRegistrationTokenParams struct {
@@ -74,12 +75,19 @@ type ConsumeRegistrationTokenParams struct {
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
-func (q *Queries) ConsumeRegistrationToken(ctx context.Context, arg ConsumeRegistrationTokenParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, consumeRegistrationToken, arg.ID, arg.ExpiresAt)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected()
+func (q *Queries) ConsumeRegistrationToken(ctx context.Context, arg ConsumeRegistrationTokenParams) (*RegistrationToken, error) {
+	row := q.db.QueryRowContext(ctx, consumeRegistrationToken, arg.ID, arg.ExpiresAt)
+	var i RegistrationToken
+	err := row.Scan(
+		&i.ID,
+		&i.ValueHash,
+		&i.Name,
+		&i.MaxUses,
+		&i.CurrentUses,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+	)
+	return &i, err
 }
 
 const countActions = `-- name: CountActions :one

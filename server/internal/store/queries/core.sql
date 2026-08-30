@@ -137,9 +137,10 @@ SELECT * FROM registration_tokens WHERE id = ?;
 SELECT * FROM registration_tokens
 WHERE value_hash = ? AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses);
 
--- name: ConsumeRegistrationToken :execrows
+-- name: ConsumeRegistrationToken :one
 UPDATE registration_tokens SET current_uses = current_uses + 1
-WHERE id = ? AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses);
+WHERE id = ? AND expires_at > ? AND (max_uses = 0 OR current_uses < max_uses)
+RETURNING *;
 
 -- name: ListRegistrationTokens :many
 SELECT * FROM registration_tokens

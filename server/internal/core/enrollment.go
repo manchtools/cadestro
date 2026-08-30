@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
@@ -55,12 +56,8 @@ func (service *Service) Register(ctx context.Context, request *connect.Request[c
 		return nil, service.internal("read issued certificate", err)
 	}
 	err = service.store.Transaction(ctx, func(queries *db.Queries) error {
-		rows, err := queries.ConsumeRegistrationToken(ctx, db.ConsumeRegistrationTokenParams{ID: token.ID, ExpiresAt: now})
-		if err != nil {
+		if _, err := consumeRegistrationToken(ctx, queries, token, now); err != nil {
 			return err
-		}
-		if rows != 1 {
-			return errors.New("registration token was consumed concurrently")
 		}
 		if _, err := queries.CreateDevice(ctx, db.CreateDeviceParams{
 			ID: deviceID, Hostname: request.Msg.GetHostname(), AgentVersion: request.Msg.GetAgentVersion(),
@@ -68,11 +65,6 @@ func (service *Service) Register(ctx context.Context, request *connect.Request[c
 			CertExpiresAt: certificate.NotAfter, RegisteredAt: now,
 		}); err != nil {
 			return err
-		}
-		if token.MaxUses > 0 && token.CurrentUses+1 >= token.MaxUses {
-			if _, err := queries.DeleteRegistrationToken(ctx, token.ID); err != nil {
-				return err
-			}
 		}
 		return queries.CreateAuditEvent(ctx, db.CreateAuditEventParams{
 			ID: ulid.Make().String(), EventType: "device.registered", StreamType: "device", StreamID: deviceID,
@@ -89,6 +81,22 @@ func (service *Service) Register(ctx context.Context, request *connect.Request[c
 		DeviceId: &cadestrov1.DeviceId{Value: deviceID}, CaCert: service.ca.CACertPEM(),
 		Certificate: certificate.CertPEM, ControlUrl: service.agentURL,
 	}), nil
+}
+
+func consumeRegistrationToken(ctx context.Context, queries *db.Queries, token *db.RegistrationToken, now time.Time) (*db.RegistrationToken, error) {
+	consumed, err := queries.ConsumeRegistrationToken(ctx, db.ConsumeRegistrationTokenParams{ID: token.ID, ExpiresAt: now})
+	if store.IsNotFound(err) {
+		return nil, errors.New("registration token was consumed concurrently")
+	}
+	if err != nil {
+		return nil, err
+	}
+	if consumed.MaxUses > 0 && consumed.CurrentUses >= consumed.MaxUses {
+		if _, err := queries.DeleteRegistrationToken(ctx, consumed.ID); err != nil {
+			return nil, err
+		}
+	}
+	return consumed, nil
 }
 
 func (service *Service) RenewCertificate(ctx context.Context, request *connect.Request[cadestrov1.RenewCertificateRequest]) (*connect.Response[cadestrov1.RenewCertificateResponse], error) {
