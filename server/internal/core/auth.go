@@ -360,7 +360,7 @@ func (service *Service) RenameIdentityProvider(ctx context.Context, request *con
 
 func (service *Service) ConfigureIdentityProvider(ctx context.Context, request *connect.Request[cadestrov1.ConfigureIdentityProviderRequest]) (*connect.Response[cadestrov1.ConfigureIdentityProviderResponse], error) {
 	id := request.Msg.GetId().GetValue()
-	provider, err := service.store.Queries().GetIdentityProvider(ctx, id)
+	_, err := service.store.Queries().GetIdentityProvider(ctx, id)
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, rpcNotFound("identity provider")
@@ -374,7 +374,7 @@ func (service *Service) ConfigureIdentityProvider(ctx context.Context, request *
 	if err != nil {
 		return nil, service.internal("encode provider scopes", err)
 	}
-	provider, err = service.store.Queries().ConfigureIdentityProvider(ctx, db.ConfigureIdentityProviderParams{
+	provider, err := service.store.Queries().ConfigureIdentityProvider(ctx, db.ConfigureIdentityProviderParams{
 		ClientID:  request.Msg.GetClientId().GetValue(),
 		IssuerUrl: request.Msg.GetIssuerUrl(), ScopesJson: string(scopes),
 		ID: id,
