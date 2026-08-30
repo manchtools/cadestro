@@ -284,9 +284,8 @@ ORDER BY actions.id;
 
 -- name: CreateExecutionResult :exec
 INSERT INTO execution_results (
-    run_id, device_id, action_id, status, error, output_exit_code, output_stdout, output_stderr, completed_at,
-    compliant, detection_exit_code, detection_stdout, detection_stderr, is_compliance
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    run_id, device_id, action_id, completed_at, result_blob
+) VALUES (?, ?, ?, ?, ?)
 ON CONFLICT(run_id) DO NOTHING;
 
 -- name: ListExecutionResults :many
@@ -295,10 +294,9 @@ JOIN actions ON actions.id = execution_results.action_id
 WHERE execution_results.device_id = ? ORDER BY execution_results.completed_at DESC LIMIT ?;
 
 -- name: ListComplianceResults :many
-SELECT execution_results.*, actions.name AS action_name FROM execution_results
+SELECT execution_results.*, actions.name AS action_name, actions.action_blob FROM execution_results
 JOIN actions ON actions.id = execution_results.action_id
-WHERE execution_results.device_id = ? AND execution_results.is_compliance = TRUE
-  AND execution_results.completed_at = (
+WHERE execution_results.device_id = ? AND execution_results.completed_at = (
       SELECT MAX(latest.completed_at) FROM execution_results latest
       WHERE latest.device_id = execution_results.device_id AND latest.action_id = execution_results.action_id
   )

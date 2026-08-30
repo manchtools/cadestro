@@ -149,17 +149,8 @@ CREATE TABLE execution_results (
     run_id TEXT PRIMARY KEY,
     device_id TEXT NOT NULL,
     action_id TEXT NOT NULL,
-    status INTEGER NOT NULL,
-    error TEXT NOT NULL DEFAULT '',
-    output_exit_code INTEGER NOT NULL DEFAULT 0,
-    output_stdout TEXT NOT NULL DEFAULT '',
-    output_stderr TEXT NOT NULL DEFAULT '',
     completed_at DATETIME NOT NULL,
-    compliant BOOLEAN NOT NULL DEFAULT FALSE,
-    detection_exit_code INTEGER NOT NULL DEFAULT 0,
-    detection_stdout TEXT NOT NULL DEFAULT '',
-    detection_stderr TEXT NOT NULL DEFAULT '',
-    is_compliance BOOLEAN NOT NULL DEFAULT FALSE,
+    result_blob BLOB NOT NULL,
     FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE,
     FOREIGN KEY (action_id) REFERENCES actions(id) ON DELETE CASCADE
 );

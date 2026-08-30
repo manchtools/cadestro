@@ -65,20 +65,11 @@ type DeviceGroupMember struct {
 }
 
 type ExecutionResult struct {
-	RunID             string    `json:"run_id"`
-	DeviceID          string    `json:"device_id"`
-	ActionID          string    `json:"action_id"`
-	Status            int64     `json:"status"`
-	Error             string    `json:"error"`
-	OutputExitCode    int64     `json:"output_exit_code"`
-	OutputStdout      string    `json:"output_stdout"`
-	OutputStderr      string    `json:"output_stderr"`
-	CompletedAt       time.Time `json:"completed_at"`
-	Compliant         bool      `json:"compliant"`
-	DetectionExitCode int64     `json:"detection_exit_code"`
-	DetectionStdout   string    `json:"detection_stdout"`
-	DetectionStderr   string    `json:"detection_stderr"`
-	IsCompliance      bool      `json:"is_compliance"`
+	RunID       string    `json:"run_id"`
+	DeviceID    string    `json:"device_id"`
+	ActionID    string    `json:"action_id"`
+	CompletedAt time.Time `json:"completed_at"`
+	ResultBlob  []byte    `json:"result_blob"`
 }
 
 type IdentityLink struct {

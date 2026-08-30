@@ -44,6 +44,12 @@ blob under the scoped action-storage exception. The selected params oneof arm
 is the sole action-kind authority: do not add a separate kind column, enum
 discriminator, or type filter.
 
+The existing ActionResult protobuf blob is the sole execution payload;
+execution_results retains only relational metadata needed for identity,
+device/action linking, and ordering; compliance classification comes only from
+the linked action concrete oneof; no result-kind discriminator or flattened
+status/error/output/detection/compliance columns.
+
 Access tokens carry their effective permissions and authorize without a
 per-request database lookup; role, permission, logout, and session-version
 changes invalidate refresh-token generations immediately but already-issued
@@ -74,8 +80,6 @@ Default roles are ordinary seed data, not immutable system roles. Administrators
 may update, delete, or revoke any role, including defaults, assigned roles, and
 the last administrator role. Registration tokens are revoked by deletion only;
 finite-use tokens are deleted on their final successful enrollment use.
-
-Action definitions may persist the existing concrete action proto message as a binary blob with the action type stored separately; do not create a parallel storage proto. This is a scoped exception for action definitions and does not repeal the general API/storage separation rule.
 
 OIDC/PKCE transaction state is held in an authenticated Secure HttpOnly cookie
 set by the control origin. Configured cross-origin web deployments use

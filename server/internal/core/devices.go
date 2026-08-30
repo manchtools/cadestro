@@ -32,14 +32,23 @@ func (service *Service) deviceProto(ctx context.Context, device *db.Device) (*ca
 	}
 	status := cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_UNSPECIFIED
 	passing := int32(0)
+	complianceCount := int32(0)
 	for _, check := range checks {
-		if check.Compliant {
+		result, ok, err := complianceResult(check)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			continue
+		}
+		complianceCount++
+		if result.GetCompliant() {
 			passing++
 		}
 	}
-	if len(checks) > 0 {
+	if complianceCount > 0 {
 		status = cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT
-		if passing == int32(len(checks)) {
+		if passing == complianceCount {
 			status = cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_COMPLIANT
 		}
 	}
@@ -47,7 +56,7 @@ func (service *Service) deviceProto(ctx context.Context, device *db.Device) (*ca
 		Id: &cadestrov1.DeviceId{Value: device.ID}, Hostname: device.Hostname, AgentVersion: device.AgentVersion,
 		Status: service.deviceStatus(device), RegisteredAt: timestamppb.New(device.RegisteredAt),
 		CertExpiresAt: timestamppb.New(device.CertExpiresAt), ComplianceStatus: status,
-		ComplianceTotal: int32(len(checks)), CompliancePassing: passing,
+		ComplianceTotal: complianceCount, CompliancePassing: passing,
 	}
 	if device.LastSeenAt != nil {
 		mapped.LastSeenAt = timestamppb.New(*device.LastSeenAt)

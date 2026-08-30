@@ -14,7 +14,9 @@ import (
 	"buf.build/go/protovalidate"
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/mtls"
@@ -229,27 +231,20 @@ func (service *Service) storeActionResult(ctx context.Context, deviceID string, 
 	if assigned == nil {
 		return errors.New("action is not assigned to device")
 	}
-	completedAt := service.now().UTC()
-	if result.GetCompletedAt() != nil {
-		completedAt = result.GetCompletedAt().AsTime()
-	}
-	output := result.GetOutput()
-	if output == nil {
-		output = &cadestrov1.CommandOutput{}
-	}
-	detection := result.GetDetectionOutput()
-	if detection == nil {
-		detection = &cadestrov1.CommandOutput{}
-	}
-	executable, err := executableAction(assigned)
-	if err != nil {
+	if _, err := executableAction(assigned); err != nil {
 		return fmt.Errorf("decode assigned action: %w", err)
 	}
+	stored := proto.CloneOf(result)
+	if stored.GetCompletedAt() == nil {
+		stored.CompletedAt = timestamppb.New(service.now().UTC())
+	}
+	completedAt := stored.GetCompletedAt().AsTime()
+	resultBlob, err := proto.Marshal(stored)
+	if err != nil {
+		return fmt.Errorf("encode action result: %w", err)
+	}
 	if err := service.store.Queries().CreateExecutionResult(ctx, db.CreateExecutionResultParams{
-		RunID: result.GetRunId().GetValue(), DeviceID: deviceID, ActionID: actionID, Status: int64(result.GetStatus()), Error: result.GetError(),
-		OutputExitCode: int64(output.GetExitCode()), OutputStdout: output.GetStdout(), OutputStderr: output.GetStderr(), CompletedAt: completedAt,
-		Compliant: result.GetCompliant(), DetectionExitCode: int64(detection.GetExitCode()), DetectionStdout: detection.GetStdout(),
-		DetectionStderr: detection.GetStderr(), IsCompliance: executable.GetShell().GetIsCompliance(),
+		RunID: stored.GetRunId().GetValue(), DeviceID: deviceID, ActionID: actionID, CompletedAt: completedAt, ResultBlob: resultBlob,
 	}); err != nil {
 		return fmt.Errorf("store action result: %w", err)
 	}

@@ -105,3 +105,15 @@
 **Harness fix**: None; Stallion's ladder and proto rules already require checking the existing flow and removing an enum discriminator duplicated by a concrete `oneof`.
 
 **Prevention**: Before preserving derived metadata for validation, trace the full mutation path and compare authoritative values already available there; add separate storage only when it enables a retained query that cannot reasonably use the authoritative value.
+
+## 2026-08-30 Ignored project rule: Flattened protobuf execution results into redundant columns
+
+**What happened**: During the execution-result storage refactor, I kept separate status, error, output, detection, and compliance columns instead of storing the existing ActionResult message as the sole payload.
+
+**What the user said**: "the whole execution_restuls needs rework. why do we have dedicated exit codes for each type, ic sompliance etc. We can infer everything by the action type its linked to? We just need to build a \"smart\" sql query to get the data, no need to strore seperate result types. Just like we didnt need it in the action itself"
+
+**Root cause**: I failed to apply the existing direct action-blob storage ruling to execution results and repeated the discarded flattened storage shape instead of retaining only metadata required for identity, linking, and ordering.
+
+**Harness fix**: promote the operator ruling in AGENTS.md that ActionResult binary storage is the sole execution payload, with compliance inferred from the linked action's concrete oneof.
+
+**Prevention**: when a protobuf already carries a complete outcome, inspect its descriptor and retain only relational metadata needed for identity, foreign-key linking, and ordering; derive every other value from the blob or its linked action.

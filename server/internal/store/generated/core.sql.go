@@ -327,27 +327,17 @@ func (q *Queries) CreateDeviceGroup(ctx context.Context, arg CreateDeviceGroupPa
 
 const createExecutionResult = `-- name: CreateExecutionResult :exec
 INSERT INTO execution_results (
-    run_id, device_id, action_id, status, error, output_exit_code, output_stdout, output_stderr, completed_at,
-    compliant, detection_exit_code, detection_stdout, detection_stderr, is_compliance
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    run_id, device_id, action_id, completed_at, result_blob
+) VALUES (?, ?, ?, ?, ?)
 ON CONFLICT(run_id) DO NOTHING
 `
 
 type CreateExecutionResultParams struct {
-	RunID             string    `json:"run_id"`
-	DeviceID          string    `json:"device_id"`
-	ActionID          string    `json:"action_id"`
-	Status            int64     `json:"status"`
-	Error             string    `json:"error"`
-	OutputExitCode    int64     `json:"output_exit_code"`
-	OutputStdout      string    `json:"output_stdout"`
-	OutputStderr      string    `json:"output_stderr"`
-	CompletedAt       time.Time `json:"completed_at"`
-	Compliant         bool      `json:"compliant"`
-	DetectionExitCode int64     `json:"detection_exit_code"`
-	DetectionStdout   string    `json:"detection_stdout"`
-	DetectionStderr   string    `json:"detection_stderr"`
-	IsCompliance      bool      `json:"is_compliance"`
+	RunID       string    `json:"run_id"`
+	DeviceID    string    `json:"device_id"`
+	ActionID    string    `json:"action_id"`
+	CompletedAt time.Time `json:"completed_at"`
+	ResultBlob  []byte    `json:"result_blob"`
 }
 
 func (q *Queries) CreateExecutionResult(ctx context.Context, arg CreateExecutionResultParams) error {
@@ -355,17 +345,8 @@ func (q *Queries) CreateExecutionResult(ctx context.Context, arg CreateExecution
 		arg.RunID,
 		arg.DeviceID,
 		arg.ActionID,
-		arg.Status,
-		arg.Error,
-		arg.OutputExitCode,
-		arg.OutputStdout,
-		arg.OutputStderr,
 		arg.CompletedAt,
-		arg.Compliant,
-		arg.DetectionExitCode,
-		arg.DetectionStdout,
-		arg.DetectionStderr,
-		arg.IsCompliance,
+		arg.ResultBlob,
 	)
 	return err
 }
@@ -1078,10 +1059,9 @@ func (q *Queries) ListAuditEvents(ctx context.Context, arg ListAuditEventsParams
 }
 
 const listComplianceResults = `-- name: ListComplianceResults :many
-SELECT execution_results.run_id, execution_results.device_id, execution_results.action_id, execution_results.status, execution_results.error, execution_results.output_exit_code, execution_results.output_stdout, execution_results.output_stderr, execution_results.completed_at, execution_results.compliant, execution_results.detection_exit_code, execution_results.detection_stdout, execution_results.detection_stderr, execution_results.is_compliance, actions.name AS action_name FROM execution_results
+SELECT execution_results.run_id, execution_results.device_id, execution_results.action_id, execution_results.completed_at, execution_results.result_blob, actions.name AS action_name, actions.action_blob FROM execution_results
 JOIN actions ON actions.id = execution_results.action_id
-WHERE execution_results.device_id = ? AND execution_results.is_compliance = TRUE
-  AND execution_results.completed_at = (
+WHERE execution_results.device_id = ? AND execution_results.completed_at = (
       SELECT MAX(latest.completed_at) FROM execution_results latest
       WHERE latest.device_id = execution_results.device_id AND latest.action_id = execution_results.action_id
   )
@@ -1089,21 +1069,13 @@ ORDER BY actions.name, actions.id
 `
 
 type ListComplianceResultsRow struct {
-	RunID             string    `json:"run_id"`
-	DeviceID          string    `json:"device_id"`
-	ActionID          string    `json:"action_id"`
-	Status            int64     `json:"status"`
-	Error             string    `json:"error"`
-	OutputExitCode    int64     `json:"output_exit_code"`
-	OutputStdout      string    `json:"output_stdout"`
-	OutputStderr      string    `json:"output_stderr"`
-	CompletedAt       time.Time `json:"completed_at"`
-	Compliant         bool      `json:"compliant"`
-	DetectionExitCode int64     `json:"detection_exit_code"`
-	DetectionStdout   string    `json:"detection_stdout"`
-	DetectionStderr   string    `json:"detection_stderr"`
-	IsCompliance      bool      `json:"is_compliance"`
-	ActionName        string    `json:"action_name"`
+	RunID       string    `json:"run_id"`
+	DeviceID    string    `json:"device_id"`
+	ActionID    string    `json:"action_id"`
+	CompletedAt time.Time `json:"completed_at"`
+	ResultBlob  []byte    `json:"result_blob"`
+	ActionName  string    `json:"action_name"`
+	ActionBlob  []byte    `json:"action_blob"`
 }
 
 func (q *Queries) ListComplianceResults(ctx context.Context, deviceID string) ([]*ListComplianceResultsRow, error) {
@@ -1119,18 +1091,10 @@ func (q *Queries) ListComplianceResults(ctx context.Context, deviceID string) ([
 			&i.RunID,
 			&i.DeviceID,
 			&i.ActionID,
-			&i.Status,
-			&i.Error,
-			&i.OutputExitCode,
-			&i.OutputStdout,
-			&i.OutputStderr,
 			&i.CompletedAt,
-			&i.Compliant,
-			&i.DetectionExitCode,
-			&i.DetectionStdout,
-			&i.DetectionStderr,
-			&i.IsCompliance,
+			&i.ResultBlob,
 			&i.ActionName,
+			&i.ActionBlob,
 		); err != nil {
 			return nil, err
 		}
@@ -1362,7 +1326,7 @@ func (q *Queries) ListEnabledIdentityProviders(ctx context.Context) ([]*Identity
 }
 
 const listExecutionResults = `-- name: ListExecutionResults :many
-SELECT execution_results.run_id, execution_results.device_id, execution_results.action_id, execution_results.status, execution_results.error, execution_results.output_exit_code, execution_results.output_stdout, execution_results.output_stderr, execution_results.completed_at, execution_results.compliant, execution_results.detection_exit_code, execution_results.detection_stdout, execution_results.detection_stderr, execution_results.is_compliance, actions.name AS action_name FROM execution_results
+SELECT execution_results.run_id, execution_results.device_id, execution_results.action_id, execution_results.completed_at, execution_results.result_blob, actions.name AS action_name FROM execution_results
 JOIN actions ON actions.id = execution_results.action_id
 WHERE execution_results.device_id = ? ORDER BY execution_results.completed_at DESC LIMIT ?
 `
@@ -1373,21 +1337,12 @@ type ListExecutionResultsParams struct {
 }
 
 type ListExecutionResultsRow struct {
-	RunID             string    `json:"run_id"`
-	DeviceID          string    `json:"device_id"`
-	ActionID          string    `json:"action_id"`
-	Status            int64     `json:"status"`
-	Error             string    `json:"error"`
-	OutputExitCode    int64     `json:"output_exit_code"`
-	OutputStdout      string    `json:"output_stdout"`
-	OutputStderr      string    `json:"output_stderr"`
-	CompletedAt       time.Time `json:"completed_at"`
-	Compliant         bool      `json:"compliant"`
-	DetectionExitCode int64     `json:"detection_exit_code"`
-	DetectionStdout   string    `json:"detection_stdout"`
-	DetectionStderr   string    `json:"detection_stderr"`
-	IsCompliance      bool      `json:"is_compliance"`
-	ActionName        string    `json:"action_name"`
+	RunID       string    `json:"run_id"`
+	DeviceID    string    `json:"device_id"`
+	ActionID    string    `json:"action_id"`
+	CompletedAt time.Time `json:"completed_at"`
+	ResultBlob  []byte    `json:"result_blob"`
+	ActionName  string    `json:"action_name"`
 }
 
 func (q *Queries) ListExecutionResults(ctx context.Context, arg ListExecutionResultsParams) ([]*ListExecutionResultsRow, error) {
@@ -1403,17 +1358,8 @@ func (q *Queries) ListExecutionResults(ctx context.Context, arg ListExecutionRes
 			&i.RunID,
 			&i.DeviceID,
 			&i.ActionID,
-			&i.Status,
-			&i.Error,
-			&i.OutputExitCode,
-			&i.OutputStdout,
-			&i.OutputStderr,
 			&i.CompletedAt,
-			&i.Compliant,
-			&i.DetectionExitCode,
-			&i.DetectionStdout,
-			&i.DetectionStderr,
-			&i.IsCompliance,
+			&i.ResultBlob,
 			&i.ActionName,
 		); err != nil {
 			return nil, err
