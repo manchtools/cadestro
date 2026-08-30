@@ -17,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cadestro/v1/agent.proto.
  */
 export const file_cadestro_v1_agent: GenFile = /*@__PURE__*/
-  fileDesc("ChdjYWRlc3Ryby92MS9hZ2VudC5wcm90bxILY2FkZXN0cm8udjEitQIKDEFnZW50TWVzc2FnZRIqCgJpZBgBIAEoCzIWLmNhZGVzdHJvLnYxLk1lc3NhZ2VJZEIGukgDyAEBEiMKBWhlbGxvGAogASgLMhIuY2FkZXN0cm8udjEuSGVsbG9IABIrCgloZWFydGJlYXQYCyABKAsyFi5jYWRlc3Ryby52MS5IZWFydGJlYXRIABIwCgxzeW5jX3JlcXVlc3QYDCABKAsyGC5jYWRlc3Ryby52MS5TeW5jUmVxdWVzdEgAEjIKDWFjdGlvbl9yZXN1bHQYFCABKAsyGS5jYWRlc3Ryby52MS5BY3Rpb25SZXN1bHRIABI2Cg9tYW5pZmVzdF9yZXN1bHQYFSABKAsyGy5jYWRlc3Ryby52MS5NYW5pZmVzdFJlc3VsdEgAQgkKB3BheWxvYWQi8AEKDVNlcnZlck1lc3NhZ2USKgoCaWQYASABKAsyFi5jYWRlc3Ryby52MS5NZXNzYWdlSWRCBrpIA8gBARInCgd3ZWxjb21lGAogASgLMhQuY2FkZXN0cm8udjEuV2VsY29tZUgAEiwKCnN5bmNfc3RhdGUYCyABKAsyFi5jYWRlc3Ryby52MS5TeW5jU3RhdGVIABIsCgpyZXN1bHRfYWNrGAwgASgLMhYuY2FkZXN0cm8udjEuUmVzdWx0QWNrSAASIwoFZXJyb3IYDSABKAsyEi5jYWRlc3Ryby52MS5FcnJvckgAQgkKB3BheWxvYWQimQEKBUhlbGxvEjAKCWRldmljZV9pZBgBIAEoCzIVLmNhZGVzdHJvLnYxLkRldmljZUlkQga6SAPIAQESIwoNYWdlbnRfdmVyc2lvbhgCIAEoCUIMukgJyAEBcgQQARggEh8KCGhvc3RuYW1lGAMgASgJQg26SArIAQFyBRABGP0BEhgKBGFyY2gYBCABKAlCCrpIB9gBAXICGBAiCwoJSGVhcnRiZWF0ImYKB1dlbGNvbWUSJAoOc2VydmVyX3ZlcnNpb24YASABKAlCDLpICcgBAXIEEAEYIBI1ChJoZWFydGJlYXRfaW50ZXJ2YWwYAiABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24iDQoLU3luY1JlcXVlc3QicgoJU3luY1N0YXRlEikKFXN5bmNfaW50ZXJ2YWxfbWludXRlcxgBIAEoBUIKukgHGgUYoAsoARI6Cg5kZXNpcmVkX3BvbGljeRgCIAEoCzIaLmNhZGVzdHJvLnYxLkRlc2lyZWRQb2xpY3lCBrpIA8gBASJyCg1EZXNpcmVkUG9saWN5EjcKCHJldmlzaW9uGAEgASgLMh0uY2FkZXN0cm8udjEuUG9saWN5UmV2aXNpb25JZEIGukgDyAEBEigKCW1hbmlmZXN0cxgCIAMoCzIVLmNhZGVzdHJvLnYxLk1hbmlmZXN0It4BCghNYW5pZmVzdBI0CgttYW5pZmVzdF9pZBgBIAEoCzIXLmNhZGVzdHJvLnYxLk1hbmlmZXN0SWRCBrpIA8gBARI4Cg1vY2N1cnJlbmNlX2lkGAIgASgLMhkuY2FkZXN0cm8udjEuT2NjdXJyZW5jZUlkQga6SAPIAQESKwoGYWN0aW9uGAMgASgLMhMuY2FkZXN0cm8udjEuQWN0aW9uQga6SAPIAQESNQoIc2NoZWR1bGUYBCABKAsyGy5jYWRlc3Ryby52MS5BY3Rpb25TY2hlZHVsZUIGukgDyAEBIpECCg5NYW5pZmVzdFJlc3VsdBIqCgZydW5faWQYASABKAsyEi5jYWRlc3Ryby52MS5SdW5JZEIGukgDyAEBEjQKC21hbmlmZXN0X2lkGAIgASgLMhcuY2FkZXN0cm8udjEuTWFuaWZlc3RJZEIGukgDyAEBEjQKBnN0YXR1cxgDIAEoDjIcLmNhZGVzdHJvLnYxLkV4ZWN1dGlvblN0YXR1c0IGukgDyAEBEjAKDGNvbXBsZXRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNQoIZHVyYXRpb24YBSABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb25CCLpIBaoBAjIAIj0KCVJlc3VsdEFjaxIwCgRjb2RlGAEgASgOMhouY2FkZXN0cm8udjEuUmVzdWx0QWNrQ29kZUIGukgDyAEBIicKBUVycm9yEh4KB21lc3NhZ2UYASABKAlCDbpICsgBAXIFEAEYgAgqbAoNUmVzdWx0QWNrQ29kZRIfChtSRVNVTFRfQUNLX0NPREVfVU5TUEVDSUZJRUQQABIcChhSRVNVTFRfQUNLX0NPREVfQUNDRVBURUQQARIcChhSRVNVTFRfQUNLX0NPREVfUkVKRUNURUQQAjJTCgxBZ2VudFNlcnZpY2USQwoGU3RyZWFtEhkuY2FkZXN0cm8udjEuQWdlbnRNZXNzYWdlGhouY2FkZXN0cm8udjEuU2VydmVyTWVzc2FnZSgBMAFCR1pFZ2l0aHViLmNvbS9tYW5jaHRvb2xzL2NhZGVzdHJvL2NvbnRyYWN0L2dlbi9nby9jYWRlc3Ryby92MTtjYWRlc3Ryb3YxYgZwcm90bzM", [file_buf_validate_validate, file_cadestro_v1_actions, file_cadestro_v1_common, file_google_protobuf_duration, file_google_protobuf_timestamp]);
+  fileDesc("ChdjYWRlc3Ryby92MS9hZ2VudC5wcm90bxILY2FkZXN0cm8udjEiyAIKDEFnZW50TWVzc2FnZRIqCgJpZBgBIAEoCzIWLmNhZGVzdHJvLnYxLk1lc3NhZ2VJZEIGukgDyAEBEiMKBWhlbGxvGAogASgLMhIuY2FkZXN0cm8udjEuSGVsbG9IABIrCgloZWFydGJlYXQYCyABKAsyFi5jYWRlc3Ryby52MS5IZWFydGJlYXRIABJDChZkZXNpcmVkX3BvbGljeV9yZXF1ZXN0GAwgASgLMiEuY2FkZXN0cm8udjEuRGVzaXJlZFBvbGljeVJlcXVlc3RIABIyCg1hY3Rpb25fcmVzdWx0GBQgASgLMhkuY2FkZXN0cm8udjEuQWN0aW9uUmVzdWx0SAASNgoPbWFuaWZlc3RfcmVzdWx0GBUgASgLMhsuY2FkZXN0cm8udjEuTWFuaWZlc3RSZXN1bHRIAEIJCgdwYXlsb2FkIvgBCg1TZXJ2ZXJNZXNzYWdlEioKAmlkGAEgASgLMhYuY2FkZXN0cm8udjEuTWVzc2FnZUlkQga6SAPIAQESJwoHd2VsY29tZRgKIAEoCzIULmNhZGVzdHJvLnYxLldlbGNvbWVIABI0Cg5kZXNpcmVkX3BvbGljeRgLIAEoCzIaLmNhZGVzdHJvLnYxLkRlc2lyZWRQb2xpY3lIABIsCgpyZXN1bHRfYWNrGAwgASgLMhYuY2FkZXN0cm8udjEuUmVzdWx0QWNrSAASIwoFZXJyb3IYDSABKAsyEi5jYWRlc3Ryby52MS5FcnJvckgAQgkKB3BheWxvYWQimQEKBUhlbGxvEjAKCWRldmljZV9pZBgBIAEoCzIVLmNhZGVzdHJvLnYxLkRldmljZUlkQga6SAPIAQESIwoNYWdlbnRfdmVyc2lvbhgCIAEoCUIMukgJyAEBcgQQARggEh8KCGhvc3RuYW1lGAMgASgJQg26SArIAQFyBRABGP0BEhgKBGFyY2gYBCABKAlCCrpIB9gBAXICGBAiCwoJSGVhcnRiZWF0ImYKB1dlbGNvbWUSJAoOc2VydmVyX3ZlcnNpb24YASABKAlCDLpICcgBAXIEEAEYIBI1ChJoZWFydGJlYXRfaW50ZXJ2YWwYAiABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24iFgoURGVzaXJlZFBvbGljeVJlcXVlc3QioAEKDURlc2lyZWRQb2xpY3kSLAoYcmVmcmVzaF9pbnRlcnZhbF9taW51dGVzGAEgASgFQgq6SAcaBRigCygBEjcKCHJldmlzaW9uGAIgASgLMh0uY2FkZXN0cm8udjEuUG9saWN5UmV2aXNpb25JZEIGukgDyAEBEigKCW1hbmlmZXN0cxgDIAMoCzIVLmNhZGVzdHJvLnYxLk1hbmlmZXN0It4BCghNYW5pZmVzdBI0CgttYW5pZmVzdF9pZBgBIAEoCzIXLmNhZGVzdHJvLnYxLk1hbmlmZXN0SWRCBrpIA8gBARI4Cg1vY2N1cnJlbmNlX2lkGAIgASgLMhkuY2FkZXN0cm8udjEuT2NjdXJyZW5jZUlkQga6SAPIAQESKwoGYWN0aW9uGAMgASgLMhMuY2FkZXN0cm8udjEuQWN0aW9uQga6SAPIAQESNQoIc2NoZWR1bGUYBCABKAsyGy5jYWRlc3Ryby52MS5BY3Rpb25TY2hlZHVsZUIGukgDyAEBIpECCg5NYW5pZmVzdFJlc3VsdBIqCgZydW5faWQYASABKAsyEi5jYWRlc3Ryby52MS5SdW5JZEIGukgDyAEBEjQKC21hbmlmZXN0X2lkGAIgASgLMhcuY2FkZXN0cm8udjEuTWFuaWZlc3RJZEIGukgDyAEBEjQKBnN0YXR1cxgDIAEoDjIcLmNhZGVzdHJvLnYxLkV4ZWN1dGlvblN0YXR1c0IGukgDyAEBEjAKDGNvbXBsZXRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNQoIZHVyYXRpb24YBSABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb25CCLpIBaoBAjIAIj0KCVJlc3VsdEFjaxIwCgRjb2RlGAEgASgOMhouY2FkZXN0cm8udjEuUmVzdWx0QWNrQ29kZUIGukgDyAEBIicKBUVycm9yEh4KB21lc3NhZ2UYASABKAlCDbpICsgBAXIFEAEYgAgqbAoNUmVzdWx0QWNrQ29kZRIfChtSRVNVTFRfQUNLX0NPREVfVU5TUEVDSUZJRUQQABIcChhSRVNVTFRfQUNLX0NPREVfQUNDRVBURUQQARIcChhSRVNVTFRfQUNLX0NPREVfUkVKRUNURUQQAjJTCgxBZ2VudFNlcnZpY2USQwoGU3RyZWFtEhkuY2FkZXN0cm8udjEuQWdlbnRNZXNzYWdlGhouY2FkZXN0cm8udjEuU2VydmVyTWVzc2FnZSgBMAFCR1pFZ2l0aHViLmNvbS9tYW5jaHRvb2xzL2NhZGVzdHJvL2NvbnRyYWN0L2dlbi9nby9jYWRlc3Ryby92MTtjYWRlc3Ryb3YxYgZwcm90bzM", [file_buf_validate_validate, file_cadestro_v1_actions, file_cadestro_v1_common, file_google_protobuf_duration, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message cadestro.v1.AgentMessage
@@ -45,10 +45,10 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
     case: "heartbeat";
   } | {
     /**
-     * @generated from field: cadestro.v1.SyncRequest sync_request = 12;
+     * @generated from field: cadestro.v1.DesiredPolicyRequest desired_policy_request = 12;
      */
-    value: SyncRequest;
-    case: "syncRequest";
+    value: DesiredPolicyRequest;
+    case: "desiredPolicyRequest";
   } | {
     /**
      * @generated from field: cadestro.v1.ActionResult action_result = 20;
@@ -91,10 +91,10 @@ export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
     case: "welcome";
   } | {
     /**
-     * @generated from field: cadestro.v1.SyncState sync_state = 11;
+     * @generated from field: cadestro.v1.DesiredPolicy desired_policy = 11;
      */
-    value: SyncState;
-    case: "syncState";
+    value: DesiredPolicy;
+    case: "desiredPolicy";
   } | {
     /**
      * @generated from field: cadestro.v1.ResultAck result_ack = 12;
@@ -185,51 +185,34 @@ export const WelcomeSchema: GenMessage<Welcome> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 4);
 
 /**
- * @generated from message cadestro.v1.SyncRequest
+ * @generated from message cadestro.v1.DesiredPolicyRequest
  */
-export type SyncRequest = Message<"cadestro.v1.SyncRequest"> & {
+export type DesiredPolicyRequest = Message<"cadestro.v1.DesiredPolicyRequest"> & {
 };
 
 /**
- * Describes the message cadestro.v1.SyncRequest.
- * Use `create(SyncRequestSchema)` to create a new message.
+ * Describes the message cadestro.v1.DesiredPolicyRequest.
+ * Use `create(DesiredPolicyRequestSchema)` to create a new message.
  */
-export const SyncRequestSchema: GenMessage<SyncRequest> = /*@__PURE__*/
+export const DesiredPolicyRequestSchema: GenMessage<DesiredPolicyRequest> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 5);
-
-/**
- * @generated from message cadestro.v1.SyncState
- */
-export type SyncState = Message<"cadestro.v1.SyncState"> & {
-  /**
-   * @generated from field: int32 sync_interval_minutes = 1;
-   */
-  syncIntervalMinutes: number;
-
-  /**
-   * @generated from field: cadestro.v1.DesiredPolicy desired_policy = 2;
-   */
-  desiredPolicy?: DesiredPolicy;
-};
-
-/**
- * Describes the message cadestro.v1.SyncState.
- * Use `create(SyncStateSchema)` to create a new message.
- */
-export const SyncStateSchema: GenMessage<SyncState> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 6);
 
 /**
  * @generated from message cadestro.v1.DesiredPolicy
  */
 export type DesiredPolicy = Message<"cadestro.v1.DesiredPolicy"> & {
   /**
-   * @generated from field: cadestro.v1.PolicyRevisionId revision = 1;
+   * @generated from field: int32 refresh_interval_minutes = 1;
+   */
+  refreshIntervalMinutes: number;
+
+  /**
+   * @generated from field: cadestro.v1.PolicyRevisionId revision = 2;
    */
   revision?: PolicyRevisionId;
 
   /**
-   * @generated from field: repeated cadestro.v1.Manifest manifests = 2;
+   * @generated from field: repeated cadestro.v1.Manifest manifests = 3;
    */
   manifests: Manifest[];
 };
@@ -239,7 +222,7 @@ export type DesiredPolicy = Message<"cadestro.v1.DesiredPolicy"> & {
  * Use `create(DesiredPolicySchema)` to create a new message.
  */
 export const DesiredPolicySchema: GenMessage<DesiredPolicy> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 7);
+  messageDesc(file_cadestro_v1_agent, 6);
 
 /**
  * @generated from message cadestro.v1.Manifest
@@ -271,7 +254,7 @@ export type Manifest = Message<"cadestro.v1.Manifest"> & {
  * Use `create(ManifestSchema)` to create a new message.
  */
 export const ManifestSchema: GenMessage<Manifest> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 8);
+  messageDesc(file_cadestro_v1_agent, 7);
 
 /**
  * @generated from message cadestro.v1.ManifestResult
@@ -308,7 +291,7 @@ export type ManifestResult = Message<"cadestro.v1.ManifestResult"> & {
  * Use `create(ManifestResultSchema)` to create a new message.
  */
 export const ManifestResultSchema: GenMessage<ManifestResult> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 9);
+  messageDesc(file_cadestro_v1_agent, 8);
 
 /**
  * @generated from message cadestro.v1.ResultAck
@@ -325,7 +308,7 @@ export type ResultAck = Message<"cadestro.v1.ResultAck"> & {
  * Use `create(ResultAckSchema)` to create a new message.
  */
 export const ResultAckSchema: GenMessage<ResultAck> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 10);
+  messageDesc(file_cadestro_v1_agent, 9);
 
 /**
  * @generated from message cadestro.v1.Error
@@ -342,7 +325,7 @@ export type Error = Message<"cadestro.v1.Error"> & {
  * Use `create(ErrorSchema)` to create a new message.
  */
 export const ErrorSchema: GenMessage<Error> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 11);
+  messageDesc(file_cadestro_v1_agent, 10);
 
 /**
  * @generated from enum cadestro.v1.ResultAckCode

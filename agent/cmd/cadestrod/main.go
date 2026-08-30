@@ -23,11 +23,11 @@ import (
 var version = "dev"
 
 const (
-	defaultHeartbeatInterval = 30 * time.Second
-	defaultSyncInterval      = 30 * time.Minute
-	minInitialBackoff        = 5 * time.Second
-	maxInitialBackoff        = 10 * time.Second
-	maxBackoff               = 5 * time.Minute
+	defaultHeartbeatInterval     = 30 * time.Second
+	defaultPolicyRefreshInterval = 30 * time.Minute
+	minInitialBackoff            = 5 * time.Second
+	maxInitialBackoff            = 10 * time.Second
+	maxBackoff                   = 5 * time.Minute
 )
 
 type Config struct {

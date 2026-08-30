@@ -343,19 +343,13 @@ func (client *Client) sendResult(ctx context.Context, message *cadestrov1.AgentM
 	}
 }
 
-// SyncStateResult contains the server's desired policy snapshot.
-type SyncStateResult struct {
-	SyncIntervalMinutes int32
-	DesiredPolicy       *cadestrov1.DesiredPolicy
-}
-
-// Sync pulls desired state over the authenticated stream.
-func (client *Client) Sync(ctx context.Context) (*SyncStateResult, error) {
+// PullDesiredPolicy pulls the desired policy over the authenticated stream.
+func (client *Client) PullDesiredPolicy(ctx context.Context) (*cadestrov1.DesiredPolicy, error) {
 	id := NewULID()
 	pending := client.registerPending(id)
 	defer client.unregisterPending(id)
 	if err := client.send(ctx, &cadestrov1.AgentMessage{
-		Id: &cadestrov1.MessageId{Value: id}, Payload: &cadestrov1.AgentMessage_SyncRequest{SyncRequest: &cadestrov1.SyncRequest{}},
+		Id: &cadestrov1.MessageId{Value: id}, Payload: &cadestrov1.AgentMessage_DesiredPolicyRequest{DesiredPolicyRequest: &cadestrov1.DesiredPolicyRequest{}},
 	}); err != nil {
 		return nil, err
 	}
@@ -364,16 +358,16 @@ func (client *Client) Sync(ctx context.Context) (*SyncStateResult, error) {
 		return nil, ctx.Err()
 	case response, ok := <-pending:
 		if !ok {
-			return nil, errors.New("agent stream closed before sync response")
+			return nil, errors.New("agent stream closed before desired policy response")
 		}
 		if response.GetError() != nil {
-			return nil, fmt.Errorf("sync rejected: %s", response.GetError().GetMessage())
+			return nil, fmt.Errorf("desired policy rejected: %s", response.GetError().GetMessage())
 		}
-		state := response.GetSyncState()
-		if state == nil {
-			return nil, errors.New("unexpected sync response")
+		policy := response.GetDesiredPolicy()
+		if policy == nil {
+			return nil, errors.New("unexpected desired policy response")
 		}
-		return &SyncStateResult{SyncIntervalMinutes: state.GetSyncIntervalMinutes(), DesiredPolicy: state.GetDesiredPolicy()}, nil
+		return policy, nil
 	}
 }
 

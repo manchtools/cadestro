@@ -87,7 +87,7 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 
 		var workers syncWorkers
 		if connected && !staged {
-			interval := syncStateFromControl(sessionCtx, client, scheduler, logger)
+			interval := pullDesiredPolicyFromControl(sessionCtx, client, scheduler, logger)
 			syncPendingResults(sessionCtx, scheduler, client, logger)
 			workers.start(sessionCtx, client, scheduler, interval, logger)
 		}
@@ -142,7 +142,7 @@ func (workers *syncWorkers) wait() {
 
 func periodicSync(ctx context.Context, client *sdk.Client, scheduler *scheduler.Scheduler, interval time.Duration, logger *slog.Logger) {
 	if interval <= 0 {
-		interval = defaultSyncInterval
+		interval = defaultPolicyRefreshInterval
 	}
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -151,7 +151,7 @@ func periodicSync(ctx context.Context, client *sdk.Client, scheduler *scheduler.
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			if updated := syncStateFromControl(ctx, client, scheduler, logger); updated > 0 && updated != interval {
+			if updated := pullDesiredPolicyFromControl(ctx, client, scheduler, logger); updated > 0 && updated != interval {
 				interval = updated
 				ticker.Reset(interval)
 			}
@@ -176,21 +176,21 @@ func sendScheduledResults(ctx context.Context, client *sdk.Client, scheduler *sc
 	}
 }
 
-func syncStateFromControl(ctx context.Context, client *sdk.Client, scheduler *scheduler.Scheduler, logger *slog.Logger) time.Duration {
-	state, err := client.Sync(ctx)
+func pullDesiredPolicyFromControl(ctx context.Context, client *sdk.Client, scheduler *scheduler.Scheduler, logger *slog.Logger) time.Duration {
+	policy, err := client.PullDesiredPolicy(ctx)
 	if err != nil {
 		logger.Warn("pull desired state", "error", err)
 		return 0
 	}
-	if state.DesiredPolicy != nil {
-		if err := scheduler.ReconcilePolicy(ctx, state.DesiredPolicy); err != nil {
+	if policy != nil {
+		if err := scheduler.ReconcilePolicy(ctx, policy); err != nil {
 			logger.Warn("reconcile desired state", "error", err)
 		}
 	}
-	if state.SyncIntervalMinutes <= 0 {
-		return defaultSyncInterval
+	if policy.GetRefreshIntervalMinutes() <= 0 {
+		return defaultPolicyRefreshInterval
 	}
-	return time.Duration(state.SyncIntervalMinutes) * time.Minute
+	return time.Duration(policy.GetRefreshIntervalMinutes()) * time.Minute
 }
 
 func syncPendingResults(ctx context.Context, scheduler *scheduler.Scheduler, client *sdk.Client, logger *slog.Logger) {

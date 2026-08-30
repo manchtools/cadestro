@@ -80,7 +80,7 @@ type AgentMessage struct {
 	//
 	//	*AgentMessage_Hello
 	//	*AgentMessage_Heartbeat
-	//	*AgentMessage_SyncRequest
+	//	*AgentMessage_DesiredPolicyRequest
 	//	*AgentMessage_ActionResult
 	//	*AgentMessage_ManifestResult
 	Payload       isAgentMessage_Payload `protobuf_oneof:"payload"`
@@ -150,10 +150,10 @@ func (x *AgentMessage) GetHeartbeat() *Heartbeat {
 	return nil
 }
 
-func (x *AgentMessage) GetSyncRequest() *SyncRequest {
+func (x *AgentMessage) GetDesiredPolicyRequest() *DesiredPolicyRequest {
 	if x != nil {
-		if x, ok := x.Payload.(*AgentMessage_SyncRequest); ok {
-			return x.SyncRequest
+		if x, ok := x.Payload.(*AgentMessage_DesiredPolicyRequest); ok {
+			return x.DesiredPolicyRequest
 		}
 	}
 	return nil
@@ -189,8 +189,8 @@ type AgentMessage_Heartbeat struct {
 	Heartbeat *Heartbeat `protobuf:"bytes,11,opt,name=heartbeat,proto3,oneof"`
 }
 
-type AgentMessage_SyncRequest struct {
-	SyncRequest *SyncRequest `protobuf:"bytes,12,opt,name=sync_request,json=syncRequest,proto3,oneof"`
+type AgentMessage_DesiredPolicyRequest struct {
+	DesiredPolicyRequest *DesiredPolicyRequest `protobuf:"bytes,12,opt,name=desired_policy_request,json=desiredPolicyRequest,proto3,oneof"`
 }
 
 type AgentMessage_ActionResult struct {
@@ -205,7 +205,7 @@ func (*AgentMessage_Hello) isAgentMessage_Payload() {}
 
 func (*AgentMessage_Heartbeat) isAgentMessage_Payload() {}
 
-func (*AgentMessage_SyncRequest) isAgentMessage_Payload() {}
+func (*AgentMessage_DesiredPolicyRequest) isAgentMessage_Payload() {}
 
 func (*AgentMessage_ActionResult) isAgentMessage_Payload() {}
 
@@ -217,7 +217,7 @@ type ServerMessage struct {
 	// Types that are valid to be assigned to Payload:
 	//
 	//	*ServerMessage_Welcome
-	//	*ServerMessage_SyncState
+	//	*ServerMessage_DesiredPolicy
 	//	*ServerMessage_ResultAck
 	//	*ServerMessage_Error
 	Payload       isServerMessage_Payload `protobuf_oneof:"payload"`
@@ -278,10 +278,10 @@ func (x *ServerMessage) GetWelcome() *Welcome {
 	return nil
 }
 
-func (x *ServerMessage) GetSyncState() *SyncState {
+func (x *ServerMessage) GetDesiredPolicy() *DesiredPolicy {
 	if x != nil {
-		if x, ok := x.Payload.(*ServerMessage_SyncState); ok {
-			return x.SyncState
+		if x, ok := x.Payload.(*ServerMessage_DesiredPolicy); ok {
+			return x.DesiredPolicy
 		}
 	}
 	return nil
@@ -313,8 +313,8 @@ type ServerMessage_Welcome struct {
 	Welcome *Welcome `protobuf:"bytes,10,opt,name=welcome,proto3,oneof"`
 }
 
-type ServerMessage_SyncState struct {
-	SyncState *SyncState `protobuf:"bytes,11,opt,name=sync_state,json=syncState,proto3,oneof"`
+type ServerMessage_DesiredPolicy struct {
+	DesiredPolicy *DesiredPolicy `protobuf:"bytes,11,opt,name=desired_policy,json=desiredPolicy,proto3,oneof"`
 }
 
 type ServerMessage_ResultAck struct {
@@ -327,7 +327,7 @@ type ServerMessage_Error struct {
 
 func (*ServerMessage_Welcome) isServerMessage_Payload() {}
 
-func (*ServerMessage_SyncState) isServerMessage_Payload() {}
+func (*ServerMessage_DesiredPolicy) isServerMessage_Payload() {}
 
 func (*ServerMessage_ResultAck) isServerMessage_Payload() {}
 
@@ -489,26 +489,26 @@ func (x *Welcome) GetHeartbeatInterval() *durationpb.Duration {
 	return nil
 }
 
-type SyncRequest struct {
+type DesiredPolicyRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SyncRequest) Reset() {
-	*x = SyncRequest{}
+func (x *DesiredPolicyRequest) Reset() {
+	*x = DesiredPolicyRequest{}
 	mi := &file_cadestro_v1_agent_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SyncRequest) String() string {
+func (x *DesiredPolicyRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SyncRequest) ProtoMessage() {}
+func (*DesiredPolicyRequest) ProtoMessage() {}
 
-func (x *SyncRequest) ProtoReflect() protoreflect.Message {
+func (x *DesiredPolicyRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_cadestro_v1_agent_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -520,74 +520,23 @@ func (x *SyncRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SyncRequest.ProtoReflect.Descriptor instead.
-func (*SyncRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use DesiredPolicyRequest.ProtoReflect.Descriptor instead.
+func (*DesiredPolicyRequest) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{5}
 }
 
-type SyncState struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	SyncIntervalMinutes int32                  `protobuf:"varint,1,opt,name=sync_interval_minutes,json=syncIntervalMinutes,proto3" json:"sync_interval_minutes,omitempty"`
-	DesiredPolicy       *DesiredPolicy         `protobuf:"bytes,2,opt,name=desired_policy,json=desiredPolicy,proto3" json:"desired_policy,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
-}
-
-func (x *SyncState) Reset() {
-	*x = SyncState{}
-	mi := &file_cadestro_v1_agent_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SyncState) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SyncState) ProtoMessage() {}
-
-func (x *SyncState) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_agent_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SyncState.ProtoReflect.Descriptor instead.
-func (*SyncState) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *SyncState) GetSyncIntervalMinutes() int32 {
-	if x != nil {
-		return x.SyncIntervalMinutes
-	}
-	return 0
-}
-
-func (x *SyncState) GetDesiredPolicy() *DesiredPolicy {
-	if x != nil {
-		return x.DesiredPolicy
-	}
-	return nil
-}
-
 type DesiredPolicy struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Revision      *PolicyRevisionId      `protobuf:"bytes,1,opt,name=revision,proto3" json:"revision,omitempty"`
-	Manifests     []*Manifest            `protobuf:"bytes,2,rep,name=manifests,proto3" json:"manifests,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"open.v1"`
+	RefreshIntervalMinutes int32                  `protobuf:"varint,1,opt,name=refresh_interval_minutes,json=refreshIntervalMinutes,proto3" json:"refresh_interval_minutes,omitempty"`
+	Revision               *PolicyRevisionId      `protobuf:"bytes,2,opt,name=revision,proto3" json:"revision,omitempty"`
+	Manifests              []*Manifest            `protobuf:"bytes,3,rep,name=manifests,proto3" json:"manifests,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *DesiredPolicy) Reset() {
 	*x = DesiredPolicy{}
-	mi := &file_cadestro_v1_agent_proto_msgTypes[7]
+	mi := &file_cadestro_v1_agent_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -599,7 +548,7 @@ func (x *DesiredPolicy) String() string {
 func (*DesiredPolicy) ProtoMessage() {}
 
 func (x *DesiredPolicy) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_agent_proto_msgTypes[7]
+	mi := &file_cadestro_v1_agent_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -612,7 +561,14 @@ func (x *DesiredPolicy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DesiredPolicy.ProtoReflect.Descriptor instead.
 func (*DesiredPolicy) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{7}
+	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *DesiredPolicy) GetRefreshIntervalMinutes() int32 {
+	if x != nil {
+		return x.RefreshIntervalMinutes
+	}
+	return 0
 }
 
 func (x *DesiredPolicy) GetRevision() *PolicyRevisionId {
@@ -641,7 +597,7 @@ type Manifest struct {
 
 func (x *Manifest) Reset() {
 	*x = Manifest{}
-	mi := &file_cadestro_v1_agent_proto_msgTypes[8]
+	mi := &file_cadestro_v1_agent_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -653,7 +609,7 @@ func (x *Manifest) String() string {
 func (*Manifest) ProtoMessage() {}
 
 func (x *Manifest) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_agent_proto_msgTypes[8]
+	mi := &file_cadestro_v1_agent_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -666,7 +622,7 @@ func (x *Manifest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Manifest.ProtoReflect.Descriptor instead.
 func (*Manifest) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{8}
+	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Manifest) GetManifestId() *ManifestId {
@@ -710,7 +666,7 @@ type ManifestResult struct {
 
 func (x *ManifestResult) Reset() {
 	*x = ManifestResult{}
-	mi := &file_cadestro_v1_agent_proto_msgTypes[9]
+	mi := &file_cadestro_v1_agent_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -722,7 +678,7 @@ func (x *ManifestResult) String() string {
 func (*ManifestResult) ProtoMessage() {}
 
 func (x *ManifestResult) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_agent_proto_msgTypes[9]
+	mi := &file_cadestro_v1_agent_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -735,7 +691,7 @@ func (x *ManifestResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ManifestResult.ProtoReflect.Descriptor instead.
 func (*ManifestResult) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{9}
+	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ManifestResult) GetRunId() *RunId {
@@ -782,7 +738,7 @@ type ResultAck struct {
 
 func (x *ResultAck) Reset() {
 	*x = ResultAck{}
-	mi := &file_cadestro_v1_agent_proto_msgTypes[10]
+	mi := &file_cadestro_v1_agent_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -794,7 +750,7 @@ func (x *ResultAck) String() string {
 func (*ResultAck) ProtoMessage() {}
 
 func (x *ResultAck) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_agent_proto_msgTypes[10]
+	mi := &file_cadestro_v1_agent_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -807,7 +763,7 @@ func (x *ResultAck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResultAck.ProtoReflect.Descriptor instead.
 func (*ResultAck) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{10}
+	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ResultAck) GetCode() ResultAckCode {
@@ -826,7 +782,7 @@ type Error struct {
 
 func (x *Error) Reset() {
 	*x = Error{}
-	mi := &file_cadestro_v1_agent_proto_msgTypes[11]
+	mi := &file_cadestro_v1_agent_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -838,7 +794,7 @@ func (x *Error) String() string {
 func (*Error) ProtoMessage() {}
 
 func (x *Error) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_agent_proto_msgTypes[11]
+	mi := &file_cadestro_v1_agent_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -851,7 +807,7 @@ func (x *Error) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Error.ProtoReflect.Descriptor instead.
 func (*Error) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{11}
+	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Error) GetMessage() string {
@@ -865,22 +821,21 @@ var File_cadestro_v1_agent_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x17cadestro/v1/agent.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x19cadestro/v1/actions.proto\x1a\x18cadestro/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf6\x02\n" +
+	"\x17cadestro/v1/agent.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x19cadestro/v1/actions.proto\x1a\x18cadestro/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x92\x03\n" +
 	"\fAgentMessage\x12.\n" +
 	"\x02id\x18\x01 \x01(\v2\x16.cadestro.v1.MessageIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x12*\n" +
 	"\x05hello\x18\n" +
 	" \x01(\v2\x12.cadestro.v1.HelloH\x00R\x05hello\x126\n" +
-	"\theartbeat\x18\v \x01(\v2\x16.cadestro.v1.HeartbeatH\x00R\theartbeat\x12=\n" +
-	"\fsync_request\x18\f \x01(\v2\x18.cadestro.v1.SyncRequestH\x00R\vsyncRequest\x12@\n" +
+	"\theartbeat\x18\v \x01(\v2\x16.cadestro.v1.HeartbeatH\x00R\theartbeat\x12Y\n" +
+	"\x16desired_policy_request\x18\f \x01(\v2!.cadestro.v1.DesiredPolicyRequestH\x00R\x14desiredPolicyRequest\x12@\n" +
 	"\raction_result\x18\x14 \x01(\v2\x19.cadestro.v1.ActionResultH\x00R\factionResult\x12F\n" +
 	"\x0fmanifest_result\x18\x15 \x01(\v2\x1b.cadestro.v1.ManifestResultH\x00R\x0emanifestResultB\t\n" +
-	"\apayload\"\x9a\x02\n" +
+	"\apayload\"\xa6\x02\n" +
 	"\rServerMessage\x12.\n" +
 	"\x02id\x18\x01 \x01(\v2\x16.cadestro.v1.MessageIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x120\n" +
 	"\awelcome\x18\n" +
-	" \x01(\v2\x14.cadestro.v1.WelcomeH\x00R\awelcome\x127\n" +
-	"\n" +
-	"sync_state\x18\v \x01(\v2\x16.cadestro.v1.SyncStateH\x00R\tsyncState\x127\n" +
+	" \x01(\v2\x14.cadestro.v1.WelcomeH\x00R\awelcome\x12C\n" +
+	"\x0edesired_policy\x18\v \x01(\v2\x1a.cadestro.v1.DesiredPolicyH\x00R\rdesiredPolicy\x127\n" +
 	"\n" +
 	"result_ack\x18\f \x01(\v2\x16.cadestro.v1.ResultAckH\x00R\tresultAck\x12*\n" +
 	"\x05error\x18\r \x01(\v2\x12.cadestro.v1.ErrorH\x00R\x05errorB\t\n" +
@@ -895,15 +850,13 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\tHeartbeat\"\x88\x01\n" +
 	"\aWelcome\x123\n" +
 	"\x0eserver_version\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18 R\rserverVersion\x12H\n" +
-	"\x12heartbeat_interval\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\x11heartbeatInterval\"\r\n" +
-	"\vSyncRequest\"\x96\x01\n" +
-	"\tSyncState\x12>\n" +
-	"\x15sync_interval_minutes\x18\x01 \x01(\x05B\n" +
-	"\xbaH\a\x1a\x05\x18\xa0\v(\x01R\x13syncIntervalMinutes\x12I\n" +
-	"\x0edesired_policy\x18\x02 \x01(\v2\x1a.cadestro.v1.DesiredPolicyB\x06\xbaH\x03\xc8\x01\x01R\rdesiredPolicy\"\x87\x01\n" +
-	"\rDesiredPolicy\x12A\n" +
-	"\brevision\x18\x01 \x01(\v2\x1d.cadestro.v1.PolicyRevisionIdB\x06\xbaH\x03\xc8\x01\x01R\brevision\x123\n" +
-	"\tmanifests\x18\x02 \x03(\v2\x15.cadestro.v1.ManifestR\tmanifests\"\x8a\x02\n" +
+	"\x12heartbeat_interval\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\x11heartbeatInterval\"\x16\n" +
+	"\x14DesiredPolicyRequest\"\xcd\x01\n" +
+	"\rDesiredPolicy\x12D\n" +
+	"\x18refresh_interval_minutes\x18\x01 \x01(\x05B\n" +
+	"\xbaH\a\x1a\x05\x18\xa0\v(\x01R\x16refreshIntervalMinutes\x12A\n" +
+	"\brevision\x18\x02 \x01(\v2\x1d.cadestro.v1.PolicyRevisionIdB\x06\xbaH\x03\xc8\x01\x01R\brevision\x123\n" +
+	"\tmanifests\x18\x03 \x03(\v2\x15.cadestro.v1.ManifestR\tmanifests\"\x8a\x02\n" +
 	"\bManifest\x12@\n" +
 	"\vmanifest_id\x18\x01 \x01(\v2\x17.cadestro.v1.ManifestIdB\x06\xbaH\x03\xc8\x01\x01R\n" +
 	"manifestId\x12F\n" +
@@ -942,7 +895,7 @@ func file_cadestro_v1_agent_proto_rawDescGZIP() []byte {
 }
 
 var file_cadestro_v1_agent_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cadestro_v1_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_cadestro_v1_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_cadestro_v1_agent_proto_goTypes = []any{
 	(ResultAckCode)(0),            // 0: cadestro.v1.ResultAckCode
 	(*AgentMessage)(nil),          // 1: cadestro.v1.AgentMessage
@@ -950,60 +903,58 @@ var file_cadestro_v1_agent_proto_goTypes = []any{
 	(*Hello)(nil),                 // 3: cadestro.v1.Hello
 	(*Heartbeat)(nil),             // 4: cadestro.v1.Heartbeat
 	(*Welcome)(nil),               // 5: cadestro.v1.Welcome
-	(*SyncRequest)(nil),           // 6: cadestro.v1.SyncRequest
-	(*SyncState)(nil),             // 7: cadestro.v1.SyncState
-	(*DesiredPolicy)(nil),         // 8: cadestro.v1.DesiredPolicy
-	(*Manifest)(nil),              // 9: cadestro.v1.Manifest
-	(*ManifestResult)(nil),        // 10: cadestro.v1.ManifestResult
-	(*ResultAck)(nil),             // 11: cadestro.v1.ResultAck
-	(*Error)(nil),                 // 12: cadestro.v1.Error
-	(*MessageId)(nil),             // 13: cadestro.v1.MessageId
-	(*ActionResult)(nil),          // 14: cadestro.v1.ActionResult
-	(*DeviceId)(nil),              // 15: cadestro.v1.DeviceId
-	(*durationpb.Duration)(nil),   // 16: google.protobuf.Duration
-	(*PolicyRevisionId)(nil),      // 17: cadestro.v1.PolicyRevisionId
-	(*ManifestId)(nil),            // 18: cadestro.v1.ManifestId
-	(*OccurrenceId)(nil),          // 19: cadestro.v1.OccurrenceId
-	(*Action)(nil),                // 20: cadestro.v1.Action
-	(*ActionSchedule)(nil),        // 21: cadestro.v1.ActionSchedule
-	(*RunId)(nil),                 // 22: cadestro.v1.RunId
-	(ExecutionStatus)(0),          // 23: cadestro.v1.ExecutionStatus
-	(*timestamppb.Timestamp)(nil), // 24: google.protobuf.Timestamp
+	(*DesiredPolicyRequest)(nil),  // 6: cadestro.v1.DesiredPolicyRequest
+	(*DesiredPolicy)(nil),         // 7: cadestro.v1.DesiredPolicy
+	(*Manifest)(nil),              // 8: cadestro.v1.Manifest
+	(*ManifestResult)(nil),        // 9: cadestro.v1.ManifestResult
+	(*ResultAck)(nil),             // 10: cadestro.v1.ResultAck
+	(*Error)(nil),                 // 11: cadestro.v1.Error
+	(*MessageId)(nil),             // 12: cadestro.v1.MessageId
+	(*ActionResult)(nil),          // 13: cadestro.v1.ActionResult
+	(*DeviceId)(nil),              // 14: cadestro.v1.DeviceId
+	(*durationpb.Duration)(nil),   // 15: google.protobuf.Duration
+	(*PolicyRevisionId)(nil),      // 16: cadestro.v1.PolicyRevisionId
+	(*ManifestId)(nil),            // 17: cadestro.v1.ManifestId
+	(*OccurrenceId)(nil),          // 18: cadestro.v1.OccurrenceId
+	(*Action)(nil),                // 19: cadestro.v1.Action
+	(*ActionSchedule)(nil),        // 20: cadestro.v1.ActionSchedule
+	(*RunId)(nil),                 // 21: cadestro.v1.RunId
+	(ExecutionStatus)(0),          // 22: cadestro.v1.ExecutionStatus
+	(*timestamppb.Timestamp)(nil), // 23: google.protobuf.Timestamp
 }
 var file_cadestro_v1_agent_proto_depIdxs = []int32{
-	13, // 0: cadestro.v1.AgentMessage.id:type_name -> cadestro.v1.MessageId
+	12, // 0: cadestro.v1.AgentMessage.id:type_name -> cadestro.v1.MessageId
 	3,  // 1: cadestro.v1.AgentMessage.hello:type_name -> cadestro.v1.Hello
 	4,  // 2: cadestro.v1.AgentMessage.heartbeat:type_name -> cadestro.v1.Heartbeat
-	6,  // 3: cadestro.v1.AgentMessage.sync_request:type_name -> cadestro.v1.SyncRequest
-	14, // 4: cadestro.v1.AgentMessage.action_result:type_name -> cadestro.v1.ActionResult
-	10, // 5: cadestro.v1.AgentMessage.manifest_result:type_name -> cadestro.v1.ManifestResult
-	13, // 6: cadestro.v1.ServerMessage.id:type_name -> cadestro.v1.MessageId
+	6,  // 3: cadestro.v1.AgentMessage.desired_policy_request:type_name -> cadestro.v1.DesiredPolicyRequest
+	13, // 4: cadestro.v1.AgentMessage.action_result:type_name -> cadestro.v1.ActionResult
+	9,  // 5: cadestro.v1.AgentMessage.manifest_result:type_name -> cadestro.v1.ManifestResult
+	12, // 6: cadestro.v1.ServerMessage.id:type_name -> cadestro.v1.MessageId
 	5,  // 7: cadestro.v1.ServerMessage.welcome:type_name -> cadestro.v1.Welcome
-	7,  // 8: cadestro.v1.ServerMessage.sync_state:type_name -> cadestro.v1.SyncState
-	11, // 9: cadestro.v1.ServerMessage.result_ack:type_name -> cadestro.v1.ResultAck
-	12, // 10: cadestro.v1.ServerMessage.error:type_name -> cadestro.v1.Error
-	15, // 11: cadestro.v1.Hello.device_id:type_name -> cadestro.v1.DeviceId
-	16, // 12: cadestro.v1.Welcome.heartbeat_interval:type_name -> google.protobuf.Duration
-	8,  // 13: cadestro.v1.SyncState.desired_policy:type_name -> cadestro.v1.DesiredPolicy
-	17, // 14: cadestro.v1.DesiredPolicy.revision:type_name -> cadestro.v1.PolicyRevisionId
-	9,  // 15: cadestro.v1.DesiredPolicy.manifests:type_name -> cadestro.v1.Manifest
-	18, // 16: cadestro.v1.Manifest.manifest_id:type_name -> cadestro.v1.ManifestId
-	19, // 17: cadestro.v1.Manifest.occurrence_id:type_name -> cadestro.v1.OccurrenceId
-	20, // 18: cadestro.v1.Manifest.action:type_name -> cadestro.v1.Action
-	21, // 19: cadestro.v1.Manifest.schedule:type_name -> cadestro.v1.ActionSchedule
-	22, // 20: cadestro.v1.ManifestResult.run_id:type_name -> cadestro.v1.RunId
-	18, // 21: cadestro.v1.ManifestResult.manifest_id:type_name -> cadestro.v1.ManifestId
-	23, // 22: cadestro.v1.ManifestResult.status:type_name -> cadestro.v1.ExecutionStatus
-	24, // 23: cadestro.v1.ManifestResult.completed_at:type_name -> google.protobuf.Timestamp
-	16, // 24: cadestro.v1.ManifestResult.duration:type_name -> google.protobuf.Duration
-	0,  // 25: cadestro.v1.ResultAck.code:type_name -> cadestro.v1.ResultAckCode
-	1,  // 26: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
-	2,  // 27: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
-	27, // [27:28] is the sub-list for method output_type
-	26, // [26:27] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	7,  // 8: cadestro.v1.ServerMessage.desired_policy:type_name -> cadestro.v1.DesiredPolicy
+	10, // 9: cadestro.v1.ServerMessage.result_ack:type_name -> cadestro.v1.ResultAck
+	11, // 10: cadestro.v1.ServerMessage.error:type_name -> cadestro.v1.Error
+	14, // 11: cadestro.v1.Hello.device_id:type_name -> cadestro.v1.DeviceId
+	15, // 12: cadestro.v1.Welcome.heartbeat_interval:type_name -> google.protobuf.Duration
+	16, // 13: cadestro.v1.DesiredPolicy.revision:type_name -> cadestro.v1.PolicyRevisionId
+	8,  // 14: cadestro.v1.DesiredPolicy.manifests:type_name -> cadestro.v1.Manifest
+	17, // 15: cadestro.v1.Manifest.manifest_id:type_name -> cadestro.v1.ManifestId
+	18, // 16: cadestro.v1.Manifest.occurrence_id:type_name -> cadestro.v1.OccurrenceId
+	19, // 17: cadestro.v1.Manifest.action:type_name -> cadestro.v1.Action
+	20, // 18: cadestro.v1.Manifest.schedule:type_name -> cadestro.v1.ActionSchedule
+	21, // 19: cadestro.v1.ManifestResult.run_id:type_name -> cadestro.v1.RunId
+	17, // 20: cadestro.v1.ManifestResult.manifest_id:type_name -> cadestro.v1.ManifestId
+	22, // 21: cadestro.v1.ManifestResult.status:type_name -> cadestro.v1.ExecutionStatus
+	23, // 22: cadestro.v1.ManifestResult.completed_at:type_name -> google.protobuf.Timestamp
+	15, // 23: cadestro.v1.ManifestResult.duration:type_name -> google.protobuf.Duration
+	0,  // 24: cadestro.v1.ResultAck.code:type_name -> cadestro.v1.ResultAckCode
+	1,  // 25: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
+	2,  // 26: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
+	26, // [26:27] is the sub-list for method output_type
+	25, // [25:26] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_agent_proto_init() }
@@ -1016,13 +967,13 @@ func file_cadestro_v1_agent_proto_init() {
 	file_cadestro_v1_agent_proto_msgTypes[0].OneofWrappers = []any{
 		(*AgentMessage_Hello)(nil),
 		(*AgentMessage_Heartbeat)(nil),
-		(*AgentMessage_SyncRequest)(nil),
+		(*AgentMessage_DesiredPolicyRequest)(nil),
 		(*AgentMessage_ActionResult)(nil),
 		(*AgentMessage_ManifestResult)(nil),
 	}
 	file_cadestro_v1_agent_proto_msgTypes[1].OneofWrappers = []any{
 		(*ServerMessage_Welcome)(nil),
-		(*ServerMessage_SyncState)(nil),
+		(*ServerMessage_DesiredPolicy)(nil),
 		(*ServerMessage_ResultAck)(nil),
 		(*ServerMessage_Error)(nil),
 	}
@@ -1032,7 +983,7 @@ func file_cadestro_v1_agent_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cadestro_v1_agent_proto_rawDesc), len(file_cadestro_v1_agent_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   12,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

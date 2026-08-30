@@ -20,7 +20,7 @@ message AgentMessage {
   oneof payload {
     Hello hello = 10;
     Heartbeat heartbeat = 11;
-    SyncRequest sync_request = 12;
+    DesiredPolicyRequest desired_policy_request = 12;
     ActionResult action_result = 20;
     ManifestResult manifest_result = 21;
   }
@@ -31,7 +31,7 @@ message ServerMessage {
 
   oneof payload {
     Welcome welcome = 10;
-    SyncState sync_state = 11;
+    DesiredPolicy desired_policy = 11;
     ResultAck result_ack = 12;
     Error error = 13;
   }
@@ -66,19 +66,15 @@ message Welcome {
   google.protobuf.Duration heartbeat_interval = 2;
 }
 
-message SyncRequest {}
+message DesiredPolicyRequest {}
 
-message SyncState {
-  int32 sync_interval_minutes = 1 [
+message DesiredPolicy {
+  int32 refresh_interval_minutes = 1 [
     (buf.validate.field).int32.gte = 1,
     (buf.validate.field).int32.lte = 1440
   ];
-  DesiredPolicy desired_policy = 2 [(buf.validate.field).required = true];
-}
-
-message DesiredPolicy {
-  PolicyRevisionId revision = 1 [(buf.validate.field).required = true];
-  repeated Manifest manifests = 2;
+  PolicyRevisionId revision = 2 [(buf.validate.field).required = true];
+  repeated Manifest manifests = 3;
 }
 
 message Manifest {

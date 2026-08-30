@@ -150,12 +150,12 @@ func (service *Service) handleAgentMessage(ctx context.Context, stream *connect.
 	switch payload := message.Payload.(type) {
 	case *cadestrov1.AgentMessage_Heartbeat:
 		return service.touchAgent(ctx, deviceID, hello)
-	case *cadestrov1.AgentMessage_SyncRequest:
-		state, err := service.syncState(ctx, deviceID)
+	case *cadestrov1.AgentMessage_DesiredPolicyRequest:
+		policy, err := service.desiredPolicy(ctx, deviceID)
 		if err != nil {
 			return err
 		}
-		return stream.Send(&cadestrov1.ServerMessage{Id: message.Id, Payload: &cadestrov1.ServerMessage_SyncState{SyncState: state}})
+		return stream.Send(&cadestrov1.ServerMessage{Id: message.Id, Payload: &cadestrov1.ServerMessage_DesiredPolicy{DesiredPolicy: policy}})
 	case *cadestrov1.AgentMessage_ActionResult:
 		err := service.storeActionResult(ctx, deviceID, payload.ActionResult)
 		code := cadestrov1.ResultAckCode_RESULT_ACK_CODE_ACCEPTED
@@ -173,7 +173,7 @@ func (service *Service) handleAgentMessage(ctx context.Context, stream *connect.
 	}
 }
 
-func (service *Service) syncState(ctx context.Context, deviceID string) (*cadestrov1.SyncState, error) {
+func (service *Service) desiredPolicy(ctx context.Context, deviceID string) (*cadestrov1.DesiredPolicy, error) {
 	actions, err := service.store.Queries().ListActionsForDevice(ctx, db.ListActionsForDeviceParams{DeviceID: deviceID, TargetID: deviceID})
 	if err != nil {
 		return nil, service.internal("compile desired policy", err)
@@ -209,7 +209,8 @@ func (service *Service) syncState(ctx context.Context, deviceID string) (*cadest
 			Action: executable, Schedule: executable.Schedule,
 		})
 	}
-	return &cadestrov1.SyncState{SyncIntervalMinutes: 5, DesiredPolicy: policy}, nil
+	policy.RefreshIntervalMinutes = 5
+	return policy, nil
 }
 
 func (service *Service) storeActionResult(ctx context.Context, deviceID string, result *cadestrov1.ActionResult) error {
