@@ -158,34 +158,19 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 }
 
 const createAction = `-- name: CreateAction :one
-INSERT INTO actions (
-    id, name, description, type, desired_state, timeout_seconds, interval_hours, run_on_assign, skip_if_unchanged,
-    package_name, package_version, shell_script, shell_interpreter, shell_working_directory, shell_environment_json,
-    shell_detection_script, shell_is_compliance, created_at, updated_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-RETURNING id, name, description, type, desired_state, timeout_seconds, interval_hours, run_on_assign, skip_if_unchanged, package_name, package_version, shell_script, shell_interpreter, shell_working_directory, shell_environment_json, shell_detection_script, shell_is_compliance, created_at, updated_at
+INSERT INTO actions (id, name, description, type, action_blob, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?)
+RETURNING id, name, description, type, action_blob, created_at, updated_at
 `
 
 type CreateActionParams struct {
-	ID                    string    `json:"id"`
-	Name                  string    `json:"name"`
-	Description           string    `json:"description"`
-	Type                  int64     `json:"type"`
-	DesiredState          int64     `json:"desired_state"`
-	TimeoutSeconds        int64     `json:"timeout_seconds"`
-	IntervalHours         int64     `json:"interval_hours"`
-	RunOnAssign           bool      `json:"run_on_assign"`
-	SkipIfUnchanged       bool      `json:"skip_if_unchanged"`
-	PackageName           string    `json:"package_name"`
-	PackageVersion        string    `json:"package_version"`
-	ShellScript           string    `json:"shell_script"`
-	ShellInterpreter      string    `json:"shell_interpreter"`
-	ShellWorkingDirectory string    `json:"shell_working_directory"`
-	ShellEnvironmentJson  string    `json:"shell_environment_json"`
-	ShellDetectionScript  string    `json:"shell_detection_script"`
-	ShellIsCompliance     bool      `json:"shell_is_compliance"`
-	CreatedAt             time.Time `json:"created_at"`
-	UpdatedAt             time.Time `json:"updated_at"`
+	ID          string                `json:"id"`
+	Name        string                `json:"name"`
+	Description string                `json:"description"`
+	Type        cadestrov1.ActionType `json:"type"`
+	ActionBlob  []byte                `json:"action_blob"`
+	CreatedAt   time.Time             `json:"created_at"`
+	UpdatedAt   time.Time             `json:"updated_at"`
 }
 
 func (q *Queries) CreateAction(ctx context.Context, arg CreateActionParams) (*Action, error) {
@@ -194,19 +179,7 @@ func (q *Queries) CreateAction(ctx context.Context, arg CreateActionParams) (*Ac
 		arg.Name,
 		arg.Description,
 		arg.Type,
-		arg.DesiredState,
-		arg.TimeoutSeconds,
-		arg.IntervalHours,
-		arg.RunOnAssign,
-		arg.SkipIfUnchanged,
-		arg.PackageName,
-		arg.PackageVersion,
-		arg.ShellScript,
-		arg.ShellInterpreter,
-		arg.ShellWorkingDirectory,
-		arg.ShellEnvironmentJson,
-		arg.ShellDetectionScript,
-		arg.ShellIsCompliance,
+		arg.ActionBlob,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -216,19 +189,7 @@ func (q *Queries) CreateAction(ctx context.Context, arg CreateActionParams) (*Ac
 		&i.Name,
 		&i.Description,
 		&i.Type,
-		&i.DesiredState,
-		&i.TimeoutSeconds,
-		&i.IntervalHours,
-		&i.RunOnAssign,
-		&i.SkipIfUnchanged,
-		&i.PackageName,
-		&i.PackageVersion,
-		&i.ShellScript,
-		&i.ShellInterpreter,
-		&i.ShellWorkingDirectory,
-		&i.ShellEnvironmentJson,
-		&i.ShellDetectionScript,
-		&i.ShellIsCompliance,
+		&i.ActionBlob,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -671,7 +632,7 @@ func (q *Queries) FindDeviceByIdentityKey(ctx context.Context, identityPublicKey
 }
 
 const getAction = `-- name: GetAction :one
-SELECT id, name, description, type, desired_state, timeout_seconds, interval_hours, run_on_assign, skip_if_unchanged, package_name, package_version, shell_script, shell_interpreter, shell_working_directory, shell_environment_json, shell_detection_script, shell_is_compliance, created_at, updated_at FROM actions WHERE id = ?
+SELECT id, name, description, type, action_blob, created_at, updated_at FROM actions WHERE id = ?
 `
 
 func (q *Queries) GetAction(ctx context.Context, id string) (*Action, error) {
@@ -682,19 +643,7 @@ func (q *Queries) GetAction(ctx context.Context, id string) (*Action, error) {
 		&i.Name,
 		&i.Description,
 		&i.Type,
-		&i.DesiredState,
-		&i.TimeoutSeconds,
-		&i.IntervalHours,
-		&i.RunOnAssign,
-		&i.SkipIfUnchanged,
-		&i.PackageName,
-		&i.PackageVersion,
-		&i.ShellScript,
-		&i.ShellInterpreter,
-		&i.ShellWorkingDirectory,
-		&i.ShellEnvironmentJson,
-		&i.ShellDetectionScript,
-		&i.ShellIsCompliance,
+		&i.ActionBlob,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -948,7 +897,7 @@ func (q *Queries) LinkIdentity(ctx context.Context, arg LinkIdentityParams) erro
 }
 
 const listActions = `-- name: ListActions :many
-SELECT id, name, description, type, desired_state, timeout_seconds, interval_hours, run_on_assign, skip_if_unchanged, package_name, package_version, shell_script, shell_interpreter, shell_working_directory, shell_environment_json, shell_detection_script, shell_is_compliance, created_at, updated_at FROM actions
+SELECT id, name, description, type, action_blob, created_at, updated_at FROM actions
 WHERE id > ?1
   AND (CAST(?2 AS INTEGER) = 0 OR type = CAST(?2 AS INTEGER))
 ORDER BY id LIMIT ?3
@@ -974,19 +923,7 @@ func (q *Queries) ListActions(ctx context.Context, arg ListActionsParams) ([]*Ac
 			&i.Name,
 			&i.Description,
 			&i.Type,
-			&i.DesiredState,
-			&i.TimeoutSeconds,
-			&i.IntervalHours,
-			&i.RunOnAssign,
-			&i.SkipIfUnchanged,
-			&i.PackageName,
-			&i.PackageVersion,
-			&i.ShellScript,
-			&i.ShellInterpreter,
-			&i.ShellWorkingDirectory,
-			&i.ShellEnvironmentJson,
-			&i.ShellDetectionScript,
-			&i.ShellIsCompliance,
+			&i.ActionBlob,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -1004,7 +941,7 @@ func (q *Queries) ListActions(ctx context.Context, arg ListActionsParams) ([]*Ac
 }
 
 const listActionsForDevice = `-- name: ListActionsForDevice :many
-SELECT DISTINCT actions.id, actions.name, actions.description, actions.type, actions.desired_state, actions.timeout_seconds, actions.interval_hours, actions.run_on_assign, actions.skip_if_unchanged, actions.package_name, actions.package_version, actions.shell_script, actions.shell_interpreter, actions.shell_working_directory, actions.shell_environment_json, actions.shell_detection_script, actions.shell_is_compliance, actions.created_at, actions.updated_at FROM actions
+SELECT DISTINCT actions.id, actions.name, actions.description, actions.type, actions.action_blob, actions.created_at, actions.updated_at FROM actions
 JOIN assignments ON assignments.action_id = actions.id
 LEFT JOIN device_group_members ON assignments.target_type = 2
     AND assignments.target_id = device_group_members.group_id
@@ -1033,19 +970,7 @@ func (q *Queries) ListActionsForDevice(ctx context.Context, arg ListActionsForDe
 			&i.Name,
 			&i.Description,
 			&i.Type,
-			&i.DesiredState,
-			&i.TimeoutSeconds,
-			&i.IntervalHours,
-			&i.RunOnAssign,
-			&i.SkipIfUnchanged,
-			&i.PackageName,
-			&i.PackageVersion,
-			&i.ShellScript,
-			&i.ShellInterpreter,
-			&i.ShellWorkingDirectory,
-			&i.ShellEnvironmentJson,
-			&i.ShellDetectionScript,
-			&i.ShellIsCompliance,
+			&i.ActionBlob,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -1801,7 +1726,7 @@ func (q *Queries) RemoveDeviceFromGroup(ctx context.Context, arg RemoveDeviceFro
 }
 
 const renameAction = `-- name: RenameAction :one
-UPDATE actions SET name = ?, updated_at = ? WHERE id = ? RETURNING id, name, description, type, desired_state, timeout_seconds, interval_hours, run_on_assign, skip_if_unchanged, package_name, package_version, shell_script, shell_interpreter, shell_working_directory, shell_environment_json, shell_detection_script, shell_is_compliance, created_at, updated_at
+UPDATE actions SET name = ?, updated_at = ? WHERE id = ? RETURNING id, name, description, type, action_blob, created_at, updated_at
 `
 
 type RenameActionParams struct {
@@ -1818,19 +1743,7 @@ func (q *Queries) RenameAction(ctx context.Context, arg RenameActionParams) (*Ac
 		&i.Name,
 		&i.Description,
 		&i.Type,
-		&i.DesiredState,
-		&i.TimeoutSeconds,
-		&i.IntervalHours,
-		&i.RunOnAssign,
-		&i.SkipIfUnchanged,
-		&i.PackageName,
-		&i.PackageVersion,
-		&i.ShellScript,
-		&i.ShellInterpreter,
-		&i.ShellWorkingDirectory,
-		&i.ShellEnvironmentJson,
-		&i.ShellDetectionScript,
-		&i.ShellIsCompliance,
+		&i.ActionBlob,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -2002,7 +1915,7 @@ func (q *Queries) TouchDevice(ctx context.Context, arg TouchDeviceParams) error 
 }
 
 const updateActionDescription = `-- name: UpdateActionDescription :one
-UPDATE actions SET description = ?, updated_at = ? WHERE id = ? RETURNING id, name, description, type, desired_state, timeout_seconds, interval_hours, run_on_assign, skip_if_unchanged, package_name, package_version, shell_script, shell_interpreter, shell_working_directory, shell_environment_json, shell_detection_script, shell_is_compliance, created_at, updated_at
+UPDATE actions SET description = ?, updated_at = ? WHERE id = ? RETURNING id, name, description, type, action_blob, created_at, updated_at
 `
 
 type UpdateActionDescriptionParams struct {
@@ -2019,19 +1932,7 @@ func (q *Queries) UpdateActionDescription(ctx context.Context, arg UpdateActionD
 		&i.Name,
 		&i.Description,
 		&i.Type,
-		&i.DesiredState,
-		&i.TimeoutSeconds,
-		&i.IntervalHours,
-		&i.RunOnAssign,
-		&i.SkipIfUnchanged,
-		&i.PackageName,
-		&i.PackageVersion,
-		&i.ShellScript,
-		&i.ShellInterpreter,
-		&i.ShellWorkingDirectory,
-		&i.ShellEnvironmentJson,
-		&i.ShellDetectionScript,
-		&i.ShellIsCompliance,
+		&i.ActionBlob,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -2039,68 +1940,25 @@ func (q *Queries) UpdateActionDescription(ctx context.Context, arg UpdateActionD
 }
 
 const updateActionParams = `-- name: UpdateActionParams :one
-UPDATE actions SET
-    desired_state = ?, timeout_seconds = ?, interval_hours = ?, run_on_assign = ?, skip_if_unchanged = ?,
-    package_name = ?, package_version = ?, shell_script = ?, shell_interpreter = ?, shell_working_directory = ?,
-    shell_environment_json = ?, shell_detection_script = ?, shell_is_compliance = ?, updated_at = ?
-WHERE id = ? RETURNING id, name, description, type, desired_state, timeout_seconds, interval_hours, run_on_assign, skip_if_unchanged, package_name, package_version, shell_script, shell_interpreter, shell_working_directory, shell_environment_json, shell_detection_script, shell_is_compliance, created_at, updated_at
+UPDATE actions SET action_blob = ?, updated_at = ?
+WHERE id = ? RETURNING id, name, description, type, action_blob, created_at, updated_at
 `
 
 type UpdateActionParamsParams struct {
-	DesiredState          int64     `json:"desired_state"`
-	TimeoutSeconds        int64     `json:"timeout_seconds"`
-	IntervalHours         int64     `json:"interval_hours"`
-	RunOnAssign           bool      `json:"run_on_assign"`
-	SkipIfUnchanged       bool      `json:"skip_if_unchanged"`
-	PackageName           string    `json:"package_name"`
-	PackageVersion        string    `json:"package_version"`
-	ShellScript           string    `json:"shell_script"`
-	ShellInterpreter      string    `json:"shell_interpreter"`
-	ShellWorkingDirectory string    `json:"shell_working_directory"`
-	ShellEnvironmentJson  string    `json:"shell_environment_json"`
-	ShellDetectionScript  string    `json:"shell_detection_script"`
-	ShellIsCompliance     bool      `json:"shell_is_compliance"`
-	UpdatedAt             time.Time `json:"updated_at"`
-	ID                    string    `json:"id"`
+	ActionBlob []byte    `json:"action_blob"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	ID         string    `json:"id"`
 }
 
 func (q *Queries) UpdateActionParams(ctx context.Context, arg UpdateActionParamsParams) (*Action, error) {
-	row := q.db.QueryRowContext(ctx, updateActionParams,
-		arg.DesiredState,
-		arg.TimeoutSeconds,
-		arg.IntervalHours,
-		arg.RunOnAssign,
-		arg.SkipIfUnchanged,
-		arg.PackageName,
-		arg.PackageVersion,
-		arg.ShellScript,
-		arg.ShellInterpreter,
-		arg.ShellWorkingDirectory,
-		arg.ShellEnvironmentJson,
-		arg.ShellDetectionScript,
-		arg.ShellIsCompliance,
-		arg.UpdatedAt,
-		arg.ID,
-	)
+	row := q.db.QueryRowContext(ctx, updateActionParams, arg.ActionBlob, arg.UpdatedAt, arg.ID)
 	var i Action
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Description,
 		&i.Type,
-		&i.DesiredState,
-		&i.TimeoutSeconds,
-		&i.IntervalHours,
-		&i.RunOnAssign,
-		&i.SkipIfUnchanged,
-		&i.PackageName,
-		&i.PackageVersion,
-		&i.ShellScript,
-		&i.ShellInterpreter,
-		&i.ShellWorkingDirectory,
-		&i.ShellEnvironmentJson,
-		&i.ShellDetectionScript,
-		&i.ShellIsCompliance,
+		&i.ActionBlob,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

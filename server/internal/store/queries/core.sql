@@ -182,11 +182,8 @@ SELECT COUNT(*) FROM devices;
 DELETE FROM devices WHERE id = ?;
 
 -- name: CreateAction :one
-INSERT INTO actions (
-    id, name, description, type, desired_state, timeout_seconds, interval_hours, run_on_assign, skip_if_unchanged,
-    package_name, package_version, shell_script, shell_interpreter, shell_working_directory, shell_environment_json,
-    shell_detection_script, shell_is_compliance, created_at, updated_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO actions (id, name, description, type, action_blob, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: GetAction :one
@@ -209,10 +206,7 @@ UPDATE actions SET name = ?, updated_at = ? WHERE id = ? RETURNING *;
 UPDATE actions SET description = ?, updated_at = ? WHERE id = ? RETURNING *;
 
 -- name: UpdateActionParams :one
-UPDATE actions SET
-    desired_state = ?, timeout_seconds = ?, interval_hours = ?, run_on_assign = ?, skip_if_unchanged = ?,
-    package_name = ?, package_version = ?, shell_script = ?, shell_interpreter = ?, shell_working_directory = ?,
-    shell_environment_json = ?, shell_detection_script = ?, shell_is_compliance = ?, updated_at = ?
+UPDATE actions SET action_blob = ?, updated_at = ?
 WHERE id = ? RETURNING *;
 
 -- name: DeleteAction :execrows

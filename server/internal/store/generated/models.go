@@ -11,25 +11,13 @@ import (
 )
 
 type Action struct {
-	ID                    string    `json:"id"`
-	Name                  string    `json:"name"`
-	Description           string    `json:"description"`
-	Type                  int64     `json:"type"`
-	DesiredState          int64     `json:"desired_state"`
-	TimeoutSeconds        int64     `json:"timeout_seconds"`
-	IntervalHours         int64     `json:"interval_hours"`
-	RunOnAssign           bool      `json:"run_on_assign"`
-	SkipIfUnchanged       bool      `json:"skip_if_unchanged"`
-	PackageName           string    `json:"package_name"`
-	PackageVersion        string    `json:"package_version"`
-	ShellScript           string    `json:"shell_script"`
-	ShellInterpreter      string    `json:"shell_interpreter"`
-	ShellWorkingDirectory string    `json:"shell_working_directory"`
-	ShellEnvironmentJson  string    `json:"shell_environment_json"`
-	ShellDetectionScript  string    `json:"shell_detection_script"`
-	ShellIsCompliance     bool      `json:"shell_is_compliance"`
-	CreatedAt             time.Time `json:"created_at"`
-	UpdatedAt             time.Time `json:"updated_at"`
+	ID          string                `json:"id"`
+	Name        string                `json:"name"`
+	Description string                `json:"description"`
+	Type        cadestrov1.ActionType `json:"type"`
+	ActionBlob  []byte                `json:"action_blob"`
+	CreatedAt   time.Time             `json:"created_at"`
+	UpdatedAt   time.Time             `json:"updated_at"`
 }
 
 type Assignment struct {

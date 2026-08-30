@@ -241,11 +241,15 @@ func (service *Service) storeActionResult(ctx context.Context, deviceID string, 
 	if detection == nil {
 		detection = &cadestrov1.CommandOutput{}
 	}
+	executable, err := executableAction(assigned)
+	if err != nil {
+		return fmt.Errorf("decode assigned action: %w", err)
+	}
 	if err := service.store.Queries().CreateExecutionResult(ctx, db.CreateExecutionResultParams{
 		RunID: result.GetRunId().GetValue(), DeviceID: deviceID, ActionID: actionID, Status: int64(result.GetStatus()), Error: result.GetError(),
 		OutputExitCode: int64(output.GetExitCode()), OutputStdout: output.GetStdout(), OutputStderr: output.GetStderr(), CompletedAt: completedAt,
 		Compliant: result.GetCompliant(), DetectionExitCode: int64(detection.GetExitCode()), DetectionStdout: detection.GetStdout(),
-		DetectionStderr: detection.GetStderr(), IsCompliance: assigned.ShellIsCompliance,
+		DetectionStderr: detection.GetStderr(), IsCompliance: executable.GetShell().GetIsCompliance(),
 	}); err != nil {
 		return fmt.Errorf("store action result: %w", err)
 	}
