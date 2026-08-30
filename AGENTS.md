@@ -64,3 +64,8 @@ or a parallel automation identity model. An operator who needs a dedicated
 automation identity creates that user in OIDC, signs in once, and issues its API
 token. Device-agent enrollment remains registration-token bootstrap followed by
 mTLS and is not part of this API-token model.
+
+Default roles are ordinary seed data, not immutable system roles. Administrators
+may update, delete, or revoke any role, including defaults, assigned roles, and
+the last administrator role. Registration tokens are revoked by deletion only;
+finite-use tokens are deleted on their final successful enrollment use.

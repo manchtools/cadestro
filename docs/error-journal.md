@@ -45,3 +45,15 @@
 **Harness fix**: add the operator ruling to AGENTS.md.
 
 **Prevention**: decide and record the permitted staleness window before designing token claims or request authorization; derive the enforcement path from that ruling.
+
+## 2026-08-30 Wrong scope: Presumed immutable roles and reversible token disabling
+
+**What happened**: I preserved immutable system roles and a separate registration-token disabled state as enterprise lifecycle features.
+
+**What the user said**: "we should just preseed roles and let the admin be able to delete any role that exists if they dont want any roles at all" and "I honestly dont see any value in disabling a token if we cant enable it again."
+
+**Root cause**: I presumed enterprise lifecycle requirements instead of following the requested ordinary seed-role and deletion-only token model.
+
+**Harness fix**: record the operator ruling in AGENTS.md.
+
+**Prevention**: treat seeded defaults as ordinary deletable data and use deletion as the sole registration-token revocation state unless the operator explicitly rules otherwise.
