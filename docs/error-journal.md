@@ -165,3 +165,15 @@
 **Harness fix**: added the AGENTS.md rule that agent-stream messages and SDK methods must name desired-policy delivery explicitly instead of using generic sync/state terminology.
 
 **Prevention**: inspect each stream message beside its producer and consumer and require its name to identify the domain operation or payload without reading its fields.
+
+## 2026-08-30 Wrong pattern: Named desired state after its delivery shape
+
+**What happened**: I proposed `DesiredPolicySnapshot`, which still named the message after how the server sends it instead of the state the server wants the agent to achieve.
+
+**What the user said**: "But why Snapshot? the server responds with the state it wants the agent to be in, not a snapshot of it"
+
+**Root cause**: I corrected the generic sync terminology at the transport layer but did not carry the domain meaning through to the replacement name.
+
+**Harness fix**: strengthened the AGENTS.md rule so desired-policy names describe server intent rather than snapshot or transport shape.
+
+**Prevention**: name policy messages from the server's desired outcome, then verify the name against both the producer's intent and the consumer's action before accepting it.

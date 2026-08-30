@@ -76,8 +76,10 @@ groups, including durable one-shot delivery built only for that path. Push is
 for genuinely live operations such as OSQuery, reboot, and terminal traffic.
 
 Agent-stream messages and SDK methods must name desired-policy delivery
-explicitly. Generic sync/state names hide that the agent requests a snapshot of
-its assigned action policy and must not be used for that operation.
+explicitly. Generic sync/state names hide that the agent requests its assigned
+desired policy and must not be used for that operation. Names describe the state
+the server wants the agent to achieve, not the transport shape used to deliver
+it.
 
 Goose migrations are the product's schema mechanism, and sqlc consumes that
 canonical migration history for generated queries. The embedded Goose runner is
