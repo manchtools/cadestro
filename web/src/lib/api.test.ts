@@ -39,7 +39,7 @@ describe('authenticate interceptor', () => {
 	it('refreshes once and retries an unauthenticated request with the renewed token', async () => {
 		state.refreshToken.mockResolvedValue({ accessToken: 'new', refreshToken: 'next', expiresAt: { seconds: 1n, nanos: 0 } });
 		const authorizations: string[] = [];
-		const next = vi.fn((value: { header: Headers }) => {
+		const next = vi.fn(async (value: { header: Headers }) => {
 			authorizations.push(value.header.get('Authorization') ?? '');
 			if (authorizations.length === 1) throw new ConnectError('expired', Code.Unauthenticated);
 			return 'ok';
