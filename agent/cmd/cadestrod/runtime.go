@@ -140,7 +140,7 @@ func sendScheduledResults(ctx context.Context, client *sdk.Client, scheduler *sc
 		select {
 		case <-ctx.Done():
 			return
-		case <-scheduler.Wakes():
+		case <-scheduler.ResultsReady():
 			syncPendingResults(ctx, scheduler, client, logger)
 		}
 	}

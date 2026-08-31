@@ -25,12 +25,17 @@ func TestActionResultSignalsWakeWithoutPayload(t *testing.T) {
 	s.now = time.Now
 	action := &pb.Action{Id: &pb.ActionId{Value: "01K00000000000000000000031"}, Params: &pb.Action_Shell{Shell: &pb.ShellActionParams{Script: "true"}}}
 	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: "01K00000000000000000000032"}, Actions: []*pb.Action{action}}))
+	select {
+	case <-s.ResultsReady():
+		t.Fatal("policy reconciliation signaled a result before execution")
+	default:
+	}
 	due, err := st.GetDueScheduledWork(context.Background())
 	require.NoError(t, err)
 	require.Len(t, due, 1)
 	s.executeAction(context.Background(), due[0])
 	select {
-	case <-s.Wakes():
+	case <-s.ResultsReady():
 	case <-time.After(time.Second):
 		t.Fatal("scheduler did not signal wake")
 	}

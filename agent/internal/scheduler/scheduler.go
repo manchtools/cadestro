@@ -17,26 +17,27 @@ type ActionExecutor interface {
 	ResetUpdateCycle()
 }
 type Scheduler struct {
-	store    *store.Store
-	executor ActionExecutor
-	logger   *slog.Logger
-	now      func() time.Time
-	wakeCh   chan struct{}
-	mu       sync.Mutex
-	running  bool
-	stopCh   chan struct{}
-	done     chan struct{}
+	store          *store.Store
+	executor       ActionExecutor
+	logger         *slog.Logger
+	now            func() time.Time
+	scheduleWakeCh chan struct{}
+	resultReadyCh  chan struct{}
+	mu             sync.Mutex
+	running        bool
+	stopCh         chan struct{}
+	done           chan struct{}
 }
 
 func New(st *store.Store, e ActionExecutor, l *slog.Logger) *Scheduler {
-	return &Scheduler{store: st, executor: e, logger: l, now: time.Now, wakeCh: make(chan struct{}, 1)}
+	return &Scheduler{store: st, executor: e, logger: l, now: time.Now, scheduleWakeCh: make(chan struct{}, 1), resultReadyCh: make(chan struct{}, 1)}
 }
-func (s *Scheduler) Wakes() <-chan struct{} { return s.wakeCh }
+func (s *Scheduler) ResultsReady() <-chan struct{} { return s.resultReadyCh }
 func (s *Scheduler) ReconcilePolicy(ctx context.Context, p *pb.DesiredPolicy) error {
 	if err := s.store.ReconcilePolicy(ctx, p); err != nil {
 		return err
 	}
-	s.Wake()
+	s.wakeSchedule()
 	return nil
 }
 func (s *Scheduler) GetPendingResults(ctx context.Context) ([]store.PendingResult, error) {
@@ -45,9 +46,9 @@ func (s *Scheduler) GetPendingResults(ctx context.Context) ([]store.PendingResul
 func (s *Scheduler) DeletePendingResult(ctx context.Context, n int64) error {
 	return s.store.DeletePendingResult(ctx, n)
 }
-func (s *Scheduler) Wake() {
+func (s *Scheduler) wakeSchedule() {
 	select {
-	case s.wakeCh <- struct{}{}:
+	case s.scheduleWakeCh <- struct{}{}:
 	default:
 	}
 }
@@ -77,7 +78,7 @@ func (s *Scheduler) Start(ctx context.Context) {
 			return
 		case <-ticker.C:
 			s.runDue(ctx)
-		case <-s.wakeCh:
+		case <-s.scheduleWakeCh:
 			s.runDue(ctx)
 		}
 	}
@@ -136,7 +137,7 @@ func (s *Scheduler) executeAction(ctx context.Context, w store.ScheduledWork) {
 		return
 	}
 	select {
-	case s.wakeCh <- struct{}{}:
+	case s.resultReadyCh <- struct{}{}:
 	default:
 	}
 }
