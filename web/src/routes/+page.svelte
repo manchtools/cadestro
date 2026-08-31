@@ -174,7 +174,7 @@
 	}
 
 	async function createAction() {
-		const schedule = create(ActionScheduleSchema, { intervalHours, runOnAssign: true });
+		const schedule = create(ActionScheduleSchema, { intervalHours });
 		const request = create(CreateActionRequestSchema, {
 			name: actionName,
 			description: actionDescription,
