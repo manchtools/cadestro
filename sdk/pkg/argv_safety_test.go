@@ -3,19 +3,11 @@ package pkg
 import (
 	"context"
 	"reflect"
+	"slices"
 	"testing"
 
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 )
-
-func indexOf(args []string, want string) int {
-	for i, a := range args {
-		if a == want {
-			return i
-		}
-	}
-	return -1
-}
 
 func TestEveryManagerMethodNeutralizesFlagShapedOperands(t *testing.T) {
 	const flag = "-rf"
@@ -85,11 +77,11 @@ func TestEveryManagerMethodNeutralizesFlagShapedOperands(t *testing.T) {
 				}
 
 				for _, c := range f.Calls() {
-					idx := indexOf(c.Args, flag)
+					idx := slices.Index(c.Args, flag)
 					if idx < 0 {
 						continue
 					}
-					sep := indexOf(c.Args, sysexec.EndOfOptions)
+					sep := slices.Index(c.Args, sysexec.EndOfOptions)
 					if sep < 0 || sep > idx {
 						t.Errorf("%s.%s (operand #%d): %q reaches argv as an OPTION — no %q separator before it: %s %v",
 							b, name, target, flag, sysexec.EndOfOptions, c.Name, c.Args)
