@@ -1,6 +1,6 @@
 version: v2
 plugins:
-  - local: protoc-gen-es
+  - local: scripts/protoc-gen-es.sh
     out: gen/ts
     opt:
       - target=ts

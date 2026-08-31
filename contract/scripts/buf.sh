@@ -12,7 +12,4 @@ if [ ! -x "$BUF" ]; then
   exit 1
 fi
 
-PATH="$REPO_ROOT/node_modules/.bin:$PATH"
-export PATH
-
 exec "$BUF" "$@"

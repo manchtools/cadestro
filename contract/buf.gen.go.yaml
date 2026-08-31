@@ -1,10 +1,10 @@
 version: v2
 plugins:
-  - local: protoc-gen-go
+  - local: scripts/protoc-gen-go.sh
     out: gen/go
     opt:
       - paths=source_relative
-  - local: protoc-gen-connect-go
+  - local: scripts/protoc-gen-connect-go.sh
     out: gen/go
     opt:
       - paths=source_relative
