@@ -249,3 +249,15 @@
 **Harness fix**: None; the repeated `User correction` category was already promoted on 2026-08-27, and this conversational referent error does not justify another repository engineering rule.
 
 **Prevention**: When the operator quotes a specific statement after "this," answer that statement's mechanics first and only add broader context if it is necessary to understand them.
+
+## 2026-08-31 User correction: Misread Luna/Terra as Sonnet
+
+**What happened**: I said Sonnet was unavailable and substituted another model family even though the operator intended the available Luna and Terra agents.
+
+**What the user said**: "i meant luna/terra not sonnet"
+
+**Root cause**: I normalized the requested model name from memory instead of resolving the intended names against the models available in this session.
+
+**Harness fix**: None; the `User correction` category is already represented by standing project rules, and this naming error is prevented at task-brief construction rather than by another repository rule.
+
+**Prevention**: Before announcing delegated models, quote the operator's requested names and match each one against the session's available model list.
