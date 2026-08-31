@@ -21,6 +21,11 @@ type heartbeatHandler struct {
 	finishAfterWelcome bool
 }
 
+type streamReceive struct {
+	message *cadestrov1.AgentMessage
+	err     error
+}
+
 func (h *heartbeatHandler) Stream(ctx context.Context, stream *connect.BidiStream[cadestrov1.AgentMessage, cadestrov1.ServerMessage]) error {
 	message, err := stream.Receive()
 	if err != nil {
@@ -30,7 +35,18 @@ func (h *heartbeatHandler) Stream(ctx context.Context, stream *connect.BidiStrea
 		return errors.New("expected hello")
 	}
 	close(h.hello)
+	received := make(chan streamReceive, 1)
+	go func() {
+		message, receiveErr := stream.Receive()
+		received <- streamReceive{message: message, err: receiveErr}
+	}()
 	select {
+	case result := <-received:
+		if result.err != nil {
+			return result.err
+		}
+		h.received <- result.message
+		return errors.New("received agent message before welcome")
 	case <-h.allow:
 	case <-ctx.Done():
 		return ctx.Err()
@@ -41,11 +57,11 @@ func (h *heartbeatHandler) Stream(ctx context.Context, stream *connect.BidiStrea
 	if h.finishAfterWelcome {
 		return nil
 	}
-	message, err = stream.Receive()
-	if err != nil {
-		return err
+	result := <-received
+	if result.err != nil {
+		return result.err
 	}
-	h.received <- message
+	h.received <- result.message
 	return nil
 }
 
@@ -54,7 +70,7 @@ type heartbeatClientHandler struct{}
 func (heartbeatClientHandler) OnWelcome(context.Context, *cadestrov1.Welcome) error { return nil }
 
 func TestRunStartsHeartbeatOnlyAfterWelcome(t *testing.T) {
-	service := &heartbeatHandler{allow: make(chan struct{}), hello: make(chan struct{}), received: make(chan *cadestrov1.AgentMessage, 1), welcome: &cadestrov1.Welcome{HeartbeatInterval: durationpb.New(10 * time.Millisecond)}}
+	service := &heartbeatHandler{allow: make(chan struct{}), hello: make(chan struct{}), received: make(chan *cadestrov1.AgentMessage, 1), welcome: &cadestrov1.Welcome{HeartbeatInterval: durationpb.New(500 * time.Millisecond)}}
 	path, handler := cadestrov1connect.NewAgentServiceHandler(service)
 	mux := http.NewServeMux()
 	mux.Handle(path, handler)
@@ -75,9 +91,14 @@ func TestRunStartsHeartbeatOnlyAfterWelcome(t *testing.T) {
 	select {
 	case <-service.received:
 		t.Fatal("heartbeat received before welcome")
-	case <-time.After(50 * time.Millisecond):
+	case <-time.After(150 * time.Millisecond):
 	}
 	close(service.allow)
+	select {
+	case <-service.received:
+		t.Fatal("heartbeat received before most of interval elapsed")
+	case <-time.After(350 * time.Millisecond):
+	}
 	select {
 	case message := <-service.received:
 		if _, ok := message.GetPayload().(*cadestrov1.AgentMessage_Heartbeat); !ok {
