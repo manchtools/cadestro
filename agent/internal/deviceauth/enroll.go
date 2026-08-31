@@ -22,7 +22,7 @@ import (
 type credentialStore interface {
 	Exists() bool
 	Load() (*credentials.Credentials, error)
-	Save(*credentials.Credentials) error
+	Save(context.Context, *credentials.Credentials) error
 }
 
 type EnrollHandler struct {
@@ -150,7 +150,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestr
 			}), nil
 		}
 
-		if err := h.credStore.Save(&credentials.Credentials{
+		if err := h.credStore.Save(ctx, &credentials.Credentials{
 			PendingPrivateKey: keyPEM,
 			PendingCSR:        csrPEM,
 		}); err != nil {
@@ -207,7 +207,7 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestr
 		ControlAddr: req.Msg.ServerUrl,
 	}
 
-	if err := h.credStore.Save(creds); err != nil {
+	if err := h.credStore.Save(ctx, creds); err != nil {
 		h.logger.Error("failed to save credentials", "error", err)
 		return connect.NewResponse(&cadestrov1.EnrollResponse{
 			Success: false,

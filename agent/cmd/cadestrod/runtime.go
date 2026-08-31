@@ -69,7 +69,7 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 		if connected && usingPending {
 			creds.Certificate = append([]byte(nil), creds.PendingCertificate...)
 			creds.PendingCertificate = nil
-			if err := credStore.Save(creds); err != nil {
+			if err := credStore.Save(sessionCtx, creds); err != nil {
 				logger.Warn("persist promoted certificate", "error", err)
 			}
 			fallbackActive = false

@@ -25,19 +25,19 @@ type failingStore struct {
 	saveErr error
 }
 
-func (f *failingStore) Save(*credentials.Credentials) error { return f.saveErr }
+func (f *failingStore) Save(context.Context, *credentials.Credentials) error { return f.saveErr }
 
 type failFinalSaveStore struct {
 	credentialStore
 	finalSaveFailed bool
 }
 
-func (f *failFinalSaveStore) Save(creds *credentials.Credentials) error {
+func (f *failFinalSaveStore) Save(ctx context.Context, creds *credentials.Credentials) error {
 	if len(creds.PendingCSR) == 0 && !f.finalSaveFailed {
 		f.finalSaveFailed = true
 		return errors.New("response lost after server commit")
 	}
-	return f.credentialStore.Save(creds)
+	return f.credentialStore.Save(ctx, creds)
 }
 
 func TestEnroll_RetryReusesPendingIdentityAfterResponseLoss(t *testing.T) {

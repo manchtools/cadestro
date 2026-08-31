@@ -110,7 +110,7 @@ func TestEnroll_MissingFields(t *testing.T) {
 func TestEnroll_AlreadyEnrolled(t *testing.T) {
 
 	credStore := credentials.NewStore(t.TempDir())
-	credStore.Save(&credentials.Credentials{
+	credStore.Save(context.Background(), &credentials.Credentials{
 		DeviceID:    "existing-device",
 		CACert:      []byte("ca"),
 		Certificate: []byte("cert"),
@@ -166,7 +166,7 @@ func TestGetEnrollmentStatus_NotEnrolled(t *testing.T) {
 
 func TestGetEnrollmentStatus_Enrolled(t *testing.T) {
 	credStore := credentials.NewStore(t.TempDir())
-	credStore.Save(&credentials.Credentials{
+	credStore.Save(context.Background(), &credentials.Credentials{
 		DeviceID:    "dev-abc",
 		CACert:      []byte("ca"),
 		Certificate: []byte("cert"),

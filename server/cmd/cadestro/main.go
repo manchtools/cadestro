@@ -61,11 +61,14 @@ func run(config *Config, logger *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("fingerprint certificate authority: %w", err)
 	}
-	service := core.New(core.Config{
+	service, err := core.New(core.Config{
 		Store: storage, CA: certificateAuthority, JWT: jwt, Logger: logger,
 		PublicBaseURL: config.PublicBaseURL, AgentURL: config.AgentURL, CAFingerprint: fingerprint,
-		Version: version, HeartbeatInterval: config.HeartbeatInterval,
+		HeartbeatInterval: config.HeartbeatInterval,
 	})
+	if err != nil {
+		return fmt.Errorf("initialize core service: %w", err)
+	}
 	if err := service.EnsureBootstrapProvider(ctx, core.BootstrapProvider{
 		Name: config.BootstrapOIDCName, Slug: config.BootstrapOIDCSlug, ClientID: config.BootstrapOIDCClientID,
 		IssuerURL: config.BootstrapOIDCIssuer, Scopes: config.BootstrapOIDCScopes,

@@ -29,7 +29,6 @@ type Config struct {
 	PublicBaseURL     string
 	AgentURL          string
 	CAFingerprint     string
-	Version           string
 	HeartbeatInterval time.Duration
 }
 
@@ -44,13 +43,12 @@ type Service struct {
 	publicBaseURL     string
 	agentURL          string
 	caFingerprint     string
-	version           string
 	heartbeatInterval time.Duration
 }
 
-func New(config Config) *Service {
+func New(config Config) (*Service, error) {
 	if config.Store == nil || config.CA == nil || config.JWT == nil {
-		panic("core: store, CA, and JWT manager are required")
+		return nil, errors.New("core: store, CA, and JWT manager are required")
 	}
 	if config.Logger == nil {
 		config.Logger = slog.Default()
@@ -64,9 +62,9 @@ func New(config Config) *Service {
 	return &Service{
 		store: config.Store, ca: config.CA, jwt: config.JWT,
 		logger: config.Logger, now: config.Now, publicBaseURL: config.PublicBaseURL,
-		agentURL: config.AgentURL, caFingerprint: config.CAFingerprint, version: config.Version,
+		agentURL: config.AgentURL, caFingerprint: config.CAFingerprint,
 		heartbeatInterval: config.HeartbeatInterval,
-	}
+	}, nil
 }
 
 func (service *Service) internal(operation string, err error) error {

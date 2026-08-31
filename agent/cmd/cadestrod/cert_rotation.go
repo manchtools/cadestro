@@ -112,7 +112,7 @@ func renewCertificateIfDue(ctx context.Context, credStore *credentials.Store, cr
 	if err := applyRenewal(creds, result); err != nil {
 		return false, err
 	}
-	if err := credStore.Save(creds); err != nil {
+	if err := credStore.Save(ctx, creds); err != nil {
 		return false, err
 	}
 	logger.Info("certificate renewal staged", "not_after", result.NotAfter)

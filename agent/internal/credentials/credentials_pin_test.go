@@ -1,6 +1,7 @@
 package credentials
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,7 +16,7 @@ func TestMachineID_RawBytesAreTheKDFContract(t *testing.T) {
 	t.Cleanup(func() { getMachineID = orig })
 
 	getMachineID = func() ([]byte, error) { return []byte("abc123\n"), nil }
-	if err := s.Save(sampleCreds()); err != nil {
+	if err := s.Save(context.Background(), sampleCreds()); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 
@@ -37,7 +38,7 @@ func TestLoadOrCreateSalt_CorruptSaltFailsClosed(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err := s.loadOrCreateSalt()
+	_, err := s.loadOrCreateSalt(context.Background())
 	if err == nil {
 		t.Fatal("corrupt salt must fail closed, not regenerate")
 	}

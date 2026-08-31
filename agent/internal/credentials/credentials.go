@@ -77,11 +77,11 @@ func NewStore(dataDir string) *Store {
 	return s
 }
 
-func (s *Store) writeFile(path string, data []byte) error {
+func (s *Store) writeFile(ctx context.Context, path string, data []byte) error {
 	if s.fsErr != nil {
 		return s.fsErr
 	}
-	return s.fs.WriteFile(context.Background(), path, data, sdkfs.WriteOptions{Mode: 0600})
+	return s.fs.WriteFile(ctx, path, data, sdkfs.WriteOptions{Mode: 0600})
 }
 
 func (s *Store) Exists() bool {
@@ -103,7 +103,7 @@ func requireOwnerOnlyDir(dir string) error {
 	return nil
 }
 
-func (s *Store) Save(creds *Credentials) error {
+func (s *Store) Save(ctx context.Context, creds *Credentials) error {
 
 	if err := os.MkdirAll(s.dataDir, 0700); err != nil {
 		return fmt.Errorf("create data directory: %w", err)
@@ -116,7 +116,7 @@ func (s *Store) Save(creds *Credentials) error {
 		return err
 	}
 
-	salt, err := s.loadOrCreateSalt()
+	salt, err := s.loadOrCreateSalt(ctx)
 	if err != nil {
 		return fmt.Errorf("load/create salt: %w", err)
 	}
@@ -138,7 +138,7 @@ func (s *Store) Save(creds *Credentials) error {
 	ciphertext = append([]byte(credentialsMagicV1), ciphertext...)
 
 	credPath := filepath.Join(s.dataDir, credentialsFile)
-	if err := s.writeFile(credPath, ciphertext); err != nil {
+	if err := s.writeFile(ctx, credPath, ciphertext); err != nil {
 		return fmt.Errorf("write credentials: %w", err)
 	}
 
@@ -204,7 +204,7 @@ func (s *Store) DataDir() string {
 	return s.dataDir
 }
 
-func (s *Store) loadOrCreateSalt() ([]byte, error) {
+func (s *Store) loadOrCreateSalt(ctx context.Context) ([]byte, error) {
 	saltPath := filepath.Join(s.dataDir, saltFile)
 
 	salt, err := os.ReadFile(saltPath)
@@ -224,7 +224,7 @@ func (s *Store) loadOrCreateSalt() ([]byte, error) {
 		return nil, fmt.Errorf("generate salt: %w", err)
 	}
 
-	if err := s.writeFile(saltPath, salt); err != nil {
+	if err := s.writeFile(ctx, saltPath, salt); err != nil {
 		return nil, fmt.Errorf("write salt: %w", err)
 	}
 

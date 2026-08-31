@@ -20,23 +20,20 @@ type Executor struct {
 	now        func() time.Time
 }
 
-func NewExecutor(runner sysexec.Runner) *Executor {
+func NewExecutor(runner sysexec.Runner) (*Executor, error) {
 	if runner == nil {
-		var err error
-		runner, err = sysexec.NewRunner(sysexec.Direct)
-		if err != nil {
-			panic(err)
-		}
+		return nil, errors.New("executor: runner is required")
 	}
 	executor := &Executor{runner: runner, now: time.Now}
 	backends := pkg.Detect()
 	if len(backends) > 0 {
 		manager, err := pkg.New(backends[0], runner)
-		if err == nil {
-			executor.pkgManager = manager
+		if err != nil {
+			return nil, fmt.Errorf("executor: initialize package manager: %w", err)
 		}
+		executor.pkgManager = manager
 	}
-	return executor
+	return executor, nil
 }
 
 func (e *Executor) ResetUpdateCycle() {}
@@ -58,11 +55,11 @@ func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.Act
 	var err error
 	switch params := action.GetParams().(type) {
 	case *pb.Action_Package:
-		output, _, err = e.executePackage(ctx, params.Package, action.GetDesiredState())
+		output, err = e.executePackage(ctx, params.Package, action.GetDesiredState())
 	case *pb.Action_Update:
-		output, _, err = e.executeUpdate(ctx, params.Update)
+		output, err = e.executeUpdate(ctx, params.Update)
 	case *pb.Action_Shell:
-		output, result.DetectionOutput, _, err = e.executeShell(ctx, params.Shell)
+		output, result.DetectionOutput, err = e.executeShell(ctx, params.Shell)
 	default:
 		err = errors.New("unsupported action parameters")
 	}
@@ -99,12 +96,12 @@ func (e *Executor) finish(result *pb.ActionResult) *pb.ActionResult {
 	return result
 }
 
-func (e *Executor) executeShell(ctx context.Context, params *pb.ShellActionParams) (*pb.CommandOutput, *pb.CommandOutput, bool, error) {
+func (e *Executor) executeShell(ctx context.Context, params *pb.ShellActionParams) (*pb.CommandOutput, *pb.CommandOutput, error) {
 	if params == nil {
-		return nil, nil, false, errors.New("shell params required")
+		return nil, nil, errors.New("shell params required")
 	}
 	if params.GetIsCompliance() && params.GetDetectionScript() == "" {
-		return nil, nil, false, errors.New("compliance shell action requires a detection script")
+		return nil, nil, errors.New("compliance shell action requires a detection script")
 	}
 	var detection *pb.CommandOutput
 	if params.GetDetectionScript() != "" {
@@ -112,17 +109,17 @@ func (e *Executor) executeShell(ctx context.Context, params *pb.ShellActionParam
 		detection, err = e.runShell(ctx, params, params.GetDetectionScript())
 		if err != nil {
 			detection = outputWithError(detection, err)
-			return nil, detection, false, err
+			return nil, detection, err
 		}
 		if detection.GetExitCode() == 0 {
-			return nil, detection, false, nil
+			return nil, detection, nil
 		}
 		if params.GetIsCompliance() {
-			return nil, detection, false, nil
+			return nil, detection, nil
 		}
 	}
 	if params.GetScript() == "" {
-		return nil, detection, false, errors.New("shell action requires a script")
+		return nil, detection, errors.New("shell action requires a script")
 	}
 	output, err := e.runShell(ctx, params, params.GetScript())
 	if err != nil || output.GetExitCode() != 0 {
@@ -130,22 +127,22 @@ func (e *Executor) executeShell(ctx context.Context, params *pb.ShellActionParam
 			err = fmt.Errorf("shell exited with status %d", output.GetExitCode())
 		}
 		output = outputWithError(output, err)
-		return output, detection, false, err
+		return output, detection, err
 	}
 	if params.GetDetectionScript() == "" {
-		return output, nil, true, nil
+		return output, nil, nil
 	}
 	verified, err := e.runShell(ctx, params, params.GetDetectionScript())
 	if err != nil {
 		verified = outputWithError(verified, err)
-		return output, verified, true, err
+		return output, verified, err
 	}
 	if verified.GetExitCode() != 0 {
 		err := fmt.Errorf("shell remediation verification exited with status %d", verified.GetExitCode())
 		verified = outputWithError(verified, err)
-		return output, verified, true, err
+		return output, verified, err
 	}
-	return output, verified, true, nil
+	return output, verified, nil
 }
 
 func outputWithError(output *pb.CommandOutput, err error) *pb.CommandOutput {

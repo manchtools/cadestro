@@ -16,6 +16,21 @@ type fakeRunner struct {
 	errors   []error
 }
 
+func mustExecutor(t *testing.T, runner sysexec.Runner) *Executor {
+	t.Helper()
+	executor, err := NewExecutor(runner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return executor
+}
+
+func TestNewExecutorRejectsNilRunner(t *testing.T) {
+	if _, err := NewExecutor(nil); err == nil {
+		t.Fatal("NewExecutor(nil) returned nil error")
+	}
+}
+
 func (f *fakeRunner) Run(_ context.Context, command sysexec.Command) (sysexec.Result, error) {
 	f.commands = append(f.commands, command)
 	index := len(f.commands) - 1
@@ -81,7 +96,7 @@ func (f *fakePackageManager) UpgradeAll(context.Context) (sysexec.Result, error)
 
 func TestComplianceShellOnlyDetects(t *testing.T) {
 	runner := &fakeRunner{results: []sysexec.Result{{ExitCode: 1}}}
-	executor := NewExecutor(runner)
+	executor := mustExecutor(t, runner)
 	result := executor.ExecuteAction(context.Background(), &pb.Action{
 		Id:           &pb.ActionId{Value: "01J0000000000000000000000A"},
 		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
@@ -100,7 +115,7 @@ func TestComplianceShellOnlyDetects(t *testing.T) {
 func TestShellErrorsUseRelevantOutput(t *testing.T) {
 	t.Run("detection", func(t *testing.T) {
 		runner := &fakeRunner{errors: []error{errors.New("detection failed")}}
-		result := NewExecutor(runner).ExecuteAction(context.Background(), &pb.Action{
+		result := mustExecutor(t, runner).ExecuteAction(context.Background(), &pb.Action{
 			Id:     &pb.ActionId{Value: "01J0000000000000000000000A"},
 			Params: &pb.Action_Shell{Shell: &pb.ShellActionParams{DetectionScript: "check", Script: "fix"}},
 		})
@@ -110,7 +125,7 @@ func TestShellErrorsUseRelevantOutput(t *testing.T) {
 	})
 	t.Run("verification", func(t *testing.T) {
 		runner := &fakeRunner{results: []sysexec.Result{{ExitCode: 1}, {}, {}}, errors: []error{nil, nil, errors.New("verification failed")}}
-		result := NewExecutor(runner).ExecuteAction(context.Background(), &pb.Action{
+		result := mustExecutor(t, runner).ExecuteAction(context.Background(), &pb.Action{
 			Id:     &pb.ActionId{Value: "01J0000000000000000000000A"},
 			Params: &pb.Action_Shell{Shell: &pb.ShellActionParams{DetectionScript: "check", Script: "fix"}},
 		})
@@ -120,7 +135,7 @@ func TestShellErrorsUseRelevantOutput(t *testing.T) {
 	})
 	t.Run("ordinary", func(t *testing.T) {
 		runner := &fakeRunner{results: []sysexec.Result{{Stderr: "command stderr"}}, errors: []error{errors.New("command failed")}}
-		result := NewExecutor(runner).ExecuteAction(context.Background(), &pb.Action{
+		result := mustExecutor(t, runner).ExecuteAction(context.Background(), &pb.Action{
 			Id:     &pb.ActionId{Value: "01J0000000000000000000000A"},
 			Params: &pb.Action_Shell{Shell: &pb.ShellActionParams{Script: "fix"}},
 		})
@@ -132,7 +147,7 @@ func TestShellErrorsUseRelevantOutput(t *testing.T) {
 
 func TestShellRemediatesAndVerifies(t *testing.T) {
 	runner := &fakeRunner{results: []sysexec.Result{{ExitCode: 1}, {}, {}}}
-	executor := NewExecutor(runner)
+	executor := mustExecutor(t, runner)
 	result := executor.ExecuteAction(context.Background(), &pb.Action{
 		Id:           &pb.ActionId{Value: "01J0000000000000000000000A"},
 		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
@@ -150,7 +165,7 @@ func TestShellRemediatesAndVerifies(t *testing.T) {
 
 func TestShellRejectsHijackEnvironment(t *testing.T) {
 	runner := &fakeRunner{}
-	executor := NewExecutor(runner)
+	executor := mustExecutor(t, runner)
 	result := executor.ExecuteAction(context.Background(), &pb.Action{
 		Id:           &pb.ActionId{Value: "01J0000000000000000000000A"},
 		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
@@ -165,7 +180,7 @@ func TestShellRejectsHijackEnvironment(t *testing.T) {
 
 func TestPackageSkipsInstalledVersion(t *testing.T) {
 	manager := &fakePackageManager{installed: true, version: "1.0"}
-	executor := NewExecutor(&fakeRunner{})
+	executor := mustExecutor(t, &fakeRunner{})
 	executor.pkgManager = manager
 	result := executor.ExecuteAction(context.Background(), &pb.Action{
 		Id:           &pb.ActionId{Value: "01J0000000000000000000000A"},
@@ -179,7 +194,7 @@ func TestPackageSkipsInstalledVersion(t *testing.T) {
 
 func TestUpdateSkipsCurrentSystem(t *testing.T) {
 	manager := &fakePackageManager{}
-	executor := NewExecutor(&fakeRunner{})
+	executor := mustExecutor(t, &fakeRunner{})
 	executor.pkgManager = manager
 	result := executor.ExecuteAction(context.Background(), &pb.Action{
 		Id:           &pb.ActionId{Value: "01J0000000000000000000000A"},

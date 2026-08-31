@@ -2,6 +2,7 @@ package credentials
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,7 +34,7 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 	store := NewStore(dir)
 
 	in := sampleCreds()
-	if err := store.Save(in); err != nil {
+	if err := store.Save(context.Background(), in); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 
@@ -69,10 +70,10 @@ func TestSaveIsIdempotent(t *testing.T) {
 	store := NewStore(dir)
 
 	in := sampleCreds()
-	if err := store.Save(in); err != nil {
+	if err := store.Save(context.Background(), in); err != nil {
 		t.Fatalf("first Save: %v", err)
 	}
-	if err := store.Save(in); err != nil {
+	if err := store.Save(context.Background(), in); err != nil {
 		t.Fatalf("second Save: %v", err)
 	}
 
@@ -91,7 +92,7 @@ func TestSaveWritesV1Magic(t *testing.T) {
 	dir := t.TempDir()
 	store := NewStore(dir)
 
-	if err := store.Save(sampleCreds()); err != nil {
+	if err := store.Save(context.Background(), sampleCreds()); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 
@@ -110,7 +111,7 @@ func TestLoadRejectsUnknownFutureMagic(t *testing.T) {
 	dir := t.TempDir()
 	store := NewStore(dir)
 
-	if _, err := store.loadOrCreateSalt(); err != nil {
+	if _, err := store.loadOrCreateSalt(context.Background()); err != nil {
 		t.Fatalf("loadOrCreateSalt: %v", err)
 	}
 
@@ -135,7 +136,7 @@ func TestLoadCorruptCiphertextFails(t *testing.T) {
 	dir := t.TempDir()
 	store := NewStore(dir)
 
-	if err := store.Save(sampleCreds()); err != nil {
+	if err := store.Save(context.Background(), sampleCreds()); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 
@@ -179,7 +180,7 @@ func TestExistsAndDelete(t *testing.T) {
 		t.Fatal("Exists returned true for empty data dir")
 	}
 
-	if err := store.Save(sampleCreds()); err != nil {
+	if err := store.Save(context.Background(), sampleCreds()); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 	if !store.Exists() {

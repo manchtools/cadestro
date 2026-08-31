@@ -41,13 +41,7 @@ func ssrfSafeDialControl(_, address string, _ syscall.RawConn) error {
 	return nil
 }
 
-var cgnatNet = func() *net.IPNet {
-	_, n, err := net.ParseCIDR("100.64.0.0/10")
-	if err != nil {
-		panic(err)
-	}
-	return n
-}()
+var cgnatNet = net.IPNet{IP: net.ParseIP("100.64.0.0").To4(), Mask: net.CIDRMask(10, 32)}
 
 func newBoundedOIDCClient() *http.Client {
 	return &http.Client{

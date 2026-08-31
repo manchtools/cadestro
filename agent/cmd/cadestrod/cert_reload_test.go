@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -33,9 +34,9 @@ func TestReloadCredsForReconnect_PicksUpRotatedCert(t *testing.T) {
 	store := credentials.NewStore(dir)
 
 	inMemory := testCreds("OLD-CERT")
-	require.NoError(t, store.Save(inMemory))
+	require.NoError(t, store.Save(context.Background(), inMemory))
 
-	require.NoError(t, store.Save(testCreds("NEW-CERT")))
+	require.NoError(t, store.Save(context.Background(), testCreds("NEW-CERT")))
 
 	got := reloadCredsForReconnect(store, inMemory, slog.Default())
 	assert.Equal(t, []byte("NEW-CERT"), got.Certificate,

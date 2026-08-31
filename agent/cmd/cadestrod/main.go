@@ -84,7 +84,11 @@ func main() {
 	}
 	defer actionStore.Close()
 
-	actionExecutor := executor.NewExecutor(runner)
+	actionExecutor, err := executor.NewExecutor(runner)
+	if err != nil {
+		logger.Error("create action executor", "error", err)
+		os.Exit(1)
+	}
 	actionScheduler := scheduler.New(actionStore, actionExecutor, logger)
 	streamHandler := handler.NewHandler()
 	go actionScheduler.Start(ctx)

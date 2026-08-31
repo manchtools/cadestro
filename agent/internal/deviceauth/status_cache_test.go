@@ -27,7 +27,7 @@ func (c *countingStore) Load() (*credentials.Credentials, error) {
 	c.loads.Add(1)
 	return &credentials.Credentials{DeviceID: "dev-cached"}, nil
 }
-func (c *countingStore) Save(*credentials.Credentials) error { return nil }
+func (c *countingStore) Save(context.Context, *credentials.Credentials) error { return nil }
 
 func newStatusHandler(store credentialStore) *EnrollHandler {
 	return &EnrollHandler{credStore: store, logger: slog.Default(), now: time.Now}
@@ -39,9 +39,9 @@ type flakyStore struct {
 	err    error
 }
 
-func (f *flakyStore) Exists() bool                            { return f.exists }
-func (f *flakyStore) Load() (*credentials.Credentials, error) { return f.creds, f.err }
-func (f *flakyStore) Save(*credentials.Credentials) error     { return nil }
+func (f *flakyStore) Exists() bool                                         { return f.exists }
+func (f *flakyStore) Load() (*credentials.Credentials, error)              { return f.creds, f.err }
+func (f *flakyStore) Save(context.Context, *credentials.Credentials) error { return nil }
 
 func TestGetEnrollmentStatus_LoadFailureNotCached(t *testing.T) {
 	store := &flakyStore{exists: true, err: errors.New("decrypt failed")}

@@ -1,6 +1,7 @@
 package credentials
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,7 +12,7 @@ func TestSavePermissions(t *testing.T) {
 	requireMachineID(t)
 	dir := t.TempDir()
 	store := NewStore(dir)
-	if err := store.Save(sampleCreds()); err != nil {
+	if err := store.Save(context.Background(), sampleCreds()); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 
@@ -37,7 +38,7 @@ func TestLoadSubstitutedSaltFails(t *testing.T) {
 	requireMachineID(t)
 	dir := t.TempDir()
 	store := NewStore(dir)
-	if err := store.Save(sampleCreds()); err != nil {
+	if err := store.Save(context.Background(), sampleCreds()); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 
@@ -61,7 +62,7 @@ func TestLoadCrossMachineFails(t *testing.T) {
 	t.Cleanup(func() { getMachineID = prev })
 
 	getMachineID = func() ([]byte, error) { return []byte("machine-id-AAAAAAAAAAAA"), nil }
-	if err := store.Save(sampleCreds()); err != nil {
+	if err := store.Save(context.Background(), sampleCreds()); err != nil {
 		t.Fatalf("Save (machine A): %v", err)
 	}
 
@@ -75,7 +76,7 @@ func TestLoadTruncatedCiphertextTooShort(t *testing.T) {
 	requireMachineID(t)
 	dir := t.TempDir()
 	store := NewStore(dir)
-	if err := store.Save(sampleCreds()); err != nil {
+	if err := store.Save(context.Background(), sampleCreds()); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 
@@ -93,7 +94,7 @@ func TestRefusesWritableStoreDir(t *testing.T) {
 	requireMachineID(t)
 	dir := t.TempDir()
 	store := NewStore(dir)
-	if err := store.Save(sampleCreds()); err != nil {
+	if err := store.Save(context.Background(), sampleCreds()); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 
@@ -115,7 +116,7 @@ func TestSaveTightensLooseDir(t *testing.T) {
 		t.Fatal(err)
 	}
 	store := NewStore(dir)
-	if err := store.Save(sampleCreds()); err != nil {
+	if err := store.Save(context.Background(), sampleCreds()); err != nil {
 		t.Fatalf("Save should tighten and succeed, got: %v", err)
 	}
 	di, err := os.Stat(dir)
