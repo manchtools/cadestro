@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -123,7 +124,7 @@ func TestLoadRejectsUnknownFutureMagic(t *testing.T) {
 		t.Fatal("expected Load to reject unknown future magic, got nil error")
 	}
 
-	if msg := err.Error(); !contains(msg, "re-enroll") {
+	if msg := err.Error(); !strings.Contains(msg, "re-enroll") {
 		t.Errorf("error message missing re-enroll hint: %q", msg)
 	}
 }
@@ -191,24 +192,4 @@ func TestExistsAndDelete(t *testing.T) {
 	if store.Exists() {
 		t.Fatal("Exists returned true after Delete")
 	}
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && indexOf(s, substr) >= 0
-}
-
-func indexOf(s, substr string) int {
-	for i := 0; i+len(substr) <= len(s); i++ {
-		if s[i:i+len(substr)] == substr {
-			return i
-		}
-	}
-	return -1
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }

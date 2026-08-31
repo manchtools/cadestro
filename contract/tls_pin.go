@@ -14,7 +14,7 @@ import (
 // fingerprint matches pin. The check runs during the handshake, before an
 // HTTP request (and therefore any bearer token) can be written.
 func WithCAPin(pin string) ClientOption {
-	return &funcOption{func(_ *Client, httpClient **http.Client) {
+	return func(_ *Client, httpClient **http.Client) {
 		base := *httpClient
 		if base == nil {
 			base = bootstrapHTTPClient()
@@ -56,7 +56,7 @@ func WithCAPin(pin string) ClientOption {
 		clone := *base
 		clone.Transport = transport
 		*httpClient = &clone
-	}}
+	}
 }
 
 func certificateFingerprint(cert *x509.Certificate) string {

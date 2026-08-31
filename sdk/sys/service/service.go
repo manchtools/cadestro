@@ -88,13 +88,10 @@ type Manager interface {
 	NeedsReload(ctx context.Context, unit string) (bool, error)
 }
 
-// Option is the functional-option type for backend-specific knobs (none today).
-type Option func(*systemd)
-
 // New returns a Manager for the named backend, driven by runner. Pure: validates
 // the backend is known; it does not probe the host (use Detect). The zero value
 // and any unimplemented backend are rejected with ErrUnknownBackend.
-func New(b Backend, runner exec.Runner, _ ...Option) (Manager, error) {
+func New(b Backend, runner exec.Runner) (Manager, error) {
 	if b != Systemd {
 		return nil, fmt.Errorf("%w: %d", ErrUnknownBackend, int(b))
 	}
