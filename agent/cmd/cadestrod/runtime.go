@@ -84,18 +84,18 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 			}
 		}
 
-		var workers resultWorkers
+		var workers sync.WaitGroup
 		if connected && !staged {
 			interval := pullDesiredPolicyFromControl(sessionCtx, client, scheduler, logger)
-			syncPendingResults(sessionCtx, scheduler, client, logger)
-			workers.start(sessionCtx, client, scheduler, interval, logger)
+			workers.Go(func() { periodicSync(sessionCtx, client, scheduler, interval, logger) })
+			workers.Go(func() { sendScheduledResults(sessionCtx, client, scheduler, logger) })
 		}
 
 		started := now()
 		streamErr := <-streamDone
 		fallbackActive = fallbackAfterConnection(len(creds.PendingCertificate) > 0, usingPending, connected)
 		cancelSession()
-		workers.wait()
+		workers.Wait()
 		client.CloseIdleConnections()
 		if ctx.Err() != nil {
 			return
@@ -113,21 +113,6 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 		}
 		backoff = min(backoff*2, maxBackoff)
 	}
-}
-
-type resultWorkers struct{ wg sync.WaitGroup }
-
-func (workers *resultWorkers) start(ctx context.Context, client *sdk.Client, scheduler *scheduler.Scheduler, interval time.Duration, logger *slog.Logger) {
-	for _, run := range []func(){
-		func() { periodicSync(ctx, client, scheduler, interval, logger) },
-		func() { sendScheduledResults(ctx, client, scheduler, logger) },
-	} {
-		workers.wg.Go(run)
-	}
-}
-
-func (workers *resultWorkers) wait() {
-	workers.wg.Wait()
 }
 
 func periodicSync(ctx context.Context, client *sdk.Client, scheduler *scheduler.Scheduler, interval time.Duration, logger *slog.Logger) {
@@ -150,18 +135,13 @@ func periodicSync(ctx context.Context, client *sdk.Client, scheduler *scheduler.
 }
 
 func sendScheduledResults(ctx context.Context, client *sdk.Client, scheduler *scheduler.Scheduler, logger *slog.Logger) {
+	syncPendingResults(ctx, scheduler, client, logger)
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case result := <-scheduler.Results():
-			if err := client.SendActionResult(ctx, result.ActionResult); err != nil {
-				logger.Warn("send scheduled result", "sequence", result.Sequence, "error", err)
-				continue
-			}
-			if err := scheduler.DeletePendingResult(ctx, result.Sequence); err != nil {
-				logger.Warn("delete sent result", "sequence", result.Sequence, "error", err)
-			}
+		case <-scheduler.Wakes():
+			syncPendingResults(ctx, scheduler, client, logger)
 		}
 	}
 }

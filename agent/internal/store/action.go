@@ -60,6 +60,10 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 	if err != nil {
 		return err
 	}
+	inventory := make(map[string]generated.ListAllWorkRow, len(rows))
+	for _, row := range rows {
+		inventory[row.WorkID] = row
+	}
 	now := s.now().UTC()
 	for _, row := range rows {
 		if _, ok := current[row.WorkID]; !ok {
@@ -95,14 +99,7 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 		}
 	}
 	for id, a := range current {
-		found := false
-		for _, row := range rows {
-			if row.WorkID == id {
-				found = true
-				break
-			}
-		}
-		if found {
+		if _, found := inventory[id]; found {
 			continue
 		}
 		blob, marshalErr := proto.Marshal(a)
@@ -274,11 +271,17 @@ func (s *Store) RecoverInterruptedActions(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		if _, err := q.FinishScheduledRun(ctx, generated.FinishScheduledRunParams{WorkID: row.WorkID, RunID: &row.RunID}); err != nil {
+		retired, err := q.FinishScheduledRun(ctx, generated.FinishScheduledRunParams{WorkID: row.WorkID, RunID: &row.RunID})
+		if err != nil {
 			return err
 		}
 		if _, err := q.InsertResultOutbox(ctx, payload); err != nil {
 			return err
+		}
+		if retired {
+			if err := q.DeleteRetiredWork(ctx, generated.DeleteRetiredWorkParams{WorkID: row.WorkID, RunID: &row.RunID}); err != nil {
+				return fmt.Errorf("recover interrupted action: delete retired work: %w", err)
+			}
 		}
 	}
 	return tx.Commit()

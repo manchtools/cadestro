@@ -86,7 +86,7 @@ func TestInterruptedRetiredActionProducesOneResultAndDeletesWork(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, pending, 1)
 	require.Equal(t, pb.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE, pending[0].ActionResult.GetStatus())
-	assigned, err := st.GetAssignedActions(ctx)
+	rows, err := st.queries.ListAllWork(ctx)
 	require.NoError(t, err)
-	require.Empty(t, assigned)
+	require.Empty(t, rows)
 }

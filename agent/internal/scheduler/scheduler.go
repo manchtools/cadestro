@@ -16,17 +16,12 @@ type ActionExecutor interface {
 	ExecuteAction(context.Context, *pb.Action) *pb.ActionResult
 	ResetUpdateCycle()
 }
-type ExecutionResult struct {
-	Sequence     int64
-	ActionResult *pb.ActionResult
-}
 type Scheduler struct {
 	store    *store.Store
 	executor ActionExecutor
 	logger   *slog.Logger
 	now      func() time.Time
 	wakeCh   chan struct{}
-	results  chan *ExecutionResult
 	mu       sync.Mutex
 	running  bool
 	stopCh   chan struct{}
@@ -34,9 +29,9 @@ type Scheduler struct {
 }
 
 func New(st *store.Store, e ActionExecutor, l *slog.Logger) *Scheduler {
-	return &Scheduler{store: st, executor: e, logger: l, now: time.Now, wakeCh: make(chan struct{}, 1), results: make(chan *ExecutionResult, 100)}
+	return &Scheduler{store: st, executor: e, logger: l, now: time.Now, wakeCh: make(chan struct{}, 1)}
 }
-func (s *Scheduler) Results() <-chan *ExecutionResult { return s.results }
+func (s *Scheduler) Wakes() <-chan struct{} { return s.wakeCh }
 func (s *Scheduler) ReconcilePolicy(ctx context.Context, p *pb.DesiredPolicy) error {
 	if err := s.store.ReconcilePolicy(ctx, p); err != nil {
 		return err
@@ -135,17 +130,13 @@ func (s *Scheduler) executeAction(ctx context.Context, w store.ScheduledWork) {
 	if r.CompletedAt == nil {
 		r.CompletedAt = timestamppb.New(s.now().UTC())
 	}
-	seq, err := s.store.RecordActionResult(ctx, r)
+	_, err := s.store.RecordActionResult(ctx, r)
 	if err != nil {
 		s.logger.Error("record action result", "run_id", w.RunID, "error", err)
 		return
 	}
-	s.publish(&ExecutionResult{Sequence: seq, ActionResult: r})
-}
-func (s *Scheduler) publish(r *ExecutionResult) {
 	select {
-	case s.results <- r:
+	case s.wakeCh <- struct{}{}:
 	default:
-		s.logger.Warn("result queue full; durable outbox will retry")
 	}
 }
