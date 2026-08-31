@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
-	"strings"
 	"syscall"
 	"time"
 
@@ -16,10 +15,8 @@ import (
 )
 
 type OIDCProvider struct {
-	Provider   *oidc.Provider
-	OAuth2Cfg  oauth2.Config
-	Verifier   *oidc.IDTokenVerifier
-	GroupClaim string
+	OAuth2Cfg oauth2.Config
+	Verifier  *oidc.IDTokenVerifier
 
 	httpClient *http.Client
 }
@@ -67,13 +64,10 @@ func newBoundedOIDCClient() *http.Client {
 }
 
 type ProviderConfig struct {
-	IssuerURL        string
-	AuthorizationURL string
-	TokenURL         string
-	ClientID         string
-	Scopes           []string
-	RedirectURL      string
-	GroupClaim       string
+	IssuerURL   string
+	ClientID    string
+	Scopes      []string
+	RedirectURL string
 }
 
 func NewOIDCProvider(ctx context.Context, cfg ProviderConfig) (*OIDCProvider, error) {
@@ -91,12 +85,6 @@ func NewOIDCProvider(ctx context.Context, cfg ProviderConfig) (*OIDCProvider, er
 	}
 
 	endpoint := provider.Endpoint()
-	if cfg.AuthorizationURL != "" {
-		endpoint.AuthURL = cfg.AuthorizationURL
-	}
-	if cfg.TokenURL != "" {
-		endpoint.TokenURL = cfg.TokenURL
-	}
 	endpoint.AuthStyle = oauth2.AuthStyleInParams
 
 	oauth2Cfg := oauth2.Config{
@@ -111,10 +99,8 @@ func NewOIDCProvider(ctx context.Context, cfg ProviderConfig) (*OIDCProvider, er
 	})
 
 	return &OIDCProvider{
-		Provider:   provider,
 		OAuth2Cfg:  oauth2Cfg,
 		Verifier:   verifier,
-		GroupClaim: cfg.GroupClaim,
 		httpClient: httpClient,
 	}, nil
 }
@@ -142,14 +128,9 @@ func (p *OIDCProvider) ExchangeCode(ctx context.Context, code, codeVerifier stri
 }
 
 type UserClaims struct {
-	Subject           string
-	Email             string
-	Name              string
-	GivenName         string
-	FamilyName        string
-	PreferredUsername string
-	Locale            string
-	Groups            []string
+	Subject string
+	Email   string
+	Name    string
 }
 
 type oidcClaims map[string]json.RawMessage
@@ -192,23 +173,6 @@ func (p *OIDCProvider) VerifyIDToken(ctx context.Context, rawIDToken, expectedNo
 	if name, ok := claimString(claims["name"]); ok {
 		userClaims.Name = name
 	}
-	if v, ok := claimString(claims["given_name"]); ok {
-		userClaims.GivenName = v
-	}
-	if v, ok := claimString(claims["family_name"]); ok {
-		userClaims.FamilyName = v
-	}
-	if v, ok := claimString(claims["preferred_username"]); ok {
-		userClaims.PreferredUsername = v
-	}
-	if v, ok := claimString(claims["locale"]); ok {
-		userClaims.Locale = v
-	}
-
-	if p.GroupClaim != "" {
-		userClaims.Groups = extractGroups(claims, p.GroupClaim)
-	}
-
 	return userClaims, nil
 }
 
@@ -227,49 +191,4 @@ func claimIsTrue(v json.RawMessage) bool {
 	}
 	var stringValue string
 	return json.Unmarshal(v, &stringValue) == nil && stringValue == "true"
-}
-
-func extractGroups(claims oidcClaims, claimName string) []string {
-	var value json.RawMessage
-	parts := strings.Split(claimName, ".")
-	current := claims
-	for i, part := range parts {
-		v, ok := current[part]
-		if !ok {
-			return nil
-		}
-		if i == len(parts)-1 {
-			value = v
-		} else {
-			var next oidcClaims
-			if err := json.Unmarshal(v, &next); err != nil {
-				return nil
-			}
-			current = next
-		}
-	}
-
-	if value == nil {
-		return nil
-	}
-
-	var groupString *string
-	if err := json.Unmarshal(value, &groupString); err == nil {
-		if groupString == nil {
-			return nil
-		}
-		return strings.Fields(*groupString)
-	}
-
-	var rawGroups []json.RawMessage
-	if err := json.Unmarshal(value, &rawGroups); err != nil {
-		return nil
-	}
-	groups := make([]string, 0, len(rawGroups))
-	for _, rawGroup := range rawGroups {
-		if group, ok := claimString(rawGroup); ok {
-			groups = append(groups, group)
-		}
-	}
-	return groups
 }

@@ -98,7 +98,6 @@ func TestVerifyAndExtractClaims_HappyPath(t *testing.T) {
 		IssuerURL:   f.srv.URL,
 		ClientID:    "test-client",
 		RedirectURL: "https://app.example.com/cb",
-		GroupClaim:  "realm_access.roles",
 	})
 	require.NoError(t, err)
 
@@ -106,8 +105,6 @@ func TestVerifyAndExtractClaims_HappyPath(t *testing.T) {
 		"email":          "alice@example.com",
 		"email_verified": true,
 		"name":           "Alice Test",
-		"given_name":     "Alice",
-		"realm_access":   map[string]any{"roles": []string{"admin", "operator"}},
 	})
 	tok := (&oauth2.Token{}).WithExtra(map[string]any{"id_token": idToken})
 
@@ -116,8 +113,6 @@ func TestVerifyAndExtractClaims_HappyPath(t *testing.T) {
 	assert.Equal(t, "test-subject-123", claims.Subject)
 	assert.Equal(t, "alice@example.com", claims.Email)
 	assert.Equal(t, "Alice Test", claims.Name)
-	assert.Equal(t, "Alice", claims.GivenName)
-	assert.Equal(t, []string{"admin", "operator"}, claims.Groups)
 }
 
 func TestVerifyAndExtractClaims_EmailVerifiedGate(t *testing.T) {

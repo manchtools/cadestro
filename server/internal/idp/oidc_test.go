@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -52,7 +51,6 @@ func TestNewOIDCProvider_DiscoverySucceeds(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, p)
-	assert.NotNil(t, p.Provider, "discovery must populate the underlying go-oidc Provider")
 	assert.NotNil(t, p.Verifier, "Verifier must be constructed for later id_token validation")
 }
 
@@ -109,22 +107,6 @@ func TestOIDCProvider_AuthCodeURL_EmitsStateNoncePKCE(t *testing.T) {
 		"PKCE code_challenge MUST be present — the auth code exchange depends on it")
 	assert.Equal(t, "S256", q.Get("code_challenge_method"),
 		"PKCE method must be S256, not plain")
-}
-
-func TestOIDCProvider_AuthCodeURL_HonoursAuthorizationURLOverride(t *testing.T) {
-
-	srv := fakeOIDCServer(t)
-	p, err := idp.NewOIDCProvider(context.Background(), idp.ProviderConfig{
-		IssuerURL:        srv.URL,
-		AuthorizationURL: "https://override.example.com/authorize",
-		ClientID:         "test",
-		RedirectURL:      "https://app.example.com/cb",
-	})
-	require.NoError(t, err)
-
-	authURL := p.AuthCodeURL("s", "n", "v-of-enough-length-please")
-	assert.True(t, strings.HasPrefix(authURL, "https://override.example.com/authorize"),
-		"AuthorizationURL override must take precedence over the discovered endpoint; got %s", authURL)
 }
 
 func TestOIDCProvider_ExchangeCode_UsesPKCEPublicClient(t *testing.T) {
