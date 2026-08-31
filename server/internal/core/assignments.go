@@ -72,7 +72,7 @@ func (service *Service) CreateAssignment(ctx context.Context, request *connect.R
 		}
 		return nil, service.internal("create assignment", err)
 	}
-	if err := service.audit(ctx, "assignment.created", "assignment", assignment.ID, "user", ""); err != nil {
+	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_ASSIGNMENT_CREATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ASSIGNMENT, assignment.ID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 		return nil, service.internal("audit assignment creation", err)
 	}
 	mapped := assignmentProto(&db.ListAssignmentsRow{
@@ -91,7 +91,7 @@ func (service *Service) DeleteAssignment(ctx context.Context, request *connect.R
 	if rows == 0 {
 		return nil, rpcNotFound("assignment")
 	}
-	if err := service.audit(ctx, "assignment.deleted", "assignment", id, "user", ""); err != nil {
+	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_ASSIGNMENT_DELETED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ASSIGNMENT, id, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 		return nil, service.internal("audit assignment deletion", err)
 	}
 	return connect.NewResponse(&cadestrov1.DeleteAssignmentResponse{}), nil

@@ -110,7 +110,7 @@ func (service *Service) DeleteDevice(ctx context.Context, request *connect.Reque
 	if rows == 0 {
 		return nil, rpcNotFound("device")
 	}
-	if err := service.audit(ctx, "device.deleted", "device", id, "user", ""); err != nil {
+	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_DEVICE_DELETED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_DEVICE, id, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 		return nil, service.internal("audit device deletion", err)
 	}
 	return connect.NewResponse(&cadestrov1.DeleteDeviceResponse{}), nil
@@ -141,7 +141,7 @@ func (service *Service) CreateToken(ctx context.Context, request *connect.Reques
 	if err != nil {
 		return nil, service.internal("create registration token", err)
 	}
-	if err := service.audit(ctx, "registration_token.created", "registration_token", token.ID, "user", ""); err != nil {
+	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_REGISTRATION_TOKEN_CREATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_REGISTRATION_TOKEN, token.ID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 		return nil, service.internal("audit registration token creation", err)
 	}
 	mapped := registrationTokenProto(token)
@@ -180,7 +180,7 @@ func (service *Service) tokenUpdateResponse(ctx context.Context, operation strin
 		}
 		return nil, service.internal(operation, err)
 	}
-	if err := service.audit(ctx, "registration_token.updated", "registration_token", token.ID, "user", ""); err != nil {
+	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_REGISTRATION_TOKEN_UPDATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_REGISTRATION_TOKEN, token.ID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 		return nil, service.internal("audit registration token update", err)
 	}
 	return connect.NewResponse(&cadestrov1.RenameTokenResponse{Token: registrationTokenProto(token)}), nil
@@ -195,7 +195,7 @@ func (service *Service) DeleteToken(ctx context.Context, request *connect.Reques
 	if rows == 0 {
 		return nil, rpcNotFound("registration token")
 	}
-	if err := service.audit(ctx, "registration_token.deleted", "registration_token", id, "user", ""); err != nil {
+	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_REGISTRATION_TOKEN_DELETED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_REGISTRATION_TOKEN, id, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 		return nil, service.internal("audit registration token deletion", err)
 	}
 	return connect.NewResponse(&cadestrov1.DeleteTokenResponse{}), nil
@@ -216,7 +216,7 @@ func (service *Service) CreateDeviceGroup(ctx context.Context, request *connect.
 		}
 		return nil, service.internal("create device group", err)
 	}
-	if err := service.audit(ctx, "device_group.created", "device_group", group.ID, "user", ""); err != nil {
+	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_DEVICE_GROUP_CREATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_DEVICE_GROUP, group.ID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 		return nil, service.internal("audit device group creation", err)
 	}
 	return connect.NewResponse(&cadestrov1.CreateDeviceGroupResponse{Group: groupProto(group.ID, group.Name, group.Description, 0, group.CreatedAt)}), nil
@@ -307,7 +307,7 @@ func (service *Service) groupUpdateResponse(ctx context.Context, operation strin
 	if err != nil {
 		return nil, service.internal("get updated device group", err)
 	}
-	if err := service.audit(ctx, "device_group.updated", "device_group", group.ID, "user", ""); err != nil {
+	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_DEVICE_GROUP_UPDATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_DEVICE_GROUP, group.ID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 		return nil, service.internal("audit device group update", err)
 	}
 	return groupProto(current.ID, current.Name, current.Description, current.MemberCount, current.CreatedAt), nil
@@ -322,7 +322,7 @@ func (service *Service) DeleteDeviceGroup(ctx context.Context, request *connect.
 	if rows == 0 {
 		return nil, rpcNotFound("device group")
 	}
-	if err := service.audit(ctx, "device_group.deleted", "device_group", id, "user", ""); err != nil {
+	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_DEVICE_GROUP_DELETED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_DEVICE_GROUP, id, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 		return nil, service.internal("audit device group deletion", err)
 	}
 	return connect.NewResponse(&cadestrov1.DeleteDeviceGroupResponse{}), nil
@@ -360,7 +360,7 @@ func (service *Service) AddDeviceToGroup(ctx context.Context, request *connect.R
 	if err != nil {
 		return nil, service.internal("get updated device group", err)
 	}
-	if err := service.audit(ctx, "device_group.member_added", "device_group", groupID, "user", ""); err != nil {
+	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_DEVICE_GROUP_MEMBER_ADDED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_DEVICE_GROUP, groupID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 		return nil, service.internal("audit device group membership", err)
 	}
 	return connect.NewResponse(&cadestrov1.AddDeviceToGroupResponse{Group: groupProto(group.ID, group.Name, group.Description, group.MemberCount, group.CreatedAt)}), nil
@@ -379,7 +379,7 @@ func (service *Service) RemoveDeviceFromGroup(ctx context.Context, request *conn
 	if err != nil {
 		return nil, service.internal("get updated device group", err)
 	}
-	if err := service.audit(ctx, "device_group.member_removed", "device_group", groupID, "user", ""); err != nil {
+	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_DEVICE_GROUP_MEMBER_REMOVED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_DEVICE_GROUP, groupID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 		return nil, service.internal("audit device group membership", err)
 	}
 	return connect.NewResponse(&cadestrov1.RemoveDeviceFromGroupResponse{Group: groupProto(group.ID, group.Name, group.Description, group.MemberCount, group.CreatedAt)}), nil

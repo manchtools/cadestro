@@ -164,10 +164,10 @@ CREATE INDEX execution_results_device_time ON execution_results(device_id, compl
 
 CREATE TABLE audit_events (
     id TEXT PRIMARY KEY,
-    event_type TEXT NOT NULL,
-    stream_type TEXT NOT NULL,
+    event_type INTEGER NOT NULL CHECK (event_type BETWEEN 1 AND 19),
+    stream_type INTEGER NOT NULL CHECK (stream_type BETWEEN 1 AND 7),
     stream_id TEXT NOT NULL,
-    actor_type TEXT NOT NULL,
+    actor_type INTEGER NOT NULL CHECK (actor_type BETWEEN 1 AND 3),
     actor_id TEXT NOT NULL,
     occurred_at DATETIME NOT NULL
 );

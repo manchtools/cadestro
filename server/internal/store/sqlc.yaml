@@ -11,6 +11,21 @@ sql:
         emit_pointers_for_null_types: true
         emit_result_struct_pointers: true
         overrides:
+          - column: "audit_events.event_type"
+            go_type:
+              import: "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+              package: "cadestrov1"
+              type: "AuditEventType"
+          - column: "audit_events.stream_type"
+            go_type:
+              import: "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+              package: "cadestrov1"
+              type: "AuditStreamType"
+          - column: "audit_events.actor_type"
+            go_type:
+              import: "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+              package: "cadestrov1"
+              type: "AuditActorType"
           - db_type: "boolean"
             go_type: "bool"
           - db_type: "datetime"

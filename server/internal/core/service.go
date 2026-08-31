@@ -101,7 +101,7 @@ func auditActor(ctx context.Context) string {
 	return ulid.Make().String()
 }
 
-func (service *Service) audit(ctx context.Context, eventType, streamType, streamID, actorType, actorID string) error {
+func (service *Service) audit(ctx context.Context, eventType cadestrov1.AuditEventType, streamType cadestrov1.AuditStreamType, streamID string, actorType cadestrov1.AuditActorType, actorID string) error {
 	if actorID == "" {
 		actorID = auditActor(ctx)
 	}

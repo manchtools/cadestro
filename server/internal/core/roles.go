@@ -274,7 +274,7 @@ func (service *Service) RevokeUserSessions(ctx context.Context, request *connect
 		}
 		return nil, service.internal("revoke user sessions", err)
 	}
-	if err := service.audit(ctx, "user.sessions_revoked", "user", request.Msg.GetUserId().GetValue(), "user", ""); err != nil {
+	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_USER_SESSIONS_REVOKED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_USER, request.Msg.GetUserId().GetValue(), cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 		return nil, service.internal("audit session revocation", err)
 	}
 	return connect.NewResponse(&cadestrov1.RevokeUserSessionsResponse{}), nil

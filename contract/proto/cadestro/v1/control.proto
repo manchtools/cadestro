@@ -892,12 +892,62 @@ message ListExecutionResultsResponse {
   repeated ExecutionResult results = 1;
 }
 
+enum AuditEventType {
+  AUDIT_EVENT_TYPE_UNSPECIFIED = 0;
+  AUDIT_EVENT_TYPE_USER_SESSIONS_REVOKED = 1;
+  AUDIT_EVENT_TYPE_EXECUTION_RESULT_RECEIVED = 2;
+  AUDIT_EVENT_TYPE_DEVICE_CERTIFICATE_RENEWED = 3;
+  AUDIT_EVENT_TYPE_DEVICE_REGISTERED = 4;
+  AUDIT_EVENT_TYPE_DEVICE_DELETED = 5;
+  AUDIT_EVENT_TYPE_ASSIGNMENT_CREATED = 6;
+  AUDIT_EVENT_TYPE_ASSIGNMENT_DELETED = 7;
+  AUDIT_EVENT_TYPE_REGISTRATION_TOKEN_CREATED = 8;
+  AUDIT_EVENT_TYPE_REGISTRATION_TOKEN_UPDATED = 9;
+  AUDIT_EVENT_TYPE_REGISTRATION_TOKEN_DELETED = 10;
+  AUDIT_EVENT_TYPE_DEVICE_GROUP_CREATED = 11;
+  AUDIT_EVENT_TYPE_DEVICE_GROUP_UPDATED = 12;
+  AUDIT_EVENT_TYPE_DEVICE_GROUP_DELETED = 13;
+  AUDIT_EVENT_TYPE_DEVICE_GROUP_MEMBER_ADDED = 14;
+  AUDIT_EVENT_TYPE_DEVICE_GROUP_MEMBER_REMOVED = 15;
+  AUDIT_EVENT_TYPE_ACTION_CREATED = 16;
+  AUDIT_EVENT_TYPE_ACTION_UPDATED = 17;
+  AUDIT_EVENT_TYPE_ACTION_DELETED = 18;
+  AUDIT_EVENT_TYPE_IDENTITY_PROVIDER_CREATED = 19;
+}
+
+enum AuditStreamType {
+  AUDIT_STREAM_TYPE_UNSPECIFIED = 0;
+  AUDIT_STREAM_TYPE_USER = 1;
+  AUDIT_STREAM_TYPE_ACTION = 2;
+  AUDIT_STREAM_TYPE_DEVICE = 3;
+  AUDIT_STREAM_TYPE_ASSIGNMENT = 4;
+  AUDIT_STREAM_TYPE_REGISTRATION_TOKEN = 5;
+  AUDIT_STREAM_TYPE_DEVICE_GROUP = 6;
+  AUDIT_STREAM_TYPE_IDENTITY_PROVIDER = 7;
+}
+
+enum AuditActorType {
+  AUDIT_ACTOR_TYPE_UNSPECIFIED = 0;
+  AUDIT_ACTOR_TYPE_USER = 1;
+  AUDIT_ACTOR_TYPE_DEVICE = 2;
+  AUDIT_ACTOR_TYPE_REGISTRATION_TOKEN = 3;
+}
+
 message AuditEvent {
   AuditEventId id = 1 [(buf.validate.field).required = true];
-  string event_type = 2;
-  string stream_type = 3;
+  AuditEventType event_type = 2 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+  AuditStreamType stream_type = 3 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
   AuditStreamId stream_id = 4;
-  string actor_type = 5;
+  AuditActorType actor_type = 5 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
   AuditActorId actor_id = 6;
   google.protobuf.Timestamp occurred_at = 7;
 }

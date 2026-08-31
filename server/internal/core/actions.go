@@ -129,7 +129,7 @@ func (service *Service) CreateAction(ctx context.Context, request *connect.Reque
 		}
 		return nil, service.internal("create action", err)
 	}
-	if err := service.audit(ctx, "action.created", "action", action.ID, "user", ""); err != nil {
+	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_ACTION_CREATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ACTION, action.ID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 		return nil, service.internal("audit action creation", err)
 	}
 	mapped, err := actionProto(action)
@@ -237,7 +237,7 @@ func (service *Service) actionUpdateResponse(ctx context.Context, operation stri
 		}
 		return nil, service.internal(operation, err)
 	}
-	if err := service.audit(ctx, "action.updated", "action", action.ID, "user", ""); err != nil {
+	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_ACTION_UPDATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ACTION, action.ID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 		return nil, service.internal("audit action update", err)
 	}
 	mapped, err := actionProto(action)
@@ -256,7 +256,7 @@ func (service *Service) DeleteAction(ctx context.Context, request *connect.Reque
 	if rows == 0 {
 		return nil, rpcNotFound("action")
 	}
-	if err := service.audit(ctx, "action.deleted", "action", id, "user", ""); err != nil {
+	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_ACTION_DELETED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ACTION, id, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 		return nil, service.internal("audit action deletion", err)
 	}
 	return connect.NewResponse(&cadestrov1.DeleteActionResponse{}), nil

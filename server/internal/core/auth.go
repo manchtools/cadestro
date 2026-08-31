@@ -290,7 +290,7 @@ func (service *Service) CreateIdentityProvider(ctx context.Context, request *con
 		}
 		return nil, service.internal("create identity provider", err)
 	}
-	if err := service.audit(ctx, "identity_provider.created", "identity_provider", id, "user", ""); err != nil {
+	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_IDENTITY_PROVIDER_CREATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_IDENTITY_PROVIDER, id, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 		return nil, service.internal("audit provider creation", err)
 	}
 	result, err := providerProto(provider)

@@ -234,5 +234,5 @@ func (service *Service) storeActionResult(ctx context.Context, deviceID string, 
 	}); err != nil {
 		return fmt.Errorf("store action result: %w", err)
 	}
-	return service.audit(ctx, "execution_result.received", "action", actionID, "device", deviceID)
+	return service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_EXECUTION_RESULT_RECEIVED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ACTION, actionID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_DEVICE, deviceID)
 }

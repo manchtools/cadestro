@@ -28,13 +28,13 @@ type Assignment struct {
 }
 
 type AuditEvent struct {
-	ID         string    `json:"id"`
-	EventType  string    `json:"event_type"`
-	StreamType string    `json:"stream_type"`
-	StreamID   string    `json:"stream_id"`
-	ActorType  string    `json:"actor_type"`
-	ActorID    string    `json:"actor_id"`
-	OccurredAt time.Time `json:"occurred_at"`
+	ID         string                     `json:"id"`
+	EventType  cadestrov1.AuditEventType  `json:"event_type"`
+	StreamType cadestrov1.AuditStreamType `json:"stream_type"`
+	StreamID   string                     `json:"stream_id"`
+	ActorType  cadestrov1.AuditActorType  `json:"actor_type"`
+	ActorID    string                     `json:"actor_id"`
+	OccurredAt time.Time                  `json:"occurred_at"`
 }
 
 type Device struct {

@@ -67,8 +67,8 @@ func (service *Service) Register(ctx context.Context, request *connect.Request[c
 			return err
 		}
 		return queries.CreateAuditEvent(ctx, db.CreateAuditEventParams{
-			ID: ulid.Make().String(), EventType: "device.registered", StreamType: "device", StreamID: deviceID,
-			ActorType: "registration_token", ActorID: token.ID, OccurredAt: now,
+			ID: ulid.Make().String(), EventType: cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_DEVICE_REGISTERED, StreamType: cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_DEVICE, StreamID: deviceID,
+			ActorType: cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_REGISTRATION_TOKEN, ActorID: token.ID, OccurredAt: now,
 		})
 	})
 	if err != nil {
@@ -154,7 +154,7 @@ func (service *Service) RenewCertificate(ctx context.Context, request *connect.R
 	if rows != 1 {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("certificate not recognized"))
 	}
-	if err := service.audit(ctx, "device.certificate_renewed", "device", deviceID, "device", deviceID); err != nil {
+	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_DEVICE_CERTIFICATE_RENEWED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_DEVICE, deviceID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_DEVICE, deviceID); err != nil {
 		return nil, service.internal("audit certificate renewal", err)
 	}
 	return connect.NewResponse(&cadestrov1.RenewCertificateResponse{Certificate: certificate.CertPEM, NotAfter: timestamppb.New(certificate.NotAfter)}), nil
