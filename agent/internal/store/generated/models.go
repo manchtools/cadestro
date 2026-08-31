@@ -10,38 +10,20 @@ import (
 
 type ResultOutbox struct {
 	Sequence  int64     `json:"sequence"`
-	ID        string    `json:"id"`
-	Kind      string    `json:"kind"`
 	Payload   []byte    `json:"payload"`
 	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Synced    bool      `json:"synced"`
 }
 
 type ScheduledWork struct {
 	WorkID         string     `json:"work_id"`
 	RunID          *string    `json:"run_id"`
-	ManifestBlob   []byte     `json:"manifest_blob"`
+	ActionBlob     []byte     `json:"action_blob"`
 	Retired        bool       `json:"retired"`
 	ReceivedAt     time.Time  `json:"received_at"`
 	LastExecutedAt *time.Time `json:"last_executed_at"`
 	NextExecuteAt  time.Time  `json:"next_execute_at"`
 	RunStartedAt   *time.Time `json:"run_started_at"`
 	RunInProgress  bool       `json:"run_in_progress"`
-	CreatedAt      time.Time  `json:"created_at"`
-	UpdatedAt      time.Time  `json:"updated_at"`
-}
-
-type ScheduledWorkOccurrence struct {
-	WorkID         string     `json:"work_id"`
-	OccurrenceID   string     `json:"occurrence_id"`
-	Position       int64      `json:"position"`
-	ActionID       string     `json:"action_id"`
-	State          string     `json:"state"`
-	StartedAt      *time.Time `json:"started_at"`
-	CompletedAt    *time.Time `json:"completed_at"`
-	ResultStatus   *int32     `json:"result_status"`
-	LastResultHash string     `json:"last_result_hash"`
 	CreatedAt      time.Time  `json:"created_at"`
 	UpdatedAt      time.Time  `json:"updated_at"`
 }

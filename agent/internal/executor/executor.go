@@ -11,7 +11,6 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/sdk/pkg"
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
-	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -43,11 +42,10 @@ func NewExecutor(runner sysexec.Runner) *Executor {
 func (e *Executor) ResetUpdateCycle() {}
 
 func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.ActionResult {
-	started := e.now()
 	result := &pb.ActionResult{Status: pb.ExecutionStatus_EXECUTION_STATUS_FAILED}
 	if action == nil || action.GetId() == nil {
 		result.Output = &pb.CommandOutput{Stderr: "action is required"}
-		return e.finish(result, started)
+		return e.finish(result)
 	}
 	result.ActionId = action.GetId()
 	if timeout := action.GetTimeoutSeconds(); timeout > 0 {
@@ -57,20 +55,18 @@ func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.Act
 	}
 
 	var output *pb.CommandOutput
-	var changed bool
 	var err error
 	switch params := action.GetParams().(type) {
 	case *pb.Action_Package:
-		output, changed, err = e.executePackage(ctx, params.Package, action.GetDesiredState())
+		output, _, err = e.executePackage(ctx, params.Package, action.GetDesiredState())
 	case *pb.Action_Update:
-		output, changed, err = e.executeUpdate(ctx, params.Update)
+		output, _, err = e.executeUpdate(ctx, params.Update)
 	case *pb.Action_Shell:
-		output, result.DetectionOutput, changed, err = e.executeShell(ctx, params.Shell)
+		output, result.DetectionOutput, _, err = e.executeShell(ctx, params.Shell)
 	default:
 		err = errors.New("unsupported action parameters")
 	}
 	result.Output = output
-	result.Changed = changed
 	if err == nil {
 		result.Status = pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS
 	} else if errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
@@ -79,7 +75,7 @@ func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.Act
 	} else {
 		ensureResultError(result, err.Error())
 	}
-	return e.finish(result, started)
+	return e.finish(result)
 }
 
 func ensureResultError(result *pb.ActionResult, message string) {
@@ -97,10 +93,9 @@ func ensureResultError(result *pb.ActionResult, message string) {
 	output.Stderr = message
 }
 
-func (e *Executor) finish(result *pb.ActionResult, started time.Time) *pb.ActionResult {
+func (e *Executor) finish(result *pb.ActionResult) *pb.ActionResult {
 	completed := e.now()
 	result.CompletedAt = timestamppb.New(completed)
-	result.Duration = durationpb.New(completed.Sub(started))
 	return result
 }
 

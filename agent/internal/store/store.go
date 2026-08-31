@@ -2,7 +2,6 @@ package store
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,7 +10,6 @@ import (
 	"time"
 
 	"github.com/pressly/goose/v3"
-	"google.golang.org/protobuf/proto"
 	_ "modernc.org/sqlite"
 
 	"github.com/manchtools/cadestro/agent/internal/store/generated"
@@ -20,8 +18,7 @@ import (
 )
 
 const (
-	defaultInterval   = 8 * time.Hour
-	binaryProtoPrefix = byte(0x00)
+	defaultInterval = 8 * time.Hour
 )
 
 type Store struct {
@@ -111,28 +108,9 @@ func (s *Store) SetClockForTest(now func() time.Time) {
 
 func (s *Store) Close() error { return s.db.Close() }
 
-func canonicalProtoBytes(message proto.Message) ([]byte, error) {
-	return proto.MarshalOptions{Deterministic: true}.Marshal(message)
-}
-
-func marshalStoredProto(message proto.Message) ([]byte, error) {
-	encoded, err := canonicalProtoBytes(message)
-	if err != nil {
-		return nil, err
-	}
-	return append([]byte{binaryProtoPrefix}, encoded...), nil
-}
-
-func unmarshalStoredProto(raw []byte, message proto.Message) error {
-	if len(raw) == 0 || raw[0] != binaryProtoPrefix {
-		return errors.New("stored blob is not binary protobuf")
-	}
-	return proto.Unmarshal(raw[1:], message)
-}
-
 func calculateNextExecuteFromSchedule(schedule *pb.ActionSchedule, lastExecuted *time.Time, runImmediately bool, now time.Time) time.Time {
 	now = now.UTC()
-	if (runImmediately || schedule.GetRunOnAssign()) && lastExecuted == nil {
+	if runImmediately && lastExecuted == nil {
 		return now
 	}
 	interval := defaultInterval

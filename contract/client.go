@@ -11,7 +11,6 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"runtime"
 	"sync"
 	"time"
 
@@ -169,11 +168,10 @@ func RenewCertificate(ctx context.Context, controlURL string, csr []byte, option
 // StreamHandler receives stream lifecycle messages.
 type StreamHandler interface {
 	OnWelcome(context.Context, *cadestrov1.Welcome) error
-	OnError(context.Context, *cadestrov1.Error) error
 }
 
 // Run connects and owns the stream until it closes or ctx is cancelled.
-func (client *Client) Run(ctx context.Context, hostname, agentVersion string, heartbeatInterval time.Duration, handler StreamHandler) error {
+func (client *Client) Run(ctx context.Context, hostname, agentVersion string, handler StreamHandler) error {
 	if handler == nil {
 		return errors.New("stream handler is required")
 	}
@@ -189,17 +187,12 @@ func (client *Client) Run(ctx context.Context, hostname, agentVersion string, he
 
 	if err := client.send(ctx, &cadestrov1.AgentMessage{
 		Id: &cadestrov1.MessageId{Value: NewULID()}, Payload: &cadestrov1.AgentMessage_Hello{Hello: &cadestrov1.Hello{
-			DeviceId: &cadestrov1.DeviceId{Value: client.deviceID}, AgentVersion: agentVersion, Hostname: hostname, Arch: runtime.GOARCH,
+			DeviceId: &cadestrov1.DeviceId{Value: client.deviceID}, AgentVersion: agentVersion, Hostname: hostname,
 		}},
 	}); err != nil {
 		return fmt.Errorf("send hello: %w", err)
 	}
-	if heartbeatInterval <= 0 {
-		heartbeatInterval = 30 * time.Second
-	}
-	heartbeatCtx, cancelHeartbeat := context.WithCancel(ctx)
-	defer cancelHeartbeat()
-	go client.sendHeartbeats(heartbeatCtx, heartbeatInterval)
+	heartbeatStarted := false
 
 	for {
 		message, err := stream.Receive()
@@ -220,9 +213,15 @@ func (client *Client) Run(ctx context.Context, hostname, agentVersion string, he
 			if err := handler.OnWelcome(ctx, payload.Welcome); err != nil {
 				return fmt.Errorf("handle welcome: %w", err)
 			}
-		case *cadestrov1.ServerMessage_Error:
-			if err := handler.OnError(ctx, payload.Error); err != nil {
-				return fmt.Errorf("handle server error: %w", err)
+			if !heartbeatStarted {
+				interval := payload.Welcome.GetHeartbeatInterval().AsDuration()
+				if interval <= 0 {
+					return errors.New("welcome heartbeat interval must be positive")
+				}
+				heartbeatCtx, cancelHeartbeat := context.WithCancel(ctx)
+				defer cancelHeartbeat()
+				go client.sendHeartbeats(heartbeatCtx, interval)
+				heartbeatStarted = true
 			}
 		default:
 			return fmt.Errorf("unexpected uncorrelated server message %T", payload)
@@ -313,11 +312,6 @@ func (client *Client) SendActionResult(ctx context.Context, result *cadestrov1.A
 	return client.sendResult(ctx, &cadestrov1.AgentMessage{Payload: &cadestrov1.AgentMessage_ActionResult{ActionResult: result}})
 }
 
-// SendManifestResult durably acknowledges delivery with the server before returning.
-func (client *Client) SendManifestResult(ctx context.Context, result *cadestrov1.ManifestResult) error {
-	return client.sendResult(ctx, &cadestrov1.AgentMessage{Payload: &cadestrov1.AgentMessage_ManifestResult{ManifestResult: result}})
-}
-
 func (client *Client) sendResult(ctx context.Context, message *cadestrov1.AgentMessage) error {
 	id := NewULID()
 	pending := client.registerPending(id)
@@ -332,9 +326,6 @@ func (client *Client) sendResult(ctx context.Context, message *cadestrov1.AgentM
 	case response, ok := <-pending:
 		if !ok {
 			return errors.New("agent stream closed before result acknowledgement")
-		}
-		if response.GetError() != nil {
-			return fmt.Errorf("server rejected result: %s", response.GetError().GetMessage())
 		}
 		if response.GetResultAck().GetCode() != cadestrov1.ResultAckCode_RESULT_ACK_CODE_ACCEPTED {
 			return errors.New("server rejected result")
@@ -359,9 +350,6 @@ func (client *Client) PullDesiredPolicy(ctx context.Context) (*cadestrov1.Desire
 	case response, ok := <-pending:
 		if !ok {
 			return nil, errors.New("agent stream closed before desired policy response")
-		}
-		if response.GetError() != nil {
-			return nil, fmt.Errorf("desired policy rejected: %s", response.GetError().GetMessage())
 		}
 		policy := response.GetDesiredPolicy()
 		if policy == nil {

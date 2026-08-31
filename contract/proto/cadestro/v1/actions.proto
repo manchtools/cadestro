@@ -4,7 +4,6 @@ package cadestro.v1;
 
 import "buf/validate/validate.proto";
 import "cadestro/v1/common.proto";
-import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1";
@@ -32,8 +31,6 @@ message ActionSchedule {
     (buf.validate.field).int32.lte = 8760,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
-  bool run_on_assign = 2;
-  bool skip_if_unchanged = 3;
 }
 
 message PackageActionParams {
@@ -80,8 +77,5 @@ message ActionResult {
   CommandOutput output = 3;
   CommandOutput detection_output = 4;
   google.protobuf.Timestamp completed_at = 5;
-  google.protobuf.Duration duration = 6 [(buf.validate.field).duration.gte = {}];
-  bool changed = 7;
-  RunId run_id = 8 [(buf.validate.field).required = true];
-  OccurrenceId occurrence_id = 9 [(buf.validate.field).required = true];
+  RunId run_id = 6 [(buf.validate.field).required = true];
 }

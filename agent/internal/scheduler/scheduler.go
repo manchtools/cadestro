@@ -2,15 +2,12 @@ package scheduler
 
 import (
 	"context"
+	"github.com/manchtools/cadestro/agent/internal/store"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"log/slog"
 	"sync"
 	"time"
-
-	"google.golang.org/protobuf/types/known/durationpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"github.com/manchtools/cadestro/agent/internal/store"
-	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 const DefaultCheckInterval = time.Minute
@@ -19,13 +16,10 @@ type ActionExecutor interface {
 	ExecuteAction(context.Context, *pb.Action) *pb.ActionResult
 	ResetUpdateCycle()
 }
-
 type ExecutionResult struct {
-	ResultID       string
-	ActionResult   *pb.ActionResult
-	ManifestResult *pb.ManifestResult
+	Sequence     int64
+	ActionResult *pb.ActionResult
 }
-
 type Scheduler struct {
 	store    *store.Store
 	executor ActionExecutor
@@ -33,45 +27,35 @@ type Scheduler struct {
 	now      func() time.Time
 	wakeCh   chan struct{}
 	results  chan *ExecutionResult
-
-	mu      sync.Mutex
-	running bool
-	stopCh  chan struct{}
-	done    chan struct{}
+	mu       sync.Mutex
+	running  bool
+	stopCh   chan struct{}
+	done     chan struct{}
 }
 
-func New(st *store.Store, executor ActionExecutor, logger *slog.Logger) *Scheduler {
-	return &Scheduler{
-		store: st, executor: executor, logger: logger, now: time.Now,
-		wakeCh: make(chan struct{}, 1), results: make(chan *ExecutionResult, 100),
-	}
+func New(st *store.Store, e ActionExecutor, l *slog.Logger) *Scheduler {
+	return &Scheduler{store: st, executor: e, logger: l, now: time.Now, wakeCh: make(chan struct{}, 1), results: make(chan *ExecutionResult, 100)}
 }
-
 func (s *Scheduler) Results() <-chan *ExecutionResult { return s.results }
-
-func (s *Scheduler) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) error {
-	if err := s.store.ReconcilePolicy(ctx, policy); err != nil {
+func (s *Scheduler) ReconcilePolicy(ctx context.Context, p *pb.DesiredPolicy) error {
+	if err := s.store.ReconcilePolicy(ctx, p); err != nil {
 		return err
 	}
 	s.Wake()
 	return nil
 }
-
 func (s *Scheduler) GetPendingResults(ctx context.Context) ([]store.PendingResult, error) {
 	return s.store.GetPendingResults(ctx)
 }
-
-func (s *Scheduler) MarkPendingResultSynced(ctx context.Context, id string) error {
-	return s.store.MarkPendingResultSynced(ctx, id)
+func (s *Scheduler) DeletePendingResult(ctx context.Context, n int64) error {
+	return s.store.DeletePendingResult(ctx, n)
 }
-
 func (s *Scheduler) Wake() {
 	select {
 	case s.wakeCh <- struct{}{}:
 	default:
 	}
 }
-
 func (s *Scheduler) Start(ctx context.Context) {
 	s.mu.Lock()
 	if s.running {
@@ -81,15 +65,9 @@ func (s *Scheduler) Start(ctx context.Context) {
 	s.running = true
 	s.stopCh = make(chan struct{})
 	s.done = make(chan struct{})
-	stopCh, done := s.stopCh, s.done
+	stop, done := s.stopCh, s.done
 	s.mu.Unlock()
-	defer func() {
-		s.mu.Lock()
-		s.running = false
-		s.mu.Unlock()
-		close(done)
-	}()
-
+	defer func() { s.mu.Lock(); s.running = false; s.mu.Unlock(); close(done) }()
 	if !s.recoverInterrupted(ctx) {
 		return
 	}
@@ -100,7 +78,7 @@ func (s *Scheduler) Start(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-stopCh:
+		case <-stop:
 			return
 		case <-ticker.C:
 			s.runDue(ctx)
@@ -109,7 +87,6 @@ func (s *Scheduler) Start(ctx context.Context) {
 		}
 	}
 }
-
 func (s *Scheduler) Stop() {
 	s.mu.Lock()
 	if !s.running {
@@ -121,87 +98,54 @@ func (s *Scheduler) Stop() {
 	s.mu.Unlock()
 	<-done
 }
-
 func (s *Scheduler) runDue(ctx context.Context) {
 	if !s.recoverInterrupted(ctx) {
 		return
 	}
-	workItems, err := s.store.GetDueScheduledWork(ctx)
+	items, err := s.store.GetDueScheduledWork(ctx)
 	if err != nil {
-		s.logger.Error("load due manifests", "error", err)
+		s.logger.Error("load due actions", "error", err)
 		return
 	}
-	for _, work := range workItems {
+	for _, w := range items {
 		if ctx.Err() != nil {
 			return
 		}
-		s.executeManifest(ctx, work)
+		s.executeAction(ctx, w)
 	}
 }
-
 func (s *Scheduler) recoverInterrupted(ctx context.Context) bool {
-	recovered, err := s.store.RecoverInterruptedOccurrences(ctx)
-	if err != nil {
+	if err := s.store.RecoverInterruptedActions(ctx); err != nil {
 		s.logger.Error("recover interrupted action", "error", err)
 		return false
 	}
-	for _, result := range recovered {
-		s.publish(&ExecutionResult{ResultID: result.ID, ActionResult: result.ActionResult})
-	}
 	return true
 }
-
-func (s *Scheduler) executeManifest(ctx context.Context, work store.ScheduledWork) {
-	manifest := work.Manifest
-	action := manifest.GetAction()
-	occurrenceID := manifest.GetOccurrenceId().GetValue()
-	started, err := s.store.BeginManifestRun(ctx, &work, s.now().UTC())
-	if err != nil {
-		s.logger.Error("begin action run", "manifest_id", manifest.GetManifestId().GetValue(), "error", err)
+func (s *Scheduler) executeAction(ctx context.Context, w store.ScheduledWork) {
+	if err := s.store.BeginActionRun(ctx, &w, s.now().UTC()); err != nil {
+		s.logger.Error("begin action run", "action_id", w.Action.GetId().GetValue(), "error", err)
 		return
 	}
-	if err := s.store.MarkOccurrenceStarted(ctx, work.RunID, occurrenceID, started); err != nil {
-		s.logger.Error("mark action started", "run_id", work.RunID, "error", err)
-		return
-	}
-
 	s.executor.ResetUpdateCycle()
-	result := s.executor.ExecuteAction(ctx, action)
+	r := s.executor.ExecuteAction(ctx, w.Action)
 	if ctx.Err() != nil {
 		return
 	}
-	finished := s.now().UTC()
-	result.RunId = &pb.RunId{Value: work.RunID}
-	result.OccurrenceId = manifest.GetOccurrenceId()
-	if result.CompletedAt == nil {
-		result.CompletedAt = timestamppb.New(finished)
+	r.RunId = &pb.RunId{Value: w.RunID}
+	if r.CompletedAt == nil {
+		r.CompletedAt = timestamppb.New(s.now().UTC())
 	}
-	suppress := manifest.GetSchedule().GetSkipIfUnchanged() && result.GetStatus() == pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS && !result.GetChanged()
-	resultID, suppressed, err := s.store.RecordOccurrenceResult(ctx, result, suppress)
+	seq, err := s.store.RecordActionResult(ctx, r)
 	if err != nil {
-		s.logger.Error("record action result", "run_id", work.RunID, "error", err)
+		s.logger.Error("record action result", "run_id", w.RunID, "error", err)
 		return
 	}
-	if !suppressed {
-		s.publish(&ExecutionResult{ResultID: resultID, ActionResult: result})
-	}
-
-	manifestResult := &pb.ManifestResult{
-		RunId: &pb.RunId{Value: work.RunID}, ManifestId: manifest.GetManifestId(), Status: result.GetStatus(),
-		CompletedAt: timestamppb.New(finished), Duration: durationpb.New(finished.Sub(started)),
-	}
-	manifestResultID, err := s.store.RecordManifestResult(ctx, manifestResult)
-	if err != nil {
-		s.logger.Error("record manifest result", "run_id", work.RunID, "error", err)
-		return
-	}
-	s.publish(&ExecutionResult{ResultID: manifestResultID, ManifestResult: manifestResult})
+	s.publish(&ExecutionResult{Sequence: seq, ActionResult: r})
 }
-
-func (s *Scheduler) publish(result *ExecutionResult) {
+func (s *Scheduler) publish(r *ExecutionResult) {
 	select {
-	case s.results <- result:
+	case s.results <- r:
 	default:
-		s.logger.Warn("result queue full; durable outbox will retry", "result_id", result.ResultID)
+		s.logger.Warn("result queue full; durable outbox will retry")
 	}
 }

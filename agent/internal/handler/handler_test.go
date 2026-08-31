@@ -2,8 +2,6 @@ package handler
 
 import (
 	"context"
-	"io"
-	"log/slog"
 	"testing"
 	"time"
 
@@ -11,7 +9,7 @@ import (
 )
 
 func TestResetConnectionWaitsForNextWelcome(t *testing.T) {
-	h := NewHandler(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	h := NewHandler()
 	if err := h.OnWelcome(context.Background(), &pb.Welcome{}); err != nil {
 		t.Fatal(err)
 	}

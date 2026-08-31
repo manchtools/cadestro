@@ -2,16 +2,15 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/manchtools/cadestro/agent/internal/credentials"
 	"github.com/manchtools/cadestro/agent/internal/handler"
 	"github.com/manchtools/cadestro/agent/internal/scheduler"
 	sdk "github.com/manchtools/cadestro/contract"
-	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 func reloadCredsForReconnect(credStore *credentials.Store, current *credentials.Credentials, logger *slog.Logger) *credentials.Credentials {
@@ -63,9 +62,9 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 		sessionCtx, cancelSession := context.WithCancel(ctx)
 		client := sdk.NewClient(strings.TrimSpace(creds.AgentAddr), mtlsOption, sdk.WithAuth(creds.DeviceID, ""), sdk.WithLogger(logger))
 		streamDone := make(chan error, 1)
-		go func() { streamDone <- client.Run(sessionCtx, hostname, version, defaultHeartbeatInterval, handler) }()
+		go func() { streamDone <- client.Run(sessionCtx, hostname, version, handler) }()
 
-		connected := waitForWelcome(sessionCtx, cancelSession, handler.WaitConnected, defaultHeartbeatInterval) == nil
+		connected := waitForWelcome(sessionCtx, cancelSession, handler.WaitConnected, 30*time.Second) == nil
 		staged := false
 		if connected && usingPending {
 			creds.Certificate = append([]byte(nil), creds.PendingCertificate...)
@@ -85,7 +84,7 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 			}
 		}
 
-		var workers syncWorkers
+		var workers resultWorkers
 		if connected && !staged {
 			interval := pullDesiredPolicyFromControl(sessionCtx, client, scheduler, logger)
 			syncPendingResults(sessionCtx, scheduler, client, logger)
@@ -116,28 +115,19 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 	}
 }
 
-type syncWorkers struct {
-	done []<-chan struct{}
-}
+type resultWorkers struct{ wg sync.WaitGroup }
 
-func (workers *syncWorkers) start(ctx context.Context, client *sdk.Client, scheduler *scheduler.Scheduler, interval time.Duration, logger *slog.Logger) {
+func (workers *resultWorkers) start(ctx context.Context, client *sdk.Client, scheduler *scheduler.Scheduler, interval time.Duration, logger *slog.Logger) {
 	for _, run := range []func(){
 		func() { periodicSync(ctx, client, scheduler, interval, logger) },
 		func() { sendScheduledResults(ctx, client, scheduler, logger) },
 	} {
-		done := make(chan struct{})
-		workers.done = append(workers.done, done)
-		go func() {
-			defer close(done)
-			run()
-		}()
+		workers.wg.Go(run)
 	}
 }
 
-func (workers *syncWorkers) wait() {
-	for _, done := range workers.done {
-		<-done
-	}
+func (workers *resultWorkers) wait() {
+	workers.wg.Wait()
 }
 
 func periodicSync(ctx context.Context, client *sdk.Client, scheduler *scheduler.Scheduler, interval time.Duration, logger *slog.Logger) {
@@ -165,12 +155,12 @@ func sendScheduledResults(ctx context.Context, client *sdk.Client, scheduler *sc
 		case <-ctx.Done():
 			return
 		case result := <-scheduler.Results():
-			if err := sendResult(ctx, client, result.ActionResult, result.ManifestResult); err != nil {
-				logger.Warn("send scheduled result", "result_id", result.ResultID, "error", err)
+			if err := client.SendActionResult(ctx, result.ActionResult); err != nil {
+				logger.Warn("send scheduled result", "sequence", result.Sequence, "error", err)
 				continue
 			}
-			if err := scheduler.MarkPendingResultSynced(ctx, result.ResultID); err != nil {
-				logger.Warn("mark result synced", "result_id", result.ResultID, "error", err)
+			if err := scheduler.DeletePendingResult(ctx, result.Sequence); err != nil {
+				logger.Warn("delete sent result", "sequence", result.Sequence, "error", err)
 			}
 		}
 	}
@@ -200,24 +190,13 @@ func syncPendingResults(ctx context.Context, scheduler *scheduler.Scheduler, cli
 		return
 	}
 	for _, result := range results {
-		if err := sendResult(ctx, client, result.ActionResult, result.ManifestResult); err != nil {
-			logger.Warn("send pending result", "result_id", result.ID, "error", err)
+		if err := client.SendActionResult(ctx, result.ActionResult); err != nil {
+			logger.Warn("send pending result", "sequence", result.Sequence, "error", err)
 			return
 		}
-		if err := scheduler.MarkPendingResultSynced(ctx, result.ID); err != nil {
-			logger.Warn("mark pending result synced", "result_id", result.ID, "error", err)
+		if err := scheduler.DeletePendingResult(ctx, result.Sequence); err != nil {
+			logger.Warn("delete pending result", "sequence", result.Sequence, "error", err)
 			return
 		}
-	}
-}
-
-func sendResult(ctx context.Context, client *sdk.Client, action *cadestrov1.ActionResult, manifest *cadestrov1.ManifestResult) error {
-	switch {
-	case action != nil && manifest == nil:
-		return client.SendActionResult(ctx, action)
-	case manifest != nil && action == nil:
-		return client.SendManifestResult(ctx, manifest)
-	default:
-		return fmt.Errorf("result outbox entry must contain exactly one payload")
 	}
 }

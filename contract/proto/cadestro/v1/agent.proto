@@ -22,7 +22,6 @@ message AgentMessage {
     Heartbeat heartbeat = 11;
     DesiredPolicyRequest desired_policy_request = 12;
     ActionResult action_result = 20;
-    ManifestResult manifest_result = 21;
   }
 }
 
@@ -33,7 +32,6 @@ message ServerMessage {
     Welcome welcome = 10;
     DesiredPolicy desired_policy = 11;
     ResultAck result_ack = 12;
-    Error error = 13;
   }
 }
 
@@ -49,21 +47,12 @@ message Hello {
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 253
   ];
-  string arch = 4 [
-    (buf.validate.field).string.max_len = 16,
-    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-  ];
 }
 
 message Heartbeat {}
 
 message Welcome {
-  string server_version = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 32
-  ];
-  google.protobuf.Duration heartbeat_interval = 2;
+  google.protobuf.Duration heartbeat_interval = 1 [(buf.validate.field).required = true];
 }
 
 message DesiredPolicyRequest {}
@@ -74,22 +63,7 @@ message DesiredPolicy {
     (buf.validate.field).int32.lte = 1440
   ];
   PolicyRevisionId revision = 2 [(buf.validate.field).required = true];
-  repeated Manifest manifests = 3;
-}
-
-message Manifest {
-  ManifestId manifest_id = 1 [(buf.validate.field).required = true];
-  OccurrenceId occurrence_id = 2 [(buf.validate.field).required = true];
-  Action action = 3 [(buf.validate.field).required = true];
-  ActionSchedule schedule = 4 [(buf.validate.field).required = true];
-}
-
-message ManifestResult {
-  RunId run_id = 1 [(buf.validate.field).required = true];
-  ManifestId manifest_id = 2 [(buf.validate.field).required = true];
-  ExecutionStatus status = 3 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp completed_at = 4;
-  google.protobuf.Duration duration = 5 [(buf.validate.field).duration.gte = {}];
+  repeated Action actions = 3;
 }
 
 enum ResultAckCode {
@@ -100,12 +74,4 @@ enum ResultAckCode {
 
 message ResultAck {
   ResultAckCode code = 1 [(buf.validate.field).required = true];
-}
-
-message Error {
-  string message = 1 [
-    (buf.validate.field).required = true,
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 1024
-  ];
 }

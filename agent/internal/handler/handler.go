@@ -2,22 +2,19 @@ package handler
 
 import (
 	"context"
-	"log/slog"
 	"sync"
 
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 type Handler struct {
-	logger *slog.Logger
-
 	mu        sync.Mutex
 	connected chan struct{}
 	ready     bool
 }
 
-func NewHandler(logger *slog.Logger) *Handler {
-	return &Handler{logger: logger, connected: make(chan struct{})}
+func NewHandler() *Handler {
+	return &Handler{connected: make(chan struct{})}
 }
 
 func (h *Handler) OnWelcome(context.Context, *pb.Welcome) error {
@@ -27,11 +24,6 @@ func (h *Handler) OnWelcome(context.Context, *pb.Welcome) error {
 		close(h.connected)
 		h.ready = true
 	}
-	return nil
-}
-
-func (h *Handler) OnError(_ context.Context, serverError *pb.Error) error {
-	h.logger.Warn("server rejected agent message", "message", serverError.GetMessage())
 	return nil
 }
 

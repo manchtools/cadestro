@@ -140,8 +140,8 @@ func TestShellRemediatesAndVerifies(t *testing.T) {
 			DetectionScript: "test -f /etc/example", Script: "touch /etc/example",
 		}},
 	})
-	if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS || !result.GetChanged() {
-		t.Fatalf("result = %s changed=%v", result.GetStatus(), result.GetChanged())
+	if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS {
+		t.Fatalf("result = %s", result.GetStatus())
 	}
 	if len(runner.commands) != 3 {
 		t.Fatalf("commands = %d, want detect, remediate, verify", len(runner.commands))
@@ -172,8 +172,8 @@ func TestPackageSkipsInstalledVersion(t *testing.T) {
 		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
 		Params:       &pb.Action_Package{Package: &pb.PackageActionParams{Name: "example", Version: "1.0"}},
 	})
-	if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS || result.GetChanged() || manager.installCalls != 0 {
-		t.Fatalf("status=%s changed=%v installs=%d", result.GetStatus(), result.GetChanged(), manager.installCalls)
+	if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS || manager.installCalls != 0 {
+		t.Fatalf("status=%s installs=%d", result.GetStatus(), manager.installCalls)
 	}
 }
 
@@ -186,7 +186,7 @@ func TestUpdateSkipsCurrentSystem(t *testing.T) {
 		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
 		Params:       &pb.Action_Update{Update: &pb.UpdateActionParams{}},
 	})
-	if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS || result.GetChanged() || manager.upgradeCalls != 0 {
-		t.Fatalf("status=%s changed=%v upgrades=%d", result.GetStatus(), result.GetChanged(), manager.upgradeCalls)
+	if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS || manager.upgradeCalls != 0 {
+		t.Fatalf("status=%s upgrades=%d", result.GetStatus(), manager.upgradeCalls)
 	}
 }

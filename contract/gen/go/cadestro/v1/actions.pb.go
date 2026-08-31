@@ -10,7 +10,6 @@ import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
@@ -155,12 +154,10 @@ func (*Action_Update) isAction_Params() {}
 func (*Action_Shell) isAction_Params() {}
 
 type ActionSchedule struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	IntervalHours   int32                  `protobuf:"varint,1,opt,name=interval_hours,json=intervalHours,proto3" json:"interval_hours,omitempty"`
-	RunOnAssign     bool                   `protobuf:"varint,2,opt,name=run_on_assign,json=runOnAssign,proto3" json:"run_on_assign,omitempty"`
-	SkipIfUnchanged bool                   `protobuf:"varint,3,opt,name=skip_if_unchanged,json=skipIfUnchanged,proto3" json:"skip_if_unchanged,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	IntervalHours int32                  `protobuf:"varint,1,opt,name=interval_hours,json=intervalHours,proto3" json:"interval_hours,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ActionSchedule) Reset() {
@@ -198,20 +195,6 @@ func (x *ActionSchedule) GetIntervalHours() int32 {
 		return x.IntervalHours
 	}
 	return 0
-}
-
-func (x *ActionSchedule) GetRunOnAssign() bool {
-	if x != nil {
-		return x.RunOnAssign
-	}
-	return false
-}
-
-func (x *ActionSchedule) GetSkipIfUnchanged() bool {
-	if x != nil {
-		return x.SkipIfUnchanged
-	}
-	return false
 }
 
 type PackageActionParams struct {
@@ -393,10 +376,7 @@ type ActionResult struct {
 	Output          *CommandOutput         `protobuf:"bytes,3,opt,name=output,proto3" json:"output,omitempty"`
 	DetectionOutput *CommandOutput         `protobuf:"bytes,4,opt,name=detection_output,json=detectionOutput,proto3" json:"detection_output,omitempty"`
 	CompletedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
-	Duration        *durationpb.Duration   `protobuf:"bytes,6,opt,name=duration,proto3" json:"duration,omitempty"`
-	Changed         bool                   `protobuf:"varint,7,opt,name=changed,proto3" json:"changed,omitempty"`
-	RunId           *RunId                 `protobuf:"bytes,8,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	OccurrenceId    *OccurrenceId          `protobuf:"bytes,9,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`
+	RunId           *RunId                 `protobuf:"bytes,6,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -466,30 +446,9 @@ func (x *ActionResult) GetCompletedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *ActionResult) GetDuration() *durationpb.Duration {
-	if x != nil {
-		return x.Duration
-	}
-	return nil
-}
-
-func (x *ActionResult) GetChanged() bool {
-	if x != nil {
-		return x.Changed
-	}
-	return false
-}
-
 func (x *ActionResult) GetRunId() *RunId {
 	if x != nil {
 		return x.RunId
-	}
-	return nil
-}
-
-func (x *ActionResult) GetOccurrenceId() *OccurrenceId {
-	if x != nil {
-		return x.OccurrenceId
 	}
 	return nil
 }
@@ -498,7 +457,7 @@ var File_cadestro_v1_actions_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\n" +
-	"\x19cadestro/v1/actions.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x18cadestro/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xab\x03\n" +
+	"\x19cadestro/v1/actions.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x18cadestro/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xab\x03\n" +
 	"\x06Action\x12-\n" +
 	"\x02id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x12F\n" +
 	"\rdesired_state\x18\x02 \x01(\x0e2\x19.cadestro.v1.DesiredStateB\x06\xbaH\x03\xc8\x01\x01R\fdesiredState\x126\n" +
@@ -508,12 +467,10 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\apackage\x18\x05 \x01(\v2 .cadestro.v1.PackageActionParamsH\x00R\apackage\x129\n" +
 	"\x06update\x18\x06 \x01(\v2\x1f.cadestro.v1.UpdateActionParamsH\x00R\x06update\x126\n" +
 	"\x05shell\x18\a \x01(\v2\x1e.cadestro.v1.ShellActionParamsH\x00R\x05shellB\b\n" +
-	"\x06params\"\x96\x01\n" +
+	"\x06params\"F\n" +
 	"\x0eActionSchedule\x124\n" +
 	"\x0einterval_hours\x18\x01 \x01(\x05B\r\xbaH\n" +
-	"\xd8\x01\x01\x1a\x05\x18\xb8D(\x00R\rintervalHours\x12\"\n" +
-	"\rrun_on_assign\x18\x02 \x01(\bR\vrunOnAssign\x12*\n" +
-	"\x11skip_if_unchanged\x18\x03 \x01(\bR\x0fskipIfUnchanged\"_\n" +
+	"\xd8\x01\x01\x1a\x05\x18\xb8D(\x00R\rintervalHours\"_\n" +
 	"\x13PackageActionParams\x12!\n" +
 	"\x04name\x18\x01 \x01(\tB\r\xbaH\n" +
 	"\xc8\x01\x01r\x05\x10\x01\x18\xff\x01R\x04name\x12%\n" +
@@ -528,17 +485,14 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\ris_compliance\x18\x06 \x01(\bR\fisCompliance\x1a>\n" +
 	"\x10EnvironmentEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x98\x04\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xf5\x02\n" +
 	"\fActionResult\x12:\n" +
 	"\taction_id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\bactionId\x12<\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusB\x06\xbaH\x03\xc8\x01\x01R\x06status\x122\n" +
 	"\x06output\x18\x03 \x01(\v2\x1a.cadestro.v1.CommandOutputR\x06output\x12E\n" +
 	"\x10detection_output\x18\x04 \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x12=\n" +
-	"\fcompleted_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12?\n" +
-	"\bduration\x18\x06 \x01(\v2\x19.google.protobuf.DurationB\b\xbaH\x05\xaa\x01\x022\x00R\bduration\x12\x18\n" +
-	"\achanged\x18\a \x01(\bR\achanged\x121\n" +
-	"\x06run_id\x18\b \x01(\v2\x12.cadestro.v1.RunIdB\x06\xbaH\x03\xc8\x01\x01R\x05runId\x12F\n" +
-	"\roccurrence_id\x18\t \x01(\v2\x19.cadestro.v1.OccurrenceIdB\x06\xbaH\x03\xc8\x01\x01R\foccurrenceIdBGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
+	"\fcompleted_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x121\n" +
+	"\x06run_id\x18\x06 \x01(\v2\x12.cadestro.v1.RunIdB\x06\xbaH\x03\xc8\x01\x01R\x05runIdBGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
 
 var (
 	file_cadestro_v1_actions_proto_rawDescOnce sync.Once
@@ -566,9 +520,7 @@ var file_cadestro_v1_actions_proto_goTypes = []any{
 	(ExecutionStatus)(0),          // 9: cadestro.v1.ExecutionStatus
 	(*CommandOutput)(nil),         // 10: cadestro.v1.CommandOutput
 	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
-	(*durationpb.Duration)(nil),   // 12: google.protobuf.Duration
-	(*RunId)(nil),                 // 13: cadestro.v1.RunId
-	(*OccurrenceId)(nil),          // 14: cadestro.v1.OccurrenceId
+	(*RunId)(nil),                 // 12: cadestro.v1.RunId
 }
 var file_cadestro_v1_actions_proto_depIdxs = []int32{
 	7,  // 0: cadestro.v1.Action.id:type_name -> cadestro.v1.ActionId
@@ -583,14 +535,12 @@ var file_cadestro_v1_actions_proto_depIdxs = []int32{
 	10, // 9: cadestro.v1.ActionResult.output:type_name -> cadestro.v1.CommandOutput
 	10, // 10: cadestro.v1.ActionResult.detection_output:type_name -> cadestro.v1.CommandOutput
 	11, // 11: cadestro.v1.ActionResult.completed_at:type_name -> google.protobuf.Timestamp
-	12, // 12: cadestro.v1.ActionResult.duration:type_name -> google.protobuf.Duration
-	13, // 13: cadestro.v1.ActionResult.run_id:type_name -> cadestro.v1.RunId
-	14, // 14: cadestro.v1.ActionResult.occurrence_id:type_name -> cadestro.v1.OccurrenceId
-	15, // [15:15] is the sub-list for method output_type
-	15, // [15:15] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	12, // 12: cadestro.v1.ActionResult.run_id:type_name -> cadestro.v1.RunId
+	13, // [13:13] is the sub-list for method output_type
+	13, // [13:13] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_actions_proto_init() }

@@ -18,14 +18,6 @@ message RunId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }
 
-message OccurrenceId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
-message ManifestId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
 message MessageId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }

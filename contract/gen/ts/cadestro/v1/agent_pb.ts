@@ -5,11 +5,11 @@
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
-import type { Action, ActionResult, ActionSchedule } from "./actions_pb";
+import type { Action, ActionResult } from "./actions_pb";
 import { file_cadestro_v1_actions } from "./actions_pb";
-import type { DeviceId, ExecutionStatus, ManifestId, MessageId, OccurrenceId, PolicyRevisionId, RunId } from "./common_pb";
+import type { DeviceId, MessageId, PolicyRevisionId } from "./common_pb";
 import { file_cadestro_v1_common } from "./common_pb";
-import type { Duration, Timestamp } from "@bufbuild/protobuf/wkt";
+import type { Duration } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_duration, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -17,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cadestro/v1/agent.proto.
  */
 export const file_cadestro_v1_agent: GenFile = /*@__PURE__*/
-  fileDesc("ChdjYWRlc3Ryby92MS9hZ2VudC5wcm90bxILY2FkZXN0cm8udjEiyAIKDEFnZW50TWVzc2FnZRIqCgJpZBgBIAEoCzIWLmNhZGVzdHJvLnYxLk1lc3NhZ2VJZEIGukgDyAEBEiMKBWhlbGxvGAogASgLMhIuY2FkZXN0cm8udjEuSGVsbG9IABIrCgloZWFydGJlYXQYCyABKAsyFi5jYWRlc3Ryby52MS5IZWFydGJlYXRIABJDChZkZXNpcmVkX3BvbGljeV9yZXF1ZXN0GAwgASgLMiEuY2FkZXN0cm8udjEuRGVzaXJlZFBvbGljeVJlcXVlc3RIABIyCg1hY3Rpb25fcmVzdWx0GBQgASgLMhkuY2FkZXN0cm8udjEuQWN0aW9uUmVzdWx0SAASNgoPbWFuaWZlc3RfcmVzdWx0GBUgASgLMhsuY2FkZXN0cm8udjEuTWFuaWZlc3RSZXN1bHRIAEIJCgdwYXlsb2FkIvgBCg1TZXJ2ZXJNZXNzYWdlEioKAmlkGAEgASgLMhYuY2FkZXN0cm8udjEuTWVzc2FnZUlkQga6SAPIAQESJwoHd2VsY29tZRgKIAEoCzIULmNhZGVzdHJvLnYxLldlbGNvbWVIABI0Cg5kZXNpcmVkX3BvbGljeRgLIAEoCzIaLmNhZGVzdHJvLnYxLkRlc2lyZWRQb2xpY3lIABIsCgpyZXN1bHRfYWNrGAwgASgLMhYuY2FkZXN0cm8udjEuUmVzdWx0QWNrSAASIwoFZXJyb3IYDSABKAsyEi5jYWRlc3Ryby52MS5FcnJvckgAQgkKB3BheWxvYWQimQEKBUhlbGxvEjAKCWRldmljZV9pZBgBIAEoCzIVLmNhZGVzdHJvLnYxLkRldmljZUlkQga6SAPIAQESIwoNYWdlbnRfdmVyc2lvbhgCIAEoCUIMukgJyAEBcgQQARggEh8KCGhvc3RuYW1lGAMgASgJQg26SArIAQFyBRABGP0BEhgKBGFyY2gYBCABKAlCCrpIB9gBAXICGBAiCwoJSGVhcnRiZWF0ImYKB1dlbGNvbWUSJAoOc2VydmVyX3ZlcnNpb24YASABKAlCDLpICcgBAXIEEAEYIBI1ChJoZWFydGJlYXRfaW50ZXJ2YWwYAiABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb24iFgoURGVzaXJlZFBvbGljeVJlcXVlc3QioAEKDURlc2lyZWRQb2xpY3kSLAoYcmVmcmVzaF9pbnRlcnZhbF9taW51dGVzGAEgASgFQgq6SAcaBRigCygBEjcKCHJldmlzaW9uGAIgASgLMh0uY2FkZXN0cm8udjEuUG9saWN5UmV2aXNpb25JZEIGukgDyAEBEigKCW1hbmlmZXN0cxgDIAMoCzIVLmNhZGVzdHJvLnYxLk1hbmlmZXN0It4BCghNYW5pZmVzdBI0CgttYW5pZmVzdF9pZBgBIAEoCzIXLmNhZGVzdHJvLnYxLk1hbmlmZXN0SWRCBrpIA8gBARI4Cg1vY2N1cnJlbmNlX2lkGAIgASgLMhkuY2FkZXN0cm8udjEuT2NjdXJyZW5jZUlkQga6SAPIAQESKwoGYWN0aW9uGAMgASgLMhMuY2FkZXN0cm8udjEuQWN0aW9uQga6SAPIAQESNQoIc2NoZWR1bGUYBCABKAsyGy5jYWRlc3Ryby52MS5BY3Rpb25TY2hlZHVsZUIGukgDyAEBIpECCg5NYW5pZmVzdFJlc3VsdBIqCgZydW5faWQYASABKAsyEi5jYWRlc3Ryby52MS5SdW5JZEIGukgDyAEBEjQKC21hbmlmZXN0X2lkGAIgASgLMhcuY2FkZXN0cm8udjEuTWFuaWZlc3RJZEIGukgDyAEBEjQKBnN0YXR1cxgDIAEoDjIcLmNhZGVzdHJvLnYxLkV4ZWN1dGlvblN0YXR1c0IGukgDyAEBEjAKDGNvbXBsZXRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNQoIZHVyYXRpb24YBSABKAsyGS5nb29nbGUucHJvdG9idWYuRHVyYXRpb25CCLpIBaoBAjIAIj0KCVJlc3VsdEFjaxIwCgRjb2RlGAEgASgOMhouY2FkZXN0cm8udjEuUmVzdWx0QWNrQ29kZUIGukgDyAEBIicKBUVycm9yEh4KB21lc3NhZ2UYASABKAlCDbpICsgBAXIFEAEYgAgqbAoNUmVzdWx0QWNrQ29kZRIfChtSRVNVTFRfQUNLX0NPREVfVU5TUEVDSUZJRUQQABIcChhSRVNVTFRfQUNLX0NPREVfQUNDRVBURUQQARIcChhSRVNVTFRfQUNLX0NPREVfUkVKRUNURUQQAjJTCgxBZ2VudFNlcnZpY2USQwoGU3RyZWFtEhkuY2FkZXN0cm8udjEuQWdlbnRNZXNzYWdlGhouY2FkZXN0cm8udjEuU2VydmVyTWVzc2FnZSgBMAFCR1pFZ2l0aHViLmNvbS9tYW5jaHRvb2xzL2NhZGVzdHJvL2NvbnRyYWN0L2dlbi9nby9jYWRlc3Ryby92MTtjYWRlc3Ryb3YxYgZwcm90bzM", [file_buf_validate_validate, file_cadestro_v1_actions, file_cadestro_v1_common, file_google_protobuf_duration, file_google_protobuf_timestamp]);
+  fileDesc("ChdjYWRlc3Ryby92MS9hZ2VudC5wcm90bxILY2FkZXN0cm8udjEikAIKDEFnZW50TWVzc2FnZRIqCgJpZBgBIAEoCzIWLmNhZGVzdHJvLnYxLk1lc3NhZ2VJZEIGukgDyAEBEiMKBWhlbGxvGAogASgLMhIuY2FkZXN0cm8udjEuSGVsbG9IABIrCgloZWFydGJlYXQYCyABKAsyFi5jYWRlc3Ryby52MS5IZWFydGJlYXRIABJDChZkZXNpcmVkX3BvbGljeV9yZXF1ZXN0GAwgASgLMiEuY2FkZXN0cm8udjEuRGVzaXJlZFBvbGljeVJlcXVlc3RIABIyCg1hY3Rpb25fcmVzdWx0GBQgASgLMhkuY2FkZXN0cm8udjEuQWN0aW9uUmVzdWx0SABCCQoHcGF5bG9hZCLTAQoNU2VydmVyTWVzc2FnZRIqCgJpZBgBIAEoCzIWLmNhZGVzdHJvLnYxLk1lc3NhZ2VJZEIGukgDyAEBEicKB3dlbGNvbWUYCiABKAsyFC5jYWRlc3Ryby52MS5XZWxjb21lSAASNAoOZGVzaXJlZF9wb2xpY3kYCyABKAsyGi5jYWRlc3Ryby52MS5EZXNpcmVkUG9saWN5SAASLAoKcmVzdWx0X2FjaxgMIAEoCzIWLmNhZGVzdHJvLnYxLlJlc3VsdEFja0gAQgkKB3BheWxvYWQifwoFSGVsbG8SMAoJZGV2aWNlX2lkGAEgASgLMhUuY2FkZXN0cm8udjEuRGV2aWNlSWRCBrpIA8gBARIjCg1hZ2VudF92ZXJzaW9uGAIgASgJQgy6SAnIAQFyBBABGCASHwoIaG9zdG5hbWUYAyABKAlCDbpICsgBAXIFEAEY/QEiCwoJSGVhcnRiZWF0IkgKB1dlbGNvbWUSPQoSaGVhcnRiZWF0X2ludGVydmFsGAEgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uQga6SAPIAQEiFgoURGVzaXJlZFBvbGljeVJlcXVlc3QinAEKDURlc2lyZWRQb2xpY3kSLAoYcmVmcmVzaF9pbnRlcnZhbF9taW51dGVzGAEgASgFQgq6SAcaBRigCygBEjcKCHJldmlzaW9uGAIgASgLMh0uY2FkZXN0cm8udjEuUG9saWN5UmV2aXNpb25JZEIGukgDyAEBEiQKB2FjdGlvbnMYAyADKAsyEy5jYWRlc3Ryby52MS5BY3Rpb24iPQoJUmVzdWx0QWNrEjAKBGNvZGUYASABKA4yGi5jYWRlc3Ryby52MS5SZXN1bHRBY2tDb2RlQga6SAPIAQEqbAoNUmVzdWx0QWNrQ29kZRIfChtSRVNVTFRfQUNLX0NPREVfVU5TUEVDSUZJRUQQABIcChhSRVNVTFRfQUNLX0NPREVfQUNDRVBURUQQARIcChhSRVNVTFRfQUNLX0NPREVfUkVKRUNURUQQAjJTCgxBZ2VudFNlcnZpY2USQwoGU3RyZWFtEhkuY2FkZXN0cm8udjEuQWdlbnRNZXNzYWdlGhouY2FkZXN0cm8udjEuU2VydmVyTWVzc2FnZSgBMAFCR1pFZ2l0aHViLmNvbS9tYW5jaHRvb2xzL2NhZGVzdHJvL2NvbnRyYWN0L2dlbi9nby9jYWRlc3Ryby92MTtjYWRlc3Ryb3YxYgZwcm90bzM", [file_buf_validate_validate, file_cadestro_v1_actions, file_cadestro_v1_common, file_google_protobuf_duration, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message cadestro.v1.AgentMessage
@@ -55,12 +55,6 @@ export type AgentMessage = Message<"cadestro.v1.AgentMessage"> & {
      */
     value: ActionResult;
     case: "actionResult";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.ManifestResult manifest_result = 21;
-     */
-    value: ManifestResult;
-    case: "manifestResult";
   } | { case: undefined; value?: undefined };
 };
 
@@ -101,12 +95,6 @@ export type ServerMessage = Message<"cadestro.v1.ServerMessage"> & {
      */
     value: ResultAck;
     case: "resultAck";
-  } | {
-    /**
-     * @generated from field: cadestro.v1.Error error = 13;
-     */
-    value: Error;
-    case: "error";
   } | { case: undefined; value?: undefined };
 };
 
@@ -135,11 +123,6 @@ export type Hello = Message<"cadestro.v1.Hello"> & {
    * @generated from field: string hostname = 3;
    */
   hostname: string;
-
-  /**
-   * @generated from field: string arch = 4;
-   */
-  arch: string;
 };
 
 /**
@@ -167,12 +150,7 @@ export const HeartbeatSchema: GenMessage<Heartbeat> = /*@__PURE__*/
  */
 export type Welcome = Message<"cadestro.v1.Welcome"> & {
   /**
-   * @generated from field: string server_version = 1;
-   */
-  serverVersion: string;
-
-  /**
-   * @generated from field: google.protobuf.Duration heartbeat_interval = 2;
+   * @generated from field: google.protobuf.Duration heartbeat_interval = 1;
    */
   heartbeatInterval?: Duration;
 };
@@ -212,9 +190,9 @@ export type DesiredPolicy = Message<"cadestro.v1.DesiredPolicy"> & {
   revision?: PolicyRevisionId;
 
   /**
-   * @generated from field: repeated cadestro.v1.Manifest manifests = 3;
+   * @generated from field: repeated cadestro.v1.Action actions = 3;
    */
-  manifests: Manifest[];
+  actions: Action[];
 };
 
 /**
@@ -223,75 +201,6 @@ export type DesiredPolicy = Message<"cadestro.v1.DesiredPolicy"> & {
  */
 export const DesiredPolicySchema: GenMessage<DesiredPolicy> = /*@__PURE__*/
   messageDesc(file_cadestro_v1_agent, 6);
-
-/**
- * @generated from message cadestro.v1.Manifest
- */
-export type Manifest = Message<"cadestro.v1.Manifest"> & {
-  /**
-   * @generated from field: cadestro.v1.ManifestId manifest_id = 1;
-   */
-  manifestId?: ManifestId;
-
-  /**
-   * @generated from field: cadestro.v1.OccurrenceId occurrence_id = 2;
-   */
-  occurrenceId?: OccurrenceId;
-
-  /**
-   * @generated from field: cadestro.v1.Action action = 3;
-   */
-  action?: Action;
-
-  /**
-   * @generated from field: cadestro.v1.ActionSchedule schedule = 4;
-   */
-  schedule?: ActionSchedule;
-};
-
-/**
- * Describes the message cadestro.v1.Manifest.
- * Use `create(ManifestSchema)` to create a new message.
- */
-export const ManifestSchema: GenMessage<Manifest> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 7);
-
-/**
- * @generated from message cadestro.v1.ManifestResult
- */
-export type ManifestResult = Message<"cadestro.v1.ManifestResult"> & {
-  /**
-   * @generated from field: cadestro.v1.RunId run_id = 1;
-   */
-  runId?: RunId;
-
-  /**
-   * @generated from field: cadestro.v1.ManifestId manifest_id = 2;
-   */
-  manifestId?: ManifestId;
-
-  /**
-   * @generated from field: cadestro.v1.ExecutionStatus status = 3;
-   */
-  status: ExecutionStatus;
-
-  /**
-   * @generated from field: google.protobuf.Timestamp completed_at = 4;
-   */
-  completedAt?: Timestamp;
-
-  /**
-   * @generated from field: google.protobuf.Duration duration = 5;
-   */
-  duration?: Duration;
-};
-
-/**
- * Describes the message cadestro.v1.ManifestResult.
- * Use `create(ManifestResultSchema)` to create a new message.
- */
-export const ManifestResultSchema: GenMessage<ManifestResult> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 8);
 
 /**
  * @generated from message cadestro.v1.ResultAck
@@ -308,24 +217,7 @@ export type ResultAck = Message<"cadestro.v1.ResultAck"> & {
  * Use `create(ResultAckSchema)` to create a new message.
  */
 export const ResultAckSchema: GenMessage<ResultAck> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 9);
-
-/**
- * @generated from message cadestro.v1.Error
- */
-export type Error = Message<"cadestro.v1.Error"> & {
-  /**
-   * @generated from field: string message = 1;
-   */
-  message: string;
-};
-
-/**
- * Describes the message cadestro.v1.Error.
- * Use `create(ErrorSchema)` to create a new message.
- */
-export const ErrorSchema: GenMessage<Error> = /*@__PURE__*/
-  messageDesc(file_cadestro_v1_agent, 10);
+  messageDesc(file_cadestro_v1_agent, 7);
 
 /**
  * @generated from enum cadestro.v1.ResultAckCode

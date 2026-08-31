@@ -114,10 +114,8 @@ func (service *Service) Stream(ctx context.Context, stream *connect.BidiStream[c
 		return err
 	}
 	if err := stream.Send(&cadestrov1.ServerMessage{
-		Id: &cadestrov1.MessageId{Value: ulid.Make().String()},
-		Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{
-			ServerVersion: service.version, HeartbeatInterval: durationpb.New(service.heartbeatInterval),
-		}},
+			Id: &cadestrov1.MessageId{Value: ulid.Make().String()},
+			Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{HeartbeatInterval: durationpb.New(service.heartbeatInterval)}},
 	}); err != nil {
 		return fmt.Errorf("send welcome: %w", err)
 	}
@@ -164,8 +162,6 @@ func (service *Service) handleAgentMessage(ctx context.Context, stream *connect.
 			code = cadestrov1.ResultAckCode_RESULT_ACK_CODE_REJECTED
 		}
 		return stream.Send(&cadestrov1.ServerMessage{Id: message.Id, Payload: &cadestrov1.ServerMessage_ResultAck{ResultAck: &cadestrov1.ResultAck{Code: code}}})
-	case *cadestrov1.AgentMessage_ManifestResult:
-		return stream.Send(&cadestrov1.ServerMessage{Id: message.Id, Payload: &cadestrov1.ServerMessage_ResultAck{ResultAck: &cadestrov1.ResultAck{Code: cadestrov1.ResultAckCode_RESULT_ACK_CODE_ACCEPTED}}})
 	case *cadestrov1.AgentMessage_Hello:
 		return connect.NewError(connect.CodeInvalidArgument, errors.New("hello is only valid as the first frame"))
 	default:
@@ -196,18 +192,7 @@ func (service *Service) desiredPolicy(ctx context.Context, deviceID string) (*ca
 		if err != nil {
 			return nil, service.internal("map desired action", err)
 		}
-		manifestID, err := deterministicULID(action.UpdatedAt, action.ID, "manifest")
-		if err != nil {
-			return nil, service.internal("create manifest ID", err)
-		}
-		occurrenceID, err := deterministicULID(action.UpdatedAt, action.ID, "occurrence")
-		if err != nil {
-			return nil, service.internal("create occurrence ID", err)
-		}
-		policy.Manifests = append(policy.Manifests, &cadestrov1.Manifest{
-			ManifestId: &cadestrov1.ManifestId{Value: manifestID}, OccurrenceId: &cadestrov1.OccurrenceId{Value: occurrenceID},
-			Action: executable, Schedule: executable.Schedule,
-		})
+		policy.Actions = append(policy.Actions, executable)
 	}
 	policy.RefreshIntervalMinutes = 5
 	return policy, nil

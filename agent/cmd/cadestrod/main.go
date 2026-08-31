@@ -23,7 +23,6 @@ import (
 var version = "dev"
 
 const (
-	defaultHeartbeatInterval     = 30 * time.Second
 	defaultPolicyRefreshInterval = 30 * time.Minute
 	minInitialBackoff            = 5 * time.Second
 	maxInitialBackoff            = 10 * time.Second
@@ -87,7 +86,7 @@ func main() {
 
 	actionExecutor := executor.NewExecutor(runner)
 	actionScheduler := scheduler.New(actionStore, actionExecutor, logger)
-	streamHandler := handler.NewHandler(logger)
+	streamHandler := handler.NewHandler()
 	go actionScheduler.Start(ctx)
 	runAgent(ctx, credentialStore, creds, hostname, streamHandler, actionScheduler, logger, time.Now)
 	actionScheduler.Stop()

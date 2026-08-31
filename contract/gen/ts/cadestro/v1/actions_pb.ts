@@ -5,17 +5,17 @@
 import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
-import type { ActionId, CommandOutput, DesiredState, ExecutionStatus, OccurrenceId, RunId } from "./common_pb";
+import type { ActionId, CommandOutput, DesiredState, ExecutionStatus, RunId } from "./common_pb";
 import { file_cadestro_v1_common } from "./common_pb";
-import type { Duration, Timestamp } from "@bufbuild/protobuf/wkt";
-import { file_google_protobuf_duration, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file cadestro/v1/actions.proto.
  */
 export const file_cadestro_v1_actions: GenFile = /*@__PURE__*/
-  fileDesc("ChljYWRlc3Ryby92MS9hY3Rpb25zLnByb3RvEgtjYWRlc3Ryby52MSLnAgoGQWN0aW9uEikKAmlkGAEgASgLMhUuY2FkZXN0cm8udjEuQWN0aW9uSWRCBrpIA8gBARI4Cg1kZXNpcmVkX3N0YXRlGAIgASgOMhkuY2FkZXN0cm8udjEuRGVzaXJlZFN0YXRlQga6SAPIAQESJgoPdGltZW91dF9zZWNvbmRzGAMgASgFQg26SArYAQEaBRiQHCgAEi0KCHNjaGVkdWxlGAQgASgLMhsuY2FkZXN0cm8udjEuQWN0aW9uU2NoZWR1bGUSMwoHcGFja2FnZRgFIAEoCzIgLmNhZGVzdHJvLnYxLlBhY2thZ2VBY3Rpb25QYXJhbXNIABIxCgZ1cGRhdGUYBiABKAsyHy5jYWRlc3Ryby52MS5VcGRhdGVBY3Rpb25QYXJhbXNIABIvCgVzaGVsbBgHIAEoCzIeLmNhZGVzdHJvLnYxLlNoZWxsQWN0aW9uUGFyYW1zSABCCAoGcGFyYW1zImkKDkFjdGlvblNjaGVkdWxlEiUKDmludGVydmFsX2hvdXJzGAEgASgFQg26SArYAQEaBRi4RCgAEhUKDXJ1bl9vbl9hc3NpZ24YAiABKAgSGQoRc2tpcF9pZl91bmNoYW5nZWQYAyABKAgiUAoTUGFja2FnZUFjdGlvblBhcmFtcxIbCgRuYW1lGAEgASgJQg26SArIAQFyBRABGP8BEhwKB3ZlcnNpb24YAiABKAlCC7pICNgBAXIDGIABIhQKElVwZGF0ZUFjdGlvblBhcmFtcyLKAgoRU2hlbGxBY3Rpb25QYXJhbXMSHAoGc2NyaXB0GAEgASgJQgy6SAnYAQFyBBiAgEASIAoLaW50ZXJwcmV0ZXIYAiABKAlCC7pICNgBAXIDGP8BEiYKEXdvcmtpbmdfZGlyZWN0b3J5GAMgASgJQgu6SAjYAQFyAzoBLxJaCgtlbnZpcm9ubWVudBgEIAMoCzIvLmNhZGVzdHJvLnYxLlNoZWxsQWN0aW9uUGFyYW1zLkVudmlyb25tZW50RW50cnlCFLpIEZoBDiIFcgMY/wEqBXIDGIAgEiYKEGRldGVjdGlvbl9zY3JpcHQYBSABKAlCDLpICdgBAXIEGICAQBIVCg1pc19jb21wbGlhbmNlGAYgASgIGjIKEEVudmlyb25tZW50RW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASK4AwoMQWN0aW9uUmVzdWx0EjAKCWFjdGlvbl9pZBgBIAEoCzIVLmNhZGVzdHJvLnYxLkFjdGlvbklkQga6SAPIAQESNAoGc3RhdHVzGAIgASgOMhwuY2FkZXN0cm8udjEuRXhlY3V0aW9uU3RhdHVzQga6SAPIAQESKgoGb3V0cHV0GAMgASgLMhouY2FkZXN0cm8udjEuQ29tbWFuZE91dHB1dBI0ChBkZXRlY3Rpb25fb3V0cHV0GAQgASgLMhouY2FkZXN0cm8udjEuQ29tbWFuZE91dHB1dBIwCgxjb21wbGV0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjUKCGR1cmF0aW9uGAYgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uQgi6SAWqAQIyABIPCgdjaGFuZ2VkGAcgASgIEioKBnJ1bl9pZBgIIAEoCzISLmNhZGVzdHJvLnYxLlJ1bklkQga6SAPIAQESOAoNb2NjdXJyZW5jZV9pZBgJIAEoCzIZLmNhZGVzdHJvLnYxLk9jY3VycmVuY2VJZEIGukgDyAEBQkdaRWdpdGh1Yi5jb20vbWFuY2h0b29scy9jYWRlc3Ryby9jb250cmFjdC9nZW4vZ28vY2FkZXN0cm8vdjE7Y2FkZXN0cm92MWIGcHJvdG8z", [file_buf_validate_validate, file_cadestro_v1_common, file_google_protobuf_duration, file_google_protobuf_timestamp]);
+  fileDesc("ChljYWRlc3Ryby92MS9hY3Rpb25zLnByb3RvEgtjYWRlc3Ryby52MSLnAgoGQWN0aW9uEikKAmlkGAEgASgLMhUuY2FkZXN0cm8udjEuQWN0aW9uSWRCBrpIA8gBARI4Cg1kZXNpcmVkX3N0YXRlGAIgASgOMhkuY2FkZXN0cm8udjEuRGVzaXJlZFN0YXRlQga6SAPIAQESJgoPdGltZW91dF9zZWNvbmRzGAMgASgFQg26SArYAQEaBRiQHCgAEi0KCHNjaGVkdWxlGAQgASgLMhsuY2FkZXN0cm8udjEuQWN0aW9uU2NoZWR1bGUSMwoHcGFja2FnZRgFIAEoCzIgLmNhZGVzdHJvLnYxLlBhY2thZ2VBY3Rpb25QYXJhbXNIABIxCgZ1cGRhdGUYBiABKAsyHy5jYWRlc3Ryby52MS5VcGRhdGVBY3Rpb25QYXJhbXNIABIvCgVzaGVsbBgHIAEoCzIeLmNhZGVzdHJvLnYxLlNoZWxsQWN0aW9uUGFyYW1zSABCCAoGcGFyYW1zIjcKDkFjdGlvblNjaGVkdWxlEiUKDmludGVydmFsX2hvdXJzGAEgASgFQg26SArYAQEaBRi4RCgAIlAKE1BhY2thZ2VBY3Rpb25QYXJhbXMSGwoEbmFtZRgBIAEoCUINukgKyAEBcgUQARj/ARIcCgd2ZXJzaW9uGAIgASgJQgu6SAjYAQFyAxiAASIUChJVcGRhdGVBY3Rpb25QYXJhbXMiygIKEVNoZWxsQWN0aW9uUGFyYW1zEhwKBnNjcmlwdBgBIAEoCUIMukgJ2AEBcgQYgIBAEiAKC2ludGVycHJldGVyGAIgASgJQgu6SAjYAQFyAxj/ARImChF3b3JraW5nX2RpcmVjdG9yeRgDIAEoCUILukgI2AEBcgM6AS8SWgoLZW52aXJvbm1lbnQYBCADKAsyLy5jYWRlc3Ryby52MS5TaGVsbEFjdGlvblBhcmFtcy5FbnZpcm9ubWVudEVudHJ5QhS6SBGaAQ4iBXIDGP8BKgVyAxiAIBImChBkZXRlY3Rpb25fc2NyaXB0GAUgASgJQgy6SAnYAQFyBBiAgEASFQoNaXNfY29tcGxpYW5jZRgGIAEoCBoyChBFbnZpcm9ubWVudEVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEitgIKDEFjdGlvblJlc3VsdBIwCglhY3Rpb25faWQYASABKAsyFS5jYWRlc3Ryby52MS5BY3Rpb25JZEIGukgDyAEBEjQKBnN0YXR1cxgCIAEoDjIcLmNhZGVzdHJvLnYxLkV4ZWN1dGlvblN0YXR1c0IGukgDyAEBEioKBm91dHB1dBgDIAEoCzIaLmNhZGVzdHJvLnYxLkNvbW1hbmRPdXRwdXQSNAoQZGV0ZWN0aW9uX291dHB1dBgEIAEoCzIaLmNhZGVzdHJvLnYxLkNvbW1hbmRPdXRwdXQSMAoMY29tcGxldGVkX2F0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIqCgZydW5faWQYBiABKAsyEi5jYWRlc3Ryby52MS5SdW5JZEIGukgDyAEBQkdaRWdpdGh1Yi5jb20vbWFuY2h0b29scy9jYWRlc3Ryby9jb250cmFjdC9nZW4vZ28vY2FkZXN0cm8vdjE7Y2FkZXN0cm92MWIGcHJvdG8z", [file_buf_validate_validate, file_cadestro_v1_common, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message cadestro.v1.Action
@@ -80,16 +80,6 @@ export type ActionSchedule = Message<"cadestro.v1.ActionSchedule"> & {
    * @generated from field: int32 interval_hours = 1;
    */
   intervalHours: number;
-
-  /**
-   * @generated from field: bool run_on_assign = 2;
-   */
-  runOnAssign: boolean;
-
-  /**
-   * @generated from field: bool skip_if_unchanged = 3;
-   */
-  skipIfUnchanged: boolean;
 };
 
 /**
@@ -206,24 +196,9 @@ export type ActionResult = Message<"cadestro.v1.ActionResult"> & {
   completedAt?: Timestamp;
 
   /**
-   * @generated from field: google.protobuf.Duration duration = 6;
-   */
-  duration?: Duration;
-
-  /**
-   * @generated from field: bool changed = 7;
-   */
-  changed: boolean;
-
-  /**
-   * @generated from field: cadestro.v1.RunId run_id = 8;
+   * @generated from field: cadestro.v1.RunId run_id = 6;
    */
   runId?: RunId;
-
-  /**
-   * @generated from field: cadestro.v1.OccurrenceId occurrence_id = 9;
-   */
-  occurrenceId?: OccurrenceId;
 };
 
 /**

@@ -9,7 +9,6 @@ import (
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -32,9 +31,8 @@ func TestExecutionResultPersistsSerializedPayload(t *testing.T) {
 	result := &cadestrov1.ActionResult{
 		ActionId: &cadestrov1.ActionId{Value: actionID}, Status: cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS,
 		Output:   &cadestrov1.CommandOutput{ExitCode: 7, Stdout: "out", Stderr: "err"},
-		Duration: durationpb.New(3 * time.Second), Changed: true,
 		DetectionOutput: &cadestrov1.CommandOutput{ExitCode: 2, Stdout: "detect", Stderr: "detect err"},
-		RunId:           &cadestrov1.RunId{Value: "01K00000000000000000000004"}, OccurrenceId: &cadestrov1.OccurrenceId{Value: "01K00000000000000000000005"},
+		RunId:           &cadestrov1.RunId{Value: "01K00000000000000000000004"},
 	}
 	expected := proto.CloneOf(result)
 	expected.CompletedAt = timestamppb.New(now)

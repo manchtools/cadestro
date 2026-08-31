@@ -9,7 +9,7 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
-func TestManifestScheduleClampsForwardClockJumpToOneInterval(t *testing.T) {
+func TestActionScheduleClampsForwardClockJumpToOneInterval(t *testing.T) {
 	now := time.Date(2026, 6, 14, 12, 0, 0, 0, time.UTC)
 	interval := 8 * time.Hour
 	lastExecuted := now.Add(10 * 24 * time.Hour)
@@ -24,7 +24,7 @@ func TestManifestScheduleClampsForwardClockJumpToOneInterval(t *testing.T) {
 	require.Equal(t, now.Add(interval), got)
 }
 
-func TestManifestScheduleWithoutExplicitCadenceUsesDriftDefault(t *testing.T) {
+func TestActionScheduleWithoutExplicitCadenceUsesDriftDefault(t *testing.T) {
 	now := time.Date(2026, 6, 14, 12, 0, 0, 0, time.UTC)
 	lastExecuted := now
 

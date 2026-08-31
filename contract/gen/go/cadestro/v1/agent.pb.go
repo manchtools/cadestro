@@ -11,7 +11,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	_ "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -82,7 +82,6 @@ type AgentMessage struct {
 	//	*AgentMessage_Heartbeat
 	//	*AgentMessage_DesiredPolicyRequest
 	//	*AgentMessage_ActionResult
-	//	*AgentMessage_ManifestResult
 	Payload       isAgentMessage_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -168,15 +167,6 @@ func (x *AgentMessage) GetActionResult() *ActionResult {
 	return nil
 }
 
-func (x *AgentMessage) GetManifestResult() *ManifestResult {
-	if x != nil {
-		if x, ok := x.Payload.(*AgentMessage_ManifestResult); ok {
-			return x.ManifestResult
-		}
-	}
-	return nil
-}
-
 type isAgentMessage_Payload interface {
 	isAgentMessage_Payload()
 }
@@ -197,10 +187,6 @@ type AgentMessage_ActionResult struct {
 	ActionResult *ActionResult `protobuf:"bytes,20,opt,name=action_result,json=actionResult,proto3,oneof"`
 }
 
-type AgentMessage_ManifestResult struct {
-	ManifestResult *ManifestResult `protobuf:"bytes,21,opt,name=manifest_result,json=manifestResult,proto3,oneof"`
-}
-
 func (*AgentMessage_Hello) isAgentMessage_Payload() {}
 
 func (*AgentMessage_Heartbeat) isAgentMessage_Payload() {}
@@ -208,8 +194,6 @@ func (*AgentMessage_Heartbeat) isAgentMessage_Payload() {}
 func (*AgentMessage_DesiredPolicyRequest) isAgentMessage_Payload() {}
 
 func (*AgentMessage_ActionResult) isAgentMessage_Payload() {}
-
-func (*AgentMessage_ManifestResult) isAgentMessage_Payload() {}
 
 type ServerMessage struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -219,7 +203,6 @@ type ServerMessage struct {
 	//	*ServerMessage_Welcome
 	//	*ServerMessage_DesiredPolicy
 	//	*ServerMessage_ResultAck
-	//	*ServerMessage_Error
 	Payload       isServerMessage_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -296,15 +279,6 @@ func (x *ServerMessage) GetResultAck() *ResultAck {
 	return nil
 }
 
-func (x *ServerMessage) GetError() *Error {
-	if x != nil {
-		if x, ok := x.Payload.(*ServerMessage_Error); ok {
-			return x.Error
-		}
-	}
-	return nil
-}
-
 type isServerMessage_Payload interface {
 	isServerMessage_Payload()
 }
@@ -321,24 +295,17 @@ type ServerMessage_ResultAck struct {
 	ResultAck *ResultAck `protobuf:"bytes,12,opt,name=result_ack,json=resultAck,proto3,oneof"`
 }
 
-type ServerMessage_Error struct {
-	Error *Error `protobuf:"bytes,13,opt,name=error,proto3,oneof"`
-}
-
 func (*ServerMessage_Welcome) isServerMessage_Payload() {}
 
 func (*ServerMessage_DesiredPolicy) isServerMessage_Payload() {}
 
 func (*ServerMessage_ResultAck) isServerMessage_Payload() {}
 
-func (*ServerMessage_Error) isServerMessage_Payload() {}
-
 type Hello struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DeviceId      *DeviceId              `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	AgentVersion  string                 `protobuf:"bytes,2,opt,name=agent_version,json=agentVersion,proto3" json:"agent_version,omitempty"`
 	Hostname      string                 `protobuf:"bytes,3,opt,name=hostname,proto3" json:"hostname,omitempty"`
-	Arch          string                 `protobuf:"bytes,4,opt,name=arch,proto3" json:"arch,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -394,13 +361,6 @@ func (x *Hello) GetHostname() string {
 	return ""
 }
 
-func (x *Hello) GetArch() string {
-	if x != nil {
-		return x.Arch
-	}
-	return ""
-}
-
 type Heartbeat struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -439,8 +399,7 @@ func (*Heartbeat) Descriptor() ([]byte, []int) {
 
 type Welcome struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	ServerVersion     string                 `protobuf:"bytes,1,opt,name=server_version,json=serverVersion,proto3" json:"server_version,omitempty"`
-	HeartbeatInterval *durationpb.Duration   `protobuf:"bytes,2,opt,name=heartbeat_interval,json=heartbeatInterval,proto3" json:"heartbeat_interval,omitempty"`
+	HeartbeatInterval *durationpb.Duration   `protobuf:"bytes,1,opt,name=heartbeat_interval,json=heartbeatInterval,proto3" json:"heartbeat_interval,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -473,13 +432,6 @@ func (x *Welcome) ProtoReflect() protoreflect.Message {
 // Deprecated: Use Welcome.ProtoReflect.Descriptor instead.
 func (*Welcome) Descriptor() ([]byte, []int) {
 	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *Welcome) GetServerVersion() string {
-	if x != nil {
-		return x.ServerVersion
-	}
-	return ""
 }
 
 func (x *Welcome) GetHeartbeatInterval() *durationpb.Duration {
@@ -529,7 +481,7 @@ type DesiredPolicy struct {
 	state                  protoimpl.MessageState `protogen:"open.v1"`
 	RefreshIntervalMinutes int32                  `protobuf:"varint,1,opt,name=refresh_interval_minutes,json=refreshIntervalMinutes,proto3" json:"refresh_interval_minutes,omitempty"`
 	Revision               *PolicyRevisionId      `protobuf:"bytes,2,opt,name=revision,proto3" json:"revision,omitempty"`
-	Manifests              []*Manifest            `protobuf:"bytes,3,rep,name=manifests,proto3" json:"manifests,omitempty"`
+	Actions                []*Action              `protobuf:"bytes,3,rep,name=actions,proto3" json:"actions,omitempty"`
 	unknownFields          protoimpl.UnknownFields
 	sizeCache              protoimpl.SizeCache
 }
@@ -578,153 +530,9 @@ func (x *DesiredPolicy) GetRevision() *PolicyRevisionId {
 	return nil
 }
 
-func (x *DesiredPolicy) GetManifests() []*Manifest {
+func (x *DesiredPolicy) GetActions() []*Action {
 	if x != nil {
-		return x.Manifests
-	}
-	return nil
-}
-
-type Manifest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ManifestId    *ManifestId            `protobuf:"bytes,1,opt,name=manifest_id,json=manifestId,proto3" json:"manifest_id,omitempty"`
-	OccurrenceId  *OccurrenceId          `protobuf:"bytes,2,opt,name=occurrence_id,json=occurrenceId,proto3" json:"occurrence_id,omitempty"`
-	Action        *Action                `protobuf:"bytes,3,opt,name=action,proto3" json:"action,omitempty"`
-	Schedule      *ActionSchedule        `protobuf:"bytes,4,opt,name=schedule,proto3" json:"schedule,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Manifest) Reset() {
-	*x = Manifest{}
-	mi := &file_cadestro_v1_agent_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Manifest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Manifest) ProtoMessage() {}
-
-func (x *Manifest) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_agent_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Manifest.ProtoReflect.Descriptor instead.
-func (*Manifest) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *Manifest) GetManifestId() *ManifestId {
-	if x != nil {
-		return x.ManifestId
-	}
-	return nil
-}
-
-func (x *Manifest) GetOccurrenceId() *OccurrenceId {
-	if x != nil {
-		return x.OccurrenceId
-	}
-	return nil
-}
-
-func (x *Manifest) GetAction() *Action {
-	if x != nil {
-		return x.Action
-	}
-	return nil
-}
-
-func (x *Manifest) GetSchedule() *ActionSchedule {
-	if x != nil {
-		return x.Schedule
-	}
-	return nil
-}
-
-type ManifestResult struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RunId         *RunId                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	ManifestId    *ManifestId            `protobuf:"bytes,2,opt,name=manifest_id,json=manifestId,proto3" json:"manifest_id,omitempty"`
-	Status        ExecutionStatus        `protobuf:"varint,3,opt,name=status,proto3,enum=cadestro.v1.ExecutionStatus" json:"status,omitempty"`
-	CompletedAt   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
-	Duration      *durationpb.Duration   `protobuf:"bytes,5,opt,name=duration,proto3" json:"duration,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ManifestResult) Reset() {
-	*x = ManifestResult{}
-	mi := &file_cadestro_v1_agent_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ManifestResult) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ManifestResult) ProtoMessage() {}
-
-func (x *ManifestResult) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_agent_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ManifestResult.ProtoReflect.Descriptor instead.
-func (*ManifestResult) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *ManifestResult) GetRunId() *RunId {
-	if x != nil {
-		return x.RunId
-	}
-	return nil
-}
-
-func (x *ManifestResult) GetManifestId() *ManifestId {
-	if x != nil {
-		return x.ManifestId
-	}
-	return nil
-}
-
-func (x *ManifestResult) GetStatus() ExecutionStatus {
-	if x != nil {
-		return x.Status
-	}
-	return ExecutionStatus_EXECUTION_STATUS_UNSPECIFIED
-}
-
-func (x *ManifestResult) GetCompletedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CompletedAt
-	}
-	return nil
-}
-
-func (x *ManifestResult) GetDuration() *durationpb.Duration {
-	if x != nil {
-		return x.Duration
+		return x.Actions
 	}
 	return nil
 }
@@ -738,7 +546,7 @@ type ResultAck struct {
 
 func (x *ResultAck) Reset() {
 	*x = ResultAck{}
-	mi := &file_cadestro_v1_agent_proto_msgTypes[9]
+	mi := &file_cadestro_v1_agent_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -750,7 +558,7 @@ func (x *ResultAck) String() string {
 func (*ResultAck) ProtoMessage() {}
 
 func (x *ResultAck) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_agent_proto_msgTypes[9]
+	mi := &file_cadestro_v1_agent_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -763,7 +571,7 @@ func (x *ResultAck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResultAck.ProtoReflect.Descriptor instead.
 func (*ResultAck) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{9}
+	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ResultAck) GetCode() ResultAckCode {
@@ -773,108 +581,43 @@ func (x *ResultAck) GetCode() ResultAckCode {
 	return ResultAckCode_RESULT_ACK_CODE_UNSPECIFIED
 }
 
-type Error struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Error) Reset() {
-	*x = Error{}
-	mi := &file_cadestro_v1_agent_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Error) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Error) ProtoMessage() {}
-
-func (x *Error) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_agent_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Error.ProtoReflect.Descriptor instead.
-func (*Error) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_agent_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *Error) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
 var File_cadestro_v1_agent_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x17cadestro/v1/agent.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x19cadestro/v1/actions.proto\x1a\x18cadestro/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x92\x03\n" +
+	"\x17cadestro/v1/agent.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x19cadestro/v1/actions.proto\x1a\x18cadestro/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xca\x02\n" +
 	"\fAgentMessage\x12.\n" +
 	"\x02id\x18\x01 \x01(\v2\x16.cadestro.v1.MessageIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x12*\n" +
 	"\x05hello\x18\n" +
 	" \x01(\v2\x12.cadestro.v1.HelloH\x00R\x05hello\x126\n" +
 	"\theartbeat\x18\v \x01(\v2\x16.cadestro.v1.HeartbeatH\x00R\theartbeat\x12Y\n" +
 	"\x16desired_policy_request\x18\f \x01(\v2!.cadestro.v1.DesiredPolicyRequestH\x00R\x14desiredPolicyRequest\x12@\n" +
-	"\raction_result\x18\x14 \x01(\v2\x19.cadestro.v1.ActionResultH\x00R\factionResult\x12F\n" +
-	"\x0fmanifest_result\x18\x15 \x01(\v2\x1b.cadestro.v1.ManifestResultH\x00R\x0emanifestResultB\t\n" +
-	"\apayload\"\xa6\x02\n" +
+	"\raction_result\x18\x14 \x01(\v2\x19.cadestro.v1.ActionResultH\x00R\factionResultB\t\n" +
+	"\apayload\"\xfa\x01\n" +
 	"\rServerMessage\x12.\n" +
 	"\x02id\x18\x01 \x01(\v2\x16.cadestro.v1.MessageIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x120\n" +
 	"\awelcome\x18\n" +
 	" \x01(\v2\x14.cadestro.v1.WelcomeH\x00R\awelcome\x12C\n" +
 	"\x0edesired_policy\x18\v \x01(\v2\x1a.cadestro.v1.DesiredPolicyH\x00R\rdesiredPolicy\x127\n" +
 	"\n" +
-	"result_ack\x18\f \x01(\v2\x16.cadestro.v1.ResultAckH\x00R\tresultAck\x12*\n" +
-	"\x05error\x18\r \x01(\v2\x12.cadestro.v1.ErrorH\x00R\x05errorB\t\n" +
-	"\apayload\"\xc1\x01\n" +
+	"result_ack\x18\f \x01(\v2\x16.cadestro.v1.ResultAckH\x00R\tresultAckB\t\n" +
+	"\apayload\"\xa1\x01\n" +
 	"\x05Hello\x12:\n" +
 	"\tdevice_id\x18\x01 \x01(\v2\x15.cadestro.v1.DeviceIdB\x06\xbaH\x03\xc8\x01\x01R\bdeviceId\x121\n" +
 	"\ragent_version\x18\x02 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18 R\fagentVersion\x12)\n" +
 	"\bhostname\x18\x03 \x01(\tB\r\xbaH\n" +
-	"\xc8\x01\x01r\x05\x10\x01\x18\xfd\x01R\bhostname\x12\x1e\n" +
-	"\x04arch\x18\x04 \x01(\tB\n" +
-	"\xbaH\a\xd8\x01\x01r\x02\x18\x10R\x04arch\"\v\n" +
-	"\tHeartbeat\"\x88\x01\n" +
-	"\aWelcome\x123\n" +
-	"\x0eserver_version\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18 R\rserverVersion\x12H\n" +
-	"\x12heartbeat_interval\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\x11heartbeatInterval\"\x16\n" +
-	"\x14DesiredPolicyRequest\"\xcd\x01\n" +
+	"\xc8\x01\x01r\x05\x10\x01\x18\xfd\x01R\bhostname\"\v\n" +
+	"\tHeartbeat\"[\n" +
+	"\aWelcome\x12P\n" +
+	"\x12heartbeat_interval\x18\x01 \x01(\v2\x19.google.protobuf.DurationB\x06\xbaH\x03\xc8\x01\x01R\x11heartbeatInterval\"\x16\n" +
+	"\x14DesiredPolicyRequest\"\xc7\x01\n" +
 	"\rDesiredPolicy\x12D\n" +
 	"\x18refresh_interval_minutes\x18\x01 \x01(\x05B\n" +
 	"\xbaH\a\x1a\x05\x18\xa0\v(\x01R\x16refreshIntervalMinutes\x12A\n" +
-	"\brevision\x18\x02 \x01(\v2\x1d.cadestro.v1.PolicyRevisionIdB\x06\xbaH\x03\xc8\x01\x01R\brevision\x123\n" +
-	"\tmanifests\x18\x03 \x03(\v2\x15.cadestro.v1.ManifestR\tmanifests\"\x8a\x02\n" +
-	"\bManifest\x12@\n" +
-	"\vmanifest_id\x18\x01 \x01(\v2\x17.cadestro.v1.ManifestIdB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"manifestId\x12F\n" +
-	"\roccurrence_id\x18\x02 \x01(\v2\x19.cadestro.v1.OccurrenceIdB\x06\xbaH\x03\xc8\x01\x01R\foccurrenceId\x123\n" +
-	"\x06action\x18\x03 \x01(\v2\x13.cadestro.v1.ActionB\x06\xbaH\x03\xc8\x01\x01R\x06action\x12?\n" +
-	"\bschedule\x18\x04 \x01(\v2\x1b.cadestro.v1.ActionScheduleB\x06\xbaH\x03\xc8\x01\x01R\bschedule\"\xc3\x02\n" +
-	"\x0eManifestResult\x121\n" +
-	"\x06run_id\x18\x01 \x01(\v2\x12.cadestro.v1.RunIdB\x06\xbaH\x03\xc8\x01\x01R\x05runId\x12@\n" +
-	"\vmanifest_id\x18\x02 \x01(\v2\x17.cadestro.v1.ManifestIdB\x06\xbaH\x03\xc8\x01\x01R\n" +
-	"manifestId\x12<\n" +
-	"\x06status\x18\x03 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusB\x06\xbaH\x03\xc8\x01\x01R\x06status\x12=\n" +
-	"\fcompleted_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12?\n" +
-	"\bduration\x18\x05 \x01(\v2\x19.google.protobuf.DurationB\b\xbaH\x05\xaa\x01\x022\x00R\bduration\"C\n" +
+	"\brevision\x18\x02 \x01(\v2\x1d.cadestro.v1.PolicyRevisionIdB\x06\xbaH\x03\xc8\x01\x01R\brevision\x12-\n" +
+	"\aactions\x18\x03 \x03(\v2\x13.cadestro.v1.ActionR\aactions\"C\n" +
 	"\tResultAck\x126\n" +
-	"\x04code\x18\x01 \x01(\x0e2\x1a.cadestro.v1.ResultAckCodeB\x06\xbaH\x03\xc8\x01\x01R\x04code\"0\n" +
-	"\x05Error\x12'\n" +
-	"\amessage\x18\x01 \x01(\tB\r\xbaH\n" +
-	"\xc8\x01\x01r\x05\x10\x01\x18\x80\bR\amessage*l\n" +
+	"\x04code\x18\x01 \x01(\x0e2\x1a.cadestro.v1.ResultAckCodeB\x06\xbaH\x03\xc8\x01\x01R\x04code*l\n" +
 	"\rResultAckCode\x12\x1f\n" +
 	"\x1bRESULT_ACK_CODE_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18RESULT_ACK_CODE_ACCEPTED\x10\x01\x12\x1c\n" +
@@ -895,66 +638,46 @@ func file_cadestro_v1_agent_proto_rawDescGZIP() []byte {
 }
 
 var file_cadestro_v1_agent_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cadestro_v1_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_cadestro_v1_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_cadestro_v1_agent_proto_goTypes = []any{
-	(ResultAckCode)(0),            // 0: cadestro.v1.ResultAckCode
-	(*AgentMessage)(nil),          // 1: cadestro.v1.AgentMessage
-	(*ServerMessage)(nil),         // 2: cadestro.v1.ServerMessage
-	(*Hello)(nil),                 // 3: cadestro.v1.Hello
-	(*Heartbeat)(nil),             // 4: cadestro.v1.Heartbeat
-	(*Welcome)(nil),               // 5: cadestro.v1.Welcome
-	(*DesiredPolicyRequest)(nil),  // 6: cadestro.v1.DesiredPolicyRequest
-	(*DesiredPolicy)(nil),         // 7: cadestro.v1.DesiredPolicy
-	(*Manifest)(nil),              // 8: cadestro.v1.Manifest
-	(*ManifestResult)(nil),        // 9: cadestro.v1.ManifestResult
-	(*ResultAck)(nil),             // 10: cadestro.v1.ResultAck
-	(*Error)(nil),                 // 11: cadestro.v1.Error
-	(*MessageId)(nil),             // 12: cadestro.v1.MessageId
-	(*ActionResult)(nil),          // 13: cadestro.v1.ActionResult
-	(*DeviceId)(nil),              // 14: cadestro.v1.DeviceId
-	(*durationpb.Duration)(nil),   // 15: google.protobuf.Duration
-	(*PolicyRevisionId)(nil),      // 16: cadestro.v1.PolicyRevisionId
-	(*ManifestId)(nil),            // 17: cadestro.v1.ManifestId
-	(*OccurrenceId)(nil),          // 18: cadestro.v1.OccurrenceId
-	(*Action)(nil),                // 19: cadestro.v1.Action
-	(*ActionSchedule)(nil),        // 20: cadestro.v1.ActionSchedule
-	(*RunId)(nil),                 // 21: cadestro.v1.RunId
-	(ExecutionStatus)(0),          // 22: cadestro.v1.ExecutionStatus
-	(*timestamppb.Timestamp)(nil), // 23: google.protobuf.Timestamp
+	(ResultAckCode)(0),           // 0: cadestro.v1.ResultAckCode
+	(*AgentMessage)(nil),         // 1: cadestro.v1.AgentMessage
+	(*ServerMessage)(nil),        // 2: cadestro.v1.ServerMessage
+	(*Hello)(nil),                // 3: cadestro.v1.Hello
+	(*Heartbeat)(nil),            // 4: cadestro.v1.Heartbeat
+	(*Welcome)(nil),              // 5: cadestro.v1.Welcome
+	(*DesiredPolicyRequest)(nil), // 6: cadestro.v1.DesiredPolicyRequest
+	(*DesiredPolicy)(nil),        // 7: cadestro.v1.DesiredPolicy
+	(*ResultAck)(nil),            // 8: cadestro.v1.ResultAck
+	(*MessageId)(nil),            // 9: cadestro.v1.MessageId
+	(*ActionResult)(nil),         // 10: cadestro.v1.ActionResult
+	(*DeviceId)(nil),             // 11: cadestro.v1.DeviceId
+	(*durationpb.Duration)(nil),  // 12: google.protobuf.Duration
+	(*PolicyRevisionId)(nil),     // 13: cadestro.v1.PolicyRevisionId
+	(*Action)(nil),               // 14: cadestro.v1.Action
 }
 var file_cadestro_v1_agent_proto_depIdxs = []int32{
-	12, // 0: cadestro.v1.AgentMessage.id:type_name -> cadestro.v1.MessageId
+	9,  // 0: cadestro.v1.AgentMessage.id:type_name -> cadestro.v1.MessageId
 	3,  // 1: cadestro.v1.AgentMessage.hello:type_name -> cadestro.v1.Hello
 	4,  // 2: cadestro.v1.AgentMessage.heartbeat:type_name -> cadestro.v1.Heartbeat
 	6,  // 3: cadestro.v1.AgentMessage.desired_policy_request:type_name -> cadestro.v1.DesiredPolicyRequest
-	13, // 4: cadestro.v1.AgentMessage.action_result:type_name -> cadestro.v1.ActionResult
-	9,  // 5: cadestro.v1.AgentMessage.manifest_result:type_name -> cadestro.v1.ManifestResult
-	12, // 6: cadestro.v1.ServerMessage.id:type_name -> cadestro.v1.MessageId
-	5,  // 7: cadestro.v1.ServerMessage.welcome:type_name -> cadestro.v1.Welcome
-	7,  // 8: cadestro.v1.ServerMessage.desired_policy:type_name -> cadestro.v1.DesiredPolicy
-	10, // 9: cadestro.v1.ServerMessage.result_ack:type_name -> cadestro.v1.ResultAck
-	11, // 10: cadestro.v1.ServerMessage.error:type_name -> cadestro.v1.Error
-	14, // 11: cadestro.v1.Hello.device_id:type_name -> cadestro.v1.DeviceId
-	15, // 12: cadestro.v1.Welcome.heartbeat_interval:type_name -> google.protobuf.Duration
-	16, // 13: cadestro.v1.DesiredPolicy.revision:type_name -> cadestro.v1.PolicyRevisionId
-	8,  // 14: cadestro.v1.DesiredPolicy.manifests:type_name -> cadestro.v1.Manifest
-	17, // 15: cadestro.v1.Manifest.manifest_id:type_name -> cadestro.v1.ManifestId
-	18, // 16: cadestro.v1.Manifest.occurrence_id:type_name -> cadestro.v1.OccurrenceId
-	19, // 17: cadestro.v1.Manifest.action:type_name -> cadestro.v1.Action
-	20, // 18: cadestro.v1.Manifest.schedule:type_name -> cadestro.v1.ActionSchedule
-	21, // 19: cadestro.v1.ManifestResult.run_id:type_name -> cadestro.v1.RunId
-	17, // 20: cadestro.v1.ManifestResult.manifest_id:type_name -> cadestro.v1.ManifestId
-	22, // 21: cadestro.v1.ManifestResult.status:type_name -> cadestro.v1.ExecutionStatus
-	23, // 22: cadestro.v1.ManifestResult.completed_at:type_name -> google.protobuf.Timestamp
-	15, // 23: cadestro.v1.ManifestResult.duration:type_name -> google.protobuf.Duration
-	0,  // 24: cadestro.v1.ResultAck.code:type_name -> cadestro.v1.ResultAckCode
-	1,  // 25: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
-	2,  // 26: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
-	26, // [26:27] is the sub-list for method output_type
-	25, // [25:26] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	10, // 4: cadestro.v1.AgentMessage.action_result:type_name -> cadestro.v1.ActionResult
+	9,  // 5: cadestro.v1.ServerMessage.id:type_name -> cadestro.v1.MessageId
+	5,  // 6: cadestro.v1.ServerMessage.welcome:type_name -> cadestro.v1.Welcome
+	7,  // 7: cadestro.v1.ServerMessage.desired_policy:type_name -> cadestro.v1.DesiredPolicy
+	8,  // 8: cadestro.v1.ServerMessage.result_ack:type_name -> cadestro.v1.ResultAck
+	11, // 9: cadestro.v1.Hello.device_id:type_name -> cadestro.v1.DeviceId
+	12, // 10: cadestro.v1.Welcome.heartbeat_interval:type_name -> google.protobuf.Duration
+	13, // 11: cadestro.v1.DesiredPolicy.revision:type_name -> cadestro.v1.PolicyRevisionId
+	14, // 12: cadestro.v1.DesiredPolicy.actions:type_name -> cadestro.v1.Action
+	0,  // 13: cadestro.v1.ResultAck.code:type_name -> cadestro.v1.ResultAckCode
+	1,  // 14: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
+	2,  // 15: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
+	15, // [15:16] is the sub-list for method output_type
+	14, // [14:15] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_agent_proto_init() }
@@ -969,13 +692,11 @@ func file_cadestro_v1_agent_proto_init() {
 		(*AgentMessage_Heartbeat)(nil),
 		(*AgentMessage_DesiredPolicyRequest)(nil),
 		(*AgentMessage_ActionResult)(nil),
-		(*AgentMessage_ManifestResult)(nil),
 	}
 	file_cadestro_v1_agent_proto_msgTypes[1].OneofWrappers = []any{
 		(*ServerMessage_Welcome)(nil),
 		(*ServerMessage_DesiredPolicy)(nil),
 		(*ServerMessage_ResultAck)(nil),
-		(*ServerMessage_Error)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -983,7 +704,7 @@ func file_cadestro_v1_agent_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cadestro_v1_agent_proto_rawDesc), len(file_cadestro_v1_agent_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   11,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
