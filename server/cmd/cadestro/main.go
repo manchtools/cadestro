@@ -25,8 +25,6 @@ import (
 	"github.com/manchtools/cadestro/server/internal/store"
 )
 
-var version = "dev"
-
 func main() {
 	config, err := loadConfig()
 	if err != nil {
