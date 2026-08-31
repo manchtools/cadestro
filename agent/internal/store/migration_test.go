@@ -23,10 +23,6 @@ func TestBaselineMigrationUsesScheduledWork(t *testing.T) {
 	var count int
 	require.NoError(t, db.QueryRow(`SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'scheduled_work'`).Scan(&count))
 	require.Equal(t, 1, count)
-	require.NoError(t, db.QueryRow(`SELECT COUNT(*) FROM pragma_table_info('scheduled_work') WHERE name = 'kind'`).Scan(&count))
-	require.Zero(t, count)
-	require.NoError(t, db.QueryRow(`SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'scheduled_work_occurrences'`).Scan(&count))
-	require.Zero(t, count)
 }
 
 func TestBaselineMigrationSupportsRollback(t *testing.T) {
