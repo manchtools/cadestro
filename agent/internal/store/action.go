@@ -56,10 +56,11 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	}
-	rows, err := q.ListActiveWork(ctx)
+	rows, err := q.ListAllWork(ctx)
 	if err != nil {
 		return err
 	}
+	now := s.now().UTC()
 	for _, row := range rows {
 		if _, ok := current[row.WorkID]; !ok {
 			if row.RunInProgress {
@@ -69,33 +70,60 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 			} else if err := q.DeleteWork(ctx, row.WorkID); err != nil {
 				return err
 			}
+		} else if !row.Retired {
+			stored, decodeErr := decodeAction(row.ActionBlob)
+			if decodeErr != nil {
+				return fmt.Errorf("reconcile policy: decode %s: %w", row.WorkID, decodeErr)
+			}
+			if !proto.Equal(stored, current[row.WorkID]) {
+				blob, marshalErr := proto.Marshal(current[row.WorkID])
+				if marshalErr != nil {
+					return fmt.Errorf("reconcile policy: marshal %s: %w", row.WorkID, marshalErr)
+				}
+				if err := q.UpdateScheduledWork(ctx, generated.UpdateScheduledWorkParams{ActionBlob: blob, NextExecuteAt: now, WorkID: row.WorkID}); err != nil {
+					return fmt.Errorf("reconcile policy: update %s: %w", row.WorkID, err)
+				}
+			}
+		} else {
+			blob, marshalErr := proto.Marshal(current[row.WorkID])
+			if marshalErr != nil {
+				return fmt.Errorf("reconcile policy: marshal %s: %w", row.WorkID, marshalErr)
+			}
+			if err := q.UpdateScheduledWork(ctx, generated.UpdateScheduledWorkParams{ActionBlob: blob, NextExecuteAt: now, WorkID: row.WorkID}); err != nil {
+				return fmt.Errorf("reconcile policy: revive %s: %w", row.WorkID, err)
+			}
 		}
 	}
-	now := s.now().UTC()
 	for id, a := range current {
-		blob, err := proto.Marshal(a)
-		if err != nil {
-			return err
-		}
-		_, err = q.ScheduledWorkExists(ctx, id)
-		if err == nil {
-			if err := q.ReviveWork(ctx, id); err != nil {
-				return err
+		found := false
+		for _, row := range rows {
+			if row.WorkID == id {
+				found = true
+				break
 			}
+		}
+		if found {
 			continue
 		}
-		if !errors.Is(err, sql.ErrNoRows) {
-			return err
+		blob, marshalErr := proto.Marshal(a)
+		if marshalErr != nil {
+			return fmt.Errorf("reconcile policy: marshal %s: %w", id, marshalErr)
 		}
-		runID := id
-		if err := q.InsertScheduledWork(ctx, generated.InsertScheduledWorkParams{WorkID: id, RunID: &runID, ActionBlob: blob, ReceivedAt: now, NextExecuteAt: calculateNextExecuteFromSchedule(a.GetSchedule(), nil, false, now)}); err != nil {
-			return err
+		if err := q.InsertScheduledWork(ctx, generated.InsertScheduledWorkParams{WorkID: id, ActionBlob: blob, ReceivedAt: now, NextExecuteAt: calculateNextExecuteFromSchedule(a.GetSchedule(), nil, now)}); err != nil {
+			return fmt.Errorf("reconcile policy: insert %s: %w", id, err)
 		}
 	}
 	if err := q.SetAssignedPolicyRevision(ctx, policy.GetRevision().GetValue()); err != nil {
 		return err
 	}
 	return tx.Commit()
+}
+func decodeAction(blob []byte) (*pb.Action, error) {
+	action := &pb.Action{}
+	if err := proto.Unmarshal(blob, action); err != nil {
+		return nil, err
+	}
+	return action, nil
 }
 func (s *Store) GetDueScheduledWork(ctx context.Context) ([]ScheduledWork, error) {
 	s.mu.RLock()
@@ -153,7 +181,7 @@ func (s *Store) BeginActionRun(ctx context.Context, w *ScheduledWork, started ti
 	}
 	started = started.UTC()
 	id := ulid.Make().String()
-	n, err := q.BeginScheduledRun(ctx, generated.BeginScheduledRunParams{RunID: &id, LastExecutedAt: &started, NextExecuteAt: calculateNextExecuteFromSchedule(w.Action.GetSchedule(), &started, false, s.now()), RunStartedAt: &started, WorkID: w.WorkID})
+	n, err := q.BeginScheduledRun(ctx, generated.BeginScheduledRunParams{RunID: &id, LastExecutedAt: &started, NextExecuteAt: calculateNextExecuteFromSchedule(w.Action.GetSchedule(), &started, s.now()), RunStartedAt: &started, WorkID: w.WorkID})
 	if err != nil {
 		return err
 	}

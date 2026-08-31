@@ -1,18 +1,16 @@
 -- name: GetAssignedPolicyRevision :one
 SELECT value FROM settings WHERE key = 'assigned_policy_revision';
--- name: ListActiveWork :many
-SELECT work_id, run_in_progress FROM scheduled_work WHERE retired = FALSE;
+-- name: ListAllWork :many
+SELECT work_id, action_blob, retired, run_in_progress FROM scheduled_work;
 -- name: RetireWork :exec
 UPDATE scheduled_work SET retired = TRUE, updated_at = CURRENT_TIMESTAMP WHERE work_id = ?;
 -- name: DeleteWork :exec
 DELETE FROM scheduled_work WHERE work_id = ?;
--- name: ScheduledWorkExists :one
-SELECT 1 FROM scheduled_work WHERE work_id = ?;
--- name: ReviveWork :exec
-UPDATE scheduled_work SET retired = FALSE, updated_at = CURRENT_TIMESTAMP WHERE work_id = ?;
+-- name: UpdateScheduledWork :exec
+UPDATE scheduled_work SET action_blob = ?, retired = FALSE, next_execute_at = ?, updated_at = CURRENT_TIMESTAMP WHERE work_id = ?;
 -- name: InsertScheduledWork :exec
 INSERT INTO scheduled_work (work_id, run_id, action_blob, retired, received_at, next_execute_at, created_at, updated_at)
-VALUES (?, ?, ?, FALSE, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+VALUES (?, NULL, ?, FALSE, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 -- name: SetAssignedPolicyRevision :exec
 INSERT INTO settings (key, value, created_at, updated_at) VALUES ('assigned_policy_revision', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP;

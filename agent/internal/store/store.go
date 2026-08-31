@@ -108,11 +108,8 @@ func (s *Store) SetClockForTest(now func() time.Time) {
 
 func (s *Store) Close() error { return s.db.Close() }
 
-func calculateNextExecuteFromSchedule(schedule *pb.ActionSchedule, lastExecuted *time.Time, runImmediately bool, now time.Time) time.Time {
+func calculateNextExecuteFromSchedule(schedule *pb.ActionSchedule, lastExecuted *time.Time, now time.Time) time.Time {
 	now = now.UTC()
-	if runImmediately && lastExecuted == nil {
-		return now
-	}
 	interval := defaultInterval
 	if hours := schedule.GetIntervalHours(); hours > 0 {
 		interval = time.Duration(hours) * time.Hour

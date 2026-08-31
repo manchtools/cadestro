@@ -17,7 +17,6 @@ func TestActionScheduleClampsForwardClockJumpToOneInterval(t *testing.T) {
 	got := calculateNextExecuteFromSchedule(
 		&pb.ActionSchedule{IntervalHours: 8},
 		&lastExecuted,
-		false,
 		now,
 	)
 
@@ -28,7 +27,7 @@ func TestActionScheduleWithoutExplicitCadenceUsesDriftDefault(t *testing.T) {
 	now := time.Date(2026, 6, 14, 12, 0, 0, 0, time.UTC)
 	lastExecuted := now
 
-	got := calculateNextExecuteFromSchedule(nil, &lastExecuted, false, now)
+	got := calculateNextExecuteFromSchedule(nil, &lastExecuted, now)
 
 	require.Equal(t, now.Add(defaultInterval), got)
 }

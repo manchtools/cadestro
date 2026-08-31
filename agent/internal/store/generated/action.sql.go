@@ -260,12 +260,11 @@ func (q *Queries) InsertResultOutbox(ctx context.Context, payload []byte) (int64
 
 const insertScheduledWork = `-- name: InsertScheduledWork :exec
 INSERT INTO scheduled_work (work_id, run_id, action_blob, retired, received_at, next_execute_at, created_at, updated_at)
-VALUES (?, ?, ?, FALSE, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+VALUES (?, NULL, ?, FALSE, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 `
 
 type InsertScheduledWorkParams struct {
 	WorkID        string    `json:"work_id"`
-	RunID         *string   `json:"run_id"`
 	ActionBlob    []byte    `json:"action_blob"`
 	ReceivedAt    time.Time `json:"received_at"`
 	NextExecuteAt time.Time `json:"next_execute_at"`
@@ -274,7 +273,6 @@ type InsertScheduledWorkParams struct {
 func (q *Queries) InsertScheduledWork(ctx context.Context, arg InsertScheduledWorkParams) error {
 	_, err := q.db.ExecContext(ctx, insertScheduledWork,
 		arg.WorkID,
-		arg.RunID,
 		arg.ActionBlob,
 		arg.ReceivedAt,
 		arg.NextExecuteAt,
@@ -282,25 +280,32 @@ func (q *Queries) InsertScheduledWork(ctx context.Context, arg InsertScheduledWo
 	return err
 }
 
-const listActiveWork = `-- name: ListActiveWork :many
-SELECT work_id, run_in_progress FROM scheduled_work WHERE retired = FALSE
+const listAllWork = `-- name: ListAllWork :many
+SELECT work_id, action_blob, retired, run_in_progress FROM scheduled_work
 `
 
-type ListActiveWorkRow struct {
+type ListAllWorkRow struct {
 	WorkID        string `json:"work_id"`
+	ActionBlob    []byte `json:"action_blob"`
+	Retired       bool   `json:"retired"`
 	RunInProgress bool   `json:"run_in_progress"`
 }
 
-func (q *Queries) ListActiveWork(ctx context.Context) ([]ListActiveWorkRow, error) {
-	rows, err := q.db.QueryContext(ctx, listActiveWork)
+func (q *Queries) ListAllWork(ctx context.Context) ([]ListAllWorkRow, error) {
+	rows, err := q.db.QueryContext(ctx, listAllWork)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListActiveWorkRow{}
+	items := []ListAllWorkRow{}
 	for rows.Next() {
-		var i ListActiveWorkRow
-		if err := rows.Scan(&i.WorkID, &i.RunInProgress); err != nil {
+		var i ListAllWorkRow
+		if err := rows.Scan(
+			&i.WorkID,
+			&i.ActionBlob,
+			&i.Retired,
+			&i.RunInProgress,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -362,26 +367,6 @@ func (q *Queries) RetireWork(ctx context.Context, workID string) error {
 	return err
 }
 
-const reviveWork = `-- name: ReviveWork :exec
-UPDATE scheduled_work SET retired = FALSE, updated_at = CURRENT_TIMESTAMP WHERE work_id = ?
-`
-
-func (q *Queries) ReviveWork(ctx context.Context, workID string) error {
-	_, err := q.db.ExecContext(ctx, reviveWork, workID)
-	return err
-}
-
-const scheduledWorkExists = `-- name: ScheduledWorkExists :one
-SELECT 1 FROM scheduled_work WHERE work_id = ?
-`
-
-func (q *Queries) ScheduledWorkExists(ctx context.Context, workID string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, scheduledWorkExists, workID)
-	var column_1 int64
-	err := row.Scan(&column_1)
-	return column_1, err
-}
-
 const setAssignedPolicyRevision = `-- name: SetAssignedPolicyRevision :exec
 INSERT INTO settings (key, value, created_at, updated_at) VALUES ('assigned_policy_revision', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
@@ -389,5 +374,20 @@ ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIME
 
 func (q *Queries) SetAssignedPolicyRevision(ctx context.Context, value string) error {
 	_, err := q.db.ExecContext(ctx, setAssignedPolicyRevision, value)
+	return err
+}
+
+const updateScheduledWork = `-- name: UpdateScheduledWork :exec
+UPDATE scheduled_work SET action_blob = ?, retired = FALSE, next_execute_at = ?, updated_at = CURRENT_TIMESTAMP WHERE work_id = ?
+`
+
+type UpdateScheduledWorkParams struct {
+	ActionBlob    []byte    `json:"action_blob"`
+	NextExecuteAt time.Time `json:"next_execute_at"`
+	WorkID        string    `json:"work_id"`
+}
+
+func (q *Queries) UpdateScheduledWork(ctx context.Context, arg UpdateScheduledWorkParams) error {
+	_, err := q.db.ExecContext(ctx, updateScheduledWork, arg.ActionBlob, arg.NextExecuteAt, arg.WorkID)
 	return err
 }
