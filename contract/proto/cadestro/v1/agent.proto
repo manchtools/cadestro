@@ -6,7 +6,6 @@ import "buf/validate/validate.proto";
 import "cadestro/v1/actions.proto";
 import "cadestro/v1/common.proto";
 import "google/protobuf/duration.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1";
 

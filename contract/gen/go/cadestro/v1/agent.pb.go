@@ -11,7 +11,6 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -585,7 +584,7 @@ var File_cadestro_v1_agent_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x17cadestro/v1/agent.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x19cadestro/v1/actions.proto\x1a\x18cadestro/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xca\x02\n" +
+	"\x17cadestro/v1/agent.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x19cadestro/v1/actions.proto\x1a\x18cadestro/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\"\xca\x02\n" +
 	"\fAgentMessage\x12.\n" +
 	"\x02id\x18\x01 \x01(\v2\x16.cadestro.v1.MessageIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x12*\n" +
 	"\x05hello\x18\n" +
