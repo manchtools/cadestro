@@ -30,7 +30,7 @@ func TestExecutionResultPersistsSerializedPayload(t *testing.T) {
 	require.NoError(t, err)
 	result := &cadestrov1.ActionResult{
 		ActionId: &cadestrov1.ActionId{Value: actionID}, Status: cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS,
-		Output:   &cadestrov1.CommandOutput{ExitCode: 7, Stdout: "out", Stderr: "err"},
+		Output:          &cadestrov1.CommandOutput{ExitCode: 7, Stdout: "out", Stderr: "err"},
 		DetectionOutput: &cadestrov1.CommandOutput{ExitCode: 2, Stdout: "detect", Stderr: "detect err"},
 		RunId:           &cadestrov1.RunId{Value: "01K00000000000000000000004"},
 	}

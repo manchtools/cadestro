@@ -114,8 +114,8 @@ func (service *Service) Stream(ctx context.Context, stream *connect.BidiStream[c
 		return err
 	}
 	if err := stream.Send(&cadestrov1.ServerMessage{
-			Id: &cadestrov1.MessageId{Value: ulid.Make().String()},
-			Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{HeartbeatInterval: durationpb.New(service.heartbeatInterval)}},
+		Id:      &cadestrov1.MessageId{Value: ulid.Make().String()},
+		Payload: &cadestrov1.ServerMessage_Welcome{Welcome: &cadestrov1.Welcome{HeartbeatInterval: durationpb.New(service.heartbeatInterval)}},
 	}); err != nil {
 		return fmt.Errorf("send welcome: %w", err)
 	}
