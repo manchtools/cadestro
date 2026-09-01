@@ -37,13 +37,13 @@ const (
 // output is locale/format-stable by construction. It is not overridable — those
 // names are rejected if passed via Env. (TZ is deliberately left to the device.)
 type Command struct {
-	Name      string    // resolved to an absolute path before escalation
-	Args      []string  // operands; the caller pre-applies SeparatePositionals
-	Dir       string    // "" = inherit cwd
-	Env       []string  // extra KEY=VALUE; screened by the env hijack blocklist
-	Stdin     io.Reader // "" = no stdin
-	ChildPath string    // explicit, isolating child PATH; "" = inherit/sanitized
-	Escalate  bool      // run through the privilege backend
+	Name      string
+	Args      []string
+	Dir       string
+	Env       []string
+	Stdin     io.Reader
+	ChildPath string
+	Escalate  bool
 }
 
 // Runner abstracts command execution + privilege escalation. It is injected

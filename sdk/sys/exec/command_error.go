@@ -44,10 +44,10 @@ var (
 // carries the exit code and captured stderr so callers can branch on them via
 // errors.As without importing internals.
 type CommandError struct {
-	Name     string // the command that failed, e.g. "useradd"
+	Name     string
 	ExitCode int
 	Stderr   string
-	Err      error // underlying cause, if any
+	Err      error
 }
 
 func (e *CommandError) Error() string {

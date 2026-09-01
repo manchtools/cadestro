@@ -395,7 +395,7 @@ func TestApt_Show(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if p.Status != "installed" || p.Version != "2:8.2" || p.Size != 3000*1024 {
+		if p.Status != PackageStatusInstalled || p.Version != "2:8.2" || p.Size != 3000*1024 {
 			t.Errorf("pkg = %+v", p)
 		}
 	})
@@ -407,7 +407,7 @@ func TestApt_Show(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if p.Status != "available" {
+		if p.Status != PackageStatusAvailable {
 			t.Errorf("pkg = %+v", p)
 		}
 	})

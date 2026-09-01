@@ -23,10 +23,10 @@ import (
 
 // UnitStatus is a unit's current state.
 type UnitStatus struct {
-	Enabled bool // explicitly enabled (systemctl enable), not boot-via-dependency
+	Enabled bool
 	Active  bool
 	Masked  bool
-	Static  bool // starts at boot via deps but cannot be enabled/disabled
+	Static  bool
 }
 
 // Manager controls systemd units through runner.

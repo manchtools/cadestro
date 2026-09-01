@@ -240,7 +240,7 @@ func (a *apt) List(ctx context.Context) ([]Package, error) {
 			Name:         fields[0],
 			Version:      fields[1],
 			Architecture: fields[2],
-			Status:       "installed",
+			Status:       PackageStatusInstalled,
 			Size:         size * 1024,
 			Description:  desc,
 		})
@@ -304,9 +304,9 @@ func (a *apt) Show(ctx context.Context, name string) (*Package, error) {
 		return nil, err
 	}
 	if installed {
-		pkg.Status = "installed"
+		pkg.Status = PackageStatusInstalled
 	} else {
-		pkg.Status = "available"
+		pkg.Status = PackageStatusAvailable
 	}
 	return pkg, nil
 }
@@ -483,7 +483,7 @@ func (a *apt) ListPinned(ctx context.Context) ([]Package, error) {
 		packages = append(packages, Package{
 			Name:    name,
 			Version: version,
-			Status:  "installed",
+			Status:  PackageStatusInstalled,
 		})
 	}
 	return packages, nil

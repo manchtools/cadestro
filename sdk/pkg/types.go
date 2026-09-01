@@ -6,10 +6,20 @@ type Package struct {
 	Version      string
 	Architecture string
 	Description  string
-	Status       string // installed, available, upgradable, pinned
-	Size         int64  // installed size in bytes
+	Status       PackageStatus
+	Size         int64
 	Repository   string
 }
+
+// PackageStatus identifies whether a package is installed or available.
+type PackageStatus string
+
+const (
+	// PackageStatusInstalled identifies an installed package.
+	PackageStatusInstalled PackageStatus = "installed"
+	// PackageStatusAvailable identifies a package available from a repository.
+	PackageStatusAvailable PackageStatus = "available"
+)
 
 // LocalPackage is the identity read out of a LOCAL package file (a .deb, .rpm or
 // pacman package on disk) by Manager.LocalPackageInfo. Name is the canonical
@@ -44,7 +54,7 @@ type SearchResult struct {
 type VersionInfo struct {
 	Name      string
 	Versions  []AvailableVersion
-	Installed string // currently installed version, empty if not installed
+	Installed string
 }
 
 // AvailableVersion represents a specific version available for installation.

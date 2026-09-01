@@ -218,7 +218,7 @@ func (z *zypper) List(ctx context.Context) ([]Package, error) {
 			Name:         fields[0],
 			Version:      fields[1],
 			Architecture: fields[2],
-			Status:       "installed",
+			Status:       PackageStatusInstalled,
 			Size:         size,
 			Description:  desc,
 		})
@@ -282,7 +282,7 @@ func (z *zypper) Show(ctx context.Context, name string) (*Package, error) {
 		return nil, err
 	}
 
-	pkg := &Package{Name: name, Status: "available"}
+	pkg := &Package{Name: name, Status: PackageStatusAvailable}
 	for line := range strings.SplitSeq(out, "\n") {
 		switch {
 		case strings.HasPrefix(line, "Version"):
@@ -300,7 +300,7 @@ func (z *zypper) Show(ctx context.Context, name string) (*Package, error) {
 			pkg.Repository = parseColonValue(line)
 		case strings.HasPrefix(line, "Status"):
 			if strings.Contains(strings.ToLower(parseColonValue(line)), "installed") {
-				pkg.Status = "installed"
+				pkg.Status = PackageStatusInstalled
 			}
 		}
 	}
@@ -310,7 +310,7 @@ func (z *zypper) Show(ctx context.Context, name string) (*Package, error) {
 		return nil, err
 	}
 	if installed {
-		pkg.Status = "installed"
+		pkg.Status = PackageStatusInstalled
 	}
 	return pkg, nil
 }
@@ -489,7 +489,7 @@ func (z *zypper) ListPinned(ctx context.Context) ([]Package, error) {
 		packages = append(packages, Package{
 			Name:    m[1],
 			Version: version,
-			Status:  "installed",
+			Status:  PackageStatusInstalled,
 		})
 	}
 	return packages, nil

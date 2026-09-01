@@ -8,10 +8,10 @@ import (
 
 // MountInfo describes one mounted filesystem, as reported by findmnt.
 type MountInfo struct {
-	Source   string // backing device or pseudo-source (e.g. /dev/sda1, tmpfs, proc)
-	Target   string // mountpoint
-	FSType   string // filesystem type (ext4, xfs, tmpfs, ...)
-	ReadOnly bool   // the mount carries the "ro" VFS option
+	Source   string
+	Target   string
+	FSType   string
+	ReadOnly bool
 }
 
 // IsReadOnly reports whether the filesystem mounted at path is read-only, by

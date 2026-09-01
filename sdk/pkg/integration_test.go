@@ -50,7 +50,7 @@ func readIntegration(t *testing.T, m Manager, knownPkg string) {
 		if p.Name == "" {
 			t.Error("List returned a package with an empty name")
 		}
-		if p.Status != "installed" {
+		if p.Status != PackageStatusInstalled {
 			t.Errorf("List package %q status = %q, want installed", p.Name, p.Status)
 		}
 	}

@@ -336,7 +336,7 @@ func TestDnf_Show(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if p.Status != "installed" || p.Version != "8.2-1.fc39" || p.Architecture != "x86_64" || p.Size != 3*1024*1024 {
+		if p.Status != PackageStatusInstalled || p.Version != "8.2-1.fc39" || p.Architecture != "x86_64" || p.Size != 3*1024*1024 {
 			t.Fatalf("p=%+v", p)
 		}
 	})
@@ -348,7 +348,7 @@ func TestDnf_Show(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if p.Status != "available" {
+		if p.Status != PackageStatusAvailable {
 			t.Fatalf("p=%+v", p)
 		}
 	})

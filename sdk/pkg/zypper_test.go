@@ -319,7 +319,7 @@ func TestZypper_Show(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if p.Status != "installed" || p.Version != "9.0-2" || p.Architecture != "x86_64" || p.Size != 3*1024*1024 || p.Repository != "repo-oss" {
+		if p.Status != PackageStatusInstalled || p.Version != "9.0-2" || p.Architecture != "x86_64" || p.Size != 3*1024*1024 || p.Repository != "repo-oss" {
 			t.Fatalf("p=%+v", p)
 		}
 	})
@@ -332,7 +332,7 @@ func TestZypper_Show(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if p.Status != "available" {
+		if p.Status != PackageStatusAvailable {
 			t.Fatalf("p=%+v", p)
 		}
 	})

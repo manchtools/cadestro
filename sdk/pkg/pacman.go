@@ -205,7 +205,7 @@ func (p *pacman) List(ctx context.Context) ([]Package, error) {
 		packages = append(packages, Package{
 			Name:    fields[0],
 			Version: fields[1],
-			Status:  "installed",
+			Status:  PackageStatusInstalled,
 		})
 	}
 	return packages, nil
@@ -259,7 +259,7 @@ func (p *pacman) Show(ctx context.Context, name string) (*Package, error) {
 	if err != nil {
 		return nil, err
 	}
-	status := "installed"
+	status := PackageStatusInstalled
 	if !ok {
 		out, ok, err = probe(ctx, p.r, "pacman", "-Si", name)
 		if err != nil {
@@ -268,7 +268,7 @@ func (p *pacman) Show(ctx context.Context, name string) (*Package, error) {
 		if !ok {
 			return nil, fmt.Errorf("package not found: %s", name)
 		}
-		status = "available"
+		status = PackageStatusAvailable
 	}
 
 	pkg := &Package{Name: name, Status: status}
@@ -487,7 +487,7 @@ func (p *pacman) ListPinned(ctx context.Context) ([]Package, error) {
 		packages = append(packages, Package{
 			Name:    name,
 			Version: version,
-			Status:  "installed",
+			Status:  PackageStatusInstalled,
 		})
 	}
 	return packages, nil

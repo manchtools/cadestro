@@ -237,7 +237,7 @@ func (d *dnf) List(ctx context.Context) ([]Package, error) {
 			Name:         fields[0],
 			Version:      fields[1],
 			Architecture: fields[2],
-			Status:       "installed",
+			Status:       PackageStatusInstalled,
 			Size:         size,
 			Description:  desc,
 		})
@@ -295,7 +295,7 @@ func (d *dnf) Show(ctx context.Context, name string) (*Package, error) {
 		return nil, err
 	}
 
-	pkg := &Package{Name: name, Status: "available"}
+	pkg := &Package{Name: name, Status: PackageStatusAvailable}
 	for line := range strings.SplitSeq(out, "\n") {
 		switch {
 		case strings.HasPrefix(line, "Version"):
@@ -323,7 +323,7 @@ func (d *dnf) Show(ctx context.Context, name string) (*Package, error) {
 		return nil, err
 	}
 	if installed {
-		pkg.Status = "installed"
+		pkg.Status = PackageStatusInstalled
 	}
 	return pkg, nil
 }
@@ -478,7 +478,7 @@ func (d *dnf) ListPinned(ctx context.Context) ([]Package, error) {
 		if err != nil {
 			return nil, err
 		}
-		packages = append(packages, Package{Name: name, Version: version, Status: "installed"})
+		packages = append(packages, Package{Name: name, Version: version, Status: PackageStatusInstalled})
 	}
 	return packages, nil
 }
