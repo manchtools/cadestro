@@ -6,7 +6,6 @@ import (
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"log/slog"
-	"sync"
 	"time"
 )
 
@@ -22,10 +21,6 @@ type Scheduler struct {
 	now            func() time.Time
 	scheduleWakeCh chan struct{}
 	resultReadyCh  chan struct{}
-	mu             sync.Mutex
-	running        bool
-	stopCh         chan struct{}
-	done           chan struct{}
 }
 
 func New(st *store.Store, e ActionExecutor, l *slog.Logger) *Scheduler {
@@ -51,18 +46,7 @@ func (s *Scheduler) wakeSchedule() {
 	default:
 	}
 }
-func (s *Scheduler) Start(ctx context.Context) {
-	s.mu.Lock()
-	if s.running {
-		s.mu.Unlock()
-		return
-	}
-	s.running = true
-	s.stopCh = make(chan struct{})
-	s.done = make(chan struct{})
-	stop, done := s.stopCh, s.done
-	s.mu.Unlock()
-	defer func() { s.mu.Lock(); s.running = false; s.mu.Unlock(); close(done) }()
+func (s *Scheduler) Run(ctx context.Context) {
 	if !s.recoverInterrupted(ctx) {
 		return
 	}
@@ -73,25 +57,12 @@ func (s *Scheduler) Start(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-stop:
-			return
 		case <-ticker.C:
 			s.runDue(ctx)
 		case <-s.scheduleWakeCh:
 			s.runDue(ctx)
 		}
 	}
-}
-func (s *Scheduler) Stop() {
-	s.mu.Lock()
-	if !s.running {
-		s.mu.Unlock()
-		return
-	}
-	close(s.stopCh)
-	done := s.done
-	s.mu.Unlock()
-	<-done
 }
 func (s *Scheduler) runDue(ctx context.Context) {
 	if !s.recoverInterrupted(ctx) {

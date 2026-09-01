@@ -65,10 +65,6 @@ func (h *heartbeatHandler) Stream(ctx context.Context, stream *connect.BidiStrea
 	return nil
 }
 
-type heartbeatClientHandler struct{}
-
-func (heartbeatClientHandler) OnWelcome(context.Context, *cadestrov1.Welcome) error { return nil }
-
 func TestRunStartsHeartbeatOnlyAfterWelcome(t *testing.T) {
 	service := &heartbeatHandler{allow: make(chan struct{}), hello: make(chan struct{}), received: make(chan *cadestrov1.AgentMessage, 1), welcome: &cadestrov1.Welcome{HeartbeatInterval: durationpb.New(500 * time.Millisecond)}}
 	path, handler := cadestrov1connect.NewAgentServiceHandler(service)
@@ -81,8 +77,9 @@ func TestRunStartsHeartbeatOnlyAfterWelcome(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	client := NewClient(server.URL, WithHTTPClient(server.Client()), WithDeviceID("01K00000000000000000000041"))
+	welcome := make(chan *cadestrov1.Welcome, 1)
 	run := make(chan error, 1)
-	go func() { run <- client.Run(ctx, "host", "version", heartbeatClientHandler{}) }()
+	go func() { run <- client.Run(ctx, "host", "version", welcome) }()
 	select {
 	case <-service.hello:
 	case <-time.After(time.Second):
@@ -126,8 +123,9 @@ func TestRunRejectsNonPositiveWelcomeHeartbeat(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	client := NewClient(server.URL, WithHTTPClient(server.Client()), WithDeviceID("01K00000000000000000000042"))
+	welcome := make(chan *cadestrov1.Welcome, 1)
 	run := make(chan error, 1)
-	go func() { run <- client.Run(ctx, "host", "version", heartbeatClientHandler{}) }()
+	go func() { run <- client.Run(ctx, "host", "version", welcome) }()
 	select {
 	case <-service.hello:
 	case <-time.After(time.Second):

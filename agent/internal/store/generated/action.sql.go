@@ -98,20 +98,15 @@ func (q *Queries) GetAssignedPolicyRevision(ctx context.Context) (string, error)
 }
 
 const getDueScheduledWork = `-- name: GetDueScheduledWork :many
-SELECT work_id, COALESCE(run_id, ''), action_blob, received_at, last_executed_at, next_execute_at, run_started_at, run_in_progress
+SELECT work_id, COALESCE(run_id, ''), action_blob
 FROM scheduled_work WHERE (retired = FALSE OR run_in_progress = TRUE) AND (run_in_progress = TRUE OR next_execute_at <= ?)
 ORDER BY run_in_progress DESC, next_execute_at, work_id
 `
 
 type GetDueScheduledWorkRow struct {
-	WorkID         string     `json:"work_id"`
-	RunID          string     `json:"run_id"`
-	ActionBlob     []byte     `json:"action_blob"`
-	ReceivedAt     time.Time  `json:"received_at"`
-	LastExecutedAt *time.Time `json:"last_executed_at"`
-	NextExecuteAt  time.Time  `json:"next_execute_at"`
-	RunStartedAt   *time.Time `json:"run_started_at"`
-	RunInProgress  bool       `json:"run_in_progress"`
+	WorkID     string `json:"work_id"`
+	RunID      string `json:"run_id"`
+	ActionBlob []byte `json:"action_blob"`
 }
 
 func (q *Queries) GetDueScheduledWork(ctx context.Context, nextExecuteAt time.Time) ([]GetDueScheduledWorkRow, error) {
@@ -123,16 +118,7 @@ func (q *Queries) GetDueScheduledWork(ctx context.Context, nextExecuteAt time.Ti
 	items := []GetDueScheduledWorkRow{}
 	for rows.Next() {
 		var i GetDueScheduledWorkRow
-		if err := rows.Scan(
-			&i.WorkID,
-			&i.RunID,
-			&i.ActionBlob,
-			&i.ReceivedAt,
-			&i.LastExecutedAt,
-			&i.NextExecuteAt,
-			&i.RunStartedAt,
-			&i.RunInProgress,
-		); err != nil {
+		if err := rows.Scan(&i.WorkID, &i.RunID, &i.ActionBlob); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -204,6 +190,17 @@ func (q *Queries) GetScheduledRun(ctx context.Context, arg GetScheduledRunParams
 		&i.RunStartedAt,
 	)
 	return i, err
+}
+
+const getScheduledWorkNextExecute = `-- name: GetScheduledWorkNextExecute :one
+SELECT next_execute_at FROM scheduled_work WHERE work_id = ?
+`
+
+func (q *Queries) GetScheduledWorkNextExecute(ctx context.Context, workID string) (time.Time, error) {
+	row := q.db.QueryRowContext(ctx, getScheduledWorkNextExecute, workID)
+	var next_execute_at time.Time
+	err := row.Scan(&next_execute_at)
+	return next_execute_at, err
 }
 
 const insertResultOutbox = `-- name: InsertResultOutbox :one

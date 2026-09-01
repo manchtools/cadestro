@@ -16,11 +16,6 @@ import (
 type ScheduledWork struct {
 	Action        *pb.Action
 	WorkID, RunID string
-	ReceivedAt    time.Time
-	LastExecuted  *time.Time
-	NextExecuteAt time.Time
-	RunStartedAt  *time.Time
-	RunInProgress bool
 }
 type PendingResult struct {
 	Sequence     int64
@@ -135,7 +130,7 @@ func (s *Store) GetDueScheduledWork(ctx context.Context) ([]ScheduledWork, error
 		if err := proto.Unmarshal(row.ActionBlob, a); err != nil {
 			return nil, fmt.Errorf("decode action %s: %w", row.WorkID, err)
 		}
-		out = append(out, ScheduledWork{Action: a, WorkID: row.WorkID, RunID: row.RunID, ReceivedAt: row.ReceivedAt, LastExecuted: row.LastExecutedAt, NextExecuteAt: row.NextExecuteAt, RunStartedAt: row.RunStartedAt, RunInProgress: row.RunInProgress})
+		out = append(out, ScheduledWork{Action: a, WorkID: row.WorkID, RunID: row.RunID})
 	}
 	return out, nil
 }
@@ -172,7 +167,6 @@ func (s *Store) BeginActionRun(ctx context.Context, w *ScheduledWork, started ti
 		return err
 	}
 	w.RunID = id
-	w.RunStartedAt = &started
 	return nil
 }
 func (s *Store) RecordActionResult(ctx context.Context, r *pb.ActionResult) (int64, error) {

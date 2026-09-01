@@ -13,7 +13,6 @@ import (
 
 	"github.com/manchtools/cadestro/agent/internal/credentials"
 	"github.com/manchtools/cadestro/agent/internal/executor"
-	"github.com/manchtools/cadestro/agent/internal/handler"
 	"github.com/manchtools/cadestro/agent/internal/scheduler"
 	"github.com/manchtools/cadestro/agent/internal/store"
 	"github.com/manchtools/cadestro/sdk/logging"
@@ -81,7 +80,6 @@ func main() {
 		logger.Error("open action store", "error", err)
 		os.Exit(1)
 	}
-	defer actionStore.Close()
 
 	actionExecutor, err := executor.NewExecutor(runner)
 	if err != nil {
@@ -89,10 +87,17 @@ func main() {
 		os.Exit(1)
 	}
 	actionScheduler := scheduler.New(actionStore, actionExecutor, logger)
-	streamHandler := handler.NewHandler()
-	go actionScheduler.Start(ctx)
-	runAgent(ctx, credentialStore, creds, hostname, streamHandler, actionScheduler, logger, time.Now)
-	actionScheduler.Stop()
+	schedulerDone := make(chan struct{})
+	go func() {
+		defer close(schedulerDone)
+		actionScheduler.Run(ctx)
+	}()
+	runAgent(ctx, credentialStore, creds, hostname, actionScheduler, logger, time.Now)
+	cancel()
+	<-schedulerDone
+	if err := actionStore.Close(); err != nil {
+		logger.Error("close action store", "error", err)
+	}
 }
 
 func loadCredentials(credentialStore *credentials.Store) (*credentials.Credentials, error) {

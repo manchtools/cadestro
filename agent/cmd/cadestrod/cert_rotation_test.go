@@ -9,6 +9,7 @@ import (
 
 	"github.com/manchtools/cadestro/agent/internal/credentials"
 	sdk "github.com/manchtools/cadestro/contract"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/sdk/cryptotest"
 )
 
@@ -31,20 +32,12 @@ func TestCertificateRenewalDue_Computation(t *testing.T) {
 	}
 }
 
-type blockingWelcomeWaiter struct{}
-
-func (blockingWelcomeWaiter) WaitConnected(ctx context.Context) error {
-	<-ctx.Done()
-	return ctx.Err()
-}
-
 func TestWaitForWelcomeIsBounded(t *testing.T) {
 	ctx, cancelSession := context.WithCancel(context.Background())
 	defer cancelSession()
 	started := time.Now()
-	err := waitForWelcome(ctx, cancelSession, blockingWelcomeWaiter{}.WaitConnected, 5*time.Millisecond)
-	if err == nil {
-		t.Fatal("missing Welcome must return an error")
+	if waitForWelcome(ctx, cancelSession, make(chan *pb.Welcome), 5*time.Millisecond) {
+		t.Fatal("missing Welcome must return false")
 	}
 	if elapsed := time.Since(started); elapsed > time.Second {
 		t.Fatalf("missing Welcome waited too long: %v", elapsed)

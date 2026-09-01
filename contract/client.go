@@ -151,15 +151,10 @@ func RenewCertificate(ctx context.Context, controlURL string, csr []byte, option
 	return &RenewCertificateResult{Certificate: response.Msg.GetCertificate(), NotAfter: response.Msg.GetNotAfter().AsTime()}, nil
 }
 
-// StreamHandler receives stream lifecycle messages.
-type StreamHandler interface {
-	OnWelcome(context.Context, *cadestrov1.Welcome) error
-}
-
 // Run connects and owns the stream until it closes or ctx is cancelled.
-func (client *Client) Run(ctx context.Context, hostname, agentVersion string, handler StreamHandler) error {
-	if handler == nil {
-		return errors.New("stream handler is required")
+func (client *Client) Run(ctx context.Context, hostname, agentVersion string, welcome chan<- *cadestrov1.Welcome) error {
+	if welcome == nil {
+		return errors.New("welcome channel is required")
 	}
 	client.mu.Lock()
 	if client.stream != nil {
@@ -196,8 +191,9 @@ func (client *Client) Run(ctx context.Context, hostname, agentVersion string, ha
 		}
 		switch payload := message.GetPayload().(type) {
 		case *cadestrov1.ServerMessage_Welcome:
-			if err := handler.OnWelcome(ctx, payload.Welcome); err != nil {
-				return fmt.Errorf("handle welcome: %w", err)
+			select {
+			case welcome <- payload.Welcome:
+			default:
 			}
 			if !heartbeatStarted {
 				interval := payload.Welcome.GetHeartbeatInterval().AsDuration()

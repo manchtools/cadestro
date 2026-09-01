@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/manchtools/cadestro/agent/internal/credentials"
-	"github.com/manchtools/cadestro/agent/internal/handler"
 	"github.com/manchtools/cadestro/agent/internal/scheduler"
 	sdk "github.com/manchtools/cadestro/contract"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 func reloadCredsForReconnect(credStore *credentials.Store, current *credentials.Credentials, logger *slog.Logger) *credentials.Credentials {
@@ -22,17 +22,19 @@ func reloadCredsForReconnect(credStore *credentials.Store, current *credentials.
 	return reloaded
 }
 
-func waitForWelcome(ctx context.Context, cancel context.CancelFunc, wait func(context.Context) error, timeout time.Duration) error {
+func waitForWelcome(ctx context.Context, cancel context.CancelFunc, welcome <-chan *pb.Welcome, timeout time.Duration) bool {
 	welcomeCtx, cancelWelcome := context.WithTimeout(ctx, timeout)
 	defer cancelWelcome()
-	err := wait(welcomeCtx)
-	if err != nil {
+	select {
+	case <-welcome:
+		return true
+	case <-welcomeCtx.Done():
 		cancel()
+		return false
 	}
-	return err
 }
 
-func runAgent(ctx context.Context, credStore *credentials.Store, creds *credentials.Credentials, hostname string, handler *handler.Handler, scheduler *scheduler.Scheduler, logger *slog.Logger, now func() time.Time) {
+func runAgent(ctx context.Context, credStore *credentials.Store, creds *credentials.Credentials, hostname string, scheduler *scheduler.Scheduler, logger *slog.Logger, now func() time.Time) {
 	backoff := randomBackoff()
 	fallbackActive := false
 	firstConnect := true
@@ -42,7 +44,7 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 			creds = reloadCredsForReconnect(credStore, creds, logger)
 		}
 		firstConnect = false
-		handler.ResetConnection()
+		welcome := make(chan *pb.Welcome, 1)
 
 		if err := requireHTTPSAgentAddr(creds.AgentAddr); err != nil {
 			logger.Error("refusing invalid control URL", "control", creds.AgentAddr, "error", err)
@@ -62,9 +64,9 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 		sessionCtx, cancelSession := context.WithCancel(ctx)
 		client := sdk.NewClient(strings.TrimSpace(creds.AgentAddr), mtlsOption, sdk.WithDeviceID(creds.DeviceID), sdk.WithLogger(logger))
 		streamDone := make(chan error, 1)
-		go func() { streamDone <- client.Run(sessionCtx, hostname, version, handler) }()
+		go func() { streamDone <- client.Run(sessionCtx, hostname, version, welcome) }()
 
-		connected := waitForWelcome(sessionCtx, cancelSession, handler.WaitConnected, 30*time.Second) == nil
+		connected := waitForWelcome(sessionCtx, cancelSession, welcome, 30*time.Second)
 		staged := false
 		if connected && usingPending {
 			creds.Certificate = append([]byte(nil), creds.PendingCertificate...)

@@ -38,13 +38,16 @@ func TestReconcileActionUpdatesOnlyChangedRows(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, due, 1)
 	require.Equal(t, "false", due[0].Action.GetShell().GetScript())
-	next := due[0].NextExecuteAt
+	next, err := st.queries.GetScheduledWorkNextExecute(ctx, id)
+	require.NoError(t, err)
 	now = now.Add(time.Minute)
 	require.NoError(t, st.ReconcilePolicy(ctx, testPolicy("01K00000000000000000000004", a2)))
 	due, err = st.GetDueScheduledWork(ctx)
 	require.NoError(t, err)
 	require.Len(t, due, 1)
-	require.Equal(t, next, due[0].NextExecuteAt)
+	nextAfter, err := st.queries.GetScheduledWorkNextExecute(ctx, id)
+	require.NoError(t, err)
+	require.Equal(t, next, nextAfter)
 }
 func TestActionResultOutboxAckDeletesOne(t *testing.T) {
 	ctx := context.Background()
