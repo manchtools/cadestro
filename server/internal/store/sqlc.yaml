@@ -37,3 +37,12 @@ sql:
               import: "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
               package: "cadestrov1"
               type: "Permission"
+          - column: "assignments.target_type"
+            go_type:
+              import: "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+              package: "cadestrov1"
+              type: "AssignmentTargetType"
+          - column: "registration_tokens.max_uses"
+            go_type: "int32"
+          - column: "registration_tokens.current_uses"
+            go_type: "int32"

@@ -69,7 +69,7 @@ func TestEnrollmentTokenLifecycle(t *testing.T) {
 		name     string
 		maxUses  int32
 		register int
-		current  int64
+		current  int32
 	}{
 		{name: "final finite use deletes token", maxUses: 1, register: 1},
 		{name: "nonfinal finite use remains", maxUses: 2, register: 1, current: 1},

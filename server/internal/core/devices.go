@@ -135,7 +135,7 @@ func (service *Service) CreateToken(ctx context.Context, request *connect.Reques
 		return nil, service.internal("generate registration token", err)
 	}
 	token, err := service.store.Queries().CreateRegistrationToken(ctx, db.CreateRegistrationTokenParams{
-		ID: ulid.Make().String(), ValueHash: digest, Name: request.Msg.GetName(), MaxUses: int64(request.Msg.GetMaxUses()),
+		ID: ulid.Make().String(), ValueHash: digest, Name: request.Msg.GetName(), MaxUses: request.Msg.GetMaxUses(),
 		ExpiresAt: request.Msg.GetExpiresAt().AsTime(),
 	})
 	if err != nil {
@@ -170,15 +170,11 @@ func (service *Service) ListTokens(ctx context.Context, request *connect.Request
 
 func (service *Service) RenameToken(ctx context.Context, request *connect.Request[cadestrov1.RenameTokenRequest]) (*connect.Response[cadestrov1.RenameTokenResponse], error) {
 	token, err := service.store.Queries().RenameRegistrationToken(ctx, db.RenameRegistrationTokenParams{Name: request.Msg.GetName(), ID: request.Msg.GetId().GetValue()})
-	return service.tokenUpdateResponse(ctx, "rename registration token", token, err)
-}
-
-func (service *Service) tokenUpdateResponse(ctx context.Context, operation string, token *db.RegistrationToken, err error) (*connect.Response[cadestrov1.RenameTokenResponse], error) {
 	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, rpcNotFound("registration token")
 		}
-		return nil, service.internal(operation, err)
+		return nil, service.internal("rename registration token", err)
 	}
 	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_REGISTRATION_TOKEN_UPDATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_REGISTRATION_TOKEN, token.ID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 		return nil, service.internal("audit registration token update", err)

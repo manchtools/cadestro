@@ -20,11 +20,11 @@ type Action struct {
 }
 
 type Assignment struct {
-	ID         string    `json:"id"`
-	ActionID   string    `json:"action_id"`
-	TargetType int64     `json:"target_type"`
-	TargetID   string    `json:"target_id"`
-	CreatedAt  time.Time `json:"created_at"`
+	ID         string                          `json:"id"`
+	ActionID   string                          `json:"action_id"`
+	TargetType cadestrov1.AssignmentTargetType `json:"target_type"`
+	TargetID   string                          `json:"target_id"`
+	CreatedAt  time.Time                       `json:"created_at"`
 }
 
 type AuditEvent struct {
@@ -97,8 +97,8 @@ type RegistrationToken struct {
 	ID          string    `json:"id"`
 	ValueHash   string    `json:"value_hash"`
 	Name        string    `json:"name"`
-	MaxUses     int64     `json:"max_uses"`
-	CurrentUses int64     `json:"current_uses"`
+	MaxUses     int32     `json:"max_uses"`
+	CurrentUses int32     `json:"current_uses"`
 	ExpiresAt   time.Time `json:"expires_at"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`

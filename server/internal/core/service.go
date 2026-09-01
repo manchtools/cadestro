@@ -126,7 +126,7 @@ func providerProto(provider *db.IdentityProvider) (*cadestrov1.IdentityProvider,
 func registrationTokenProto(token *db.RegistrationToken) *cadestrov1.RegistrationToken {
 	return &cadestrov1.RegistrationToken{
 		Id: &cadestrov1.RegistrationTokenId{Value: token.ID}, Name: token.Name,
-		MaxUses: int32(token.MaxUses), CurrentUses: int32(token.CurrentUses),
+		MaxUses: token.MaxUses, CurrentUses: token.CurrentUses,
 		ExpiresAt: timestamppb.New(token.ExpiresAt), CreatedAt: timestamppb.New(token.CreatedAt),
 	}
 }

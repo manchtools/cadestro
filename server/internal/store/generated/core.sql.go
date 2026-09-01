@@ -284,10 +284,10 @@ INSERT INTO assignments (id, action_id, target_type, target_id, created_at) VALU
 `
 
 type CreateAssignmentParams struct {
-	ID         string `json:"id"`
-	ActionID   string `json:"action_id"`
-	TargetType int64  `json:"target_type"`
-	TargetID   string `json:"target_id"`
+	ID         string                          `json:"id"`
+	ActionID   string                          `json:"action_id"`
+	TargetType cadestrov1.AssignmentTargetType `json:"target_type"`
+	TargetID   string                          `json:"target_id"`
 }
 
 func (q *Queries) CreateAssignment(ctx context.Context, arg CreateAssignmentParams) (*Assignment, error) {
@@ -484,7 +484,7 @@ type CreateRegistrationTokenParams struct {
 	ID        string    `json:"id"`
 	ValueHash string    `json:"value_hash"`
 	Name      string    `json:"name"`
-	MaxUses   int64     `json:"max_uses"`
+	MaxUses   int32     `json:"max_uses"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
@@ -1091,13 +1091,13 @@ type ListAssignmentsParams struct {
 }
 
 type ListAssignmentsRow struct {
-	ID         string    `json:"id"`
-	ActionID   string    `json:"action_id"`
-	TargetType int64     `json:"target_type"`
-	TargetID   string    `json:"target_id"`
-	CreatedAt  time.Time `json:"created_at"`
-	ActionName string    `json:"action_name"`
-	TargetName string    `json:"target_name"`
+	ID         string                          `json:"id"`
+	ActionID   string                          `json:"action_id"`
+	TargetType cadestrov1.AssignmentTargetType `json:"target_type"`
+	TargetID   string                          `json:"target_id"`
+	CreatedAt  time.Time                       `json:"created_at"`
+	ActionName string                          `json:"action_name"`
+	TargetName string                          `json:"target_name"`
 }
 
 func (q *Queries) ListAssignments(ctx context.Context, arg ListAssignmentsParams) ([]*ListAssignmentsRow, error) {

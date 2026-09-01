@@ -18,7 +18,7 @@ import (
 func assignmentProto(assignment *db.ListAssignmentsRow) *cadestrov1.Assignment {
 	return &cadestrov1.Assignment{
 		Id: &cadestrov1.AssignmentId{Value: assignment.ID}, ActionId: &cadestrov1.ActionId{Value: assignment.ActionID},
-		ActionName: assignment.ActionName, TargetType: cadestrov1.AssignmentTargetType(assignment.TargetType),
+		ActionName: assignment.ActionName, TargetType: assignment.TargetType,
 		TargetId: &cadestrov1.AssignmentTargetId{Value: assignment.TargetID}, TargetName: assignment.TargetName,
 		CreatedAt: timestamppb.New(assignment.CreatedAt),
 	}
@@ -64,7 +64,7 @@ func (service *Service) CreateAssignment(ctx context.Context, request *connect.R
 		return nil, err
 	}
 	assignment, err := service.store.Queries().CreateAssignment(ctx, db.CreateAssignmentParams{
-		ID: ulid.Make().String(), ActionID: actionID, TargetType: int64(request.Msg.GetTargetType()), TargetID: targetID,
+		ID: ulid.Make().String(), ActionID: actionID, TargetType: request.Msg.GetTargetType(), TargetID: targetID,
 	})
 	if err != nil {
 		if store.IsConflict(err) {
@@ -147,7 +147,7 @@ func (service *Service) GetDeviceCompliance(ctx context.Context, request *connec
 		return nil, service.internal("list compliance results", err)
 	}
 	response := &cadestrov1.GetDeviceComplianceResponse{Status: cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_UNSPECIFIED}
-	compliant := false
+	compliant := true
 	for _, check := range checks {
 		action, result, err := complianceResult(check)
 		if err != nil {
@@ -157,9 +157,6 @@ func (service *Service) GetDeviceCompliance(ctx context.Context, request *connec
 			continue
 		}
 		ok := complianceValue(action, result)
-		if len(response.Checks) == 0 {
-			compliant = true
-		}
 		compliant = compliant && ok
 		response.Checks = append(response.Checks, &cadestrov1.ComplianceCheckResult{
 			ActionId: &cadestrov1.ActionId{Value: check.ActionID}, ActionName: check.ActionName, Compliant: ok,

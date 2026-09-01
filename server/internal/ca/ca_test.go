@@ -214,8 +214,6 @@ func TestIssueCertificateFromCSR_Success(t *testing.T) {
 	cert, err := c.IssueCertificateFromCSR("device-001", csrPEM)
 	require.NoError(t, err)
 	assert.NotEmpty(t, cert.CertPEM)
-	assert.Nil(t, cert.KeyPEM, "private key should stay on agent")
-	assert.NotEmpty(t, cert.Fingerprint)
 	assert.True(t, cert.NotAfter.After(time.Now()))
 }
 

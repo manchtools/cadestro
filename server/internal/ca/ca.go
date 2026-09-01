@@ -5,10 +5,8 @@ import (
 	"crypto"
 	"crypto/ed25519"
 	"crypto/rand"
-	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/hex"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -60,7 +58,7 @@ func parseEnrollmentCSR(csrPEM []byte) (*x509.CertificateRequest, ed25519.Public
 
 type CA struct {
 	cert         *x509.Certificate
-	key          crypto.Signer
+	key          ed25519.PrivateKey
 	validity     time.Duration
 	activeCAPool *x509.CertPool
 	now          func() time.Time
@@ -71,10 +69,8 @@ type Option func(*CA)
 func WithClock(now func() time.Time) Option { return func(c *CA) { c.now = now } }
 
 type Certificate struct {
-	CertPEM     []byte
-	KeyPEM      []byte
-	Fingerprint string
-	NotAfter    time.Time
+	CertPEM  []byte
+	NotAfter time.Time
 }
 
 func SerialFromCert(cert *x509.Certificate) (string, error) {
@@ -142,13 +138,13 @@ func NewFromPEM(certPEM, keyPEM []byte, validity time.Duration, opts ...Option) 
 		return nil, fmt.Errorf("failed to decode CA key PEM")
 	}
 
-	key, err := parsePrivateKey(keyBlock.Bytes)
+	parsedKey, err := x509.ParsePKCS8PrivateKey(keyBlock.Bytes)
 	if err != nil {
 		return nil, fmt.Errorf("parse CA key: %w", err)
 	}
-
-	if _, ok := key.(ed25519.PrivateKey); !ok {
-		return nil, fmt.Errorf("unsupported CA signing key type %T: Ed25519 is required", key)
+	key, ok := parsedKey.(ed25519.PrivateKey)
+	if !ok {
+		return nil, fmt.Errorf("unsupported CA signing key type %T: Ed25519 is required", parsedKey)
 	}
 	certPublic, err := x509.MarshalPKIXPublicKey(cert.PublicKey)
 	if err != nil {
@@ -224,13 +220,9 @@ func (ca *CA) IssueCertificateFromCSR(deviceID string, csrPEM []byte) (*Certific
 		Bytes: certDER,
 	})
 
-	fingerprint := sha256.Sum256(certDER)
-
 	return &Certificate{
-		CertPEM:     certPEM,
-		KeyPEM:      nil,
-		Fingerprint: hex.EncodeToString(fingerprint[:]),
-		NotAfter:    notAfter,
+		CertPEM:  certPEM,
+		NotAfter: notAfter,
 	}, nil
 }
 
@@ -243,24 +235,6 @@ func (ca *CA) CACertPEM() []byte {
 		Type:  "CERTIFICATE",
 		Bytes: ca.cert.Raw,
 	})
-}
-
-func parsePrivateKey(der []byte) (crypto.Signer, error) {
-	if key, err := x509.ParsePKCS8PrivateKey(der); err == nil {
-		if signer, ok := key.(crypto.Signer); ok {
-			return signer, nil
-		}
-	}
-
-	if key, err := x509.ParseECPrivateKey(der); err == nil {
-		return key, nil
-	}
-
-	if key, err := x509.ParsePKCS1PrivateKey(der); err == nil {
-		return key, nil
-	}
-
-	return nil, fmt.Errorf("unsupported private key format")
 }
 
 func AssertCSRMatchesCert(cert *x509.Certificate, csrPEM []byte) error {
