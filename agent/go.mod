@@ -3,13 +3,11 @@ module github.com/manchtools/cadestro/agent
 go 1.25.12
 
 require (
-	connectrpc.com/connect v1.20.0
 	github.com/manchtools/cadestro/contract v0.0.0
 	github.com/manchtools/cadestro/sdk v0.0.0
 	github.com/oklog/ulid/v2 v2.1.2
 	github.com/pressly/goose/v3 v3.27.3
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/sys v0.47.0
 	google.golang.org/protobuf v1.36.12
 	modernc.org/sqlite v1.55.0
 )
@@ -22,6 +20,7 @@ require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260709200747-435963d16310.1 // indirect
 	buf.build/go/protovalidate v1.3.0 // indirect
 	cel.dev/expr v0.25.1 // indirect
+	connectrpc.com/connect v1.20.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -39,6 +38,7 @@ require (
 	golang.org/x/exp v0.0.0-20260718201538-764159d718ef // indirect
 	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250811230008-5f3141c8851a // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260720211330-0afa2a65878a // indirect

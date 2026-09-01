@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -11,7 +12,6 @@ import (
 	"time"
 
 	"github.com/manchtools/cadestro/agent/internal/credentials"
-	"github.com/manchtools/cadestro/agent/internal/deviceauth"
 	"github.com/manchtools/cadestro/agent/internal/executor"
 	"github.com/manchtools/cadestro/agent/internal/handler"
 	"github.com/manchtools/cadestro/agent/internal/scheduler"
@@ -42,8 +42,7 @@ func main() {
 			fmt.Printf("cadestrod %s\n", version)
 			return
 		case "enroll":
-			runEnroll(os.Args[2:])
-			return
+			os.Exit(runEnroll(os.Args[2:], os.Geteuid()))
 		case "install-unit":
 			os.Exit(runInstallUnit(os.Args[2:]))
 		}
@@ -72,7 +71,7 @@ func main() {
 	defer cancel()
 	reconcileUnitAtStartup(ctx, runner, logger, cfg.DataDir)
 	credentialStore := credentials.NewStore(cfg.DataDir)
-	creds, err := loadOrEnroll(ctx, credentialStore, hostname, logger)
+	creds, err := loadCredentials(credentialStore)
 	if err != nil {
 		logger.Error("initialize enrollment", "error", err)
 		os.Exit(1)
@@ -96,24 +95,18 @@ func main() {
 	actionScheduler.Stop()
 }
 
-func loadOrEnroll(ctx context.Context, credentialStore *credentials.Store, hostname string, logger *slog.Logger) (*credentials.Credentials, error) {
-	if credentialStore.Exists() {
-		return credentialStore.Load()
+func loadCredentials(credentialStore *credentials.Store) (*credentials.Credentials, error) {
+	creds, err := credentialStore.Load()
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("agent is not enrolled; run cadestrod enroll")
 	}
-	enrolled := make(chan *credentials.Credentials, 1)
-	enrollHandler := deviceauth.NewEnrollHandler(hostname, version, credentialStore, logger, func(creds *credentials.Credentials) { enrolled <- creds })
-	enrollServer := deviceauth.NewEnrollServer(enrollHandler, deviceauth.EnrollSocketPath, logger)
-	errors := make(chan error, 1)
-	go func() { errors <- enrollServer.Start(ctx) }()
-	defer enrollServer.Shutdown()
-	select {
-	case creds := <-enrolled:
-		return creds, nil
-	case err := <-errors:
-		return nil, err
-	case <-ctx.Done():
-		return nil, ctx.Err()
+	if err != nil {
+		return nil, fmt.Errorf("load credentials: %w", err)
 	}
+	if !creds.Ready() {
+		return nil, fmt.Errorf("agent is not enrolled; run cadestrod enroll")
+	}
+	return creds, nil
 }
 
 func parseFlags() *Config {

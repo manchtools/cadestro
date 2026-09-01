@@ -16,4 +16,4 @@ SOURCE="${1:?usage: sudo ./install.sh /path/to/cadestrod}"
 install -m 0755 "$SOURCE" /usr/local/bin/cadestrod
 install -d -m 0700 /var/lib/cadestro
 /usr/local/bin/cadestrod install-unit
-systemctl enable --now cadestrod.service
+systemctl enable cadestrod.service

@@ -37,6 +37,10 @@ type Store struct {
 	fsErr   error
 }
 
+func (c *Credentials) Ready() bool {
+	return c != nil && c.DeviceID != "" && len(c.CACert) > 0 && len(c.Certificate) > 0 && len(c.PrivateKey) > 0 && c.AgentAddr != "" && len(c.PendingCSR) == 0 && len(c.PendingPrivateKey) == 0
+}
+
 func NewStore(dataDir string) *Store {
 	if dataDir == "" {
 		dataDir = DefaultDataDir
@@ -61,11 +65,6 @@ func (s *Store) writeFile(ctx context.Context, path string, data []byte) error {
 		return s.fsErr
 	}
 	return s.fs.WriteFile(ctx, path, data, sdkfs.WriteOptions{Mode: 0600})
-}
-
-func (s *Store) Exists() bool {
-	_, err := os.Stat(filepath.Join(s.dataDir, credentialsFile))
-	return err == nil
 }
 
 func requireOwnerOnlyDir(dir string) error {

@@ -50,6 +50,35 @@ func TestPlaintextCredentialsRoundTrip(t *testing.T) {
 	}
 }
 
+func TestCredentialsReady(t *testing.T) {
+	var nilCredentials *Credentials
+	if nilCredentials.Ready() {
+		t.Fatal("nil credentials reported ready")
+	}
+	base := &Credentials{DeviceID: "device", CACert: []byte("ca"), Certificate: []byte("cert"), PrivateKey: []byte("key"), AgentAddr: "https://agent.example.test"}
+	for name, mutate := range map[string]func(*Credentials){
+		"ready":                       func(*Credentials) {},
+		"pending certificate allowed": func(c *Credentials) { c.PendingCertificate = []byte("pending-cert") },
+		"missing device":              func(c *Credentials) { c.DeviceID = "" },
+		"missing ca":                  func(c *Credentials) { c.CACert = nil },
+		"missing certificate":         func(c *Credentials) { c.Certificate = nil },
+		"missing private key":         func(c *Credentials) { c.PrivateKey = nil },
+		"missing agent address":       func(c *Credentials) { c.AgentAddr = "" },
+		"pending csr":                 func(c *Credentials) { c.PendingCSR = []byte("csr") },
+		"pending key":                 func(c *Credentials) { c.PendingPrivateKey = []byte("key") },
+	} {
+		t.Run(name, func(t *testing.T) {
+			got := *base
+
+			mutate(&got)
+			want := name == "ready" || name == "pending certificate allowed"
+			if got.Ready() != want {
+				t.Fatalf("Ready() = %v, want %v", got.Ready(), want)
+			}
+		})
+	}
+}
+
 func TestSaveIsIdempotent(t *testing.T) {
 	dir := t.TempDir()
 	store := NewStore(dir)
@@ -125,19 +154,5 @@ func TestLoadRejectsCorruptJSON(t *testing.T) {
 	}
 	if _, err := store.Load(); err == nil {
 		t.Fatal("Load accepted corrupt JSON")
-	}
-}
-
-func TestExists(t *testing.T) {
-	dir := t.TempDir()
-	store := NewStore(dir)
-	if store.Exists() {
-		t.Fatal("Exists returned true for an empty data directory")
-	}
-	if err := store.Save(context.Background(), sampleCreds()); err != nil {
-		t.Fatalf("Save: %v", err)
-	}
-	if !store.Exists() {
-		t.Fatal("Exists returned false after Save")
 	}
 }
