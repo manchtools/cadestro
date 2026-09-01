@@ -7,26 +7,12 @@ import (
 	"io"
 )
 
-func GenerateState() (string, error) {
-	b := make([]byte, 32)
+func GenerateTransactionValues() (state, nonce, codeVerifier string, err error) {
+	b := make([]byte, 96)
 	if _, err := io.ReadFull(rand.Reader, b); err != nil {
-		return "", fmt.Errorf("generate state: %w", err)
+		return "", "", "", fmt.Errorf("generate OIDC transaction values: %w", err)
 	}
-	return base64.RawURLEncoding.EncodeToString(b), nil
-}
-
-func GenerateNonce() (string, error) {
-	b := make([]byte, 32)
-	if _, err := io.ReadFull(rand.Reader, b); err != nil {
-		return "", fmt.Errorf("generate nonce: %w", err)
-	}
-	return base64.RawURLEncoding.EncodeToString(b), nil
-}
-
-func GenerateCodeVerifier() (string, error) {
-	b := make([]byte, 32)
-	if _, err := io.ReadFull(rand.Reader, b); err != nil {
-		return "", fmt.Errorf("generate code verifier: %w", err)
-	}
-	return base64.RawURLEncoding.EncodeToString(b), nil
+	return base64.RawURLEncoding.EncodeToString(b[:32]),
+		base64.RawURLEncoding.EncodeToString(b[32:64]),
+		base64.RawURLEncoding.EncodeToString(b[64:]), nil
 }

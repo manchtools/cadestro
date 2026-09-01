@@ -2,7 +2,6 @@ package ca
 
 import (
 	"bytes"
-	"crypto"
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/x509"
@@ -249,9 +248,9 @@ func AssertCSRMatchesCert(cert *x509.Certificate, csrPEM []byte) error {
 	if err != nil {
 		return fmt.Errorf("parse CSR: %w", err)
 	}
-	type equalKey interface{ Equal(crypto.PublicKey) bool }
-	certKey, ok := cert.PublicKey.(equalKey)
-	if !ok || !certKey.Equal(csr.PublicKey) {
+	certKey, certOK := cert.PublicKey.(ed25519.PublicKey)
+	csrKey, csrOK := csr.PublicKey.(ed25519.PublicKey)
+	if !certOK || !csrOK || !bytes.Equal(certKey, csrKey) {
 		return errors.New("CSR public key does not match authenticated TLS peer")
 	}
 	return nil

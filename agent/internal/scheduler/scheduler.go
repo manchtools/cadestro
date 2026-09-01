@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const DefaultCheckInterval = time.Minute
+const checkInterval = time.Minute
 
 type ActionExecutor interface {
 	ExecuteAction(context.Context, *pb.Action) *pb.ActionResult
@@ -31,7 +31,10 @@ func (s *Scheduler) ReconcilePolicy(ctx context.Context, p *pb.DesiredPolicy) er
 	if err := s.store.ReconcilePolicy(ctx, p); err != nil {
 		return err
 	}
-	s.wakeSchedule()
+	select {
+	case s.scheduleWakeCh <- struct{}{}:
+	default:
+	}
 	return nil
 }
 func (s *Scheduler) GetPendingResults(ctx context.Context) ([]store.PendingResult, error) {
@@ -40,14 +43,8 @@ func (s *Scheduler) GetPendingResults(ctx context.Context) ([]store.PendingResul
 func (s *Scheduler) DeletePendingResult(ctx context.Context, n int64) error {
 	return s.store.DeletePendingResult(ctx, n)
 }
-func (s *Scheduler) wakeSchedule() {
-	select {
-	case s.scheduleWakeCh <- struct{}{}:
-	default:
-	}
-}
 func (s *Scheduler) Run(ctx context.Context) {
-	ticker := time.NewTicker(DefaultCheckInterval)
+	ticker := time.NewTicker(checkInterval)
 	defer ticker.Stop()
 	s.runDue(ctx)
 	for {
@@ -62,7 +59,8 @@ func (s *Scheduler) Run(ctx context.Context) {
 	}
 }
 func (s *Scheduler) runDue(ctx context.Context) {
-	if !s.recoverInterrupted(ctx) {
+	if err := s.store.RecoverInterruptedActions(ctx); err != nil {
+		s.logger.Error("recover interrupted action", "error", err)
 		return
 	}
 	items, err := s.store.GetDueScheduledWork(ctx)
@@ -76,13 +74,6 @@ func (s *Scheduler) runDue(ctx context.Context) {
 		}
 		s.executeAction(ctx, w)
 	}
-}
-func (s *Scheduler) recoverInterrupted(ctx context.Context) bool {
-	if err := s.store.RecoverInterruptedActions(ctx); err != nil {
-		s.logger.Error("recover interrupted action", "error", err)
-		return false
-	}
-	return true
 }
 func (s *Scheduler) executeAction(ctx context.Context, w store.ScheduledWork) {
 	if err := s.store.BeginActionRun(ctx, &w, s.now().UTC()); err != nil {

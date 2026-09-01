@@ -3,9 +3,7 @@ package core
 import (
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/base64"
-	"encoding/hex"
 	"errors"
 	"time"
 
@@ -122,8 +120,7 @@ func registrationToken() (string, string, error) {
 		return "", "", err
 	}
 	value := base64.RawURLEncoding.EncodeToString(raw)
-	digest := sha256.Sum256([]byte(value))
-	return value, hex.EncodeToString(digest[:]), nil
+	return value, tokenHash(value), nil
 }
 
 func (service *Service) CreateToken(ctx context.Context, request *connect.Request[cadestrov1.CreateTokenRequest]) (*connect.Response[cadestrov1.CreateTokenResponse], error) {

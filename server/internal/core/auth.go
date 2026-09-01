@@ -148,17 +148,9 @@ func (service *Service) GetSSOLoginURL(ctx context.Context, request *connect.Req
 	if err != nil {
 		return nil, service.internal("initialize OIDC provider", err)
 	}
-	state, err := idp.GenerateState()
+	state, nonce, verifier, err := idp.GenerateTransactionValues()
 	if err != nil {
-		return nil, service.internal("generate OIDC state", err)
-	}
-	nonce, err := idp.GenerateNonce()
-	if err != nil {
-		return nil, service.internal("generate OIDC nonce", err)
-	}
-	verifier, err := idp.GenerateCodeVerifier()
-	if err != nil {
-		return nil, service.internal("generate PKCE verifier", err)
+		return nil, service.internal("generate OIDC transaction values", err)
 	}
 	now := service.now().UTC()
 	transaction, err := service.jwt.SignOIDCTransaction(state, provider.ID, nonce, verifier, request.Msg.GetRedirectUrl(), now.Add(authStateTTL))

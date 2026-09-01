@@ -793,40 +793,6 @@ func TestPacman_GetIgnoredPackages(t *testing.T) {
 	}
 }
 
-func TestPacman_ParseValueAndSize(t *testing.T) {
-	if v := parseColonValue("Version : 9.0"); v != "9.0" {
-		t.Errorf("parseColonValue=%q", v)
-	}
-	if v := parseColonValue("no colon"); v != "" {
-		t.Errorf("parseColonValue no-colon=%q", v)
-	}
-	cases := map[string]int64{
-		"3.00 MiB": 3 * 1024 * 1024,
-		"512 KiB":  512 * 1024,
-		"2 GiB":    2 * 1024 * 1024 * 1024,
-		"900 B":    900,
-		"42":       42,
-	}
-	for in, want := range cases {
-		got, sizeOK := parsePacmanSize(in)
-		if !sizeOK {
-			t.Errorf("parsePacmanSize(%q) reported a parse failure on valid input", in)
-			continue
-		}
-		if got != want {
-			t.Errorf("parsePacmanSize(%q)=%d want %d", in, got, want)
-		}
-	}
-
-	for _, in := range []string{"", "unknown", "3.00 MiB extra"} {
-		if got, sizeOK := parsePacmanSize(in); sizeOK {
-			t.Errorf("parsePacmanSize(%q)=(%d, true), want ok=false", in, got)
-		} else if got != 0 {
-			t.Errorf("parsePacmanSize(%q) failed but returned %d, want 0", in, got)
-		}
-	}
-}
-
 func readAll(t *testing.T, c sysexec.Command) string {
 	t.Helper()
 	if c.Stdin == nil {

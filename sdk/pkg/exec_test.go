@@ -182,3 +182,41 @@ func TestParseSizeWithUnits_RejectsNonFiniteAndOutOfRange(t *testing.T) {
 		t.Errorf("parseSizeWithUnits(8000000000 B) = (%d, %v), want (8000000000, true)", got, ok)
 	}
 }
+
+func TestParseColonValue(t *testing.T) {
+	for in, want := range map[string]string{
+		"Version : 9.0":        "9.0",
+		"Version      : 8.2":   "8.2",
+		"no colon":             "",
+		"a line with no colon": "",
+	} {
+		if got := parseColonValue(in); got != want {
+			t.Errorf("parseColonValue(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestParseBinarySize(t *testing.T) {
+	for in, want := range map[string]int64{
+		"3.0 MiB":  3 * 1024 * 1024,
+		"3.00 MiB": 3 * 1024 * 1024,
+		"512 KiB":  512 * 1024,
+		"2 GiB":    2 * 1024 * 1024 * 1024,
+		"900 B":    900,
+		"42":       42,
+	} {
+		got, ok := parseBinarySize(in)
+		if !ok {
+			t.Errorf("parseBinarySize(%q) reported a parse failure on valid input", in)
+		} else if got != want {
+			t.Errorf("parseBinarySize(%q) = %d, want %d", in, got, want)
+		}
+	}
+	for _, in := range []string{"", "unknown", "3.0 MiB extra", "3.00 MiB extra"} {
+		if got, ok := parseBinarySize(in); ok {
+			t.Errorf("parseBinarySize(%q) = (%d, true), want ok=false", in, got)
+		} else if got != 0 {
+			t.Errorf("parseBinarySize(%q) failed but returned %d, want 0", in, got)
+		}
+	}
+}

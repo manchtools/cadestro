@@ -293,7 +293,7 @@ func (z *zypper) Show(ctx context.Context, name string) (*Package, error) {
 			pkg.Description = parseColonValue(line)
 		case strings.HasPrefix(line, "Installed Size"):
 
-			if n, sizeOK := parseZypperSize(parseColonValue(line)); sizeOK {
+			if n, sizeOK := parseBinarySize(parseColonValue(line)); sizeOK {
 				pkg.Size = n
 			}
 		case strings.HasPrefix(line, "Repository"):
@@ -514,13 +514,4 @@ func (z *zypper) IsPinned(ctx context.Context, name string) (bool, error) {
 		}
 	}
 	return false, nil
-}
-
-func parseZypperSize(s string) (int64, bool) {
-	return parseSizeWithUnits(s, []sizeUnit{
-		{" KiB", 1024},
-		{" MiB", 1024 * 1024},
-		{" GiB", 1024 * 1024 * 1024},
-		{" B", 1},
-	})
 }

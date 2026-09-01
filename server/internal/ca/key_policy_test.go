@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"math/big"
 	"os"
 	"path/filepath"
 	"testing"
@@ -65,6 +66,21 @@ func TestIssueCertificateFromCSR_RejectsNonEd25519Identity(t *testing.T) {
 	require.NoError(t, err)
 	_, err = c.IssueCertificateFromCSR("device-1", pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrDER}))
 	require.ErrorContains(t, err, "Ed25519 is required")
+}
+
+func TestAssertCSRMatchesCert_RejectsMatchingECDSAKeys(t *testing.T) {
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	template := &x509.Certificate{SerialNumber: big.NewInt(1), Subject: pkix.Name{CommonName: "device-1"}}
+	certDER, err := x509.CreateCertificate(rand.Reader, template, template, &key.PublicKey, key)
+	require.NoError(t, err)
+	csrDER, err := x509.CreateCertificateRequest(rand.Reader, &x509.CertificateRequest{Subject: template.Subject}, key)
+	require.NoError(t, err)
+	cert, err := x509.ParseCertificate(certDER)
+	require.NoError(t, err)
+
+	err = ca.AssertCSRMatchesCert(cert, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrDER}))
+	require.ErrorContains(t, err, "does not match")
 }
 
 func TestNew_RejectsGroupOrWorldReadableKeyFile(t *testing.T) {

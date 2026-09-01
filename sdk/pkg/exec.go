@@ -130,6 +130,15 @@ func parseSizeWithUnits(s string, units []sizeUnit) (size int64, ok bool) {
 	return int64(scaled), true
 }
 
+func parseBinarySize(s string) (int64, bool) {
+	return parseSizeWithUnits(s, []sizeUnit{
+		{" KiB", 1024},
+		{" MiB", 1024 * 1024},
+		{" GiB", 1024 * 1024 * 1024},
+		{" B", 1},
+	})
+}
+
 func splitPositionalFields(data string) []string {
 	lines := strings.Split(strings.TrimRight(data, "\n"), "\n")
 	fields := make([]string, len(lines))

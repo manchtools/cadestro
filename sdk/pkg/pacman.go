@@ -282,7 +282,7 @@ func (p *pacman) Show(ctx context.Context, name string) (*Package, error) {
 			pkg.Description = parseColonValue(line)
 		case strings.HasPrefix(line, "Installed Size"):
 
-			if n, sizeOK := parsePacmanSize(parseColonValue(line)); sizeOK {
+			if n, sizeOK := parseBinarySize(parseColonValue(line)); sizeOK {
 				pkg.Size = n
 			}
 		case strings.HasPrefix(line, "Repository"):
@@ -565,13 +565,4 @@ func buildIgnorePkgConf(conf string, ignored []string) string {
 		b.WriteString(content)
 	}
 	return b.String()
-}
-
-func parsePacmanSize(s string) (int64, bool) {
-	return parseSizeWithUnits(s, []sizeUnit{
-		{" KiB", 1024},
-		{" MiB", 1024 * 1024},
-		{" GiB", 1024 * 1024 * 1024},
-		{" B", 1},
-	})
 }
