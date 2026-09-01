@@ -32,7 +32,7 @@ env:
   GOWORK: 'off'
 
 jobs:
-  test:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -41,12 +41,13 @@ jobs:
           go-version-file: server/go.mod
       - name: Load tool versions
         run: cat ../.github/go-tools.env >> "$GITHUB_ENV"
-      - run: make sqlc-check
-      - run: test -z "$(gofmt -l .)"
-      - run: go vet ./...
-      - run: go install honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}
-      - run: staticcheck ./...
+      - name: Install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}
+      - name: Verify server
+        run: ./scripts/verify.sh
       - run: go test -race -count=1 -p 1 ./...
       - run: bash deploy/setup_test.sh
-      - run: go install golang.org/x/vuln/cmd/govulncheck@${GOVULNCHECK_VERSION}
-      - run: govulncheck ./...
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@${GOVULNCHECK_VERSION}
+      - name: Vulnerability scan
+        run: govulncheck ./...

@@ -28,8 +28,7 @@ env:
   GOWORK: 'off'
 
 jobs:
-  static-checks:
-    name: Static Checks (gofmt, vet, staticcheck)
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -41,43 +40,6 @@ jobs:
       - name: Load Go analysis tool versions
         run: cat ../.github/go-tools.env >> "$GITHUB_ENV"
 
-      - name: gofmt
-        run: |
-          dirty=$(gofmt -l .)
-          if [ -n "$dirty" ]; then
-            echo "The following files are not gofmt-clean:"
-            echo "$dirty"
-            echo "---- diff ----"
-            gofmt -d .
-            exit 1
-          fi
-
-      - name: go vet
-        run: go vet ./...
-
-      - name: staticcheck
-        run: |
-          go install honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}
-          staticcheck ./...
-
-  test-go:
-    name: Go tests (race)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-go@v6
-        with:
-          go-version-file: contract/go.mod
-
-      - run: go test -race -count=1 -p 1 ./...
-
-  proto-lint:
-    name: Proto lint + format
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -87,91 +49,20 @@ jobs:
       - name: Install npm deps
         run: npm ci
 
-      - name: buf lint
-        working-directory: contract/proto
-        run: ../scripts/buf.sh lint
-
-      - name: buf format (drift)
-        working-directory: contract/proto
-        run: ../scripts/buf.sh format --diff --exit-code
-
-  proto-gen-drift:
-    name: Generated-code drift
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-go@v6
-        with:
-          go-version-file: contract/go.mod
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: contract/package-lock.json
-
-      - name: Install npm deps
-        run: npm ci
-
-      - name: Install protoc (pinned)
-        env:
-          PROTOC_VERSION: 30.2
-        run: |
-          curl -fsSL -o /tmp/protoc.zip \
-            "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
-          sudo unzip -q -o /tmp/protoc.zip -d /usr/local
-          protoc --version
-
-      - name: Install protoc plugins
+      - name: Install generation tools
         run: make install-tools
 
-      - name: make generate
-        run: make generate
+      - name: Install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}
 
-      - name: Verify no drift
-        run: |
-          if ! git diff --exit-code \
-               -I '^//\s*protoc\s+v[0-9]+\.[0-9]+\(\.[0-9]+\)\?' \
-               -- gen/; then
-            echo ""
-            echo "::error::generated code in contract/gen/ drifted from proto sources."
-            echo "Run 'make generate' in contract/ and commit the result."
-            exit 1
-          fi
+      - name: Verify contract
+        run: ./scripts/verify.sh
 
-  ts-typecheck:
-    name: TypeScript typecheck
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
+      - name: Race tests
+        run: go test -race -count=1 -p 1 ./...
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: contract/package-lock.json
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@${GOVULNCHECK_VERSION}
 
-      - name: Install npm deps
-        run: npm ci
-
-      - name: tsc --noEmit
-        run: npm run typecheck
-
-  ts-test:
-    name: TypeScript unit tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: contract/package-lock.json
-
-      - name: Install npm deps
-        run: npm ci
-
-      - name: Run tests
-        run: npm test
+      - name: Vulnerability scan
+        run: govulncheck ./...

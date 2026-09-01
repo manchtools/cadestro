@@ -32,8 +32,7 @@ env:
   GOWORK: 'off'
 
 jobs:
-  lint:
-    name: gofmt + vet + staticcheck + govulncheck
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -45,35 +44,17 @@ jobs:
       - name: Load Go analysis tool versions
         run: cat ../.github/go-tools.env >> "$GITHUB_ENV"
 
-      - name: sqlc drift
-        run: make sqlc-check
+      - name: Install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}
 
-      - name: gofmt
-        run: |
-          test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+      - name: Verify agent
+        run: ./scripts/verify.sh
 
-      - name: go vet
-        run: go vet ./...
+      - name: Race tests
+        run: go test -race -count=1 -p 1 ./...
 
-      - name: staticcheck
-        run: |
-          go install honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}
-          staticcheck -checks='inherit,-SA1019,-U1000' ./...
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@${GOVULNCHECK_VERSION}
 
-      - name: govulncheck
-        run: |
-          go install golang.org/x/vuln/cmd/govulncheck@${GOVULNCHECK_VERSION}
-          govulncheck ./...
-
-  unit-tests:
-    name: Unit Tests (race)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-go@v6
-        with:
-          go-version-file: agent/go.mod
-
-      - name: go test
-        run: go test -race -p 1 ./...
+      - name: Vulnerability scan
+        run: govulncheck ./...
