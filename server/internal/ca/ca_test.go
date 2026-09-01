@@ -231,18 +231,13 @@ func TestIssueCertificateFromCSR_IdentityComesFromServerNotCSR(t *testing.T) {
 	cert, err := c.IssueCertificateFromCSR(serverAuthoritativeID, csrPEM)
 	require.NoError(t, err)
 
-	got, err := c.VerifyCertificate(cert.CertPEM)
-	require.NoError(t, err)
-	assert.Equal(t, serverAuthoritativeID, got, "VerifyCertificate must report the SERVER id")
-	assert.NotEqual(t, csrChosenID, got)
-
-	gotPEM, err := ca.DeviceIDFromPEM(cert.CertPEM)
-	require.NoError(t, err)
-	assert.Equal(t, serverAuthoritativeID, gotPEM)
-
 	block, _ := pem.Decode(cert.CertPEM)
 	require.NotNil(t, block)
 	parsed, err := x509.ParseCertificate(block.Bytes)
+	require.NoError(t, err)
+	roots := x509.NewCertPool()
+	require.True(t, roots.AppendCertsFromPEM(certPEM))
+	_, err = parsed.Verify(x509.VerifyOptions{Roots: roots, KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}})
 	require.NoError(t, err)
 	assert.Equal(t, serverAuthoritativeID, parsed.Subject.CommonName, "CN must be the server id, not the CSR CN")
 	assert.Equal(t, serverAuthoritativeID, parsed.Subject.SerialNumber, "Subject.SerialNumber must be the server id")
@@ -397,45 +392,6 @@ func TestIssueCertificateFromCSR_ForgedSignatureRejected(t *testing.T) {
 	assert.Contains(t, err.Error(), "invalid CSR signature")
 }
 
-func TestIssueServerCertificateFromCSR_StampsControlClassAndValidity(t *testing.T) {
-	certPEM, keyPEM := generateTestCA(t)
-	fixed := time.Date(2020, 6, 1, 12, 0, 0, 0, time.UTC)
-
-	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour, ca.WithClock(func() time.Time { return fixed }))
-	require.NoError(t, err)
-
-	const controlID = "control-01JABCDEF"
-	const controlHost = "control.example.com"
-	csrPEM := generateCSRWithSAN(t, "csr-chosen-id", func(*x509.CertificateRequest) {})
-
-	cert, err := c.IssueServerCertificateFromCSR(controlID, csrPEM, controlHost)
-	require.NoError(t, err)
-
-	block, _ := pem.Decode(cert.CertPEM)
-	require.NotNil(t, block)
-	parsed, err := x509.ParseCertificate(block.Bytes)
-	require.NoError(t, err)
-
-	assert.Equal(t, controlID, parsed.Subject.CommonName)
-	assert.Equal(t, controlID, parsed.Subject.SerialNumber)
-
-	require.Len(t, parsed.URIs, 1, "a control cert must carry exactly one URI SAN")
-	class, err := mtls.PeerClassFromCert(parsed)
-	require.NoError(t, err)
-	assert.Equal(t, mtls.PeerClassControl, class, "a server cert must carry the control peer class, never agent")
-
-	const want45d = 45 * 24 * time.Hour
-	assert.True(t, cert.NotAfter.Equal(fixed.Add(want45d)),
-		"control NotAfter must be clock+45d; got %s want %s", cert.NotAfter, fixed.Add(want45d))
-
-	assert.Contains(t, parsed.ExtKeyUsage, x509.ExtKeyUsageClientAuth)
-	assert.Contains(t, parsed.ExtKeyUsage, x509.ExtKeyUsageServerAuth,
-		"a control cert must be usable as a TLS server cert")
-
-	assert.Equal(t, []string{controlHost}, parsed.DNSNames,
-		"the control hostname must be stamped as a DNS SAN")
-}
-
 func TestIssueCertificateFromCSR_AgentIsClientAuthOnly(t *testing.T) {
 	certPEM, keyPEM := generateTestCA(t)
 	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
@@ -451,67 +407,6 @@ func TestIssueCertificateFromCSR_AgentIsClientAuthOnly(t *testing.T) {
 		"an agent cert must be client-auth only")
 }
 
-func TestIssueServerCertificateFromCSR_RejectsSAN(t *testing.T) {
-	certPEM, keyPEM := generateTestCA(t)
-	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
-	require.NoError(t, err)
-
-	mustURL := func(s string) *url.URL {
-		u, perr := url.Parse(s)
-		require.NoError(t, perr)
-		return u
-	}
-	csrPEM := generateCSRWithSAN(t, "gw-1", func(r *x509.CertificateRequest) {
-		r.URIs = []*url.URL{mustURL("spiffe://cadestro/control")}
-	})
-	cert, err := c.IssueServerCertificateFromCSR("gw-1", csrPEM, "gw-1.example.com")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "must not request subject alternative names")
-	assert.Nil(t, cert)
-}
-
-func TestVerifyCertificate_Success(t *testing.T) {
-	certPEM, keyPEM := generateTestCA(t)
-	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
-	require.NoError(t, err)
-
-	csrPEM, _ := generateCSR(t, "device-001")
-	issued, err := c.IssueCertificateFromCSR("device-001", csrPEM)
-	require.NoError(t, err)
-
-	deviceID, err := c.VerifyCertificate(issued.CertPEM)
-	require.NoError(t, err)
-	assert.Equal(t, "device-001", deviceID)
-}
-
-func TestVerifyCertificate_WrongCA(t *testing.T) {
-	certPEM1, keyPEM1 := generateTestCA(t)
-	c1, err := ca.NewFromPEM(certPEM1, keyPEM1, 24*time.Hour)
-	require.NoError(t, err)
-
-	certPEM2, keyPEM2 := generateTestCA(t)
-	c2, err := ca.NewFromPEM(certPEM2, keyPEM2, 24*time.Hour)
-	require.NoError(t, err)
-
-	csrPEM, _ := generateCSR(t, "device-001")
-	issued, err := c1.IssueCertificateFromCSR("device-001", csrPEM)
-	require.NoError(t, err)
-
-	_, err = c2.VerifyCertificate(issued.CertPEM)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "verification failed")
-}
-
-func TestVerifyCertificate_InvalidPEM(t *testing.T) {
-	certPEM, keyPEM := generateTestCA(t)
-	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
-	require.NoError(t, err)
-
-	_, err = c.VerifyCertificate([]byte("not a certificate"))
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "decode certificate PEM")
-}
-
 func TestCACertPEM(t *testing.T) {
 	certPEM, keyPEM := generateTestCA(t)
 	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
@@ -525,48 +420,6 @@ func TestCACertPEM(t *testing.T) {
 	assert.Equal(t, "CERTIFICATE", block.Type)
 }
 
-func TestDeviceIDFromPEM(t *testing.T) {
-	certPEM, keyPEM := generateTestCA(t)
-	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
-	require.NoError(t, err)
-
-	csrPEM, _ := generateCSR(t, "device-002")
-	issued, err := c.IssueCertificateFromCSR("device-002", csrPEM)
-	require.NoError(t, err)
-
-	deviceID, err := ca.DeviceIDFromPEM(issued.CertPEM)
-	require.NoError(t, err)
-	assert.Equal(t, "device-002", deviceID)
-}
-
-func TestDeviceIDFromPEM_InvalidPEM(t *testing.T) {
-	_, err := ca.DeviceIDFromPEM([]byte("not a certificate"))
-	assert.Error(t, err)
-}
-
-func TestDeviceIDFromPEM_StrictDecoding(t *testing.T) {
-	certPEM, keyPEM := generateTestCA(t)
-	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
-	require.NoError(t, err)
-
-	csrPEM, _ := generateCSR(t, "device-003")
-	issued, err := c.IssueCertificateFromCSR("device-003", csrPEM)
-	require.NoError(t, err)
-
-	t.Run("wrong PEM block type rejected", func(t *testing.T) {
-		block, _ := pem.Decode(issued.CertPEM)
-		require.NotNil(t, block)
-		block.Type = "CERTIFICATE REQUEST"
-		_, err := ca.DeviceIDFromPEM(pem.EncodeToMemory(block))
-		assert.Error(t, err)
-	})
-	t.Run("trailing data after PEM rejected", func(t *testing.T) {
-		input := append(append([]byte(nil), issued.CertPEM...), []byte("trailing")...)
-		_, err := ca.DeviceIDFromPEM(input)
-		assert.Error(t, err)
-	})
-}
-
 func TestTrustPool(t *testing.T) {
 	certPEM, keyPEM := generateTestCA(t)
 	c, err := ca.NewFromPEM(certPEM, keyPEM, 24*time.Hour)
@@ -574,8 +427,4 @@ func TestTrustPool(t *testing.T) {
 
 	pool := c.TrustPool()
 	assert.NotNil(t, pool)
-}
-
-func TestFingerprintFromCert_NilSafe(t *testing.T) {
-	assert.Empty(t, ca.FingerprintFromCert(nil))
 }

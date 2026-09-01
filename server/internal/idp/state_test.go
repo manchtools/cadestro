@@ -30,11 +30,3 @@ func TestGenerateState_Nonce_CodeVerifier_EntropyAndShape(t *testing.T) {
 		})
 	}
 }
-
-func TestCodeChallengeS256_KnownAnswer(t *testing.T) {
-	const (
-		verifier  = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
-		challenge = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
-	)
-	assert.Equal(t, challenge, CodeChallengeS256(verifier))
-}

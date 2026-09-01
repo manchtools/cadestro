@@ -71,56 +71,6 @@ func TestDeviceIDFromRequest_EmptyCN(t *testing.T) {
 	}
 }
 
-func TestDeviceIDFromTLS_Success(t *testing.T) {
-	state := &tls.ConnectionState{
-		PeerCertificates: []*x509.Certificate{
-			{Subject: pkix.Name{CommonName: "device-xyz"}},
-		},
-	}
-
-	id, err := DeviceIDFromTLS(state)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if id != "device-xyz" {
-		t.Fatalf("got %q, want %q", id, "device-xyz")
-	}
-}
-
-func TestDeviceIDFromTLS_NilState(t *testing.T) {
-	_, err := DeviceIDFromTLS(nil)
-	if err == nil {
-		t.Fatal("expected error for nil state")
-	}
-	if err.Error() != "no TLS connection state" {
-		t.Fatalf("unexpected error: %v", err)
-	}
-}
-
-func TestDeviceIDFromTLS_NoPeerCerts(t *testing.T) {
-	state := &tls.ConnectionState{
-		PeerCertificates: []*x509.Certificate{},
-	}
-
-	_, err := DeviceIDFromTLS(state)
-	if err == nil {
-		t.Fatal("expected error for empty peer certificates")
-	}
-}
-
-func TestDeviceIDFromTLS_EmptyCN(t *testing.T) {
-	state := &tls.ConnectionState{
-		PeerCertificates: []*x509.Certificate{
-			{Subject: pkix.Name{CommonName: ""}},
-		},
-	}
-
-	_, err := DeviceIDFromTLS(state)
-	if err == nil {
-		t.Fatal("expected error for empty CN")
-	}
-}
-
 func TestDeviceIDFromRequest_UsesFirstCert(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.TLS = &tls.ConnectionState{

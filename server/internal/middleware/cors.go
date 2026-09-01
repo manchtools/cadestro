@@ -15,15 +15,13 @@ const (
 	corsMaxAge = "86400"
 )
 
-func CORS(allowedOrigins []string, allowAll bool, logger *slog.Logger) func(http.Handler) http.Handler {
+func CORS(allowedOrigins []string, logger *slog.Logger) func(http.Handler) http.Handler {
 	originSet := make(map[string]bool, len(allowedOrigins))
 	for _, o := range allowedOrigins {
 		originSet[o] = true
 	}
 
-	if allowAll {
-		logger.Warn("CORS: allow-all mode enabled — do not use in production")
-	} else if len(allowedOrigins) == 0 {
+	if len(allowedOrigins) == 0 {
 		logger.Warn("CORS: no origins configured (CONTROL_CORS_ORIGINS), all cross-origin requests will be denied")
 	} else {
 		logger.Info("CORS: allowed origins configured", "origins", allowedOrigins)
@@ -39,9 +37,6 @@ func CORS(allowedOrigins []string, allowAll bool, logger *slog.Logger) func(http
 
 					w.Header().Set("Access-Control-Allow-Origin", origin)
 					w.Header().Set("Access-Control-Allow-Credentials", "true")
-				case allowAll:
-
-					w.Header().Set("Access-Control-Allow-Origin", origin)
 				default:
 
 					if r.Method == http.MethodOptions {

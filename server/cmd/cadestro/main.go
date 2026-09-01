@@ -124,7 +124,7 @@ func buildServers(config *Config, service *core.Service, jwt *auth.JWTManager, l
 	publicMux.Handle(publicPath, publicHandler)
 	publicMux.HandleFunc("/health", health)
 	publicMux.HandleFunc("/ready", health)
-	publicRoot := middleware.RequestID(middleware.SecurityHeaders(middleware.CORS(config.CORSOrigins, false, logger)(publicMux)))
+	publicRoot := middleware.SecurityHeaders(middleware.CORS(config.CORSOrigins, logger)(publicMux))
 	agentMux := http.NewServeMux()
 	agentPath, agentHandler := cadestrov1connect.NewAgentServiceHandler(service, connect.WithInterceptors(validator))
 	agentMux.Handle(agentPath, agentHandler)

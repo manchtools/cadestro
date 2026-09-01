@@ -80,9 +80,10 @@ func assertAgentLeaf(t *testing.T, c *ca.CA, issued *ca.Certificate, keyPEM []by
 	assert.Equal(t, []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}, parsed.ExtKeyUsage,
 		"an agent cert must be client-auth only")
 
-	verified, err := c.VerifyCertificate(issued.CertPEM)
+	roots := x509.NewCertPool()
+	require.True(t, roots.AppendCertsFromPEM(c.CACertPEM()))
+	_, err = parsed.Verify(x509.VerifyOptions{Roots: roots, KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}})
 	require.NoError(t, err)
-	assert.Equal(t, interopDeviceID, verified)
 
 	_, err = tls.X509KeyPair(issued.CertPEM, keyPEM)
 	require.NoError(t, err, "the SDK's key must load together with the issued leaf")

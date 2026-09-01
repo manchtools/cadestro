@@ -20,22 +20,8 @@ func okHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 }
 
-func TestCORS_AllowAll_NoCredentialedWildcard(t *testing.T) {
-	h := CORS(nil, true, corsTestLogger())(okHandler())
-
-	req := httptest.NewRequest(http.MethodGet, "/x", nil)
-	req.Header.Set("Origin", "https://evil.example")
-	w := httptest.NewRecorder()
-	h.ServeHTTP(w, req)
-
-	assert.Equal(t, "https://evil.example", w.Header().Get("Access-Control-Allow-Origin"),
-		"allow-all reflects the origin")
-	assert.Empty(t, w.Header().Get("Access-Control-Allow-Credentials"),
-		"allow-all must NOT set Allow-Credentials (credentialed-wildcard hole)")
-}
-
 func TestCORS_ExplicitOrigin_KeepsCredentials(t *testing.T) {
-	h := CORS([]string{"https://app.example"}, false, corsTestLogger())(okHandler())
+	h := CORS([]string{"https://app.example"}, corsTestLogger())(okHandler())
 
 	req := httptest.NewRequest(http.MethodGet, "/x", nil)
 	req.Header.Set("Origin", "https://app.example")
@@ -48,7 +34,7 @@ func TestCORS_ExplicitOrigin_KeepsCredentials(t *testing.T) {
 }
 
 func TestCORS_AllowHeadersExcludesCookie(t *testing.T) {
-	h := CORS([]string{"https://app.example"}, false, corsTestLogger())(okHandler())
+	h := CORS([]string{"https://app.example"}, corsTestLogger())(okHandler())
 
 	req := httptest.NewRequest(http.MethodOptions, "/x", nil)
 	req.Header.Set("Origin", "https://app.example")
@@ -63,7 +49,7 @@ func TestCORS_AllowHeadersExcludesCookie(t *testing.T) {
 }
 
 func TestCORS_AllowedOriginPreflight204(t *testing.T) {
-	h := CORS([]string{"https://app.example"}, false, corsTestLogger())(okHandler())
+	h := CORS([]string{"https://app.example"}, corsTestLogger())(okHandler())
 
 	req := httptest.NewRequest(http.MethodOptions, "/x", nil)
 	req.Header.Set("Origin", "https://app.example")
@@ -88,7 +74,7 @@ func splitCSV(s string) []string {
 }
 
 func TestCORS_UnlistedOrigin_NoHeaders(t *testing.T) {
-	h := CORS([]string{"https://app.example"}, false, corsTestLogger())(okHandler())
+	h := CORS([]string{"https://app.example"}, corsTestLogger())(okHandler())
 
 	req := httptest.NewRequest(http.MethodOptions, "/x", nil)
 	req.Header.Set("Origin", "https://evil.example")

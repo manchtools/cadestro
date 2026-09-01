@@ -178,24 +178,9 @@ func NewFromPEM(certPEM, keyPEM []byte, validity time.Duration, opts ...Option) 
 	return c, nil
 }
 
-const (
-	serverCertValidity = 45 * 24 * time.Hour
-	clockSkewAllowance = time.Minute
-)
+const clockSkewAllowance = time.Minute
 
 func (ca *CA) IssueCertificateFromCSR(deviceID string, csrPEM []byte) (*Certificate, error) {
-	return ca.issueFromCSR(deviceID, csrPEM, mtls.PeerClassAgent, ca.validity, nil)
-}
-
-func (ca *CA) IssueServerCertificateFromCSR(id string, csrPEM []byte, hostname string) (*Certificate, error) {
-	var dnsNames []string
-	if hostname != "" {
-		dnsNames = []string{hostname}
-	}
-	return ca.issueFromCSR(id, csrPEM, mtls.PeerClassControl, serverCertValidity, dnsNames)
-}
-
-func (ca *CA) issueFromCSR(deviceID string, csrPEM []byte, class mtls.PeerClass, validity time.Duration, dnsNames []string) (*Certificate, error) {
 	csr, _, err := parseEnrollmentCSR(csrPEM)
 	if err != nil {
 		return nil, err
@@ -207,9 +192,9 @@ func (ca *CA) issueFromCSR(deviceID string, csrPEM []byte, class mtls.PeerClass,
 	}
 
 	now := ca.now()
-	notAfter := now.Add(validity)
+	notAfter := now.Add(ca.validity)
 
-	peerURI, err := mtls.PeerClassURI(class)
+	peerURI, err := mtls.PeerClassURI(mtls.PeerClassAgent)
 	if err != nil {
 		return nil, fmt.Errorf("build peer-class URI: %w", err)
 	}
@@ -224,10 +209,9 @@ func (ca *CA) issueFromCSR(deviceID string, csrPEM []byte, class mtls.PeerClass,
 		NotBefore:             now.Add(-clockSkewAllowance),
 		NotAfter:              notAfter,
 		KeyUsage:              x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:           certExtKeyUsage(len(dnsNames) > 0),
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		BasicConstraintsValid: true,
 		URIs:                  []*url.URL{peerURI},
-		DNSNames:              dnsNames,
 	}
 
 	certDER, err := x509.CreateCertificate(rand.Reader, template, ca.cert, csr.PublicKey, ca.key)
@@ -248,34 +232,6 @@ func (ca *CA) issueFromCSR(deviceID string, csrPEM []byte, class mtls.PeerClass,
 		Fingerprint: hex.EncodeToString(fingerprint[:]),
 		NotAfter:    notAfter,
 	}, nil
-}
-
-func certExtKeyUsage(servesTLS bool) []x509.ExtKeyUsage {
-	usage := []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}
-	if servesTLS {
-		usage = append(usage, x509.ExtKeyUsageServerAuth)
-	}
-	return usage
-}
-
-func (ca *CA) VerifyCertificate(certPEM []byte) (string, error) {
-	block, _ := pem.Decode(certPEM)
-	if block == nil {
-		return "", fmt.Errorf("failed to decode certificate PEM")
-	}
-
-	cert, err := x509.ParseCertificate(block.Bytes)
-	if err != nil {
-		return "", fmt.Errorf("parse certificate: %w", err)
-	}
-
-	if _, err := cert.Verify(x509.VerifyOptions{
-		Roots:     ca.activeCAPool,
-		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-	}); err != nil {
-		return "", fmt.Errorf("certificate verification failed: %w", err)
-	}
-	return cert.Subject.CommonName, nil
 }
 
 func (ca *CA) TrustPool() *x509.CertPool {
@@ -305,35 +261,6 @@ func parsePrivateKey(der []byte) (crypto.Signer, error) {
 	}
 
 	return nil, fmt.Errorf("unsupported private key format")
-}
-
-func NotAfterFromPEM(certPEM []byte) (time.Time, error) {
-	block, _ := pem.Decode(certPEM)
-	if block == nil {
-		return time.Time{}, fmt.Errorf("failed to decode certificate PEM")
-	}
-	cert, err := x509.ParseCertificate(block.Bytes)
-	if err != nil {
-		return time.Time{}, fmt.Errorf("parse certificate: %w", err)
-	}
-	return cert.NotAfter, nil
-}
-
-func FingerprintFromCert(cert *x509.Certificate) string {
-	if cert == nil {
-		return ""
-	}
-	fingerprint := sha256.Sum256(cert.Raw)
-	return hex.EncodeToString(fingerprint[:])
-}
-
-func DeviceIDFromPEM(certPEM []byte) (string, error) {
-	cert, err := parseCertificatePEM(certPEM)
-	if err != nil {
-		return "", err
-	}
-
-	return cert.Subject.CommonName, nil
 }
 
 func AssertCSRMatchesCert(cert *x509.Certificate, csrPEM []byte) error {

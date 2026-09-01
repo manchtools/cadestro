@@ -74,12 +74,6 @@ func NewJWTManager(config JWTConfig) (*JWTManager, error) {
 	return &JWTManager{config: config}, nil
 }
 
-func GenerateSessionKey() (ed25519.PublicKey, ed25519.PrivateKey, error) {
-	return ed25519.GenerateKey(rand.Reader)
-}
-
-func (manager *JWTManager) AccessTokenTTL() time.Duration { return manager.config.AccessTokenExpiry }
-
 func (manager *JWTManager) GenerateTokens(userID, email string, sessionVersion int32, permissions []cadestrov1.Permission) (*TokenPair, error) {
 	now := manager.config.Now().UTC()
 	accessExpiry := now.Add(manager.config.AccessTokenExpiry)
