@@ -60,7 +60,7 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 		}
 
 		sessionCtx, cancelSession := context.WithCancel(ctx)
-		client := sdk.NewClient(strings.TrimSpace(creds.AgentAddr), mtlsOption, sdk.WithAuth(creds.DeviceID, ""), sdk.WithLogger(logger))
+		client := sdk.NewClient(strings.TrimSpace(creds.AgentAddr), mtlsOption, sdk.WithDeviceID(creds.DeviceID), sdk.WithLogger(logger))
 		streamDone := make(chan error, 1)
 		go func() { streamDone <- client.Run(sessionCtx, hostname, version, handler) }()
 

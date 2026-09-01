@@ -80,7 +80,7 @@ func TestRunStartsHeartbeatOnlyAfterWelcome(t *testing.T) {
 	defer server.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	client := NewClient(server.URL, WithHTTPClient(server.Client()), WithAuth("01K00000000000000000000041", ""))
+	client := NewClient(server.URL, WithHTTPClient(server.Client()), WithDeviceID("01K00000000000000000000041"))
 	run := make(chan error, 1)
 	go func() { run <- client.Run(ctx, "host", "version", heartbeatClientHandler{}) }()
 	select {
@@ -125,7 +125,7 @@ func TestRunRejectsNonPositiveWelcomeHeartbeat(t *testing.T) {
 	defer server.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	client := NewClient(server.URL, WithHTTPClient(server.Client()), WithAuth("01K00000000000000000000042", ""))
+	client := NewClient(server.URL, WithHTTPClient(server.Client()), WithDeviceID("01K00000000000000000000042"))
 	run := make(chan error, 1)
 	go func() { run <- client.Run(ctx, "host", "version", heartbeatClientHandler{}) }()
 	select {

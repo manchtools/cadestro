@@ -3,16 +3,21 @@ package deviceauth
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
 
+	"connectrpc.com/connect"
 	"github.com/manchtools/cadestro/agent/internal/credentials"
 	sdk "github.com/manchtools/cadestro/contract"
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
 	"github.com/manchtools/cadestro/sdk/crypto"
 	"github.com/manchtools/cadestro/sdk/cryptotest"
 )
@@ -117,16 +122,6 @@ func TestDirectEnrollSuccessAndSecurityFailures(t *testing.T) {
 		if err != nil || parsed.CheckSignature() != nil {
 			t.Fatalf("registration CSR is not signed: %v", err)
 		}
-		if len(options) != 1 {
-			t.Fatalf("CA pin options = %d, want 1", len(options))
-		}
-		httpClient := &http.Client{Transport: &http.Transport{}}
-		var client sdk.Client
-		options[0](&client, &httpClient)
-		transport, ok := httpClient.Transport.(*http.Transport)
-		if !ok || transport.TLSClientConfig == nil || transport.TLSClientConfig.VerifyConnection == nil {
-			t.Fatal("CA pin option did not configure verification")
-		}
 		return &sdk.RegisterAgentResult{DeviceID: "device", CACert: ca, Certificate: []byte("certificate"), ControlURL: "https://agent.example.test"}, nil
 	}
 	store := testStore(t)
@@ -142,6 +137,51 @@ func TestDirectEnrollSuccessAndSecurityFailures(t *testing.T) {
 		t.Fatalf("final credentials = %+v err=%v", loaded, err)
 	}
 
+}
+
+type registrationHandler struct {
+	cadestrov1connect.UnimplementedControlServiceHandler
+	ca []byte
+}
+
+func (h registrationHandler) Register(context.Context, *connect.Request[cadestrov1.RegisterRequest]) (*connect.Response[cadestrov1.RegisterResponse], error) {
+	return connect.NewResponse(&cadestrov1.RegisterResponse{DeviceId: &cadestrov1.DeviceId{Value: "device"}, CaCert: h.ca, Certificate: []byte("certificate"), ControlUrl: "https://agent.example.test"}), nil
+}
+
+func TestEnrollUsesWebPKIForRegistrationAndPinsReturnedCA(t *testing.T) {
+	_, tlsCAKey, tlsCACert := cryptotest.GenCA(t, "TLS CA")
+	tlsLeafPEM, tlsLeafKeyPEM := cryptotest.GenLeaf(t, tlsCACert, tlsCAKey, "localhost", true)
+	certificate, err := tls.X509KeyPair(tlsLeafPEM, tlsLeafKeyPEM)
+	if err != nil {
+		t.Fatal(err)
+	}
+	certificate.Certificate = append(certificate.Certificate, tlsCACert.Raw)
+	returnedCA := cryptotest.CAPEM(t, "returned CA")
+	path, handler := cadestrov1connect.NewControlServiceHandler(registrationHandler{ca: returnedCA})
+	mux := http.NewServeMux()
+	mux.Handle(path, handler)
+	server := httptest.NewUnstartedServer(mux)
+	server.TLS = &tls.Config{Certificates: []tls.Certificate{certificate}, MinVersion: tls.VersionTLS13}
+	server.StartTLS()
+	defer server.Close()
+	serverURL := strings.Replace(server.URL, "127.0.0.1", "localhost", 1)
+	request := EnrollmentRequest{ServerURL: serverURL, Token: "token", CAPin: mustFingerprint(t, returnedCA), Hostname: "host", Version: "v1"}
+	register := func(ctx context.Context, controlURL, token, hostname, version string, csr []byte, _ ...sdk.ClientOption) (*sdk.RegisterAgentResult, error) {
+		return sdk.RegisterAgent(ctx, controlURL, token, hostname, version, csr, sdk.WithHTTPClient(server.Client()))
+	}
+	result, err := enroll(context.Background(), request, testStore(t), register)
+	if err != nil || result.Credentials.DeviceID != "device" {
+		t.Fatalf("enrollment result = %+v, error = %v", result, err)
+	}
+}
+
+func mustFingerprint(t *testing.T, certPEM []byte) string {
+	t.Helper()
+	fingerprint, err := crypto.CAFingerprintFromPEM(certPEM)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return fingerprint
 }
 
 func TestDirectEnrollPinMismatchAndMissingCertificatesKeepPending(t *testing.T) {

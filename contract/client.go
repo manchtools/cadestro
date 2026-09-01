@@ -41,38 +41,36 @@ type Client struct {
 }
 
 // ClientOption configures a Client.
-type ClientOption func(*Client, **http.Client)
+type ClientOption func(*Client)
 
 // NewClient creates an agent protocol client.
 func NewClient(serverURL string, options ...ClientOption) *Client {
-	client := &Client{logger: slog.Default(), pending: make(map[string]chan *cadestrov1.ServerMessage)}
-	httpClient := http.DefaultClient
+	client := &Client{logger: slog.Default(), pending: make(map[string]chan *cadestrov1.ServerMessage), httpClient: http.DefaultClient}
 	for _, option := range options {
-		option(client, &httpClient)
+		option(client)
 	}
-	client.httpClient = httpClient
-	client.client = cadestrov1connect.NewAgentServiceClient(httpClient, serverURL, connect.WithReadMaxBytes(maxInboundMessageBytes))
+	client.client = cadestrov1connect.NewAgentServiceClient(client.httpClient, serverURL, connect.WithReadMaxBytes(maxInboundMessageBytes))
 	return client
 }
 
 // WithHTTPClient supplies the HTTP client used for RPCs.
 func WithHTTPClient(httpClient *http.Client) ClientOption {
-	return func(_ *Client, target **http.Client) { *target = httpClient }
+	return func(client *Client) { client.httpClient = httpClient }
 }
 
-// WithAuth supplies the device identity. The token parameter is ignored because device streams authenticate with mTLS.
-func WithAuth(deviceID, _ string) ClientOption {
-	return func(client *Client, _ **http.Client) { client.deviceID = deviceID }
+// WithDeviceID supplies the device identity.
+func WithDeviceID(deviceID string) ClientOption {
+	return func(client *Client) { client.deviceID = deviceID }
 }
 
 // WithLogger supplies the structured logger.
 func WithLogger(logger *slog.Logger) ClientOption {
-	return func(client *Client, _ **http.Client) { client.logger = logger }
+	return func(client *Client) { client.logger = logger }
 }
 
 // WithTLSConfig supplies a TLS configuration.
 func WithTLSConfig(config *tls.Config) ClientOption {
-	return func(_ *Client, target **http.Client) { *target = newHTTPClientWithTLS(config) }
+	return func(client *Client) { client.httpClient = newHTTPClientWithTLS(config) }
 }
 
 // WithMTLSFromPEM configures TLS 1.3 client authentication and trusts only the supplied CA.
@@ -116,12 +114,11 @@ type RegisterAgentResult struct {
 
 // RegisterAgent enrolls a device through the public control endpoint.
 func RegisterAgent(ctx context.Context, controlURL, token, hostname, agentVersion string, csr []byte, options ...ClientOption) (*RegisterAgentResult, error) {
-	httpClient := bootstrapHTTPClient()
-	client := &Client{}
+	client := &Client{httpClient: bootstrapHTTPClient()}
 	for _, option := range options {
-		option(client, &httpClient)
+		option(client)
 	}
-	control := cadestrov1connect.NewControlServiceClient(httpClient, controlURL)
+	control := cadestrov1connect.NewControlServiceClient(client.httpClient, controlURL)
 	response, err := control.Register(ctx, connect.NewRequest(&cadestrov1.RegisterRequest{
 		Token: token, Hostname: hostname, AgentVersion: agentVersion, Csr: csr,
 	}))
@@ -142,12 +139,11 @@ type RenewCertificateResult struct {
 
 // RenewCertificate renews the certificate presented by the authenticated device.
 func RenewCertificate(ctx context.Context, controlURL string, csr []byte, options ...ClientOption) (*RenewCertificateResult, error) {
-	httpClient := bootstrapHTTPClient()
-	client := &Client{}
+	client := &Client{httpClient: bootstrapHTTPClient()}
 	for _, option := range options {
-		option(client, &httpClient)
+		option(client)
 	}
-	control := cadestrov1connect.NewControlServiceClient(httpClient, controlURL)
+	control := cadestrov1connect.NewControlServiceClient(client.httpClient, controlURL)
 	response, err := control.RenewCertificate(ctx, connect.NewRequest(&cadestrov1.RenewCertificateRequest{Csr: csr}))
 	if err != nil {
 		return nil, fmt.Errorf("renew certificate: %w", err)

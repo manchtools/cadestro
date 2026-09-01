@@ -89,7 +89,7 @@ func enroll(ctx context.Context, request EnrollmentRequest, store *credentials.S
 		}
 	}
 
-	result, err := register(ctx, request.ServerURL, request.Token, request.Hostname, request.Version, csrPEM, sdk.WithCAPin(pin))
+	result, err := register(ctx, request.ServerURL, request.Token, request.Hostname, request.Version, csrPEM)
 	if err != nil {
 		return nil, fmt.Errorf("register agent: %w", err)
 	}
