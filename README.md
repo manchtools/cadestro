@@ -9,12 +9,11 @@ Cadestro is a small Linux fleet-management core for administrators:
 - root, non-interactive shell actions as the escape hatch;
 - detection-only shell compliance;
 - static device groups, assignments, results, and audit events;
-- OIDC login for administrators.
+- OIDC login, user roles, and permission assignment for administrators.
 
 That is the product boundary. Cadestro does not currently provide a remote
 terminal, OSQuery, inventory, log collection, self-service software, SCIM,
-API tokens, user management, action sets, dynamic groups, or additional action
-families.
+API tokens, action sets, dynamic groups, or additional action families.
 
 ## Layout
 

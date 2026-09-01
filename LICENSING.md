@@ -15,16 +15,7 @@ Each module's `LICENSE` file is authoritative for that module. When in doubt
 about a file, the governing license is the one in the nearest enclosing module
 directory.
 
-**Dependency direction and license flow.** `contract` imports nothing else in
-this repository. `sdk` imports nothing else either, with one recorded
-exception: `sdk/sys/osquery` expresses its `Querier` API in the contract's
-`OSQuery` messages, so it — and the adversarial suite that drives it — imports
-`contract`. `agent`, `server`, and `web` depend on both leaves.
-
-Permissive leaves feeding copyleft consumers is the safe direction; the
-reverse would not be, which is why this is enforced by an architecture test
-(`sdk/archtest/leaf_purity_test.go`) rather than left to convention. That test
-also fails when a second SDK package starts importing the contract, and when
-the recorded exception goes stale — so the exception can shrink but not
-spread. Both leaves are MIT, so the edge carries no license consequence; what
-it costs is that `sdk` cannot be consumed without `contract`.
+**Dependency direction and license flow.** `contract/` and `sdk/` are
+independent Go leaves. `agent/` and `server/` depend on both; `web/` consumes
+the generated TypeScript contract. This keeps permissive modules below the
+copyleft consumers.
