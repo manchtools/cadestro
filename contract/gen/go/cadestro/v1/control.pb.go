@@ -603,7 +603,6 @@ func (x *RenewCertificateRequest) GetCsr() []byte {
 type RenewCertificateResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Certificate   []byte                 `protobuf:"bytes,1,opt,name=certificate,proto3" json:"certificate,omitempty"`
-	NotAfter      *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=not_after,json=notAfter,proto3" json:"not_after,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -641,13 +640,6 @@ func (*RenewCertificateResponse) Descriptor() ([]byte, []int) {
 func (x *RenewCertificateResponse) GetCertificate() []byte {
 	if x != nil {
 		return x.Certificate
-	}
-	return nil
-}
-
-func (x *RenewCertificateResponse) GetNotAfter() *timestamppb.Timestamp {
-	if x != nil {
-		return x.NotAfter
 	}
 	return nil
 }
@@ -2585,7 +2577,6 @@ type SSOCallbackResponse struct {
 	AccessToken   string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
 	RefreshToken  string                 `protobuf:"bytes,2,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
 	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	User          *User                  `protobuf:"bytes,4,opt,name=user,proto3" json:"user,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2637,13 +2628,6 @@ func (x *SSOCallbackResponse) GetRefreshToken() string {
 func (x *SSOCallbackResponse) GetExpiresAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.ExpiresAt
-	}
-	return nil
-}
-
-func (x *SSOCallbackResponse) GetUser() *User {
-	if x != nil {
-		return x.User
 	}
 	return nil
 }
@@ -7436,10 +7420,9 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\vcontrol_url\x18\x04 \x01(\tB\v\xbaH\b\xc8\x01\x01r\x03\x88\x01\x01R\n" +
 	"controlUrl\"3\n" +
 	"\x17RenewCertificateRequest\x12\x18\n" +
-	"\x03csr\x18\x01 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\x03csr\"\x85\x01\n" +
+	"\x03csr\x18\x01 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\x03csr\"D\n" +
 	"\x18RenewCertificateResponse\x12(\n" +
-	"\vcertificate\x18\x01 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\vcertificate\x12?\n" +
-	"\tnot_after\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\bnotAfter\"B\n" +
+	"\vcertificate\x18\x01 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\vcertificate\"B\n" +
 	"\x13RefreshTokenRequest\x12+\n" +
 	"\rrefresh_token\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\frefreshToken\"\xb1\x01\n" +
 	"\x14RefreshTokenResponse\x12)\n" +
@@ -7557,13 +7540,12 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x12SSOCallbackRequest\x12 \n" +
 	"\x04slug\x18\x01 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18@R\x04slug\x12\x1a\n" +
 	"\x04code\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04code\x12\x1c\n" +
-	"\x05state\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05state\"\xdf\x01\n" +
+	"\x05state\x18\x03 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x05state\"\xb0\x01\n" +
 	"\x13SSOCallbackResponse\x12)\n" +
 	"\faccess_token\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\vaccessToken\x12+\n" +
 	"\rrefresh_token\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\frefreshToken\x12A\n" +
 	"\n" +
-	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\texpiresAt\x12-\n" +
-	"\x04user\x18\x04 \x01(\v2\x11.cadestro.v1.UserB\x06\xbaH\x03\xc8\x01\x01R\x04user\"\xf2\x02\n" +
+	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\texpiresAt\"\xf2\x02\n" +
 	"\x10IdentityProvider\x127\n" +
 	"\x02id\x18\x01 \x01(\v2\x1f.cadestro.v1.IdentityProviderIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
@@ -8234,294 +8216,292 @@ var file_cadestro_v1_control_proto_goTypes = []any{
 }
 var file_cadestro_v1_control_proto_depIdxs = []int32{
 	135, // 0: cadestro.v1.RegisterResponse.device_id:type_name -> cadestro.v1.DeviceId
-	136, // 1: cadestro.v1.RenewCertificateResponse.not_after:type_name -> google.protobuf.Timestamp
-	136, // 2: cadestro.v1.RefreshTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
-	137, // 3: cadestro.v1.User.id:type_name -> cadestro.v1.UserId
-	136, // 4: cadestro.v1.User.created_at:type_name -> google.protobuf.Timestamp
-	136, // 5: cadestro.v1.User.last_login_at:type_name -> google.protobuf.Timestamp
-	0,   // 6: cadestro.v1.User.permissions:type_name -> cadestro.v1.Permission
-	13,  // 7: cadestro.v1.User.roles:type_name -> cadestro.v1.Role
-	138, // 8: cadestro.v1.Role.id:type_name -> cadestro.v1.RoleId
-	0,   // 9: cadestro.v1.Role.permissions:type_name -> cadestro.v1.Permission
-	136, // 10: cadestro.v1.Role.created_at:type_name -> google.protobuf.Timestamp
-	136, // 11: cadestro.v1.Role.updated_at:type_name -> google.protobuf.Timestamp
-	0,   // 12: cadestro.v1.CreateRoleRequest.permissions:type_name -> cadestro.v1.Permission
-	13,  // 13: cadestro.v1.CreateRoleResponse.role:type_name -> cadestro.v1.Role
-	138, // 14: cadestro.v1.GetRoleRequest.id:type_name -> cadestro.v1.RoleId
-	13,  // 15: cadestro.v1.GetRoleResponse.role:type_name -> cadestro.v1.Role
-	13,  // 16: cadestro.v1.ListRolesResponse.roles:type_name -> cadestro.v1.Role
-	138, // 17: cadestro.v1.RenameRoleRequest.id:type_name -> cadestro.v1.RoleId
-	13,  // 18: cadestro.v1.RenameRoleResponse.role:type_name -> cadestro.v1.Role
-	138, // 19: cadestro.v1.SetRoleDescriptionRequest.id:type_name -> cadestro.v1.RoleId
-	13,  // 20: cadestro.v1.SetRoleDescriptionResponse.role:type_name -> cadestro.v1.Role
-	138, // 21: cadestro.v1.GrantRolePermissionRequest.id:type_name -> cadestro.v1.RoleId
-	0,   // 22: cadestro.v1.GrantRolePermissionRequest.permission:type_name -> cadestro.v1.Permission
-	13,  // 23: cadestro.v1.GrantRolePermissionResponse.role:type_name -> cadestro.v1.Role
-	138, // 24: cadestro.v1.RevokeRolePermissionRequest.id:type_name -> cadestro.v1.RoleId
-	0,   // 25: cadestro.v1.RevokeRolePermissionRequest.permission:type_name -> cadestro.v1.Permission
-	13,  // 26: cadestro.v1.RevokeRolePermissionResponse.role:type_name -> cadestro.v1.Role
-	138, // 27: cadestro.v1.DeleteRoleRequest.id:type_name -> cadestro.v1.RoleId
-	137, // 28: cadestro.v1.AssignRoleToUserRequest.user_id:type_name -> cadestro.v1.UserId
-	138, // 29: cadestro.v1.AssignRoleToUserRequest.role_id:type_name -> cadestro.v1.RoleId
-	137, // 30: cadestro.v1.RevokeRoleFromUserRequest.user_id:type_name -> cadestro.v1.UserId
-	138, // 31: cadestro.v1.RevokeRoleFromUserRequest.role_id:type_name -> cadestro.v1.RoleId
-	0,   // 32: cadestro.v1.ListPermissionsResponse.permissions:type_name -> cadestro.v1.Permission
-	12,  // 33: cadestro.v1.ListUsersResponse.users:type_name -> cadestro.v1.User
-	137, // 34: cadestro.v1.RevokeUserSessionsRequest.user_id:type_name -> cadestro.v1.UserId
-	12,  // 35: cadestro.v1.GetCurrentUserResponse.user:type_name -> cadestro.v1.User
-	42,  // 36: cadestro.v1.ListAuthMethodsResponse.providers:type_name -> cadestro.v1.AuthMethodProvider
-	136, // 37: cadestro.v1.SSOCallbackResponse.expires_at:type_name -> google.protobuf.Timestamp
-	12,  // 38: cadestro.v1.SSOCallbackResponse.user:type_name -> cadestro.v1.User
-	139, // 39: cadestro.v1.IdentityProvider.id:type_name -> cadestro.v1.IdentityProviderId
-	140, // 40: cadestro.v1.IdentityProvider.client_id:type_name -> cadestro.v1.OidcClientId
-	136, // 41: cadestro.v1.IdentityProvider.created_at:type_name -> google.protobuf.Timestamp
-	136, // 42: cadestro.v1.IdentityProvider.updated_at:type_name -> google.protobuf.Timestamp
-	140, // 43: cadestro.v1.CreateIdentityProviderRequest.client_id:type_name -> cadestro.v1.OidcClientId
-	49,  // 44: cadestro.v1.CreateIdentityProviderResponse.provider:type_name -> cadestro.v1.IdentityProvider
-	139, // 45: cadestro.v1.GetIdentityProviderRequest.id:type_name -> cadestro.v1.IdentityProviderId
-	49,  // 46: cadestro.v1.GetIdentityProviderResponse.provider:type_name -> cadestro.v1.IdentityProvider
-	49,  // 47: cadestro.v1.ListIdentityProvidersResponse.providers:type_name -> cadestro.v1.IdentityProvider
-	139, // 48: cadestro.v1.RenameIdentityProviderRequest.id:type_name -> cadestro.v1.IdentityProviderId
-	49,  // 49: cadestro.v1.RenameIdentityProviderResponse.provider:type_name -> cadestro.v1.IdentityProvider
-	139, // 50: cadestro.v1.ConfigureIdentityProviderRequest.id:type_name -> cadestro.v1.IdentityProviderId
-	140, // 51: cadestro.v1.ConfigureIdentityProviderRequest.client_id:type_name -> cadestro.v1.OidcClientId
-	49,  // 52: cadestro.v1.ConfigureIdentityProviderResponse.provider:type_name -> cadestro.v1.IdentityProvider
-	139, // 53: cadestro.v1.EnableIdentityProviderRequest.id:type_name -> cadestro.v1.IdentityProviderId
-	49,  // 54: cadestro.v1.EnableIdentityProviderResponse.provider:type_name -> cadestro.v1.IdentityProvider
-	139, // 55: cadestro.v1.DisableIdentityProviderRequest.id:type_name -> cadestro.v1.IdentityProviderId
-	49,  // 56: cadestro.v1.DisableIdentityProviderResponse.provider:type_name -> cadestro.v1.IdentityProvider
-	139, // 57: cadestro.v1.DeleteIdentityProviderRequest.id:type_name -> cadestro.v1.IdentityProviderId
-	135, // 58: cadestro.v1.Device.id:type_name -> cadestro.v1.DeviceId
-	141, // 59: cadestro.v1.Device.status:type_name -> cadestro.v1.DeviceStatus
-	136, // 60: cadestro.v1.Device.registered_at:type_name -> google.protobuf.Timestamp
-	136, // 61: cadestro.v1.Device.last_seen_at:type_name -> google.protobuf.Timestamp
-	136, // 62: cadestro.v1.Device.cert_expires_at:type_name -> google.protobuf.Timestamp
-	142, // 63: cadestro.v1.Device.compliance_status:type_name -> cadestro.v1.ComplianceStatus
-	66,  // 64: cadestro.v1.ListDevicesResponse.devices:type_name -> cadestro.v1.Device
-	135, // 65: cadestro.v1.GetDeviceRequest.id:type_name -> cadestro.v1.DeviceId
-	66,  // 66: cadestro.v1.GetDeviceResponse.device:type_name -> cadestro.v1.Device
-	135, // 67: cadestro.v1.DeleteDeviceRequest.id:type_name -> cadestro.v1.DeviceId
-	143, // 68: cadestro.v1.RegistrationToken.id:type_name -> cadestro.v1.RegistrationTokenId
-	136, // 69: cadestro.v1.RegistrationToken.expires_at:type_name -> google.protobuf.Timestamp
-	136, // 70: cadestro.v1.RegistrationToken.created_at:type_name -> google.protobuf.Timestamp
-	136, // 71: cadestro.v1.CreateTokenRequest.expires_at:type_name -> google.protobuf.Timestamp
-	73,  // 72: cadestro.v1.CreateTokenResponse.token:type_name -> cadestro.v1.RegistrationToken
-	73,  // 73: cadestro.v1.ListTokensResponse.tokens:type_name -> cadestro.v1.RegistrationToken
-	143, // 74: cadestro.v1.RenameTokenRequest.id:type_name -> cadestro.v1.RegistrationTokenId
-	73,  // 75: cadestro.v1.RenameTokenResponse.token:type_name -> cadestro.v1.RegistrationToken
-	143, // 76: cadestro.v1.DeleteTokenRequest.id:type_name -> cadestro.v1.RegistrationTokenId
-	144, // 77: cadestro.v1.ManagedAction.id:type_name -> cadestro.v1.ActionId
-	145, // 78: cadestro.v1.ManagedAction.desired_state:type_name -> cadestro.v1.DesiredState
-	146, // 79: cadestro.v1.ManagedAction.schedule:type_name -> cadestro.v1.ActionSchedule
-	136, // 80: cadestro.v1.ManagedAction.created_at:type_name -> google.protobuf.Timestamp
-	136, // 81: cadestro.v1.ManagedAction.updated_at:type_name -> google.protobuf.Timestamp
-	147, // 82: cadestro.v1.ManagedAction.package:type_name -> cadestro.v1.PackageActionParams
-	148, // 83: cadestro.v1.ManagedAction.update:type_name -> cadestro.v1.UpdateActionParams
-	149, // 84: cadestro.v1.ManagedAction.shell:type_name -> cadestro.v1.ShellActionParams
-	145, // 85: cadestro.v1.CreateActionRequest.desired_state:type_name -> cadestro.v1.DesiredState
-	146, // 86: cadestro.v1.CreateActionRequest.schedule:type_name -> cadestro.v1.ActionSchedule
-	147, // 87: cadestro.v1.CreateActionRequest.package:type_name -> cadestro.v1.PackageActionParams
-	148, // 88: cadestro.v1.CreateActionRequest.update:type_name -> cadestro.v1.UpdateActionParams
-	149, // 89: cadestro.v1.CreateActionRequest.shell:type_name -> cadestro.v1.ShellActionParams
-	82,  // 90: cadestro.v1.CreateActionResponse.action:type_name -> cadestro.v1.ManagedAction
-	144, // 91: cadestro.v1.GetActionRequest.id:type_name -> cadestro.v1.ActionId
-	82,  // 92: cadestro.v1.GetActionResponse.action:type_name -> cadestro.v1.ManagedAction
-	82,  // 93: cadestro.v1.ListActionsResponse.actions:type_name -> cadestro.v1.ManagedAction
-	144, // 94: cadestro.v1.RenameActionRequest.id:type_name -> cadestro.v1.ActionId
-	144, // 95: cadestro.v1.SetActionDescriptionRequest.id:type_name -> cadestro.v1.ActionId
-	144, // 96: cadestro.v1.ConfigureActionRequest.id:type_name -> cadestro.v1.ActionId
-	145, // 97: cadestro.v1.ConfigureActionRequest.desired_state:type_name -> cadestro.v1.DesiredState
-	146, // 98: cadestro.v1.ConfigureActionRequest.schedule:type_name -> cadestro.v1.ActionSchedule
-	147, // 99: cadestro.v1.ConfigureActionRequest.package:type_name -> cadestro.v1.PackageActionParams
-	148, // 100: cadestro.v1.ConfigureActionRequest.update:type_name -> cadestro.v1.UpdateActionParams
-	149, // 101: cadestro.v1.ConfigureActionRequest.shell:type_name -> cadestro.v1.ShellActionParams
-	82,  // 102: cadestro.v1.RenameActionResponse.action:type_name -> cadestro.v1.ManagedAction
-	82,  // 103: cadestro.v1.SetActionDescriptionResponse.action:type_name -> cadestro.v1.ManagedAction
-	82,  // 104: cadestro.v1.ConfigureActionResponse.action:type_name -> cadestro.v1.ManagedAction
-	144, // 105: cadestro.v1.DeleteActionRequest.id:type_name -> cadestro.v1.ActionId
-	150, // 106: cadestro.v1.DeviceGroup.id:type_name -> cadestro.v1.DeviceGroupId
-	136, // 107: cadestro.v1.DeviceGroup.created_at:type_name -> google.protobuf.Timestamp
-	135, // 108: cadestro.v1.DeviceGroupMember.device_id:type_name -> cadestro.v1.DeviceId
-	136, // 109: cadestro.v1.DeviceGroupMember.last_seen_at:type_name -> google.protobuf.Timestamp
-	97,  // 110: cadestro.v1.CreateDeviceGroupResponse.group:type_name -> cadestro.v1.DeviceGroup
-	150, // 111: cadestro.v1.GetDeviceGroupRequest.id:type_name -> cadestro.v1.DeviceGroupId
-	97,  // 112: cadestro.v1.GetDeviceGroupResponse.group:type_name -> cadestro.v1.DeviceGroup
-	98,  // 113: cadestro.v1.GetDeviceGroupResponse.devices:type_name -> cadestro.v1.DeviceGroupMember
-	97,  // 114: cadestro.v1.ListDeviceGroupsResponse.groups:type_name -> cadestro.v1.DeviceGroup
-	135, // 115: cadestro.v1.ListDeviceGroupsForDeviceRequest.device_id:type_name -> cadestro.v1.DeviceId
-	97,  // 116: cadestro.v1.ListDeviceGroupsForDeviceResponse.groups:type_name -> cadestro.v1.DeviceGroup
-	150, // 117: cadestro.v1.RenameDeviceGroupRequest.id:type_name -> cadestro.v1.DeviceGroupId
-	150, // 118: cadestro.v1.SetDeviceGroupDescriptionRequest.id:type_name -> cadestro.v1.DeviceGroupId
-	97,  // 119: cadestro.v1.RenameDeviceGroupResponse.group:type_name -> cadestro.v1.DeviceGroup
-	97,  // 120: cadestro.v1.SetDeviceGroupDescriptionResponse.group:type_name -> cadestro.v1.DeviceGroup
-	150, // 121: cadestro.v1.DeleteDeviceGroupRequest.id:type_name -> cadestro.v1.DeviceGroupId
-	150, // 122: cadestro.v1.AddDeviceToGroupRequest.group_id:type_name -> cadestro.v1.DeviceGroupId
-	135, // 123: cadestro.v1.AddDeviceToGroupRequest.device_id:type_name -> cadestro.v1.DeviceId
-	97,  // 124: cadestro.v1.AddDeviceToGroupResponse.group:type_name -> cadestro.v1.DeviceGroup
-	150, // 125: cadestro.v1.RemoveDeviceFromGroupRequest.group_id:type_name -> cadestro.v1.DeviceGroupId
-	135, // 126: cadestro.v1.RemoveDeviceFromGroupRequest.device_id:type_name -> cadestro.v1.DeviceId
-	97,  // 127: cadestro.v1.RemoveDeviceFromGroupResponse.group:type_name -> cadestro.v1.DeviceGroup
-	151, // 128: cadestro.v1.Assignment.id:type_name -> cadestro.v1.AssignmentId
-	144, // 129: cadestro.v1.Assignment.action_id:type_name -> cadestro.v1.ActionId
-	152, // 130: cadestro.v1.Assignment.target_type:type_name -> cadestro.v1.AssignmentTargetType
-	153, // 131: cadestro.v1.Assignment.target_id:type_name -> cadestro.v1.AssignmentTargetId
-	136, // 132: cadestro.v1.Assignment.created_at:type_name -> google.protobuf.Timestamp
-	144, // 133: cadestro.v1.CreateAssignmentRequest.action_id:type_name -> cadestro.v1.ActionId
-	152, // 134: cadestro.v1.CreateAssignmentRequest.target_type:type_name -> cadestro.v1.AssignmentTargetType
-	153, // 135: cadestro.v1.CreateAssignmentRequest.target_id:type_name -> cadestro.v1.AssignmentTargetId
-	117, // 136: cadestro.v1.CreateAssignmentResponse.assignment:type_name -> cadestro.v1.Assignment
-	151, // 137: cadestro.v1.DeleteAssignmentRequest.id:type_name -> cadestro.v1.AssignmentId
-	144, // 138: cadestro.v1.ListAssignmentsRequest.action_id:type_name -> cadestro.v1.ActionId
-	152, // 139: cadestro.v1.ListAssignmentsRequest.target_type:type_name -> cadestro.v1.AssignmentTargetType
-	153, // 140: cadestro.v1.ListAssignmentsRequest.target_id:type_name -> cadestro.v1.AssignmentTargetId
-	117, // 141: cadestro.v1.ListAssignmentsResponse.assignments:type_name -> cadestro.v1.Assignment
-	135, // 142: cadestro.v1.GetDeviceAssignmentsRequest.device_id:type_name -> cadestro.v1.DeviceId
-	82,  // 143: cadestro.v1.GetDeviceAssignmentsResponse.actions:type_name -> cadestro.v1.ManagedAction
-	144, // 144: cadestro.v1.ComplianceCheckResult.action_id:type_name -> cadestro.v1.ActionId
-	154, // 145: cadestro.v1.ComplianceCheckResult.detection_output:type_name -> cadestro.v1.CommandOutput
-	136, // 146: cadestro.v1.ComplianceCheckResult.checked_at:type_name -> google.protobuf.Timestamp
-	135, // 147: cadestro.v1.GetDeviceComplianceRequest.device_id:type_name -> cadestro.v1.DeviceId
-	142, // 148: cadestro.v1.GetDeviceComplianceResponse.status:type_name -> cadestro.v1.ComplianceStatus
-	126, // 149: cadestro.v1.GetDeviceComplianceResponse.checks:type_name -> cadestro.v1.ComplianceCheckResult
-	155, // 150: cadestro.v1.ExecutionResult.run_id:type_name -> cadestro.v1.RunId
-	144, // 151: cadestro.v1.ExecutionResult.action_id:type_name -> cadestro.v1.ActionId
-	156, // 152: cadestro.v1.ExecutionResult.status:type_name -> cadestro.v1.ExecutionStatus
-	154, // 153: cadestro.v1.ExecutionResult.output:type_name -> cadestro.v1.CommandOutput
-	136, // 154: cadestro.v1.ExecutionResult.completed_at:type_name -> google.protobuf.Timestamp
-	154, // 155: cadestro.v1.ExecutionResult.detection_output:type_name -> cadestro.v1.CommandOutput
-	135, // 156: cadestro.v1.ListExecutionResultsRequest.device_id:type_name -> cadestro.v1.DeviceId
-	129, // 157: cadestro.v1.ListExecutionResultsResponse.results:type_name -> cadestro.v1.ExecutionResult
-	157, // 158: cadestro.v1.AuditEvent.id:type_name -> cadestro.v1.AuditEventId
-	1,   // 159: cadestro.v1.AuditEvent.event_type:type_name -> cadestro.v1.AuditEventType
-	2,   // 160: cadestro.v1.AuditEvent.stream_type:type_name -> cadestro.v1.AuditStreamType
-	158, // 161: cadestro.v1.AuditEvent.stream_id:type_name -> cadestro.v1.AuditStreamId
-	3,   // 162: cadestro.v1.AuditEvent.actor_type:type_name -> cadestro.v1.AuditActorType
-	159, // 163: cadestro.v1.AuditEvent.actor_id:type_name -> cadestro.v1.AuditActorId
-	136, // 164: cadestro.v1.AuditEvent.occurred_at:type_name -> google.protobuf.Timestamp
-	132, // 165: cadestro.v1.ListAuditEventsResponse.events:type_name -> cadestro.v1.AuditEvent
-	8,   // 166: cadestro.v1.ControlService.RefreshToken:input_type -> cadestro.v1.RefreshTokenRequest
-	10,  // 167: cadestro.v1.ControlService.Logout:input_type -> cadestro.v1.LogoutRequest
-	40,  // 168: cadestro.v1.ControlService.GetCurrentUser:input_type -> cadestro.v1.GetCurrentUserRequest
-	43,  // 169: cadestro.v1.ControlService.ListAuthMethods:input_type -> cadestro.v1.ListAuthMethodsRequest
-	45,  // 170: cadestro.v1.ControlService.GetSSOLoginURL:input_type -> cadestro.v1.GetSSOLoginURLRequest
-	47,  // 171: cadestro.v1.ControlService.SSOCallback:input_type -> cadestro.v1.SSOCallbackRequest
-	50,  // 172: cadestro.v1.ControlService.CreateIdentityProvider:input_type -> cadestro.v1.CreateIdentityProviderRequest
-	52,  // 173: cadestro.v1.ControlService.GetIdentityProvider:input_type -> cadestro.v1.GetIdentityProviderRequest
-	54,  // 174: cadestro.v1.ControlService.ListIdentityProviders:input_type -> cadestro.v1.ListIdentityProvidersRequest
-	56,  // 175: cadestro.v1.ControlService.RenameIdentityProvider:input_type -> cadestro.v1.RenameIdentityProviderRequest
-	58,  // 176: cadestro.v1.ControlService.ConfigureIdentityProvider:input_type -> cadestro.v1.ConfigureIdentityProviderRequest
-	60,  // 177: cadestro.v1.ControlService.EnableIdentityProvider:input_type -> cadestro.v1.EnableIdentityProviderRequest
-	62,  // 178: cadestro.v1.ControlService.DisableIdentityProvider:input_type -> cadestro.v1.DisableIdentityProviderRequest
-	64,  // 179: cadestro.v1.ControlService.DeleteIdentityProvider:input_type -> cadestro.v1.DeleteIdentityProviderRequest
-	4,   // 180: cadestro.v1.ControlService.Register:input_type -> cadestro.v1.RegisterRequest
-	6,   // 181: cadestro.v1.ControlService.RenewCertificate:input_type -> cadestro.v1.RenewCertificateRequest
-	67,  // 182: cadestro.v1.ControlService.ListDevices:input_type -> cadestro.v1.ListDevicesRequest
-	69,  // 183: cadestro.v1.ControlService.GetDevice:input_type -> cadestro.v1.GetDeviceRequest
-	71,  // 184: cadestro.v1.ControlService.DeleteDevice:input_type -> cadestro.v1.DeleteDeviceRequest
-	74,  // 185: cadestro.v1.ControlService.CreateToken:input_type -> cadestro.v1.CreateTokenRequest
-	76,  // 186: cadestro.v1.ControlService.ListTokens:input_type -> cadestro.v1.ListTokensRequest
-	78,  // 187: cadestro.v1.ControlService.RenameToken:input_type -> cadestro.v1.RenameTokenRequest
-	80,  // 188: cadestro.v1.ControlService.DeleteToken:input_type -> cadestro.v1.DeleteTokenRequest
-	83,  // 189: cadestro.v1.ControlService.CreateAction:input_type -> cadestro.v1.CreateActionRequest
-	85,  // 190: cadestro.v1.ControlService.GetAction:input_type -> cadestro.v1.GetActionRequest
-	87,  // 191: cadestro.v1.ControlService.ListActions:input_type -> cadestro.v1.ListActionsRequest
-	89,  // 192: cadestro.v1.ControlService.RenameAction:input_type -> cadestro.v1.RenameActionRequest
-	90,  // 193: cadestro.v1.ControlService.SetActionDescription:input_type -> cadestro.v1.SetActionDescriptionRequest
-	91,  // 194: cadestro.v1.ControlService.ConfigureAction:input_type -> cadestro.v1.ConfigureActionRequest
-	95,  // 195: cadestro.v1.ControlService.DeleteAction:input_type -> cadestro.v1.DeleteActionRequest
-	99,  // 196: cadestro.v1.ControlService.CreateDeviceGroup:input_type -> cadestro.v1.CreateDeviceGroupRequest
-	101, // 197: cadestro.v1.ControlService.GetDeviceGroup:input_type -> cadestro.v1.GetDeviceGroupRequest
-	103, // 198: cadestro.v1.ControlService.ListDeviceGroups:input_type -> cadestro.v1.ListDeviceGroupsRequest
-	105, // 199: cadestro.v1.ControlService.ListDeviceGroupsForDevice:input_type -> cadestro.v1.ListDeviceGroupsForDeviceRequest
-	107, // 200: cadestro.v1.ControlService.RenameDeviceGroup:input_type -> cadestro.v1.RenameDeviceGroupRequest
-	108, // 201: cadestro.v1.ControlService.SetDeviceGroupDescription:input_type -> cadestro.v1.SetDeviceGroupDescriptionRequest
-	111, // 202: cadestro.v1.ControlService.DeleteDeviceGroup:input_type -> cadestro.v1.DeleteDeviceGroupRequest
-	113, // 203: cadestro.v1.ControlService.AddDeviceToGroup:input_type -> cadestro.v1.AddDeviceToGroupRequest
-	115, // 204: cadestro.v1.ControlService.RemoveDeviceFromGroup:input_type -> cadestro.v1.RemoveDeviceFromGroupRequest
-	118, // 205: cadestro.v1.ControlService.CreateAssignment:input_type -> cadestro.v1.CreateAssignmentRequest
-	120, // 206: cadestro.v1.ControlService.DeleteAssignment:input_type -> cadestro.v1.DeleteAssignmentRequest
-	122, // 207: cadestro.v1.ControlService.ListAssignments:input_type -> cadestro.v1.ListAssignmentsRequest
-	124, // 208: cadestro.v1.ControlService.GetDeviceAssignments:input_type -> cadestro.v1.GetDeviceAssignmentsRequest
-	127, // 209: cadestro.v1.ControlService.GetDeviceCompliance:input_type -> cadestro.v1.GetDeviceComplianceRequest
-	130, // 210: cadestro.v1.ControlService.ListExecutionResults:input_type -> cadestro.v1.ListExecutionResultsRequest
-	133, // 211: cadestro.v1.ControlService.ListAuditEvents:input_type -> cadestro.v1.ListAuditEventsRequest
-	14,  // 212: cadestro.v1.ControlService.CreateRole:input_type -> cadestro.v1.CreateRoleRequest
-	16,  // 213: cadestro.v1.ControlService.GetRole:input_type -> cadestro.v1.GetRoleRequest
-	18,  // 214: cadestro.v1.ControlService.ListRoles:input_type -> cadestro.v1.ListRolesRequest
-	20,  // 215: cadestro.v1.ControlService.RenameRole:input_type -> cadestro.v1.RenameRoleRequest
-	22,  // 216: cadestro.v1.ControlService.SetRoleDescription:input_type -> cadestro.v1.SetRoleDescriptionRequest
-	24,  // 217: cadestro.v1.ControlService.GrantRolePermission:input_type -> cadestro.v1.GrantRolePermissionRequest
-	26,  // 218: cadestro.v1.ControlService.RevokeRolePermission:input_type -> cadestro.v1.RevokeRolePermissionRequest
-	28,  // 219: cadestro.v1.ControlService.DeleteRole:input_type -> cadestro.v1.DeleteRoleRequest
-	30,  // 220: cadestro.v1.ControlService.AssignRoleToUser:input_type -> cadestro.v1.AssignRoleToUserRequest
-	32,  // 221: cadestro.v1.ControlService.RevokeRoleFromUser:input_type -> cadestro.v1.RevokeRoleFromUserRequest
-	34,  // 222: cadestro.v1.ControlService.ListPermissions:input_type -> cadestro.v1.ListPermissionsRequest
-	36,  // 223: cadestro.v1.ControlService.ListUsers:input_type -> cadestro.v1.ListUsersRequest
-	38,  // 224: cadestro.v1.ControlService.RevokeUserSessions:input_type -> cadestro.v1.RevokeUserSessionsRequest
-	9,   // 225: cadestro.v1.ControlService.RefreshToken:output_type -> cadestro.v1.RefreshTokenResponse
-	11,  // 226: cadestro.v1.ControlService.Logout:output_type -> cadestro.v1.LogoutResponse
-	41,  // 227: cadestro.v1.ControlService.GetCurrentUser:output_type -> cadestro.v1.GetCurrentUserResponse
-	44,  // 228: cadestro.v1.ControlService.ListAuthMethods:output_type -> cadestro.v1.ListAuthMethodsResponse
-	46,  // 229: cadestro.v1.ControlService.GetSSOLoginURL:output_type -> cadestro.v1.GetSSOLoginURLResponse
-	48,  // 230: cadestro.v1.ControlService.SSOCallback:output_type -> cadestro.v1.SSOCallbackResponse
-	51,  // 231: cadestro.v1.ControlService.CreateIdentityProvider:output_type -> cadestro.v1.CreateIdentityProviderResponse
-	53,  // 232: cadestro.v1.ControlService.GetIdentityProvider:output_type -> cadestro.v1.GetIdentityProviderResponse
-	55,  // 233: cadestro.v1.ControlService.ListIdentityProviders:output_type -> cadestro.v1.ListIdentityProvidersResponse
-	57,  // 234: cadestro.v1.ControlService.RenameIdentityProvider:output_type -> cadestro.v1.RenameIdentityProviderResponse
-	59,  // 235: cadestro.v1.ControlService.ConfigureIdentityProvider:output_type -> cadestro.v1.ConfigureIdentityProviderResponse
-	61,  // 236: cadestro.v1.ControlService.EnableIdentityProvider:output_type -> cadestro.v1.EnableIdentityProviderResponse
-	63,  // 237: cadestro.v1.ControlService.DisableIdentityProvider:output_type -> cadestro.v1.DisableIdentityProviderResponse
-	65,  // 238: cadestro.v1.ControlService.DeleteIdentityProvider:output_type -> cadestro.v1.DeleteIdentityProviderResponse
-	5,   // 239: cadestro.v1.ControlService.Register:output_type -> cadestro.v1.RegisterResponse
-	7,   // 240: cadestro.v1.ControlService.RenewCertificate:output_type -> cadestro.v1.RenewCertificateResponse
-	68,  // 241: cadestro.v1.ControlService.ListDevices:output_type -> cadestro.v1.ListDevicesResponse
-	70,  // 242: cadestro.v1.ControlService.GetDevice:output_type -> cadestro.v1.GetDeviceResponse
-	72,  // 243: cadestro.v1.ControlService.DeleteDevice:output_type -> cadestro.v1.DeleteDeviceResponse
-	75,  // 244: cadestro.v1.ControlService.CreateToken:output_type -> cadestro.v1.CreateTokenResponse
-	77,  // 245: cadestro.v1.ControlService.ListTokens:output_type -> cadestro.v1.ListTokensResponse
-	79,  // 246: cadestro.v1.ControlService.RenameToken:output_type -> cadestro.v1.RenameTokenResponse
-	81,  // 247: cadestro.v1.ControlService.DeleteToken:output_type -> cadestro.v1.DeleteTokenResponse
-	84,  // 248: cadestro.v1.ControlService.CreateAction:output_type -> cadestro.v1.CreateActionResponse
-	86,  // 249: cadestro.v1.ControlService.GetAction:output_type -> cadestro.v1.GetActionResponse
-	88,  // 250: cadestro.v1.ControlService.ListActions:output_type -> cadestro.v1.ListActionsResponse
-	92,  // 251: cadestro.v1.ControlService.RenameAction:output_type -> cadestro.v1.RenameActionResponse
-	93,  // 252: cadestro.v1.ControlService.SetActionDescription:output_type -> cadestro.v1.SetActionDescriptionResponse
-	94,  // 253: cadestro.v1.ControlService.ConfigureAction:output_type -> cadestro.v1.ConfigureActionResponse
-	96,  // 254: cadestro.v1.ControlService.DeleteAction:output_type -> cadestro.v1.DeleteActionResponse
-	100, // 255: cadestro.v1.ControlService.CreateDeviceGroup:output_type -> cadestro.v1.CreateDeviceGroupResponse
-	102, // 256: cadestro.v1.ControlService.GetDeviceGroup:output_type -> cadestro.v1.GetDeviceGroupResponse
-	104, // 257: cadestro.v1.ControlService.ListDeviceGroups:output_type -> cadestro.v1.ListDeviceGroupsResponse
-	106, // 258: cadestro.v1.ControlService.ListDeviceGroupsForDevice:output_type -> cadestro.v1.ListDeviceGroupsForDeviceResponse
-	109, // 259: cadestro.v1.ControlService.RenameDeviceGroup:output_type -> cadestro.v1.RenameDeviceGroupResponse
-	110, // 260: cadestro.v1.ControlService.SetDeviceGroupDescription:output_type -> cadestro.v1.SetDeviceGroupDescriptionResponse
-	112, // 261: cadestro.v1.ControlService.DeleteDeviceGroup:output_type -> cadestro.v1.DeleteDeviceGroupResponse
-	114, // 262: cadestro.v1.ControlService.AddDeviceToGroup:output_type -> cadestro.v1.AddDeviceToGroupResponse
-	116, // 263: cadestro.v1.ControlService.RemoveDeviceFromGroup:output_type -> cadestro.v1.RemoveDeviceFromGroupResponse
-	119, // 264: cadestro.v1.ControlService.CreateAssignment:output_type -> cadestro.v1.CreateAssignmentResponse
-	121, // 265: cadestro.v1.ControlService.DeleteAssignment:output_type -> cadestro.v1.DeleteAssignmentResponse
-	123, // 266: cadestro.v1.ControlService.ListAssignments:output_type -> cadestro.v1.ListAssignmentsResponse
-	125, // 267: cadestro.v1.ControlService.GetDeviceAssignments:output_type -> cadestro.v1.GetDeviceAssignmentsResponse
-	128, // 268: cadestro.v1.ControlService.GetDeviceCompliance:output_type -> cadestro.v1.GetDeviceComplianceResponse
-	131, // 269: cadestro.v1.ControlService.ListExecutionResults:output_type -> cadestro.v1.ListExecutionResultsResponse
-	134, // 270: cadestro.v1.ControlService.ListAuditEvents:output_type -> cadestro.v1.ListAuditEventsResponse
-	15,  // 271: cadestro.v1.ControlService.CreateRole:output_type -> cadestro.v1.CreateRoleResponse
-	17,  // 272: cadestro.v1.ControlService.GetRole:output_type -> cadestro.v1.GetRoleResponse
-	19,  // 273: cadestro.v1.ControlService.ListRoles:output_type -> cadestro.v1.ListRolesResponse
-	21,  // 274: cadestro.v1.ControlService.RenameRole:output_type -> cadestro.v1.RenameRoleResponse
-	23,  // 275: cadestro.v1.ControlService.SetRoleDescription:output_type -> cadestro.v1.SetRoleDescriptionResponse
-	25,  // 276: cadestro.v1.ControlService.GrantRolePermission:output_type -> cadestro.v1.GrantRolePermissionResponse
-	27,  // 277: cadestro.v1.ControlService.RevokeRolePermission:output_type -> cadestro.v1.RevokeRolePermissionResponse
-	29,  // 278: cadestro.v1.ControlService.DeleteRole:output_type -> cadestro.v1.DeleteRoleResponse
-	31,  // 279: cadestro.v1.ControlService.AssignRoleToUser:output_type -> cadestro.v1.AssignRoleToUserResponse
-	33,  // 280: cadestro.v1.ControlService.RevokeRoleFromUser:output_type -> cadestro.v1.RevokeRoleFromUserResponse
-	35,  // 281: cadestro.v1.ControlService.ListPermissions:output_type -> cadestro.v1.ListPermissionsResponse
-	37,  // 282: cadestro.v1.ControlService.ListUsers:output_type -> cadestro.v1.ListUsersResponse
-	39,  // 283: cadestro.v1.ControlService.RevokeUserSessions:output_type -> cadestro.v1.RevokeUserSessionsResponse
-	225, // [225:284] is the sub-list for method output_type
-	166, // [166:225] is the sub-list for method input_type
-	166, // [166:166] is the sub-list for extension type_name
-	166, // [166:166] is the sub-list for extension extendee
-	0,   // [0:166] is the sub-list for field type_name
+	136, // 1: cadestro.v1.RefreshTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
+	137, // 2: cadestro.v1.User.id:type_name -> cadestro.v1.UserId
+	136, // 3: cadestro.v1.User.created_at:type_name -> google.protobuf.Timestamp
+	136, // 4: cadestro.v1.User.last_login_at:type_name -> google.protobuf.Timestamp
+	0,   // 5: cadestro.v1.User.permissions:type_name -> cadestro.v1.Permission
+	13,  // 6: cadestro.v1.User.roles:type_name -> cadestro.v1.Role
+	138, // 7: cadestro.v1.Role.id:type_name -> cadestro.v1.RoleId
+	0,   // 8: cadestro.v1.Role.permissions:type_name -> cadestro.v1.Permission
+	136, // 9: cadestro.v1.Role.created_at:type_name -> google.protobuf.Timestamp
+	136, // 10: cadestro.v1.Role.updated_at:type_name -> google.protobuf.Timestamp
+	0,   // 11: cadestro.v1.CreateRoleRequest.permissions:type_name -> cadestro.v1.Permission
+	13,  // 12: cadestro.v1.CreateRoleResponse.role:type_name -> cadestro.v1.Role
+	138, // 13: cadestro.v1.GetRoleRequest.id:type_name -> cadestro.v1.RoleId
+	13,  // 14: cadestro.v1.GetRoleResponse.role:type_name -> cadestro.v1.Role
+	13,  // 15: cadestro.v1.ListRolesResponse.roles:type_name -> cadestro.v1.Role
+	138, // 16: cadestro.v1.RenameRoleRequest.id:type_name -> cadestro.v1.RoleId
+	13,  // 17: cadestro.v1.RenameRoleResponse.role:type_name -> cadestro.v1.Role
+	138, // 18: cadestro.v1.SetRoleDescriptionRequest.id:type_name -> cadestro.v1.RoleId
+	13,  // 19: cadestro.v1.SetRoleDescriptionResponse.role:type_name -> cadestro.v1.Role
+	138, // 20: cadestro.v1.GrantRolePermissionRequest.id:type_name -> cadestro.v1.RoleId
+	0,   // 21: cadestro.v1.GrantRolePermissionRequest.permission:type_name -> cadestro.v1.Permission
+	13,  // 22: cadestro.v1.GrantRolePermissionResponse.role:type_name -> cadestro.v1.Role
+	138, // 23: cadestro.v1.RevokeRolePermissionRequest.id:type_name -> cadestro.v1.RoleId
+	0,   // 24: cadestro.v1.RevokeRolePermissionRequest.permission:type_name -> cadestro.v1.Permission
+	13,  // 25: cadestro.v1.RevokeRolePermissionResponse.role:type_name -> cadestro.v1.Role
+	138, // 26: cadestro.v1.DeleteRoleRequest.id:type_name -> cadestro.v1.RoleId
+	137, // 27: cadestro.v1.AssignRoleToUserRequest.user_id:type_name -> cadestro.v1.UserId
+	138, // 28: cadestro.v1.AssignRoleToUserRequest.role_id:type_name -> cadestro.v1.RoleId
+	137, // 29: cadestro.v1.RevokeRoleFromUserRequest.user_id:type_name -> cadestro.v1.UserId
+	138, // 30: cadestro.v1.RevokeRoleFromUserRequest.role_id:type_name -> cadestro.v1.RoleId
+	0,   // 31: cadestro.v1.ListPermissionsResponse.permissions:type_name -> cadestro.v1.Permission
+	12,  // 32: cadestro.v1.ListUsersResponse.users:type_name -> cadestro.v1.User
+	137, // 33: cadestro.v1.RevokeUserSessionsRequest.user_id:type_name -> cadestro.v1.UserId
+	12,  // 34: cadestro.v1.GetCurrentUserResponse.user:type_name -> cadestro.v1.User
+	42,  // 35: cadestro.v1.ListAuthMethodsResponse.providers:type_name -> cadestro.v1.AuthMethodProvider
+	136, // 36: cadestro.v1.SSOCallbackResponse.expires_at:type_name -> google.protobuf.Timestamp
+	139, // 37: cadestro.v1.IdentityProvider.id:type_name -> cadestro.v1.IdentityProviderId
+	140, // 38: cadestro.v1.IdentityProvider.client_id:type_name -> cadestro.v1.OidcClientId
+	136, // 39: cadestro.v1.IdentityProvider.created_at:type_name -> google.protobuf.Timestamp
+	136, // 40: cadestro.v1.IdentityProvider.updated_at:type_name -> google.protobuf.Timestamp
+	140, // 41: cadestro.v1.CreateIdentityProviderRequest.client_id:type_name -> cadestro.v1.OidcClientId
+	49,  // 42: cadestro.v1.CreateIdentityProviderResponse.provider:type_name -> cadestro.v1.IdentityProvider
+	139, // 43: cadestro.v1.GetIdentityProviderRequest.id:type_name -> cadestro.v1.IdentityProviderId
+	49,  // 44: cadestro.v1.GetIdentityProviderResponse.provider:type_name -> cadestro.v1.IdentityProvider
+	49,  // 45: cadestro.v1.ListIdentityProvidersResponse.providers:type_name -> cadestro.v1.IdentityProvider
+	139, // 46: cadestro.v1.RenameIdentityProviderRequest.id:type_name -> cadestro.v1.IdentityProviderId
+	49,  // 47: cadestro.v1.RenameIdentityProviderResponse.provider:type_name -> cadestro.v1.IdentityProvider
+	139, // 48: cadestro.v1.ConfigureIdentityProviderRequest.id:type_name -> cadestro.v1.IdentityProviderId
+	140, // 49: cadestro.v1.ConfigureIdentityProviderRequest.client_id:type_name -> cadestro.v1.OidcClientId
+	49,  // 50: cadestro.v1.ConfigureIdentityProviderResponse.provider:type_name -> cadestro.v1.IdentityProvider
+	139, // 51: cadestro.v1.EnableIdentityProviderRequest.id:type_name -> cadestro.v1.IdentityProviderId
+	49,  // 52: cadestro.v1.EnableIdentityProviderResponse.provider:type_name -> cadestro.v1.IdentityProvider
+	139, // 53: cadestro.v1.DisableIdentityProviderRequest.id:type_name -> cadestro.v1.IdentityProviderId
+	49,  // 54: cadestro.v1.DisableIdentityProviderResponse.provider:type_name -> cadestro.v1.IdentityProvider
+	139, // 55: cadestro.v1.DeleteIdentityProviderRequest.id:type_name -> cadestro.v1.IdentityProviderId
+	135, // 56: cadestro.v1.Device.id:type_name -> cadestro.v1.DeviceId
+	141, // 57: cadestro.v1.Device.status:type_name -> cadestro.v1.DeviceStatus
+	136, // 58: cadestro.v1.Device.registered_at:type_name -> google.protobuf.Timestamp
+	136, // 59: cadestro.v1.Device.last_seen_at:type_name -> google.protobuf.Timestamp
+	136, // 60: cadestro.v1.Device.cert_expires_at:type_name -> google.protobuf.Timestamp
+	142, // 61: cadestro.v1.Device.compliance_status:type_name -> cadestro.v1.ComplianceStatus
+	66,  // 62: cadestro.v1.ListDevicesResponse.devices:type_name -> cadestro.v1.Device
+	135, // 63: cadestro.v1.GetDeviceRequest.id:type_name -> cadestro.v1.DeviceId
+	66,  // 64: cadestro.v1.GetDeviceResponse.device:type_name -> cadestro.v1.Device
+	135, // 65: cadestro.v1.DeleteDeviceRequest.id:type_name -> cadestro.v1.DeviceId
+	143, // 66: cadestro.v1.RegistrationToken.id:type_name -> cadestro.v1.RegistrationTokenId
+	136, // 67: cadestro.v1.RegistrationToken.expires_at:type_name -> google.protobuf.Timestamp
+	136, // 68: cadestro.v1.RegistrationToken.created_at:type_name -> google.protobuf.Timestamp
+	136, // 69: cadestro.v1.CreateTokenRequest.expires_at:type_name -> google.protobuf.Timestamp
+	73,  // 70: cadestro.v1.CreateTokenResponse.token:type_name -> cadestro.v1.RegistrationToken
+	73,  // 71: cadestro.v1.ListTokensResponse.tokens:type_name -> cadestro.v1.RegistrationToken
+	143, // 72: cadestro.v1.RenameTokenRequest.id:type_name -> cadestro.v1.RegistrationTokenId
+	73,  // 73: cadestro.v1.RenameTokenResponse.token:type_name -> cadestro.v1.RegistrationToken
+	143, // 74: cadestro.v1.DeleteTokenRequest.id:type_name -> cadestro.v1.RegistrationTokenId
+	144, // 75: cadestro.v1.ManagedAction.id:type_name -> cadestro.v1.ActionId
+	145, // 76: cadestro.v1.ManagedAction.desired_state:type_name -> cadestro.v1.DesiredState
+	146, // 77: cadestro.v1.ManagedAction.schedule:type_name -> cadestro.v1.ActionSchedule
+	136, // 78: cadestro.v1.ManagedAction.created_at:type_name -> google.protobuf.Timestamp
+	136, // 79: cadestro.v1.ManagedAction.updated_at:type_name -> google.protobuf.Timestamp
+	147, // 80: cadestro.v1.ManagedAction.package:type_name -> cadestro.v1.PackageActionParams
+	148, // 81: cadestro.v1.ManagedAction.update:type_name -> cadestro.v1.UpdateActionParams
+	149, // 82: cadestro.v1.ManagedAction.shell:type_name -> cadestro.v1.ShellActionParams
+	145, // 83: cadestro.v1.CreateActionRequest.desired_state:type_name -> cadestro.v1.DesiredState
+	146, // 84: cadestro.v1.CreateActionRequest.schedule:type_name -> cadestro.v1.ActionSchedule
+	147, // 85: cadestro.v1.CreateActionRequest.package:type_name -> cadestro.v1.PackageActionParams
+	148, // 86: cadestro.v1.CreateActionRequest.update:type_name -> cadestro.v1.UpdateActionParams
+	149, // 87: cadestro.v1.CreateActionRequest.shell:type_name -> cadestro.v1.ShellActionParams
+	82,  // 88: cadestro.v1.CreateActionResponse.action:type_name -> cadestro.v1.ManagedAction
+	144, // 89: cadestro.v1.GetActionRequest.id:type_name -> cadestro.v1.ActionId
+	82,  // 90: cadestro.v1.GetActionResponse.action:type_name -> cadestro.v1.ManagedAction
+	82,  // 91: cadestro.v1.ListActionsResponse.actions:type_name -> cadestro.v1.ManagedAction
+	144, // 92: cadestro.v1.RenameActionRequest.id:type_name -> cadestro.v1.ActionId
+	144, // 93: cadestro.v1.SetActionDescriptionRequest.id:type_name -> cadestro.v1.ActionId
+	144, // 94: cadestro.v1.ConfigureActionRequest.id:type_name -> cadestro.v1.ActionId
+	145, // 95: cadestro.v1.ConfigureActionRequest.desired_state:type_name -> cadestro.v1.DesiredState
+	146, // 96: cadestro.v1.ConfigureActionRequest.schedule:type_name -> cadestro.v1.ActionSchedule
+	147, // 97: cadestro.v1.ConfigureActionRequest.package:type_name -> cadestro.v1.PackageActionParams
+	148, // 98: cadestro.v1.ConfigureActionRequest.update:type_name -> cadestro.v1.UpdateActionParams
+	149, // 99: cadestro.v1.ConfigureActionRequest.shell:type_name -> cadestro.v1.ShellActionParams
+	82,  // 100: cadestro.v1.RenameActionResponse.action:type_name -> cadestro.v1.ManagedAction
+	82,  // 101: cadestro.v1.SetActionDescriptionResponse.action:type_name -> cadestro.v1.ManagedAction
+	82,  // 102: cadestro.v1.ConfigureActionResponse.action:type_name -> cadestro.v1.ManagedAction
+	144, // 103: cadestro.v1.DeleteActionRequest.id:type_name -> cadestro.v1.ActionId
+	150, // 104: cadestro.v1.DeviceGroup.id:type_name -> cadestro.v1.DeviceGroupId
+	136, // 105: cadestro.v1.DeviceGroup.created_at:type_name -> google.protobuf.Timestamp
+	135, // 106: cadestro.v1.DeviceGroupMember.device_id:type_name -> cadestro.v1.DeviceId
+	136, // 107: cadestro.v1.DeviceGroupMember.last_seen_at:type_name -> google.protobuf.Timestamp
+	97,  // 108: cadestro.v1.CreateDeviceGroupResponse.group:type_name -> cadestro.v1.DeviceGroup
+	150, // 109: cadestro.v1.GetDeviceGroupRequest.id:type_name -> cadestro.v1.DeviceGroupId
+	97,  // 110: cadestro.v1.GetDeviceGroupResponse.group:type_name -> cadestro.v1.DeviceGroup
+	98,  // 111: cadestro.v1.GetDeviceGroupResponse.devices:type_name -> cadestro.v1.DeviceGroupMember
+	97,  // 112: cadestro.v1.ListDeviceGroupsResponse.groups:type_name -> cadestro.v1.DeviceGroup
+	135, // 113: cadestro.v1.ListDeviceGroupsForDeviceRequest.device_id:type_name -> cadestro.v1.DeviceId
+	97,  // 114: cadestro.v1.ListDeviceGroupsForDeviceResponse.groups:type_name -> cadestro.v1.DeviceGroup
+	150, // 115: cadestro.v1.RenameDeviceGroupRequest.id:type_name -> cadestro.v1.DeviceGroupId
+	150, // 116: cadestro.v1.SetDeviceGroupDescriptionRequest.id:type_name -> cadestro.v1.DeviceGroupId
+	97,  // 117: cadestro.v1.RenameDeviceGroupResponse.group:type_name -> cadestro.v1.DeviceGroup
+	97,  // 118: cadestro.v1.SetDeviceGroupDescriptionResponse.group:type_name -> cadestro.v1.DeviceGroup
+	150, // 119: cadestro.v1.DeleteDeviceGroupRequest.id:type_name -> cadestro.v1.DeviceGroupId
+	150, // 120: cadestro.v1.AddDeviceToGroupRequest.group_id:type_name -> cadestro.v1.DeviceGroupId
+	135, // 121: cadestro.v1.AddDeviceToGroupRequest.device_id:type_name -> cadestro.v1.DeviceId
+	97,  // 122: cadestro.v1.AddDeviceToGroupResponse.group:type_name -> cadestro.v1.DeviceGroup
+	150, // 123: cadestro.v1.RemoveDeviceFromGroupRequest.group_id:type_name -> cadestro.v1.DeviceGroupId
+	135, // 124: cadestro.v1.RemoveDeviceFromGroupRequest.device_id:type_name -> cadestro.v1.DeviceId
+	97,  // 125: cadestro.v1.RemoveDeviceFromGroupResponse.group:type_name -> cadestro.v1.DeviceGroup
+	151, // 126: cadestro.v1.Assignment.id:type_name -> cadestro.v1.AssignmentId
+	144, // 127: cadestro.v1.Assignment.action_id:type_name -> cadestro.v1.ActionId
+	152, // 128: cadestro.v1.Assignment.target_type:type_name -> cadestro.v1.AssignmentTargetType
+	153, // 129: cadestro.v1.Assignment.target_id:type_name -> cadestro.v1.AssignmentTargetId
+	136, // 130: cadestro.v1.Assignment.created_at:type_name -> google.protobuf.Timestamp
+	144, // 131: cadestro.v1.CreateAssignmentRequest.action_id:type_name -> cadestro.v1.ActionId
+	152, // 132: cadestro.v1.CreateAssignmentRequest.target_type:type_name -> cadestro.v1.AssignmentTargetType
+	153, // 133: cadestro.v1.CreateAssignmentRequest.target_id:type_name -> cadestro.v1.AssignmentTargetId
+	117, // 134: cadestro.v1.CreateAssignmentResponse.assignment:type_name -> cadestro.v1.Assignment
+	151, // 135: cadestro.v1.DeleteAssignmentRequest.id:type_name -> cadestro.v1.AssignmentId
+	144, // 136: cadestro.v1.ListAssignmentsRequest.action_id:type_name -> cadestro.v1.ActionId
+	152, // 137: cadestro.v1.ListAssignmentsRequest.target_type:type_name -> cadestro.v1.AssignmentTargetType
+	153, // 138: cadestro.v1.ListAssignmentsRequest.target_id:type_name -> cadestro.v1.AssignmentTargetId
+	117, // 139: cadestro.v1.ListAssignmentsResponse.assignments:type_name -> cadestro.v1.Assignment
+	135, // 140: cadestro.v1.GetDeviceAssignmentsRequest.device_id:type_name -> cadestro.v1.DeviceId
+	82,  // 141: cadestro.v1.GetDeviceAssignmentsResponse.actions:type_name -> cadestro.v1.ManagedAction
+	144, // 142: cadestro.v1.ComplianceCheckResult.action_id:type_name -> cadestro.v1.ActionId
+	154, // 143: cadestro.v1.ComplianceCheckResult.detection_output:type_name -> cadestro.v1.CommandOutput
+	136, // 144: cadestro.v1.ComplianceCheckResult.checked_at:type_name -> google.protobuf.Timestamp
+	135, // 145: cadestro.v1.GetDeviceComplianceRequest.device_id:type_name -> cadestro.v1.DeviceId
+	142, // 146: cadestro.v1.GetDeviceComplianceResponse.status:type_name -> cadestro.v1.ComplianceStatus
+	126, // 147: cadestro.v1.GetDeviceComplianceResponse.checks:type_name -> cadestro.v1.ComplianceCheckResult
+	155, // 148: cadestro.v1.ExecutionResult.run_id:type_name -> cadestro.v1.RunId
+	144, // 149: cadestro.v1.ExecutionResult.action_id:type_name -> cadestro.v1.ActionId
+	156, // 150: cadestro.v1.ExecutionResult.status:type_name -> cadestro.v1.ExecutionStatus
+	154, // 151: cadestro.v1.ExecutionResult.output:type_name -> cadestro.v1.CommandOutput
+	136, // 152: cadestro.v1.ExecutionResult.completed_at:type_name -> google.protobuf.Timestamp
+	154, // 153: cadestro.v1.ExecutionResult.detection_output:type_name -> cadestro.v1.CommandOutput
+	135, // 154: cadestro.v1.ListExecutionResultsRequest.device_id:type_name -> cadestro.v1.DeviceId
+	129, // 155: cadestro.v1.ListExecutionResultsResponse.results:type_name -> cadestro.v1.ExecutionResult
+	157, // 156: cadestro.v1.AuditEvent.id:type_name -> cadestro.v1.AuditEventId
+	1,   // 157: cadestro.v1.AuditEvent.event_type:type_name -> cadestro.v1.AuditEventType
+	2,   // 158: cadestro.v1.AuditEvent.stream_type:type_name -> cadestro.v1.AuditStreamType
+	158, // 159: cadestro.v1.AuditEvent.stream_id:type_name -> cadestro.v1.AuditStreamId
+	3,   // 160: cadestro.v1.AuditEvent.actor_type:type_name -> cadestro.v1.AuditActorType
+	159, // 161: cadestro.v1.AuditEvent.actor_id:type_name -> cadestro.v1.AuditActorId
+	136, // 162: cadestro.v1.AuditEvent.occurred_at:type_name -> google.protobuf.Timestamp
+	132, // 163: cadestro.v1.ListAuditEventsResponse.events:type_name -> cadestro.v1.AuditEvent
+	8,   // 164: cadestro.v1.ControlService.RefreshToken:input_type -> cadestro.v1.RefreshTokenRequest
+	10,  // 165: cadestro.v1.ControlService.Logout:input_type -> cadestro.v1.LogoutRequest
+	40,  // 166: cadestro.v1.ControlService.GetCurrentUser:input_type -> cadestro.v1.GetCurrentUserRequest
+	43,  // 167: cadestro.v1.ControlService.ListAuthMethods:input_type -> cadestro.v1.ListAuthMethodsRequest
+	45,  // 168: cadestro.v1.ControlService.GetSSOLoginURL:input_type -> cadestro.v1.GetSSOLoginURLRequest
+	47,  // 169: cadestro.v1.ControlService.SSOCallback:input_type -> cadestro.v1.SSOCallbackRequest
+	50,  // 170: cadestro.v1.ControlService.CreateIdentityProvider:input_type -> cadestro.v1.CreateIdentityProviderRequest
+	52,  // 171: cadestro.v1.ControlService.GetIdentityProvider:input_type -> cadestro.v1.GetIdentityProviderRequest
+	54,  // 172: cadestro.v1.ControlService.ListIdentityProviders:input_type -> cadestro.v1.ListIdentityProvidersRequest
+	56,  // 173: cadestro.v1.ControlService.RenameIdentityProvider:input_type -> cadestro.v1.RenameIdentityProviderRequest
+	58,  // 174: cadestro.v1.ControlService.ConfigureIdentityProvider:input_type -> cadestro.v1.ConfigureIdentityProviderRequest
+	60,  // 175: cadestro.v1.ControlService.EnableIdentityProvider:input_type -> cadestro.v1.EnableIdentityProviderRequest
+	62,  // 176: cadestro.v1.ControlService.DisableIdentityProvider:input_type -> cadestro.v1.DisableIdentityProviderRequest
+	64,  // 177: cadestro.v1.ControlService.DeleteIdentityProvider:input_type -> cadestro.v1.DeleteIdentityProviderRequest
+	4,   // 178: cadestro.v1.ControlService.Register:input_type -> cadestro.v1.RegisterRequest
+	6,   // 179: cadestro.v1.ControlService.RenewCertificate:input_type -> cadestro.v1.RenewCertificateRequest
+	67,  // 180: cadestro.v1.ControlService.ListDevices:input_type -> cadestro.v1.ListDevicesRequest
+	69,  // 181: cadestro.v1.ControlService.GetDevice:input_type -> cadestro.v1.GetDeviceRequest
+	71,  // 182: cadestro.v1.ControlService.DeleteDevice:input_type -> cadestro.v1.DeleteDeviceRequest
+	74,  // 183: cadestro.v1.ControlService.CreateToken:input_type -> cadestro.v1.CreateTokenRequest
+	76,  // 184: cadestro.v1.ControlService.ListTokens:input_type -> cadestro.v1.ListTokensRequest
+	78,  // 185: cadestro.v1.ControlService.RenameToken:input_type -> cadestro.v1.RenameTokenRequest
+	80,  // 186: cadestro.v1.ControlService.DeleteToken:input_type -> cadestro.v1.DeleteTokenRequest
+	83,  // 187: cadestro.v1.ControlService.CreateAction:input_type -> cadestro.v1.CreateActionRequest
+	85,  // 188: cadestro.v1.ControlService.GetAction:input_type -> cadestro.v1.GetActionRequest
+	87,  // 189: cadestro.v1.ControlService.ListActions:input_type -> cadestro.v1.ListActionsRequest
+	89,  // 190: cadestro.v1.ControlService.RenameAction:input_type -> cadestro.v1.RenameActionRequest
+	90,  // 191: cadestro.v1.ControlService.SetActionDescription:input_type -> cadestro.v1.SetActionDescriptionRequest
+	91,  // 192: cadestro.v1.ControlService.ConfigureAction:input_type -> cadestro.v1.ConfigureActionRequest
+	95,  // 193: cadestro.v1.ControlService.DeleteAction:input_type -> cadestro.v1.DeleteActionRequest
+	99,  // 194: cadestro.v1.ControlService.CreateDeviceGroup:input_type -> cadestro.v1.CreateDeviceGroupRequest
+	101, // 195: cadestro.v1.ControlService.GetDeviceGroup:input_type -> cadestro.v1.GetDeviceGroupRequest
+	103, // 196: cadestro.v1.ControlService.ListDeviceGroups:input_type -> cadestro.v1.ListDeviceGroupsRequest
+	105, // 197: cadestro.v1.ControlService.ListDeviceGroupsForDevice:input_type -> cadestro.v1.ListDeviceGroupsForDeviceRequest
+	107, // 198: cadestro.v1.ControlService.RenameDeviceGroup:input_type -> cadestro.v1.RenameDeviceGroupRequest
+	108, // 199: cadestro.v1.ControlService.SetDeviceGroupDescription:input_type -> cadestro.v1.SetDeviceGroupDescriptionRequest
+	111, // 200: cadestro.v1.ControlService.DeleteDeviceGroup:input_type -> cadestro.v1.DeleteDeviceGroupRequest
+	113, // 201: cadestro.v1.ControlService.AddDeviceToGroup:input_type -> cadestro.v1.AddDeviceToGroupRequest
+	115, // 202: cadestro.v1.ControlService.RemoveDeviceFromGroup:input_type -> cadestro.v1.RemoveDeviceFromGroupRequest
+	118, // 203: cadestro.v1.ControlService.CreateAssignment:input_type -> cadestro.v1.CreateAssignmentRequest
+	120, // 204: cadestro.v1.ControlService.DeleteAssignment:input_type -> cadestro.v1.DeleteAssignmentRequest
+	122, // 205: cadestro.v1.ControlService.ListAssignments:input_type -> cadestro.v1.ListAssignmentsRequest
+	124, // 206: cadestro.v1.ControlService.GetDeviceAssignments:input_type -> cadestro.v1.GetDeviceAssignmentsRequest
+	127, // 207: cadestro.v1.ControlService.GetDeviceCompliance:input_type -> cadestro.v1.GetDeviceComplianceRequest
+	130, // 208: cadestro.v1.ControlService.ListExecutionResults:input_type -> cadestro.v1.ListExecutionResultsRequest
+	133, // 209: cadestro.v1.ControlService.ListAuditEvents:input_type -> cadestro.v1.ListAuditEventsRequest
+	14,  // 210: cadestro.v1.ControlService.CreateRole:input_type -> cadestro.v1.CreateRoleRequest
+	16,  // 211: cadestro.v1.ControlService.GetRole:input_type -> cadestro.v1.GetRoleRequest
+	18,  // 212: cadestro.v1.ControlService.ListRoles:input_type -> cadestro.v1.ListRolesRequest
+	20,  // 213: cadestro.v1.ControlService.RenameRole:input_type -> cadestro.v1.RenameRoleRequest
+	22,  // 214: cadestro.v1.ControlService.SetRoleDescription:input_type -> cadestro.v1.SetRoleDescriptionRequest
+	24,  // 215: cadestro.v1.ControlService.GrantRolePermission:input_type -> cadestro.v1.GrantRolePermissionRequest
+	26,  // 216: cadestro.v1.ControlService.RevokeRolePermission:input_type -> cadestro.v1.RevokeRolePermissionRequest
+	28,  // 217: cadestro.v1.ControlService.DeleteRole:input_type -> cadestro.v1.DeleteRoleRequest
+	30,  // 218: cadestro.v1.ControlService.AssignRoleToUser:input_type -> cadestro.v1.AssignRoleToUserRequest
+	32,  // 219: cadestro.v1.ControlService.RevokeRoleFromUser:input_type -> cadestro.v1.RevokeRoleFromUserRequest
+	34,  // 220: cadestro.v1.ControlService.ListPermissions:input_type -> cadestro.v1.ListPermissionsRequest
+	36,  // 221: cadestro.v1.ControlService.ListUsers:input_type -> cadestro.v1.ListUsersRequest
+	38,  // 222: cadestro.v1.ControlService.RevokeUserSessions:input_type -> cadestro.v1.RevokeUserSessionsRequest
+	9,   // 223: cadestro.v1.ControlService.RefreshToken:output_type -> cadestro.v1.RefreshTokenResponse
+	11,  // 224: cadestro.v1.ControlService.Logout:output_type -> cadestro.v1.LogoutResponse
+	41,  // 225: cadestro.v1.ControlService.GetCurrentUser:output_type -> cadestro.v1.GetCurrentUserResponse
+	44,  // 226: cadestro.v1.ControlService.ListAuthMethods:output_type -> cadestro.v1.ListAuthMethodsResponse
+	46,  // 227: cadestro.v1.ControlService.GetSSOLoginURL:output_type -> cadestro.v1.GetSSOLoginURLResponse
+	48,  // 228: cadestro.v1.ControlService.SSOCallback:output_type -> cadestro.v1.SSOCallbackResponse
+	51,  // 229: cadestro.v1.ControlService.CreateIdentityProvider:output_type -> cadestro.v1.CreateIdentityProviderResponse
+	53,  // 230: cadestro.v1.ControlService.GetIdentityProvider:output_type -> cadestro.v1.GetIdentityProviderResponse
+	55,  // 231: cadestro.v1.ControlService.ListIdentityProviders:output_type -> cadestro.v1.ListIdentityProvidersResponse
+	57,  // 232: cadestro.v1.ControlService.RenameIdentityProvider:output_type -> cadestro.v1.RenameIdentityProviderResponse
+	59,  // 233: cadestro.v1.ControlService.ConfigureIdentityProvider:output_type -> cadestro.v1.ConfigureIdentityProviderResponse
+	61,  // 234: cadestro.v1.ControlService.EnableIdentityProvider:output_type -> cadestro.v1.EnableIdentityProviderResponse
+	63,  // 235: cadestro.v1.ControlService.DisableIdentityProvider:output_type -> cadestro.v1.DisableIdentityProviderResponse
+	65,  // 236: cadestro.v1.ControlService.DeleteIdentityProvider:output_type -> cadestro.v1.DeleteIdentityProviderResponse
+	5,   // 237: cadestro.v1.ControlService.Register:output_type -> cadestro.v1.RegisterResponse
+	7,   // 238: cadestro.v1.ControlService.RenewCertificate:output_type -> cadestro.v1.RenewCertificateResponse
+	68,  // 239: cadestro.v1.ControlService.ListDevices:output_type -> cadestro.v1.ListDevicesResponse
+	70,  // 240: cadestro.v1.ControlService.GetDevice:output_type -> cadestro.v1.GetDeviceResponse
+	72,  // 241: cadestro.v1.ControlService.DeleteDevice:output_type -> cadestro.v1.DeleteDeviceResponse
+	75,  // 242: cadestro.v1.ControlService.CreateToken:output_type -> cadestro.v1.CreateTokenResponse
+	77,  // 243: cadestro.v1.ControlService.ListTokens:output_type -> cadestro.v1.ListTokensResponse
+	79,  // 244: cadestro.v1.ControlService.RenameToken:output_type -> cadestro.v1.RenameTokenResponse
+	81,  // 245: cadestro.v1.ControlService.DeleteToken:output_type -> cadestro.v1.DeleteTokenResponse
+	84,  // 246: cadestro.v1.ControlService.CreateAction:output_type -> cadestro.v1.CreateActionResponse
+	86,  // 247: cadestro.v1.ControlService.GetAction:output_type -> cadestro.v1.GetActionResponse
+	88,  // 248: cadestro.v1.ControlService.ListActions:output_type -> cadestro.v1.ListActionsResponse
+	92,  // 249: cadestro.v1.ControlService.RenameAction:output_type -> cadestro.v1.RenameActionResponse
+	93,  // 250: cadestro.v1.ControlService.SetActionDescription:output_type -> cadestro.v1.SetActionDescriptionResponse
+	94,  // 251: cadestro.v1.ControlService.ConfigureAction:output_type -> cadestro.v1.ConfigureActionResponse
+	96,  // 252: cadestro.v1.ControlService.DeleteAction:output_type -> cadestro.v1.DeleteActionResponse
+	100, // 253: cadestro.v1.ControlService.CreateDeviceGroup:output_type -> cadestro.v1.CreateDeviceGroupResponse
+	102, // 254: cadestro.v1.ControlService.GetDeviceGroup:output_type -> cadestro.v1.GetDeviceGroupResponse
+	104, // 255: cadestro.v1.ControlService.ListDeviceGroups:output_type -> cadestro.v1.ListDeviceGroupsResponse
+	106, // 256: cadestro.v1.ControlService.ListDeviceGroupsForDevice:output_type -> cadestro.v1.ListDeviceGroupsForDeviceResponse
+	109, // 257: cadestro.v1.ControlService.RenameDeviceGroup:output_type -> cadestro.v1.RenameDeviceGroupResponse
+	110, // 258: cadestro.v1.ControlService.SetDeviceGroupDescription:output_type -> cadestro.v1.SetDeviceGroupDescriptionResponse
+	112, // 259: cadestro.v1.ControlService.DeleteDeviceGroup:output_type -> cadestro.v1.DeleteDeviceGroupResponse
+	114, // 260: cadestro.v1.ControlService.AddDeviceToGroup:output_type -> cadestro.v1.AddDeviceToGroupResponse
+	116, // 261: cadestro.v1.ControlService.RemoveDeviceFromGroup:output_type -> cadestro.v1.RemoveDeviceFromGroupResponse
+	119, // 262: cadestro.v1.ControlService.CreateAssignment:output_type -> cadestro.v1.CreateAssignmentResponse
+	121, // 263: cadestro.v1.ControlService.DeleteAssignment:output_type -> cadestro.v1.DeleteAssignmentResponse
+	123, // 264: cadestro.v1.ControlService.ListAssignments:output_type -> cadestro.v1.ListAssignmentsResponse
+	125, // 265: cadestro.v1.ControlService.GetDeviceAssignments:output_type -> cadestro.v1.GetDeviceAssignmentsResponse
+	128, // 266: cadestro.v1.ControlService.GetDeviceCompliance:output_type -> cadestro.v1.GetDeviceComplianceResponse
+	131, // 267: cadestro.v1.ControlService.ListExecutionResults:output_type -> cadestro.v1.ListExecutionResultsResponse
+	134, // 268: cadestro.v1.ControlService.ListAuditEvents:output_type -> cadestro.v1.ListAuditEventsResponse
+	15,  // 269: cadestro.v1.ControlService.CreateRole:output_type -> cadestro.v1.CreateRoleResponse
+	17,  // 270: cadestro.v1.ControlService.GetRole:output_type -> cadestro.v1.GetRoleResponse
+	19,  // 271: cadestro.v1.ControlService.ListRoles:output_type -> cadestro.v1.ListRolesResponse
+	21,  // 272: cadestro.v1.ControlService.RenameRole:output_type -> cadestro.v1.RenameRoleResponse
+	23,  // 273: cadestro.v1.ControlService.SetRoleDescription:output_type -> cadestro.v1.SetRoleDescriptionResponse
+	25,  // 274: cadestro.v1.ControlService.GrantRolePermission:output_type -> cadestro.v1.GrantRolePermissionResponse
+	27,  // 275: cadestro.v1.ControlService.RevokeRolePermission:output_type -> cadestro.v1.RevokeRolePermissionResponse
+	29,  // 276: cadestro.v1.ControlService.DeleteRole:output_type -> cadestro.v1.DeleteRoleResponse
+	31,  // 277: cadestro.v1.ControlService.AssignRoleToUser:output_type -> cadestro.v1.AssignRoleToUserResponse
+	33,  // 278: cadestro.v1.ControlService.RevokeRoleFromUser:output_type -> cadestro.v1.RevokeRoleFromUserResponse
+	35,  // 279: cadestro.v1.ControlService.ListPermissions:output_type -> cadestro.v1.ListPermissionsResponse
+	37,  // 280: cadestro.v1.ControlService.ListUsers:output_type -> cadestro.v1.ListUsersResponse
+	39,  // 281: cadestro.v1.ControlService.RevokeUserSessions:output_type -> cadestro.v1.RevokeUserSessionsResponse
+	223, // [223:282] is the sub-list for method output_type
+	164, // [164:223] is the sub-list for method input_type
+	164, // [164:164] is the sub-list for extension type_name
+	164, // [164:164] is the sub-list for extension extendee
+	0,   // [0:164] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_control_proto_init() }

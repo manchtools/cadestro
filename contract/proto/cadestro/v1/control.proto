@@ -156,7 +156,6 @@ message RenewCertificateRequest {
 
 message RenewCertificateResponse {
   bytes certificate = 1 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp not_after = 2 [(buf.validate.field).required = true];
 }
 
 message RefreshTokenRequest {
@@ -363,7 +362,6 @@ message SSOCallbackResponse {
   string access_token = 1 [(buf.validate.field).required = true];
   string refresh_token = 2 [(buf.validate.field).required = true];
   google.protobuf.Timestamp expires_at = 3 [(buf.validate.field).required = true];
-  User user = 4 [(buf.validate.field).required = true];
 }
 
 message IdentityProvider {

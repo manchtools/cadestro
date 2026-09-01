@@ -47,9 +47,6 @@ func (s *Scheduler) wakeSchedule() {
 	}
 }
 func (s *Scheduler) Run(ctx context.Context) {
-	if !s.recoverInterrupted(ctx) {
-		return
-	}
 	ticker := time.NewTicker(DefaultCheckInterval)
 	defer ticker.Stop()
 	s.runDue(ctx)

@@ -131,14 +131,8 @@ func RegisterAgent(ctx context.Context, controlURL, token, hostname, agentVersio
 	}, nil
 }
 
-// RenewCertificateResult contains the renewed device certificate.
-type RenewCertificateResult struct {
-	Certificate []byte
-	NotAfter    time.Time
-}
-
 // RenewCertificate renews the certificate presented by the authenticated device.
-func RenewCertificate(ctx context.Context, controlURL string, csr []byte, options ...ClientOption) (*RenewCertificateResult, error) {
+func RenewCertificate(ctx context.Context, controlURL string, csr []byte, options ...ClientOption) ([]byte, error) {
 	client := &Client{httpClient: bootstrapHTTPClient()}
 	for _, option := range options {
 		option(client)
@@ -148,14 +142,11 @@ func RenewCertificate(ctx context.Context, controlURL string, csr []byte, option
 	if err != nil {
 		return nil, fmt.Errorf("renew certificate: %w", err)
 	}
-	return &RenewCertificateResult{Certificate: response.Msg.GetCertificate(), NotAfter: response.Msg.GetNotAfter().AsTime()}, nil
+	return response.Msg.GetCertificate(), nil
 }
 
 // Run connects and owns the stream until it closes or ctx is cancelled.
-func (client *Client) Run(ctx context.Context, hostname, agentVersion string, welcome chan<- *cadestrov1.Welcome) error {
-	if welcome == nil {
-		return errors.New("welcome channel is required")
-	}
+func (client *Client) Run(ctx context.Context, hostname, agentVersion string, readiness chan<- struct{}) error {
 	client.mu.Lock()
 	if client.stream != nil {
 		client.mu.Unlock()
@@ -166,15 +157,18 @@ func (client *Client) Run(ctx context.Context, hostname, agentVersion string, we
 	client.mu.Unlock()
 	defer client.closeStream(stream)
 
+	id, err := newULID(rand.Reader)
+	if err != nil {
+		return fmt.Errorf("generate hello id: %w", err)
+	}
 	if err := client.send(ctx, &cadestrov1.AgentMessage{
-		Id: &cadestrov1.MessageId{Value: NewULID()}, Payload: &cadestrov1.AgentMessage_Hello{Hello: &cadestrov1.Hello{
+		Id: &cadestrov1.MessageId{Value: id}, Payload: &cadestrov1.AgentMessage_Hello{Hello: &cadestrov1.Hello{
 			DeviceId: &cadestrov1.DeviceId{Value: client.deviceID}, AgentVersion: agentVersion, Hostname: hostname,
 		}},
 	}); err != nil {
 		return fmt.Errorf("send hello: %w", err)
 	}
 	heartbeatStarted := false
-
 	for {
 		message, err := stream.Receive()
 		if err != nil {
@@ -192,7 +186,7 @@ func (client *Client) Run(ctx context.Context, hostname, agentVersion string, we
 		switch payload := message.GetPayload().(type) {
 		case *cadestrov1.ServerMessage_Welcome:
 			select {
-			case welcome <- payload.Welcome:
+			case readiness <- struct{}{}:
 			default:
 			}
 			if !heartbeatStarted {
@@ -200,9 +194,7 @@ func (client *Client) Run(ctx context.Context, hostname, agentVersion string, we
 				if interval <= 0 {
 					return errors.New("welcome heartbeat interval must be positive")
 				}
-				heartbeatCtx, cancelHeartbeat := context.WithCancel(ctx)
-				defer cancelHeartbeat()
-				go client.sendHeartbeats(heartbeatCtx, interval)
+				go client.sendHeartbeats(ctx, interval)
 				heartbeatStarted = true
 			}
 		default:
@@ -219,8 +211,13 @@ func (client *Client) sendHeartbeats(ctx context.Context, interval time.Duration
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
+			id, err := newULID(rand.Reader)
+			if err != nil {
+				client.logger.Debug("generate heartbeat id", "error", err)
+				return
+			}
 			if err := client.send(ctx, &cadestrov1.AgentMessage{
-				Id: &cadestrov1.MessageId{Value: NewULID()}, Payload: &cadestrov1.AgentMessage_Heartbeat{Heartbeat: &cadestrov1.Heartbeat{}},
+				Id: &cadestrov1.MessageId{Value: id}, Payload: &cadestrov1.AgentMessage_Heartbeat{Heartbeat: &cadestrov1.Heartbeat{}},
 			}); err != nil {
 				client.logger.Debug("send heartbeat", "error", err)
 				return
@@ -295,7 +292,10 @@ func (client *Client) SendActionResult(ctx context.Context, result *cadestrov1.A
 }
 
 func (client *Client) sendResult(ctx context.Context, message *cadestrov1.AgentMessage) error {
-	id := NewULID()
+	id, err := newULID(rand.Reader)
+	if err != nil {
+		return fmt.Errorf("generate result id: %w", err)
+	}
 	pending := client.registerPending(id)
 	defer client.unregisterPending(id)
 	message.Id = &cadestrov1.MessageId{Value: id}
@@ -318,7 +318,10 @@ func (client *Client) sendResult(ctx context.Context, message *cadestrov1.AgentM
 
 // PullDesiredPolicy pulls the desired policy over the authenticated stream.
 func (client *Client) PullDesiredPolicy(ctx context.Context) (*cadestrov1.DesiredPolicy, error) {
-	id := NewULID()
+	id, err := newULID(rand.Reader)
+	if err != nil {
+		return nil, fmt.Errorf("generate desired policy request id: %w", err)
+	}
 	pending := client.registerPending(id)
 	defer client.unregisterPending(id)
 	if err := client.send(ctx, &cadestrov1.AgentMessage{
@@ -355,7 +358,10 @@ func (client *Client) DeviceID() string {
 	return client.deviceID
 }
 
-// NewULID returns a cryptographically random ULID.
-func NewULID() string {
-	return ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String()
+func newULID(entropy io.Reader) (string, error) {
+	id, err := ulid.New(ulid.Timestamp(time.Now()), entropy)
+	if err != nil {
+		return "", fmt.Errorf("generate ULID: %w", err)
+	}
+	return id.String(), nil
 }

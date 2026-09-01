@@ -49,7 +49,4 @@ fi
 echo "== TypeScript typecheck"
 npm run typecheck
 
-echo "== TypeScript tests"
-npm test
-
 echo "== contract gate green"

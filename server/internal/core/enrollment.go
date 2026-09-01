@@ -9,7 +9,6 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/ca"
@@ -133,7 +132,7 @@ func (service *Service) RenewCertificate(ctx context.Context, request *connect.R
 			return nil, service.internal("read pending certificate", errors.New("pending certificate is incomplete"))
 		}
 		return connect.NewResponse(&cadestrov1.RenewCertificateResponse{
-			Certificate: device.PendingCertificatePem, NotAfter: timestamppb.New(*device.PendingCertExpiresAt),
+			Certificate: device.PendingCertificatePem,
 		}), nil
 	}
 	certificate, err := service.ca.IssueCertificateFromCSR(deviceID, request.Msg.GetCsr())
@@ -157,5 +156,5 @@ func (service *Service) RenewCertificate(ctx context.Context, request *connect.R
 	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_DEVICE_CERTIFICATE_RENEWED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_DEVICE, deviceID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_DEVICE, deviceID); err != nil {
 		return nil, service.internal("audit certificate renewal", err)
 	}
-	return connect.NewResponse(&cadestrov1.RenewCertificateResponse{Certificate: certificate.CertPEM, NotAfter: timestamppb.New(certificate.NotAfter)}), nil
+	return connect.NewResponse(&cadestrov1.RenewCertificateResponse{Certificate: certificate.CertPEM}), nil
 }

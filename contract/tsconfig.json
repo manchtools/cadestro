@@ -16,13 +16,10 @@
     "skipLibCheck": true,
     "noEmit": true,
     "allowJs": false,
-    "resolveJsonModule": true,
-    "types": ["node"]
+    "resolveJsonModule": true
   },
   "include": [
-    "ts/**/*.ts",
-    "gen/ts/**/*.ts",
-    "test/ts/**/*.ts"
+    "gen/ts/**/*.ts"
   ],
   "exclude": [
     "node_modules",

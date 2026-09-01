@@ -208,13 +208,9 @@ func (service *Service) SSOCallback(ctx context.Context, request *connect.Reques
 	if err != nil {
 		return nil, service.internal("mint OIDC session", err)
 	}
-	value, err := service.userProto(ctx, user)
-	if err != nil {
-		return nil, service.internal("read OIDC user roles", err)
-	}
 	return connect.NewResponse(&cadestrov1.SSOCallbackResponse{
 		AccessToken: pair.AccessToken, RefreshToken: pair.RefreshToken,
-		ExpiresAt: timestamppb.New(pair.ExpiresAt), User: value,
+		ExpiresAt: timestamppb.New(pair.ExpiresAt),
 	}), nil
 }
 

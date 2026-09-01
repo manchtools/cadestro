@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/manchtools/cadestro/agent/internal/credentials"
-	sdk "github.com/manchtools/cadestro/contract"
-	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/sdk/cryptotest"
 )
 
@@ -32,20 +30,20 @@ func TestCertificateRenewalDue_Computation(t *testing.T) {
 	}
 }
 
-func TestWaitForWelcomeIsBounded(t *testing.T) {
+func TestWaitForReadinessIsBounded(t *testing.T) {
 	ctx, cancelSession := context.WithCancel(context.Background())
 	defer cancelSession()
 	started := time.Now()
-	if waitForWelcome(ctx, cancelSession, make(chan *pb.Welcome), 5*time.Millisecond) {
-		t.Fatal("missing Welcome must return false")
+	if waitForReadiness(ctx, cancelSession, make(chan struct{}), 5*time.Millisecond) {
+		t.Fatal("missing readiness must return false")
 	}
 	if elapsed := time.Since(started); elapsed > time.Second {
-		t.Fatalf("missing Welcome waited too long: %v", elapsed)
+		t.Fatalf("missing readiness waited too long: %v", elapsed)
 	}
 	select {
 	case <-ctx.Done():
 	default:
-		t.Fatal("missing Welcome must cancel the stream session")
+		t.Fatal("missing readiness must cancel the stream session")
 	}
 }
 
@@ -96,7 +94,7 @@ func TestApplyRenewal_StagesPendingCertificate(t *testing.T) {
 	caPEM, caKey, caCert := cryptotest.GenCA(t, "test-ca")
 	certPEM, keyPEM := cryptotest.GenLeaf(t, caCert, caKey, "dev-1", false)
 	creds := &credentials.Credentials{DeviceID: "dev-1", Certificate: certPEM, PendingCertificate: []byte("corrupt pending"), PrivateKey: keyPEM, CACert: caPEM}
-	if err := applyRenewal(creds, &sdk.RenewCertificateResult{Certificate: certPEM}); err != nil {
+	if err := applyRenewal(creds, certPEM); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if string(creds.Certificate) != string(certPEM) || string(creds.PendingCertificate) != string(certPEM) {
@@ -109,7 +107,7 @@ func TestApplyRenewalRejectsTrailingCertificateData(t *testing.T) {
 	activePEM, activeKey := cryptotest.GenLeaf(t, caCert, caKey, "dev-1", false)
 	creds := &credentials.Credentials{DeviceID: "dev-1", Certificate: activePEM, PendingCertificate: []byte("still usable"), PrivateKey: activeKey, CACert: caPEM}
 	trailing := append(append([]byte(nil), activePEM...), []byte("trailing")...)
-	if err := applyRenewal(creds, &sdk.RenewCertificateResult{Certificate: trailing}); err == nil {
+	if err := applyRenewal(creds, trailing); err == nil {
 		t.Fatal("trailing certificate data must be rejected")
 	}
 	if !bytes.Equal(creds.PendingCertificate, []byte("still usable")) {
@@ -122,7 +120,7 @@ func TestApplyRenewalRejectsCertificateWithWrongKey(t *testing.T) {
 	activePEM, activeKey := cryptotest.GenLeaf(t, caCert, caKey, "dev-1", false)
 	otherPEM, _ := cryptotest.GenLeaf(t, caCert, caKey, "dev-1", false)
 	creds := &credentials.Credentials{DeviceID: "dev-1", Certificate: activePEM, PrivateKey: activeKey, CACert: caPEM}
-	if err := applyRenewal(creds, &sdk.RenewCertificateResult{Certificate: otherPEM}); err == nil {
+	if err := applyRenewal(creds, otherPEM); err == nil {
 		t.Fatal("renewal certificate with a different public key must be rejected")
 	}
 	if len(creds.PendingCertificate) != 0 {

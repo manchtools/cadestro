@@ -10,7 +10,6 @@ import (
 	"github.com/manchtools/cadestro/agent/internal/credentials"
 	"github.com/manchtools/cadestro/agent/internal/scheduler"
 	sdk "github.com/manchtools/cadestro/contract"
-	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 )
 
 func reloadCredsForReconnect(credStore *credentials.Store, current *credentials.Credentials, logger *slog.Logger) *credentials.Credentials {
@@ -22,13 +21,13 @@ func reloadCredsForReconnect(credStore *credentials.Store, current *credentials.
 	return reloaded
 }
 
-func waitForWelcome(ctx context.Context, cancel context.CancelFunc, welcome <-chan *pb.Welcome, timeout time.Duration) bool {
-	welcomeCtx, cancelWelcome := context.WithTimeout(ctx, timeout)
-	defer cancelWelcome()
+func waitForReadiness(ctx context.Context, cancel context.CancelFunc, readiness <-chan struct{}, timeout time.Duration) bool {
+	readinessCtx, cancelReadiness := context.WithTimeout(ctx, timeout)
+	defer cancelReadiness()
 	select {
-	case <-welcome:
+	case <-readiness:
 		return true
-	case <-welcomeCtx.Done():
+	case <-readinessCtx.Done():
 		cancel()
 		return false
 	}
@@ -44,7 +43,7 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 			creds = reloadCredsForReconnect(credStore, creds, logger)
 		}
 		firstConnect = false
-		welcome := make(chan *pb.Welcome, 1)
+		readiness := make(chan struct{}, 1)
 
 		if err := requireHTTPSAgentAddr(creds.AgentAddr); err != nil {
 			logger.Error("refusing invalid control URL", "control", creds.AgentAddr, "error", err)
@@ -64,9 +63,9 @@ func runAgent(ctx context.Context, credStore *credentials.Store, creds *credenti
 		sessionCtx, cancelSession := context.WithCancel(ctx)
 		client := sdk.NewClient(strings.TrimSpace(creds.AgentAddr), mtlsOption, sdk.WithDeviceID(creds.DeviceID), sdk.WithLogger(logger))
 		streamDone := make(chan error, 1)
-		go func() { streamDone <- client.Run(sessionCtx, hostname, version, welcome) }()
+		go func() { streamDone <- client.Run(sessionCtx, hostname, version, readiness) }()
 
-		connected := waitForWelcome(sessionCtx, cancelSession, welcome, 30*time.Second)
+		connected := waitForReadiness(sessionCtx, cancelSession, readiness, 30*time.Second)
 		staged := false
 		if connected && usingPending {
 			creds.Certificate = append([]byte(nil), creds.PendingCertificate...)
@@ -154,13 +153,8 @@ func pullDesiredPolicyFromControl(ctx context.Context, client *sdk.Client, sched
 		logger.Warn("pull desired state", "error", err)
 		return 0
 	}
-	if policy != nil {
-		if err := scheduler.ReconcilePolicy(ctx, policy); err != nil {
-			logger.Warn("reconcile desired state", "error", err)
-		}
-	}
-	if policy.GetRefreshIntervalMinutes() <= 0 {
-		return defaultPolicyRefreshInterval
+	if err := scheduler.ReconcilePolicy(ctx, policy); err != nil {
+		logger.Warn("reconcile desired state", "error", err)
 	}
 	return time.Duration(policy.GetRefreshIntervalMinutes()) * time.Minute
 }

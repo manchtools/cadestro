@@ -3,6 +3,7 @@ package contract
 import (
 	"connectrpc.com/connect"
 	"context"
+	"crypto/rand"
 	"errors"
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/contract/gen/go/cadestro/v1/cadestrov1connect"
@@ -12,6 +13,16 @@ import (
 	"testing"
 	"time"
 )
+
+type failingEntropy struct{}
+
+func (failingEntropy) Read([]byte) (int, error) { return 0, errors.New("entropy unavailable") }
+
+func TestNewULIDReturnsEntropyError(t *testing.T) {
+	if _, err := newULID(failingEntropy{}); err == nil {
+		t.Fatal("newULID returned nil error")
+	}
+}
 
 type heartbeatHandler struct {
 	allow              chan struct{}
@@ -51,7 +62,11 @@ func (h *heartbeatHandler) Stream(ctx context.Context, stream *connect.BidiStrea
 	case <-ctx.Done():
 		return ctx.Err()
 	}
-	if err := stream.Send(&cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: NewULID()}, Payload: &cadestrov1.ServerMessage_Welcome{Welcome: h.welcome}}); err != nil {
+	id, err := newULID(rand.Reader)
+	if err != nil {
+		return err
+	}
+	if err := stream.Send(&cadestrov1.ServerMessage{Id: &cadestrov1.MessageId{Value: id}, Payload: &cadestrov1.ServerMessage_Welcome{Welcome: h.welcome}}); err != nil {
 		return err
 	}
 	if h.finishAfterWelcome {
@@ -77,9 +92,9 @@ func TestRunStartsHeartbeatOnlyAfterWelcome(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	client := NewClient(server.URL, WithHTTPClient(server.Client()), WithDeviceID("01K00000000000000000000041"))
-	welcome := make(chan *cadestrov1.Welcome, 1)
+	readiness := make(chan struct{}, 1)
 	run := make(chan error, 1)
-	go func() { run <- client.Run(ctx, "host", "version", welcome) }()
+	go func() { run <- client.Run(ctx, "host", "version", readiness) }()
 	select {
 	case <-service.hello:
 	case <-time.After(time.Second):
@@ -123,9 +138,9 @@ func TestRunRejectsNonPositiveWelcomeHeartbeat(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	client := NewClient(server.URL, WithHTTPClient(server.Client()), WithDeviceID("01K00000000000000000000042"))
-	welcome := make(chan *cadestrov1.Welcome, 1)
+	readiness := make(chan struct{}, 1)
 	run := make(chan error, 1)
-	go func() { run <- client.Run(ctx, "host", "version", welcome) }()
+	go func() { run <- client.Run(ctx, "host", "version", readiness) }()
 	select {
 	case <-service.hello:
 	case <-time.After(time.Second):

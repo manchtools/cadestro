@@ -74,14 +74,14 @@ func certificateRenewalDue(cert *x509.Certificate, now time.Time) bool {
 	return !now.Before(cert.NotBefore.Add(time.Duration(float64(cert.NotAfter.Sub(cert.NotBefore)) * .8)))
 }
 
-func applyRenewal(creds *credentials.Credentials, result *sdk.RenewCertificateResult) error {
-	if len(result.Certificate) == 0 {
+func applyRenewal(creds *credentials.Credentials, certificate []byte) error {
+	if len(certificate) == 0 {
 		return fmt.Errorf("renewal returned an empty certificate")
 	}
-	if err := validateRenewalCertificate(result.Certificate, creds.PrivateKey, creds.CACert, creds.DeviceID); err != nil {
+	if err := validateRenewalCertificate(certificate, creds.PrivateKey, creds.CACert, creds.DeviceID); err != nil {
 		return err
 	}
-	creds.PendingCertificate = append([]byte(nil), result.Certificate...)
+	creds.PendingCertificate = append([]byte(nil), certificate...)
 	return nil
 }
 
@@ -115,6 +115,6 @@ func renewCertificateIfDue(ctx context.Context, credStore *credentials.Store, cr
 	if err := credStore.Save(ctx, creds); err != nil {
 		return false, err
 	}
-	logger.Info("certificate renewal staged", "not_after", result.NotAfter)
+	logger.Info("certificate renewal staged")
 	return true, nil
 }
