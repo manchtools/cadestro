@@ -58,7 +58,7 @@ func TestFileMutationSecurityMachine(t *testing.T) {
 	}
 }
 
-func runFileMutationStep(m Manager, action fileMutationAction) error {
+func runFileMutationStep(m *Manager, action fileMutationAction) error {
 	setuidMode := os.FileMode(0o755) | os.ModeSetuid
 	switch action {
 	case fileMutationWriteConfig:

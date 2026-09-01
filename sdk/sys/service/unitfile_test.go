@@ -97,7 +97,7 @@ func TestRemoveUnit_WrapsFSError(t *testing.T) {
 	}
 }
 
-func TestDetect(t *testing.T) {
+func TestAvailable(t *testing.T) {
 	lp, marker := lookPath, systemdRunMarker
 	defer func() { lookPath, systemdRunMarker = lp, marker }()
 
@@ -106,23 +106,22 @@ func TestDetect(t *testing.T) {
 	t.Run("systemd present", func(t *testing.T) {
 		lookPath = func(string) (string, error) { return "/usr/bin/systemctl", nil }
 		systemdRunMarker = existingDir
-		got := Detect(context.Background())
-		if len(got) != 1 || got[0] != Systemd {
-			t.Errorf("Detect = %v, want [Systemd]", got)
+		if !Available() {
+			t.Error("Available = false, want true")
 		}
 	})
 	t.Run("systemctl missing", func(t *testing.T) {
 		lookPath = func(string) (string, error) { return "", errors.New("not found") }
 		systemdRunMarker = existingDir
-		if got := Detect(context.Background()); len(got) != 0 {
-			t.Errorf("Detect = %v, want empty when systemctl is missing", got)
+		if Available() {
+			t.Error("Available = true, want false when systemctl is missing")
 		}
 	})
 	t.Run("not pid 1 (marker absent)", func(t *testing.T) {
 		lookPath = func(string) (string, error) { return "/usr/bin/systemctl", nil }
 		systemdRunMarker = filepath.Join(existingDir, "does-not-exist")
-		if got := Detect(context.Background()); len(got) != 0 {
-			t.Errorf("Detect = %v, want empty when /run/systemd/system is absent", got)
+		if Available() {
+			t.Error("Available = true, want false when /run/systemd/system is absent")
 		}
 	})
 }

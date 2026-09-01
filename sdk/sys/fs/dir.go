@@ -9,7 +9,7 @@ import (
 // Mkdir creates a directory per opts. opts.Recursive adds -p; opts.Mode and
 // opts.Owner/Group, when set, are applied after creation. A zero opts.Mode
 // leaves mkdir's default (mode minus umask) in place.
-func (m *manager) Mkdir(ctx context.Context, path string, opts MkdirOptions) error {
+func (m *Manager) Mkdir(ctx context.Context, path string, opts MkdirOptions) error {
 	if err := ValidatePath(path); err != nil {
 		return err
 	}
@@ -36,7 +36,7 @@ func (m *manager) Mkdir(ctx context.Context, path string, opts MkdirOptions) err
 
 // Remove deletes a single file (rm -f) and returns any error. The `--`
 // end-of-options separator and ValidatePath both refuse a leading-`-` path.
-func (m *manager) Remove(ctx context.Context, path string) error {
+func (m *Manager) Remove(ctx context.Context, path string) error {
 	if err := ValidatePath(path); err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func (m *manager) Remove(ctx context.Context, path string) error {
 //     path).
 //
 // The deny-by-default refusal applies regardless of backend.
-func (m *manager) RemoveDir(ctx context.Context, path string) error {
+func (m *Manager) RemoveDir(ctx context.Context, path string) error {
 	if err := ValidatePath(path); err != nil {
 		return err
 	}

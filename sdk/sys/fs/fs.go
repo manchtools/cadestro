@@ -101,87 +101,26 @@ type MkdirOptions struct {
 // Manager is the privileged filesystem surface. Every method takes a context so
 // the caller controls timeout/cancellation. A non-zero exit from a shelled
 // command becomes an *exec.CommandError carrying the exit code and stderr.
-type Manager interface {
-	// ReadFile returns the contents of path. A path that does not exist yields a
-	// wrapped fs.ErrNotExist (not a silent empty result), so a caller can tell
-	// "absent" from "present but empty"; opt into absent-as-empty with
-	// errors.Is(err, fs.ErrNotExist). A present empty file returns (nil, nil).
-	ReadFile(ctx context.Context, path string) ([]byte, error)
-	// ReadDir lists the immediate entries of a directory (no recursion). A
-	// missing directory yields a wrapped fs.ErrNotExist (the same explicit-
-	// absence contract as ReadFile); a non-directory target is an error too,
-	// never a silent empty listing.
-	ReadDir(ctx context.Context, path string) ([]DirEntry, error)
-	// WriteFile writes data to path atomically. When the Runner's backend is
-	// Direct the write is also symlink-safe (fd-anchored); see the package doc.
-	WriteFile(ctx context.Context, path string, data []byte, opts WriteOptions) error
-	// WriteFileExclusive writes data to path only if path does not already
-	// exist, returning ErrExists (matchable with errors.Is) when it does. The
-	// existence test and the create are the SAME atomic operation — on Linux a
-	// RENAME_NOREPLACE rename, on the escalated backend an ln(1) — so unlike
-	// Exists-then-WriteFile there is no window in which another writer can slip a
-	// file in between. Callers that need to know whether THEY created a file, in
-	// order to decide whether they may later delete it, must use this rather than
-	// probing first: a probe would let them adopt, and then destroy, someone
-	// else's file.
-	WriteFileExclusive(ctx context.Context, path string, data []byte, opts WriteOptions) error
-	// Exists reports whether path exists. The probe runs through the privilege
-	// backend so it can see paths in directories the caller cannot traverse
-	// (e.g. /etc/sudoers.d, mode 0750). A runner/ctx failure is returned as an
-	// error (fail-closed) rather than reported as "absent".
-	Exists(ctx context.Context, path string) (bool, error)
-	// Mkdir creates a directory per opts.
-	Mkdir(ctx context.Context, path string, opts MkdirOptions) error
-	// Remove deletes a single file and returns any error.
-	Remove(ctx context.Context, path string) error
-	// RemoveDir removes a directory and its contents. It refuses any target at
-	// or under a security-relevant system prefix (deny-by-default) and, on the
-	// Direct backend, never follows a symlink (fd-anchored recursive delete).
-	RemoveDir(ctx context.Context, path string) error
-	// Copy copies src to dst and applies opts (mode/ownership) to dst.
-	Copy(ctx context.Context, src, dst string, opts WriteOptions) error
-	// CopyTree recursively copies the tree at src to dst (cp -a), merging into
-	// dst rather than nesting under it. A non-zero opts.Mode chmods the dst root;
-	// opts.Owner/Group, if set, are applied recursively.
-	CopyTree(ctx context.Context, src, dst string, opts WriteOptions) error
-	// SetMode sets the file mode (chmod).
-	SetMode(ctx context.Context, path string, mode os.FileMode) error
-	// SetOwnership sets the file owner and group (chown). Either may be empty;
-	// both empty is a no-op.
-	SetOwnership(ctx context.Context, path, owner, group string) error
-	// SetOwnershipRecursive changes ownership of a path and all its contents
-	// (chown -R). Both owner and group empty is a no-op.
-	SetOwnershipRecursive(ctx context.Context, path, owner, group string) error
-	// IsReadOnly reports whether the filesystem mounted at path is read-only.
-	IsReadOnly(ctx context.Context, path string) (bool, error)
-	// RemountRW remounts the filesystem at path read-write.
-	RemountRW(ctx context.Context, path string) error
-	// ListMounts enumerates every mounted filesystem (source/target/fstype/ro).
-	// The enumeration counterpart to IsReadOnly/RemountRW — for acting on every
-	// matching mount (e.g. remounting all read-only on-disk mounts).
-	ListMounts(ctx context.Context) ([]MountInfo, error)
-}
-
-type manager struct {
+type Manager struct {
 	r sysexec.Runner
 }
 
 // New builds a filesystem Manager driven by runner. A nil runner is rejected
 // (fail-closed). New is pure — it does not probe the host.
-func New(runner sysexec.Runner) (Manager, error) {
+func New(runner sysexec.Runner) (*Manager, error) {
 	if runner == nil {
 		return nil, fmt.Errorf("fs: %w", sysexec.ErrRunnerRequired)
 	}
-	return &manager{r: runner}, nil
+	return &Manager{r: runner}, nil
 }
 
-func (m *manager) direct() bool { return m.r.Backend() == sysexec.Direct }
+func (m *Manager) direct() bool { return m.r.Backend() == sysexec.Direct }
 
-func (m *manager) runPriv(ctx context.Context, name string, args ...string) (sysexec.Result, error) {
+func (m *Manager) runPriv(ctx context.Context, name string, args ...string) (sysexec.Result, error) {
 	return m.r.Run(ctx, sysexec.Command{Name: name, Args: args, Escalate: true})
 }
 
-func (m *manager) runPrivStdin(ctx context.Context, stdin string, name string, args ...string) (sysexec.Result, error) {
+func (m *Manager) runPrivStdin(ctx context.Context, stdin string, name string, args ...string) (sysexec.Result, error) {
 	var in *strings.Reader
 	if stdin != "" {
 		in = strings.NewReader(stdin)
@@ -193,7 +132,7 @@ func (m *manager) runPrivStdin(ctx context.Context, stdin string, name string, a
 	return m.r.Run(ctx, cmd)
 }
 
-func (m *manager) runQuery(ctx context.Context, name string, args ...string) (sysexec.Result, error) {
+func (m *Manager) runQuery(ctx context.Context, name string, args ...string) (sysexec.Result, error) {
 	return m.r.Run(ctx, sysexec.Command{Name: name, Args: args})
 }
 

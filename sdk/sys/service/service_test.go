@@ -11,11 +11,11 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/exec/exectest"
 )
 
-func mgr(t *testing.T, f *exectest.FakeRunner) Manager {
+func mgr(t *testing.T, f *exectest.FakeRunner) *Manager {
 	t.Helper()
-	m, err := New(Systemd, f)
+	m, err := New(f)
 	if err != nil {
-		t.Fatalf("New(Systemd): %v", err)
+		t.Fatalf("New: %v", err)
 	}
 	return m
 }
@@ -40,16 +40,11 @@ func wantOneCmd(t *testing.T, f *exectest.FakeRunner, args []string, escalate bo
 
 func TestNew_FailClosed(t *testing.T) {
 	f := exectest.New(exec.Direct)
-	for _, b := range []Backend{0, Backend(-1), Backend(99)} {
-		if _, err := New(b, f); !errors.Is(err, ErrUnknownBackend) {
-			t.Errorf("New(%d) err = %v, want ErrUnknownBackend", b, err)
-		}
-	}
-	if _, err := New(Systemd, nil); !errors.Is(err, exec.ErrRunnerRequired) {
+	if _, err := New(nil); !errors.Is(err, exec.ErrRunnerRequired) {
 		t.Errorf("New(_, nil) error = %v, want ErrRunnerRequired", err)
 	}
-	if _, err := New(Systemd, f); err != nil {
-		t.Errorf("New(Systemd, runner) err = %v, want nil", err)
+	if _, err := New(f); err != nil {
+		t.Errorf("New(runner) err = %v, want nil", err)
 	}
 }
 
@@ -57,20 +52,20 @@ func TestMutations_GoldenArgv(t *testing.T) {
 	const unit = "nginx.service"
 	tests := []struct {
 		name string
-		call func(Manager) error
+		call func(*Manager) error
 		args []string
 	}{
-		{"Enable", func(m Manager) error { return m.Enable(context.Background(), unit) }, []string{"enable", "--", unit}},
-		{"Disable", func(m Manager) error { return m.Disable(context.Background(), unit) }, []string{"disable", "--", unit}},
-		{"EnableNow", func(m Manager) error { return m.EnableNow(context.Background(), unit) }, []string{"enable", "--now", "--", unit}},
-		{"DisableNow", func(m Manager) error { return m.DisableNow(context.Background(), unit) }, []string{"disable", "--now", "--", unit}},
-		{"Start", func(m Manager) error { return m.Start(context.Background(), unit) }, []string{"start", "--", unit}},
-		{"Stop", func(m Manager) error { return m.Stop(context.Background(), unit) }, []string{"stop", "--", unit}},
-		{"Restart", func(m Manager) error { return m.Restart(context.Background(), unit) }, []string{"restart", "--", unit}},
-		{"Reload", func(m Manager) error { return m.Reload(context.Background(), unit) }, []string{"reload", "--", unit}},
-		{"Mask", func(m Manager) error { return m.Mask(context.Background(), unit) }, []string{"mask", "--", unit}},
-		{"Unmask", func(m Manager) error { return m.Unmask(context.Background(), unit) }, []string{"unmask", "--", unit}},
-		{"DaemonReload", func(m Manager) error { return m.DaemonReload(context.Background()) }, []string{"daemon-reload"}},
+		{"Enable", func(m *Manager) error { return m.Enable(context.Background(), unit) }, []string{"enable", "--", unit}},
+		{"Disable", func(m *Manager) error { return m.Disable(context.Background(), unit) }, []string{"disable", "--", unit}},
+		{"EnableNow", func(m *Manager) error { return m.EnableNow(context.Background(), unit) }, []string{"enable", "--now", "--", unit}},
+		{"DisableNow", func(m *Manager) error { return m.DisableNow(context.Background(), unit) }, []string{"disable", "--now", "--", unit}},
+		{"Start", func(m *Manager) error { return m.Start(context.Background(), unit) }, []string{"start", "--", unit}},
+		{"Stop", func(m *Manager) error { return m.Stop(context.Background(), unit) }, []string{"stop", "--", unit}},
+		{"Restart", func(m *Manager) error { return m.Restart(context.Background(), unit) }, []string{"restart", "--", unit}},
+		{"Reload", func(m *Manager) error { return m.Reload(context.Background(), unit) }, []string{"reload", "--", unit}},
+		{"Mask", func(m *Manager) error { return m.Mask(context.Background(), unit) }, []string{"mask", "--", unit}},
+		{"Unmask", func(m *Manager) error { return m.Unmask(context.Background(), unit) }, []string{"unmask", "--", unit}},
+		{"DaemonReload", func(m *Manager) error { return m.DaemonReload(context.Background()) }, []string{"daemon-reload"}},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -246,10 +241,7 @@ func TestEveryMethodRejectsUnsafeUnitNameBeforeRunner(t *testing.T) {
 
 	defer swapFSSeams(t)()
 
-	mt := reflect.TypeOf((*Manager)(nil)).Elem()
-	if mt.NumMethod() == 0 {
-		t.Fatal("matches-zero guard: Manager has no methods")
-	}
+	mt := reflect.TypeOf((*Manager)(nil))
 	ctxType := reflect.TypeOf((*context.Context)(nil)).Elem()
 	checked := 0
 

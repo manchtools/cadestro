@@ -1,15 +1,13 @@
 // Package service manages init/service units through an injected exec.Runner.
 //
-// Build a Manager for an explicit backend (systemd is the only one today) and a
-// Runner, then call its methods. Query verbs (is-enabled/is-active) run
+// Build a Manager over an exec.Runner, then call its methods. Query verbs (is-enabled/is-active) run
 // unprivileged; mutations escalate through the Runner.
 //
 //	r, _ := exec.NewRunner(exec.Direct)
-//	svc, _ := service.New(service.Systemd, r)
+//	svc, _ := service.New(r)
 //	_ = svc.EnableNow(ctx, "nginx.service")
 //
-// Detect reports whether systemd is usable on the host so a consumer can choose
-// a backend explicitly.
+// Available reports whether systemd is usable on the host.
 package service
 
 import (
@@ -23,20 +21,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-// Backend selects the service-manager implementation. Passed explicitly even
-// though systemd is the only value today; the zero value is invalid
-// (New → ErrUnknownBackend). The deleted OpenRC/Runit/S6 scaffolds — which only
-// ever returned "not supported" — are not ported; a real second backend is
-// appended here when actually written.
-type Backend int
-
-// Systemd wraps systemctl.
-const Systemd Backend = iota + 1
-
-// ErrUnknownBackend is returned by New for the zero value or any Backend the SDK
-// does not implement (fail-closed).
-var ErrUnknownBackend = fmt.Errorf("service: unknown backend")
-
 // UnitStatus is a unit's current state.
 type UnitStatus struct {
 	Enabled bool // explicitly enabled (systemctl enable), not boot-via-dependency
@@ -45,56 +29,14 @@ type UnitStatus struct {
 	Static  bool // starts at boot via deps but cannot be enabled/disabled
 }
 
-// Manager is the service-manager contract.
-type Manager interface {
-	Status(ctx context.Context, unit string) (UnitStatus, error)
-	IsEnabled(ctx context.Context, unit string) (bool, error)
-	IsActive(ctx context.Context, unit string) (bool, error)
-	IsMasked(ctx context.Context, unit string) (bool, error)
-	Enable(ctx context.Context, unit string) error
-	Disable(ctx context.Context, unit string) error
-	EnableNow(ctx context.Context, unit string) error
-	DisableNow(ctx context.Context, unit string) error
-	Start(ctx context.Context, unit string) error
-	Stop(ctx context.Context, unit string) error
-	Restart(ctx context.Context, unit string) error
-	// Reload asks a running unit to re-read its configuration via its
-	// ExecReload command, without restarting it (so it keeps open connections
-	// and child processes). A unit that defines no ExecReload makes systemctl
-	// exit non-zero, returned as a *exec.CommandError — use Restart for those.
-	Reload(ctx context.Context, unit string) error
-	Mask(ctx context.Context, unit string) error
-	Unmask(ctx context.Context, unit string) error
-	DaemonReload(ctx context.Context) error
-	WriteUnit(ctx context.Context, unit, content string) error
-	// ReadUnit returns the on-disk content of a unit WriteUnit manages —
-	// the sibling read so the unit path is constructed in exactly one
-	// place. An absent unit surfaces sys/fs's wrapped fs.ErrNotExist
-	// (errors.Is-able), so callers can tell "not installed" from a read
-	// failure.
-	ReadUnit(ctx context.Context, unit string) (string, error)
-	RemoveUnit(ctx context.Context, unit string) error
-	// Version reports the service manager's major version (for systemd:
-	// the first integer token on the first line of `systemctl --version`).
-	// Unparseable or empty output is an ERROR, never a guessed value —
-	// version-conditional rendering decides its own fail-safe.
-	Version(ctx context.Context) (int, error)
-	// NeedsReload reports whether the manager's LOADED configuration for
-	// unit is stale relative to the on-disk unit file (systemd's
-	// NeedDaemonReload property) — i.e. a daemon-reload is pending. Lets
-	// a caller that once failed a reload retry it later without tracking
-	// state of its own. Unexpected output is an ERROR, never a guessed
-	// false.
-	NeedsReload(ctx context.Context, unit string) (bool, error)
+// Manager controls systemd units through runner.
+type Manager struct {
+	r   exec.Runner
+	fsm fsManager
 }
 
-// New returns a Manager for the named backend, driven by runner. Pure: validates
-// the backend is known; it does not probe the host (use Detect). The zero value
-// and any unimplemented backend are rejected with ErrUnknownBackend.
-func New(b Backend, runner exec.Runner) (Manager, error) {
-	if b != Systemd {
-		return nil, fmt.Errorf("%w: %d", ErrUnknownBackend, int(b))
-	}
+// New builds a Manager driven by runner. A nil runner is rejected.
+func New(runner exec.Runner) (*Manager, error) {
 	if runner == nil {
 		return nil, fmt.Errorf("service: %w", exec.ErrRunnerRequired)
 	}
@@ -102,21 +44,16 @@ func New(b Backend, runner exec.Runner) (Manager, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &systemd{r: runner, fsm: fsm}, nil
+	return &Manager{r: runner, fsm: fsm}, nil
 }
 
-// Detect reports the service backends usable on THIS host: Systemd when both
-// systemctl is on PATH and /run/systemd/system exists (systemd is PID 1). It
-// lists; it never picks. An empty slice means no usable service manager.
-func Detect(ctx context.Context) []Backend {
-	_ = ctx
+// Available reports whether systemd is usable on this host.
+func Available() bool {
 	if _, err := lookPath("systemctl"); err != nil {
-		return nil
+		return false
 	}
-	if _, err := os.Stat(systemdRunMarker); err != nil {
-		return nil
-	}
-	return []Backend{Systemd}
+	_, err := os.Stat(systemdRunMarker)
+	return err == nil
 }
 
 const systemctlQueryTimeout = 30 * time.Second

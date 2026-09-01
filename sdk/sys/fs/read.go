@@ -26,7 +26,7 @@ import (
 // content verbatim; for newline-terminated content (every config file) they
 // round-trip exactly with what WriteFile wrote, which the idempotency check
 // depends on.
-func (m *manager) ReadFile(ctx context.Context, path string) ([]byte, error) {
+func (m *Manager) ReadFile(ctx context.Context, path string) ([]byte, error) {
 	if err := ValidatePath(path); err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (m *manager) ReadFile(ctx context.Context, path string) ([]byte, error) {
 // directories not readable by the caller are visible. A genuine probe failure
 // (runner/ctx error, or a non-not-exist stat error) is returned as an error so a
 // probe that could not run is never silently treated as absence.
-func (m *manager) Exists(ctx context.Context, path string) (bool, error) {
+func (m *Manager) Exists(ctx context.Context, path string) (bool, error) {
 	if err := ValidatePath(path); err != nil {
 		return false, err
 	}

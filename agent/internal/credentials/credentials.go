@@ -54,7 +54,7 @@ type Credentials struct {
 
 type Store struct {
 	dataDir string
-	fs      sdkfs.Manager
+	fs      *sdkfs.Manager
 	fsErr   error
 }
 

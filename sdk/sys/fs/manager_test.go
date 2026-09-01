@@ -28,7 +28,7 @@ func osUser() (ownerGroup, error) {
 	return ownerGroup{owner: u.Username, group: g.Name}, nil
 }
 
-func mustManager(t *testing.T, f *exectest.FakeRunner) Manager {
+func mustManager(t *testing.T, f *exectest.FakeRunner) *Manager {
 	t.Helper()
 	m, err := New(f)
 	if err != nil {
@@ -37,13 +37,13 @@ func mustManager(t *testing.T, f *exectest.FakeRunner) Manager {
 	return m
 }
 
-func sudoMgr(t *testing.T) (*exectest.FakeRunner, Manager) {
+func sudoMgr(t *testing.T) (*exectest.FakeRunner, *Manager) {
 	t.Helper()
 	f := exectest.New(sysexec.Sudo)
 	return f, mustManager(t, f)
 }
 
-func directManager(t *testing.T) Manager {
+func directManager(t *testing.T) *Manager {
 	t.Helper()
 	return mustManager(t, exectest.New(sysexec.Direct))
 }

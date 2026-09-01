@@ -12,7 +12,7 @@ import (
 func TestQuery_UnsupportedVerbRejected(t *testing.T) {
 	f := exectest.New(exec.Direct)
 	f.Push(exec.Result{Stdout: "whatever\n"}, nil)
-	s := &systemd{r: f}
+	s := &Manager{r: f}
 	if _, err := s.query(context.Background(), "nginx.service", "is-failed"); err == nil {
 		t.Error("query accepted an unwhitelisted verb")
 	}

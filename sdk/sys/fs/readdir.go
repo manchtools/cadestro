@@ -32,7 +32,7 @@ type DirEntry struct {
 // "absent → empty" opts in with errors.Is(err, fs.ErrNotExist). Any other failure
 // (permission denied, a non-directory target) is returned as an error too — never
 // silently reported as empty.
-func (m *manager) ReadDir(ctx context.Context, path string) ([]DirEntry, error) {
+func (m *Manager) ReadDir(ctx context.Context, path string) ([]DirEntry, error) {
 	if err := ValidatePath(path); err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func readDirDirect(path string) ([]DirEntry, error) {
 	return entries, nil
 }
 
-func (m *manager) readDirEscalated(ctx context.Context, path string) ([]DirEntry, error) {
+func (m *Manager) readDirEscalated(ctx context.Context, path string) ([]DirEntry, error) {
 	res, err := m.runPriv(ctx, "find", path+"/", "-maxdepth", "1", "-mindepth", "1", "-printf", `%y/%f\n`)
 	if err != nil {
 		return nil, err

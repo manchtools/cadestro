@@ -29,7 +29,7 @@ func runInstallUnit(args []string) int {
 	}
 
 	ctx := context.Background()
-	if len(service.Detect(ctx)) == 0 {
+	if !service.Available() {
 
 		logger.Error("no usable systemd detected on this host; the agent's unit cannot be installed")
 		return 1
@@ -40,7 +40,7 @@ func runInstallUnit(args []string) int {
 		logger.Error("failed to build runner", "error", err)
 		return 1
 	}
-	mgr, err := service.New(service.Systemd, runner)
+	mgr, err := service.New(runner)
 	if err != nil {
 		logger.Error("failed to build service manager", "error", err)
 		return 1
@@ -65,11 +65,11 @@ func reconcileUnitAtStartup(ctx context.Context, runner sysexec.Runner, logger *
 		logger.Debug("skipping unit reconcile: not running as root")
 		return
 	}
-	if len(service.Detect(ctx)) == 0 {
+	if !service.Available() {
 		logger.Debug("skipping unit reconcile: no usable systemd detected")
 		return
 	}
-	mgr, err := service.New(service.Systemd, runner)
+	mgr, err := service.New(runner)
 	if err != nil {
 		logger.Error("unit reconcile: failed to build service manager; agent continues with the on-disk unit", "error", err)
 		return

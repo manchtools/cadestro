@@ -17,7 +17,7 @@ type MountInfo struct {
 // IsReadOnly reports whether the filesystem mounted at path is read-only, by
 // examining the mount options via findmnt (unprivileged). The caller controls
 // timeout/cancellation through ctx.
-func (m *manager) IsReadOnly(ctx context.Context, path string) (bool, error) {
+func (m *Manager) IsReadOnly(ctx context.Context, path string) (bool, error) {
 	if err := ValidatePath(path); err != nil {
 		return false, err
 	}
@@ -50,7 +50,7 @@ func mountOptionsReadOnly(options string) bool {
 // Output is the raw `findmnt -rn` form: one row per mount, SOURCE/TARGET/FSTYPE/
 // OPTIONS. A row that does not split into at least four fields is skipped rather
 // than aborting the whole enumeration.
-func (m *manager) ListMounts(ctx context.Context) ([]MountInfo, error) {
+func (m *Manager) ListMounts(ctx context.Context) ([]MountInfo, error) {
 	res, err := m.runQuery(ctx, "findmnt", "-rn", "-o", "SOURCE,TARGET,FSTYPE,OPTIONS")
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func (m *manager) ListMounts(ctx context.Context) ([]MountInfo, error) {
 
 // RemountRW remounts the filesystem at path read-write through the privilege
 // backend: mount -o remount,rw.
-func (m *manager) RemountRW(ctx context.Context, path string) error {
+func (m *Manager) RemountRW(ctx context.Context, path string) error {
 	if err := ValidatePath(path); err != nil {
 		return err
 	}

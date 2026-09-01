@@ -43,7 +43,7 @@ func missingPath(t *testing.T) string {
 	return filepath.Join(t.TempDir(), "definitely-missing")
 }
 
-func intManager(t *testing.T) fs.Manager {
+func intManager(t *testing.T) *fs.Manager {
 	t.Helper()
 	b := exec.Sudo
 	if os.Geteuid() == 0 {
@@ -65,7 +65,7 @@ func tmpPath(t *testing.T, name string) string {
 	return fmt.Sprintf("/tmp/cadestro-fs-test-%s-%d", name, os.Getpid())
 }
 
-func cleanup(t *testing.T, m fs.Manager, path string) {
+func cleanup(t *testing.T, m *fs.Manager, path string) {
 	t.Helper()
 	_ = m.Remove(context.Background(), path)
 }

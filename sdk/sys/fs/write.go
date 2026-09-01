@@ -24,7 +24,7 @@ import (
 // place a symlink could be planted) and then writing atomically in a single root
 // shell — mktemp + write + `mv -T` over the target (a rename replaces a symlinked
 // target, never follows it). See writeEscalated.
-func (m *manager) WriteFile(ctx context.Context, path string, data []byte, opts WriteOptions) error {
+func (m *Manager) WriteFile(ctx context.Context, path string, data []byte, opts WriteOptions) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func (m *manager) WriteFile(ctx context.Context, path string, data []byte, opts 
 //
 // Backup is rejected: a backup only makes sense when replacing existing content,
 // and this call by construction never replaces anything.
-func (m *manager) WriteFileExclusive(ctx context.Context, path string, data []byte, opts WriteOptions) error {
+func (m *Manager) WriteFileExclusive(ctx context.Context, path string, data []byte, opts WriteOptions) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func writeExclusiveDirect(path string, data []byte, opts WriteOptions) error {
 	return nil
 }
 
-func (m *manager) writeExclusiveEscalated(ctx context.Context, path string, data []byte, opts WriteOptions) error {
+func (m *Manager) writeExclusiveEscalated(ctx context.Context, path string, data []byte, opts WriteOptions) error {
 	perm := opts.Mode
 	if perm == 0 {
 		perm = 0o644
@@ -161,7 +161,7 @@ func writeDirect(path string, data []byte, opts WriteOptions) error {
 	return nil
 }
 
-func (m *manager) writeEscalated(ctx context.Context, path string, data []byte, opts WriteOptions) error {
+func (m *Manager) writeEscalated(ctx context.Context, path string, data []byte, opts WriteOptions) error {
 	perm := opts.Mode
 	if perm == 0 {
 		perm = 0o644
@@ -197,7 +197,7 @@ mv -T -- "$tmp" "$target"
 trap - EXIT
 `
 
-func (m *manager) runChecked(ctx context.Context, name string, args ...string) error {
+func (m *Manager) runChecked(ctx context.Context, name string, args ...string) error {
 	res, err := m.runPriv(ctx, name, args...)
 	if err != nil {
 		return err
@@ -209,7 +209,7 @@ func (m *manager) runChecked(ctx context.Context, name string, args ...string) e
 // 0 leaves cp's default destination mode (the source mode with the process umask
 // applied) in place; set opts.Mode to fix the mode explicitly. This differs from
 // WriteFile, which defaults a zero mode to 0644.
-func (m *manager) Copy(ctx context.Context, src, dst string, opts WriteOptions) error {
+func (m *Manager) Copy(ctx context.Context, src, dst string, opts WriteOptions) error {
 	if err := ValidatePath(src); err != nil {
 		return err
 	}
@@ -249,7 +249,7 @@ func (m *manager) Copy(ctx context.Context, src, dst string, opts WriteOptions) 
 // while Owner/Group, if set, are applied RECURSIVELY (the common intent when
 // re-homing a tree copied as root — e.g. skel → a user's home). Both are skipped
 // when unset, leaving the archive-preserved metadata.
-func (m *manager) CopyTree(ctx context.Context, src, dst string, opts WriteOptions) error {
+func (m *Manager) CopyTree(ctx context.Context, src, dst string, opts WriteOptions) error {
 	if err := ValidatePath(src); err != nil {
 		return err
 	}
@@ -278,7 +278,7 @@ func (m *manager) CopyTree(ctx context.Context, src, dst string, opts WriteOptio
 // SetMode sets the file mode (chmod). The mode is applied exactly as given
 // (a zero mode means 0000); callers that want a default for a fresh file use
 // WriteOptions.Mode, which defaults 0 to 0644.
-func (m *manager) SetMode(ctx context.Context, path string, mode os.FileMode) error {
+func (m *Manager) SetMode(ctx context.Context, path string, mode os.FileMode) error {
 	if err := ValidatePath(path); err != nil {
 		return err
 	}
@@ -289,7 +289,7 @@ func (m *manager) SetMode(ctx context.Context, path string, mode os.FileMode) er
 }
 
 // SetOwnership sets the file owner and group (chown). Both empty is a no-op.
-func (m *manager) SetOwnership(ctx context.Context, path, owner, group string) error {
+func (m *Manager) SetOwnership(ctx context.Context, path, owner, group string) error {
 	ownership := Ownership(owner, group)
 	if ownership == "" {
 		return nil
@@ -303,7 +303,7 @@ func (m *manager) SetOwnership(ctx context.Context, path, owner, group string) e
 // SetOwnershipRecursive changes ownership of a path and all its contents
 // (chown -R). Both empty is a no-op. The `--` separator and ValidatePath both
 // refuse an ownership or path value that begins with `-`.
-func (m *manager) SetOwnershipRecursive(ctx context.Context, path, owner, group string) error {
+func (m *Manager) SetOwnershipRecursive(ctx context.Context, path, owner, group string) error {
 	ownership := Ownership(owner, group)
 	if ownership == "" {
 		return nil

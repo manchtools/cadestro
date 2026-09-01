@@ -11,11 +11,6 @@ import (
 	"github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
-type systemd struct {
-	r   exec.Runner
-	fsm fsManager
-}
-
 var validSystemdUnitName = regexp.MustCompile(`^(?:[a-zA-Z0-9@_:-]|\\x[0-9A-Fa-f]{2})(?:[a-zA-Z0-9@._:-]|\\x[0-9A-Fa-f]{2})*\.(service|socket|device|timer|mount|automount|swap|target|path|slice|scope)$`)
 
 // ValidateUnitName reports whether unit is a safe, well-formed systemd unit name.
@@ -38,7 +33,7 @@ var validSystemctlOutputs = map[string]map[string]struct{}{
 	},
 }
 
-func (s *systemd) query(ctx context.Context, unit, verb string) (string, error) {
+func (s *Manager) query(ctx context.Context, unit, verb string) (string, error) {
 	ctx, cancel := ensureCtx(ctx)
 	defer cancel()
 	res, err := s.r.Run(ctx, exec.Command{Name: "systemctl", Args: []string{verb, "--", unit}})
@@ -56,7 +51,7 @@ func (s *systemd) query(ctx context.Context, unit, verb string) (string, error) 
 	return trimmed, nil
 }
 
-func (s *systemd) mutate(ctx context.Context, args ...string) error {
+func (s *Manager) mutate(ctx context.Context, args ...string) error {
 	res, err := s.r.Run(ctx, exec.Command{Name: "systemctl", Args: args, Escalate: true})
 	if err != nil {
 		return err
@@ -67,7 +62,8 @@ func (s *systemd) mutate(ctx context.Context, args ...string) error {
 	return nil
 }
 
-func (s *systemd) Status(ctx context.Context, unit string) (UnitStatus, error) {
+// Status reports the current unit state.
+func (s *Manager) Status(ctx context.Context, unit string) (UnitStatus, error) {
 	if err := ValidateUnitName(unit); err != nil {
 		return UnitStatus{}, err
 	}
@@ -92,7 +88,8 @@ func (s *systemd) Status(ctx context.Context, unit string) (UnitStatus, error) {
 	return status, nil
 }
 
-func (s *systemd) IsEnabled(ctx context.Context, unit string) (bool, error) {
+// IsEnabled reports whether a unit is enabled.
+func (s *Manager) IsEnabled(ctx context.Context, unit string) (bool, error) {
 	if err := ValidateUnitName(unit); err != nil {
 		return false, err
 	}
@@ -104,7 +101,8 @@ func (s *systemd) IsEnabled(ctx context.Context, unit string) (bool, error) {
 	return out == "enabled" || out == "enabled-runtime", nil
 }
 
-func (s *systemd) IsMasked(ctx context.Context, unit string) (bool, error) {
+// IsMasked reports whether a unit is masked.
+func (s *Manager) IsMasked(ctx context.Context, unit string) (bool, error) {
 	if err := ValidateUnitName(unit); err != nil {
 		return false, err
 	}
@@ -115,7 +113,8 @@ func (s *systemd) IsMasked(ctx context.Context, unit string) (bool, error) {
 	return out == "masked" || out == "masked-runtime", nil
 }
 
-func (s *systemd) IsActive(ctx context.Context, unit string) (bool, error) {
+// IsActive reports whether a unit is active.
+func (s *Manager) IsActive(ctx context.Context, unit string) (bool, error) {
 	if err := ValidateUnitName(unit); err != nil {
 		return false, err
 	}
@@ -126,81 +125,93 @@ func (s *systemd) IsActive(ctx context.Context, unit string) (bool, error) {
 	return out == "active", nil
 }
 
-func (s *systemd) Enable(ctx context.Context, unit string) error {
+// Enable enables a unit.
+func (s *Manager) Enable(ctx context.Context, unit string) error {
 	if err := ValidateUnitName(unit); err != nil {
 		return err
 	}
 	return s.mutate(ctx, "enable", "--", unit)
 }
 
-func (s *systemd) Disable(ctx context.Context, unit string) error {
+// Disable disables a unit.
+func (s *Manager) Disable(ctx context.Context, unit string) error {
 	if err := ValidateUnitName(unit); err != nil {
 		return err
 	}
 	return s.mutate(ctx, "disable", "--", unit)
 }
 
-func (s *systemd) EnableNow(ctx context.Context, unit string) error {
+// EnableNow enables and starts a unit.
+func (s *Manager) EnableNow(ctx context.Context, unit string) error {
 	if err := ValidateUnitName(unit); err != nil {
 		return err
 	}
 	return s.mutate(ctx, "enable", "--now", "--", unit)
 }
 
-func (s *systemd) DisableNow(ctx context.Context, unit string) error {
+// DisableNow disables and stops a unit.
+func (s *Manager) DisableNow(ctx context.Context, unit string) error {
 	if err := ValidateUnitName(unit); err != nil {
 		return err
 	}
 	return s.mutate(ctx, "disable", "--now", "--", unit)
 }
 
-func (s *systemd) Start(ctx context.Context, unit string) error {
+// Start starts a unit.
+func (s *Manager) Start(ctx context.Context, unit string) error {
 	if err := ValidateUnitName(unit); err != nil {
 		return err
 	}
 	return s.mutate(ctx, "start", "--", unit)
 }
 
-func (s *systemd) Stop(ctx context.Context, unit string) error {
+// Stop stops a unit.
+func (s *Manager) Stop(ctx context.Context, unit string) error {
 	if err := ValidateUnitName(unit); err != nil {
 		return err
 	}
 	return s.mutate(ctx, "stop", "--", unit)
 }
 
-func (s *systemd) Restart(ctx context.Context, unit string) error {
+// Restart restarts a unit.
+func (s *Manager) Restart(ctx context.Context, unit string) error {
 	if err := ValidateUnitName(unit); err != nil {
 		return err
 	}
 	return s.mutate(ctx, "restart", "--", unit)
 }
 
-func (s *systemd) Reload(ctx context.Context, unit string) error {
+// Reload asks a running unit to re-read its configuration.
+func (s *Manager) Reload(ctx context.Context, unit string) error {
 	if err := ValidateUnitName(unit); err != nil {
 		return err
 	}
 	return s.mutate(ctx, "reload", "--", unit)
 }
 
-func (s *systemd) Mask(ctx context.Context, unit string) error {
+// Mask masks a unit.
+func (s *Manager) Mask(ctx context.Context, unit string) error {
 	if err := ValidateUnitName(unit); err != nil {
 		return err
 	}
 	return s.mutate(ctx, "mask", "--", unit)
 }
 
-func (s *systemd) Unmask(ctx context.Context, unit string) error {
+// Unmask removes a unit mask.
+func (s *Manager) Unmask(ctx context.Context, unit string) error {
 	if err := ValidateUnitName(unit); err != nil {
 		return err
 	}
 	return s.mutate(ctx, "unmask", "--", unit)
 }
 
-func (s *systemd) DaemonReload(ctx context.Context) error {
+// DaemonReload asks systemd to reload unit files.
+func (s *Manager) DaemonReload(ctx context.Context) error {
 	return s.mutate(ctx, "daemon-reload")
 }
 
-func (s *systemd) WriteUnit(ctx context.Context, unit, content string) error {
+// WriteUnit writes a unit file.
+func (s *Manager) WriteUnit(ctx context.Context, unit, content string) error {
 	if err := ValidateUnitName(unit); err != nil {
 		return err
 	}
@@ -210,7 +221,8 @@ func (s *systemd) WriteUnit(ctx context.Context, unit, content string) error {
 	return s.fsm.WriteFile(ctx, "/etc/systemd/system/"+unit, []byte(content), fs.WriteOptions{Mode: 0o644, Owner: "root", Group: "root"})
 }
 
-func (s *systemd) ReadUnit(ctx context.Context, unit string) (string, error) {
+// ReadUnit returns the on-disk content of a unit.
+func (s *Manager) ReadUnit(ctx context.Context, unit string) (string, error) {
 	if err := ValidateUnitName(unit); err != nil {
 		return "", err
 	}
@@ -222,7 +234,8 @@ func (s *systemd) ReadUnit(ctx context.Context, unit string) (string, error) {
 	return string(content), nil
 }
 
-func (s *systemd) RemoveUnit(ctx context.Context, unit string) error {
+// RemoveUnit removes a unit file.
+func (s *Manager) RemoveUnit(ctx context.Context, unit string) error {
 	if err := ValidateUnitName(unit); err != nil {
 		return err
 	}
@@ -238,7 +251,7 @@ func (s *systemd) RemoveUnit(ctx context.Context, unit string) error {
 // property. `systemctl show` is lenient (exit 0 even for unknown units), so
 // correctness rides on the strict yes/no output parse: anything else is an
 // error, never a guessed false.
-func (s *systemd) NeedsReload(ctx context.Context, unit string) (bool, error) {
+func (s *Manager) NeedsReload(ctx context.Context, unit string) (bool, error) {
 	if err := ValidateUnitName(unit); err != nil {
 		return false, err
 	}
@@ -263,7 +276,7 @@ func (s *systemd) NeedsReload(ctx context.Context, unit string) (bool, error) {
 // mirroring the parse the agent install script used. Anything else — empty
 // output, no numeric token, an exec failure — is an error; the caller owns
 // its fail-safe.
-func (s *systemd) Version(ctx context.Context) (int, error) {
+func (s *Manager) Version(ctx context.Context) (int, error) {
 	ctx, cancel := ensureCtx(ctx)
 	defer cancel()
 	res, err := s.r.Run(ctx, exec.Command{Name: "systemctl", Args: []string{"--version"}})

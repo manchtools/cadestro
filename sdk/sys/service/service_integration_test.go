@@ -25,20 +25,20 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 `
 
-func newManager(t *testing.T) service.Manager {
+func newManager(t *testing.T) *service.Manager {
 	t.Helper()
 	r, err := exec.NewRunner(exec.Sudo)
 	if err != nil {
 		t.Fatalf("NewRunner(Sudo): %v", err)
 	}
-	m, err := service.New(service.Systemd, r)
+	m, err := service.New(r)
 	if err != nil {
 		t.Fatalf("service.New: %v", err)
 	}
 	return m
 }
 
-func cleanupUnit(t *testing.T, m service.Manager) {
+func cleanupUnit(t *testing.T, m *service.Manager) {
 	t.Helper()
 	ctx := context.Background()
 	_ = m.Stop(ctx, testUnitName)
