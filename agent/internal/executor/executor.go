@@ -36,8 +36,6 @@ func NewExecutor(runner sysexec.Runner) (*Executor, error) {
 	return executor, nil
 }
 
-func (e *Executor) ResetUpdateCycle() {}
-
 func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.ActionResult {
 	result := &pb.ActionResult{Status: pb.ExecutionStatus_EXECUTION_STATUS_FAILED}
 	if action == nil || action.GetId() == nil {

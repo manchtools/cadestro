@@ -13,7 +13,6 @@ import (
 
 type testExecutor struct{}
 
-func (testExecutor) ResetUpdateCycle() {}
 func (testExecutor) ExecuteAction(_ context.Context, action *pb.Action) *pb.ActionResult {
 	return &pb.ActionResult{ActionId: action.Id, Status: pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS}
 }

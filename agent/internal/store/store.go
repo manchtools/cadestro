@@ -28,28 +28,7 @@ type Store struct {
 	now     func() time.Time
 }
 
-type StoredAction struct {
-	ID             string
-	Action         *pb.Action
-	AssignedAt     time.Time
-	LastExecutedAt *time.Time
-	NextExecuteAt  time.Time
-}
-
-func New(dataDir string) (*Store, error) { return open(dataDir, true) }
-
-func OpenExisting(dataDir string) (*Store, error) {
-	dbPath := filepath.Join(dataDir, "agent.db")
-	if _, err := os.Stat(dbPath); err != nil {
-		if os.IsNotExist(err) {
-			return nil, fmt.Errorf("agent database %s does not exist — start the agent service first", dbPath)
-		}
-		return nil, fmt.Errorf("stat agent database: %w", err)
-	}
-	return open(dataDir, false)
-}
-
-func open(dataDir string, migrate bool) (*Store, error) {
+func New(dataDir string) (*Store, error) {
 	if err := os.MkdirAll(dataDir, 0o700); err != nil {
 		return nil, fmt.Errorf("create data directory: %w", err)
 	}
@@ -66,14 +45,12 @@ func open(dataDir string, migrate bool) (*Store, error) {
 		_ = db.Close()
 		return nil, err
 	}
-	if migrate {
-		goose.SetBaseFS(migrations.FS)
-		if err := goose.SetDialect("sqlite3"); err != nil {
-			return closeOnError(fmt.Errorf("set goose dialect: %w", err))
-		}
-		if err := goose.Up(db, "."); err != nil {
-			return closeOnError(fmt.Errorf("run migrations: %w", err))
-		}
+	goose.SetBaseFS(migrations.FS)
+	if err := goose.SetDialect("sqlite3"); err != nil {
+		return closeOnError(fmt.Errorf("set goose dialect: %w", err))
+	}
+	if err := goose.Up(db, "."); err != nil {
+		return closeOnError(fmt.Errorf("run migrations: %w", err))
 	}
 	if err := os.Chmod(dataDir, 0o700); err != nil {
 		return closeOnError(fmt.Errorf("restrict data dir mode: %w", err))
@@ -98,12 +75,6 @@ func verifyRestrictiveDirMode(dir string) error {
 		return fmt.Errorf("data dir %s is %#o after tightening; refusing to store state there", dir, perm)
 	}
 	return nil
-}
-
-func (s *Store) SetClockForTest(now func() time.Time) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.now = now
 }
 
 func (s *Store) Close() error { return s.db.Close() }

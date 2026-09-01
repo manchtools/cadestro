@@ -26,36 +26,27 @@ type ExecutionStatus int32
 
 const (
 	ExecutionStatus_EXECUTION_STATUS_UNSPECIFIED   ExecutionStatus = 0
-	ExecutionStatus_EXECUTION_STATUS_PENDING       ExecutionStatus = 1
-	ExecutionStatus_EXECUTION_STATUS_RUNNING       ExecutionStatus = 2
-	ExecutionStatus_EXECUTION_STATUS_SUCCESS       ExecutionStatus = 3
-	ExecutionStatus_EXECUTION_STATUS_FAILED        ExecutionStatus = 4
-	ExecutionStatus_EXECUTION_STATUS_SKIPPED       ExecutionStatus = 5
-	ExecutionStatus_EXECUTION_STATUS_TIMEOUT       ExecutionStatus = 6
-	ExecutionStatus_EXECUTION_STATUS_INDETERMINATE ExecutionStatus = 7
+	ExecutionStatus_EXECUTION_STATUS_SUCCESS       ExecutionStatus = 1
+	ExecutionStatus_EXECUTION_STATUS_FAILED        ExecutionStatus = 2
+	ExecutionStatus_EXECUTION_STATUS_TIMEOUT       ExecutionStatus = 3
+	ExecutionStatus_EXECUTION_STATUS_INDETERMINATE ExecutionStatus = 4
 )
 
 // Enum value maps for ExecutionStatus.
 var (
 	ExecutionStatus_name = map[int32]string{
 		0: "EXECUTION_STATUS_UNSPECIFIED",
-		1: "EXECUTION_STATUS_PENDING",
-		2: "EXECUTION_STATUS_RUNNING",
-		3: "EXECUTION_STATUS_SUCCESS",
-		4: "EXECUTION_STATUS_FAILED",
-		5: "EXECUTION_STATUS_SKIPPED",
-		6: "EXECUTION_STATUS_TIMEOUT",
-		7: "EXECUTION_STATUS_INDETERMINATE",
+		1: "EXECUTION_STATUS_SUCCESS",
+		2: "EXECUTION_STATUS_FAILED",
+		3: "EXECUTION_STATUS_TIMEOUT",
+		4: "EXECUTION_STATUS_INDETERMINATE",
 	}
 	ExecutionStatus_value = map[string]int32{
 		"EXECUTION_STATUS_UNSPECIFIED":   0,
-		"EXECUTION_STATUS_PENDING":       1,
-		"EXECUTION_STATUS_RUNNING":       2,
-		"EXECUTION_STATUS_SUCCESS":       3,
-		"EXECUTION_STATUS_FAILED":        4,
-		"EXECUTION_STATUS_SKIPPED":       5,
-		"EXECUTION_STATUS_TIMEOUT":       6,
-		"EXECUTION_STATUS_INDETERMINATE": 7,
+		"EXECUTION_STATUS_SUCCESS":       1,
+		"EXECUTION_STATUS_FAILED":        2,
+		"EXECUTION_STATUS_TIMEOUT":       3,
+		"EXECUTION_STATUS_INDETERMINATE": 4,
 	}
 )
 
@@ -1086,16 +1077,13 @@ const file_cadestro_v1_common_proto_rawDesc = "" +
 	"\rCommandOutput\x12\x1b\n" +
 	"\texit_code\x18\x01 \x01(\x05R\bexitCode\x12$\n" +
 	"\x06stdout\x18\x02 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x06stdout\x12$\n" +
-	"\x06stderr\x18\x03 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x06stderr*\x8a\x02\n" +
+	"\x06stderr\x18\x03 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x04\x18\x80\x80@R\x06stderr*\xb0\x01\n" +
 	"\x0fExecutionStatus\x12 \n" +
 	"\x1cEXECUTION_STATUS_UNSPECIFIED\x10\x00\x12\x1c\n" +
-	"\x18EXECUTION_STATUS_PENDING\x10\x01\x12\x1c\n" +
-	"\x18EXECUTION_STATUS_RUNNING\x10\x02\x12\x1c\n" +
-	"\x18EXECUTION_STATUS_SUCCESS\x10\x03\x12\x1b\n" +
-	"\x17EXECUTION_STATUS_FAILED\x10\x04\x12\x1c\n" +
-	"\x18EXECUTION_STATUS_SKIPPED\x10\x05\x12\x1c\n" +
-	"\x18EXECUTION_STATUS_TIMEOUT\x10\x06\x12\"\n" +
-	"\x1eEXECUTION_STATUS_INDETERMINATE\x10\a*b\n" +
+	"\x18EXECUTION_STATUS_SUCCESS\x10\x01\x12\x1b\n" +
+	"\x17EXECUTION_STATUS_FAILED\x10\x02\x12\x1c\n" +
+	"\x18EXECUTION_STATUS_TIMEOUT\x10\x03\x12\"\n" +
+	"\x1eEXECUTION_STATUS_INDETERMINATE\x10\x04*b\n" +
 	"\fDesiredState\x12\x1d\n" +
 	"\x19DESIRED_STATE_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15DESIRED_STATE_PRESENT\x10\x01\x12\x18\n" +

@@ -139,23 +139,6 @@ func (s *Store) GetDueScheduledWork(ctx context.Context) ([]ScheduledWork, error
 	}
 	return out, nil
 }
-func (s *Store) GetAssignedActions(ctx context.Context) ([]*StoredAction, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	rows, err := s.queries.GetAssignedActions(ctx)
-	if err != nil {
-		return nil, err
-	}
-	out := make([]*StoredAction, 0, len(rows))
-	for _, row := range rows {
-		a := &pb.Action{}
-		if err := proto.Unmarshal(row.ActionBlob, a); err != nil {
-			return nil, err
-		}
-		out = append(out, &StoredAction{ID: row.WorkID, Action: a, AssignedAt: row.ReceivedAt, LastExecutedAt: row.LastExecutedAt, NextExecuteAt: row.NextExecuteAt})
-	}
-	return out, nil
-}
 func (s *Store) BeginActionRun(ctx context.Context, w *ScheduledWork, started time.Time) error {
 	if w == nil || w.Action == nil || w.WorkID == "" {
 		return errors.New("begin action run: missing work")

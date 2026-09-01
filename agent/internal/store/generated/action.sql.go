@@ -86,47 +86,6 @@ func (q *Queries) FinishScheduledRun(ctx context.Context, arg FinishScheduledRun
 	return retired, err
 }
 
-const getAssignedActions = `-- name: GetAssignedActions :many
-SELECT work_id, action_blob, received_at, last_executed_at, next_execute_at FROM scheduled_work WHERE retired = FALSE ORDER BY received_at, work_id
-`
-
-type GetAssignedActionsRow struct {
-	WorkID         string     `json:"work_id"`
-	ActionBlob     []byte     `json:"action_blob"`
-	ReceivedAt     time.Time  `json:"received_at"`
-	LastExecutedAt *time.Time `json:"last_executed_at"`
-	NextExecuteAt  time.Time  `json:"next_execute_at"`
-}
-
-func (q *Queries) GetAssignedActions(ctx context.Context) ([]GetAssignedActionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAssignedActions)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GetAssignedActionsRow{}
-	for rows.Next() {
-		var i GetAssignedActionsRow
-		if err := rows.Scan(
-			&i.WorkID,
-			&i.ActionBlob,
-			&i.ReceivedAt,
-			&i.LastExecutedAt,
-			&i.NextExecuteAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getAssignedPolicyRevision = `-- name: GetAssignedPolicyRevision :one
 SELECT value FROM settings WHERE key = 'assigned_policy_revision'
 `

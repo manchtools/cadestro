@@ -18,8 +18,6 @@ ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIME
 SELECT work_id, COALESCE(run_id, ''), action_blob, received_at, last_executed_at, next_execute_at, run_started_at, run_in_progress
 FROM scheduled_work WHERE (retired = FALSE OR run_in_progress = TRUE) AND (run_in_progress = TRUE OR next_execute_at <= ?)
 ORDER BY run_in_progress DESC, next_execute_at, work_id;
--- name: GetAssignedActions :many
-SELECT work_id, action_blob, received_at, last_executed_at, next_execute_at FROM scheduled_work WHERE retired = FALSE ORDER BY received_at, work_id;
 -- name: GetScheduledRun :one
 SELECT work_id, COALESCE(run_id, ''), run_in_progress, run_started_at FROM scheduled_work WHERE (work_id = ? OR run_id = ?) AND (retired = FALSE OR run_in_progress = TRUE);
 -- name: BeginScheduledRun :execrows

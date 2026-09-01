@@ -14,7 +14,6 @@ const DefaultCheckInterval = time.Minute
 
 type ActionExecutor interface {
 	ExecuteAction(context.Context, *pb.Action) *pb.ActionResult
-	ResetUpdateCycle()
 }
 type Scheduler struct {
 	store          *store.Store
@@ -122,7 +121,6 @@ func (s *Scheduler) executeAction(ctx context.Context, w store.ScheduledWork) {
 		s.logger.Error("begin action run", "action_id", w.Action.GetId().GetValue(), "error", err)
 		return
 	}
-	s.executor.ResetUpdateCycle()
 	r := s.executor.ExecuteAction(ctx, w.Action)
 	if ctx.Err() != nil {
 		return

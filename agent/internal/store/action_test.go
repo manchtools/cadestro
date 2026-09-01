@@ -20,7 +20,7 @@ func TestReconcileActionUpdatesOnlyChangedRows(t *testing.T) {
 	st, err := New(t.TempDir())
 	require.NoError(t, err)
 	defer st.Close()
-	st.SetClockForTest(func() time.Time { return now })
+	st.now = func() time.Time { return now }
 	id := "01K00000000000000000000001"
 	a := testAction(id, "true")
 	require.NoError(t, st.ReconcilePolicy(ctx, testPolicy("01K00000000000000000000002", a)))
@@ -34,18 +34,17 @@ func TestReconcileActionUpdatesOnlyChangedRows(t *testing.T) {
 	a2 := testAction(id, "false")
 	now = now.Add(10 * time.Minute)
 	require.NoError(t, st.ReconcilePolicy(ctx, testPolicy("01K00000000000000000000003", a2)))
-	assigned, err := st.GetAssignedActions(ctx)
-	require.NoError(t, err)
-	require.Equal(t, "false", assigned[0].Action.GetShell().GetScript())
 	due, err = st.GetDueScheduledWork(ctx)
 	require.NoError(t, err)
 	require.Len(t, due, 1)
-	next := assigned[0].NextExecuteAt
+	require.Equal(t, "false", due[0].Action.GetShell().GetScript())
+	next := due[0].NextExecuteAt
 	now = now.Add(time.Minute)
 	require.NoError(t, st.ReconcilePolicy(ctx, testPolicy("01K00000000000000000000004", a2)))
-	assigned, err = st.GetAssignedActions(ctx)
+	due, err = st.GetDueScheduledWork(ctx)
 	require.NoError(t, err)
-	require.Equal(t, next, assigned[0].NextExecuteAt)
+	require.Len(t, due, 1)
+	require.Equal(t, next, due[0].NextExecuteAt)
 }
 func TestActionResultOutboxAckDeletesOne(t *testing.T) {
 	ctx := context.Background()
