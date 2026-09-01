@@ -204,7 +204,6 @@ func (h *EnrollHandler) Enroll(ctx context.Context, req *connect.Request[cadestr
 		Certificate: result.Certificate,
 		PrivateKey:  keyPEM,
 		AgentAddr:   result.ControlURL,
-		ControlAddr: req.Msg.ServerUrl,
 	}
 
 	if err := h.credStore.Save(ctx, creds); err != nil {

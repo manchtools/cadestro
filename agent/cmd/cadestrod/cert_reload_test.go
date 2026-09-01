@@ -20,15 +20,10 @@ func testCreds(cert string) *credentials.Credentials {
 		Certificate: []byte(cert),
 		PrivateKey:  []byte("key"),
 		AgentAddr:   "https://gw:8443",
-		ControlAddr: "https://ctl",
 	}
 }
 
 func TestReloadCredsForReconnect_PicksUpRotatedCert(t *testing.T) {
-
-	if !credentials.MachineIDAvailable() {
-		t.Skip("no machine-id on this host; credential save/load is unavailable")
-	}
 
 	dir := t.TempDir()
 	store := credentials.NewStore(dir)

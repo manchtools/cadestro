@@ -9,7 +9,6 @@ require (
 	github.com/oklog/ulid/v2 v2.1.2
 	github.com/pressly/goose/v3 v3.27.3
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/crypto v0.55.0
 	golang.org/x/sys v0.47.0
 	google.golang.org/protobuf v1.36.12
 	modernc.org/sqlite v1.55.0

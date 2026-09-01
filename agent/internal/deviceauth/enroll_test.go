@@ -85,7 +85,6 @@ func TestEnroll_Success(t *testing.T) {
 	require.NotNil(t, enrolledCreds)
 	assert.Equal(t, "dev-123", enrolledCreds.DeviceID)
 	assert.Equal(t, "https://gw.example.com:8443", enrolledCreds.AgentAddr)
-	assert.Equal(t, srv.URL, enrolledCreds.ControlAddr)
 
 	assert.True(t, credStore.Exists())
 	loaded, err := credStore.Load()

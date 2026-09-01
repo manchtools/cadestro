@@ -1,39 +1,20 @@
 package credentials
 
 import (
-	"bytes"
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
-
-	"golang.org/x/crypto/argon2"
 
 	sysexec "github.com/manchtools/cadestro/sdk/sys/exec"
 	sdkfs "github.com/manchtools/cadestro/sdk/sys/fs"
 )
 
 const (
-	argonTime    = 1
-	argonMemory  = 64 * 1024
-	argonThreads = 4
-	argonKeyLen  = 32
-
-	saltLen  = 32
-	nonceLen = 12
-
-	credentialsFile = "credentials.enc"
-	saltFile        = "salt"
+	credentialsFile = "credentials.json"
 
 	DefaultDataDir = "/var/lib/cadestro"
-
-	credentialsMagicV1 = "cadestrocred:v1:"
 )
 
 type Credentials struct {
@@ -48,8 +29,6 @@ type Credentials struct {
 	PrivateKey        []byte `json:"private_key"`
 
 	AgentAddr string `json:"agent_addr"`
-
-	ControlAddr string `json:"control_addr,omitempty"`
 }
 
 type Store struct {
@@ -97,8 +76,8 @@ func requireOwnerOnlyDir(dir string) error {
 	if !info.IsDir() {
 		return fmt.Errorf("store path %s is not a directory", dir)
 	}
-	if info.Mode().Perm()&0o022 != 0 {
-		return fmt.Errorf("store directory %s is group/world-writable (%#o); it must be owner-only-writable (0700)", dir, info.Mode().Perm())
+	if info.Mode().Perm() != 0o700 {
+		return fmt.Errorf("store directory %s must have owner-only permissions (0700), got %#o", dir, info.Mode().Perm())
 	}
 	return nil
 }
@@ -116,29 +95,13 @@ func (s *Store) Save(ctx context.Context, creds *Credentials) error {
 		return err
 	}
 
-	salt, err := s.loadOrCreateSalt(ctx)
-	if err != nil {
-		return fmt.Errorf("load/create salt: %w", err)
-	}
-
-	key, err := s.deriveKey(salt)
-	if err != nil {
-		return fmt.Errorf("derive key: %w", err)
-	}
-
 	plaintext, err := json.Marshal(creds)
 	if err != nil {
 		return fmt.Errorf("marshal credentials: %w", err)
 	}
 
-	ciphertext, err := encrypt(key, plaintext)
-	if err != nil {
-		return fmt.Errorf("encrypt credentials: %w", err)
-	}
-	ciphertext = append([]byte(credentialsMagicV1), ciphertext...)
-
 	credPath := filepath.Join(s.dataDir, credentialsFile)
-	if err := s.writeFile(ctx, credPath, ciphertext); err != nil {
+	if err := s.writeFile(ctx, credPath, plaintext); err != nil {
 		return fmt.Errorf("write credentials: %w", err)
 	}
 
@@ -151,31 +114,17 @@ func (s *Store) Load() (*Credentials, error) {
 		return nil, err
 	}
 
-	saltPath := filepath.Join(s.dataDir, saltFile)
-	salt, err := os.ReadFile(saltPath)
-	if err != nil {
-		return nil, fmt.Errorf("read salt: %w", err)
-	}
-
-	key, err := s.deriveKey(salt)
-	if err != nil {
-		return nil, fmt.Errorf("derive key: %w", err)
-	}
-
 	credPath := filepath.Join(s.dataDir, credentialsFile)
-	ciphertext, err := os.ReadFile(credPath)
+	info, err := os.Lstat(credPath)
+	if err != nil {
+		return nil, fmt.Errorf("stat credentials: %w", err)
+	}
+	if !info.Mode().IsRegular() || info.Mode().Perm() != 0o600 {
+		return nil, fmt.Errorf("credentials file %s must be a regular owner-only file (0600)", credPath)
+	}
+	plaintext, err := os.ReadFile(credPath)
 	if err != nil {
 		return nil, fmt.Errorf("read credentials: %w", err)
-	}
-
-	if !bytes.HasPrefix(ciphertext, []byte(credentialsMagicV1)) {
-		return nil, errors.New("unsupported credentials format, please re-enroll the agent (delete credentials.enc and use a fresh registration token)")
-	}
-	ciphertext = ciphertext[len(credentialsMagicV1):]
-
-	plaintext, err := decrypt(key, ciphertext)
-	if err != nil {
-		return nil, fmt.Errorf("decrypt credentials: %w", err)
 	}
 
 	var creds Credentials
@@ -184,125 +133,4 @@ func (s *Store) Load() (*Credentials, error) {
 	}
 
 	return &creds, nil
-}
-
-func (s *Store) Delete() error {
-	credPath := filepath.Join(s.dataDir, credentialsFile)
-	saltPath := filepath.Join(s.dataDir, saltFile)
-
-	if err := os.Remove(credPath); err != nil && !os.IsNotExist(err) {
-		slog.Warn("failed to remove credentials file", "path", credPath, "error", err)
-	}
-	if err := os.Remove(saltPath); err != nil && !os.IsNotExist(err) {
-		slog.Warn("failed to remove salt file", "path", saltPath, "error", err)
-	}
-
-	return nil
-}
-
-func (s *Store) DataDir() string {
-	return s.dataDir
-}
-
-func (s *Store) loadOrCreateSalt(ctx context.Context) ([]byte, error) {
-	saltPath := filepath.Join(s.dataDir, saltFile)
-
-	salt, err := os.ReadFile(saltPath)
-	if err == nil && len(salt) == saltLen {
-		return salt, nil
-	}
-
-	if err == nil {
-		return nil, fmt.Errorf("salt file %s is corrupt (%d bytes, want %d) — refusing to regenerate; delete it together with %s to re-enroll", saltPath, len(salt), saltLen, credentialsFile)
-	}
-	if !os.IsNotExist(err) {
-		return nil, fmt.Errorf("read salt: %w", err)
-	}
-
-	salt = make([]byte, saltLen)
-	if _, err := rand.Read(salt); err != nil {
-		return nil, fmt.Errorf("generate salt: %w", err)
-	}
-
-	if err := s.writeFile(ctx, saltPath, salt); err != nil {
-		return nil, fmt.Errorf("write salt: %w", err)
-	}
-
-	return salt, nil
-}
-
-func (s *Store) deriveKey(salt []byte) ([]byte, error) {
-	machineID, err := getMachineID()
-	if err != nil {
-		return nil, fmt.Errorf("get machine ID: %w", err)
-	}
-
-	key := argon2.IDKey(machineID, salt, argonTime, argonMemory, argonThreads, argonKeyLen)
-	return key, nil
-}
-
-var getMachineID = func() ([]byte, error) {
-
-	id, err := os.ReadFile("/etc/machine-id")
-	if err == nil && len(id) > 0 {
-		return id, nil
-	}
-
-	id, err = os.ReadFile("/var/lib/dbus/machine-id")
-	if err == nil && len(id) > 0 {
-		return id, nil
-	}
-
-	return nil, errors.New("machine ID not found")
-}
-
-func MachineIDAvailable() bool {
-	_, err := getMachineID()
-	return err == nil
-}
-
-func encrypt(key, plaintext []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
-	nonce := make([]byte, nonceLen)
-	if _, err := rand.Read(nonce); err != nil {
-		return nil, err
-	}
-
-	ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
-	return ciphertext, nil
-}
-
-func decrypt(key, ciphertext []byte) ([]byte, error) {
-	if len(ciphertext) < nonceLen {
-		return nil, errors.New("ciphertext too short")
-	}
-
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
-	nonce := ciphertext[:nonceLen]
-	ciphertext = ciphertext[nonceLen:]
-
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return plaintext, nil
 }

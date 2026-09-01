@@ -70,7 +70,7 @@ func TestGetEnrollmentStatus_LoadsAtMostOnce(t *testing.T) {
 		assert.Equal(t, "dev-cached", resp.Msg.GetDeviceId().GetValue())
 	}
 	assert.LessOrEqual(t, store.loads.Load(), int64(1),
-		"Load (Argon2id) must run at most once across repeated status calls; got %d", store.loads.Load())
+		"Load must run at most once across repeated status calls; got %d", store.loads.Load())
 }
 
 func TestGetEnrollmentStatus_ConcurrentFloodLoadsOnce(t *testing.T) {
@@ -87,7 +87,7 @@ func TestGetEnrollmentStatus_ConcurrentFloodLoadsOnce(t *testing.T) {
 	}
 	wg.Wait()
 	assert.Equal(t, int64(1), store.loads.Load(),
-		"a concurrent status flood must trigger exactly one Argon2id derivation")
+		"a concurrent status flood must trigger exactly one credential load")
 }
 
 func TestGetEnrollmentStatus_NotEnrolledNeverLoads(t *testing.T) {
@@ -97,5 +97,5 @@ func TestGetEnrollmentStatus_NotEnrolledNeverLoads(t *testing.T) {
 	resp, err := h.GetEnrollmentStatus(context.Background(), connect.NewRequest(&cadestrov1.GetEnrollmentStatusRequest{}))
 	require.NoError(t, err)
 	assert.False(t, resp.Msg.Enrolled)
-	assert.Equal(t, int64(0), store.loads.Load(), "un-enrolled status must not derive the key")
+	assert.Equal(t, int64(0), store.loads.Load(), "un-enrolled status must not load credentials")
 }

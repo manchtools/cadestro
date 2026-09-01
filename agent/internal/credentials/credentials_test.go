@@ -1,74 +1,58 @@
 package credentials
 
 import (
-	"bytes"
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
-	"strings"
+	"reflect"
 	"testing"
 )
 
-func requireMachineID(t *testing.T) {
-	t.Helper()
-	if _, err := getMachineID(); err != nil {
-		t.Skipf("machine ID not available: %v", err)
-	}
-}
-
 func sampleCreds() *Credentials {
 	return &Credentials{
-		DeviceID:    "01HXYZSAMPLE",
-		CACert:      []byte("ca-cert-bytes"),
-		Certificate: []byte("client-cert-bytes"),
-		PrivateKey:  []byte("client-key-bytes"),
-		AgentAddr:   "https://agent.control.example.test:443",
-		ControlAddr: "https://control.example.test:443",
+		DeviceID:           "01HXYZSAMPLE",
+		CACert:             []byte("ca-cert-bytes"),
+		Certificate:        []byte("client-cert-bytes"),
+		PendingCertificate: []byte("pending-cert-bytes"),
+		PendingPrivateKey:  []byte("pending-key-bytes"),
+		PendingCSR:         []byte("pending-csr-bytes"),
+		PrivateKey:         []byte("client-key-bytes"),
+		AgentAddr:          "https://agent.control.example.test:443",
 	}
 }
 
-func TestSaveLoadRoundTrip(t *testing.T) {
-	requireMachineID(t)
-
+func TestPlaintextCredentialsRoundTrip(t *testing.T) {
 	dir := t.TempDir()
 	store := NewStore(dir)
-
 	in := sampleCreds()
+
 	if err := store.Save(context.Background(), in); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
-
+	raw, err := os.ReadFile(filepath.Join(dir, credentialsFile))
+	if err != nil {
+		t.Fatalf("read credentials file: %v", err)
+	}
+	var decoded Credentials
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		t.Fatalf("credentials file is not plaintext JSON: %v", err)
+	}
+	if !reflect.DeepEqual(decoded, *in) {
+		t.Fatalf("decoded credentials do not match input")
+	}
 	out, err := store.Load()
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-
-	if out.DeviceID != in.DeviceID {
-		t.Errorf("DeviceID mismatch: got %q want %q", out.DeviceID, in.DeviceID)
-	}
-	if !bytes.Equal(out.CACert, in.CACert) {
-		t.Errorf("CACert mismatch")
-	}
-	if !bytes.Equal(out.Certificate, in.Certificate) {
-		t.Errorf("Certificate mismatch")
-	}
-	if !bytes.Equal(out.PrivateKey, in.PrivateKey) {
-		t.Errorf("PrivateKey mismatch")
-	}
-	if out.AgentAddr != in.AgentAddr {
-		t.Errorf("AgentAddr mismatch: got %q want %q", out.AgentAddr, in.AgentAddr)
-	}
-	if out.ControlAddr != in.ControlAddr {
-		t.Errorf("ControlAddr mismatch: got %q want %q", out.ControlAddr, in.ControlAddr)
+	if !reflect.DeepEqual(out, in) {
+		t.Fatalf("loaded credentials do not match input")
 	}
 }
 
 func TestSaveIsIdempotent(t *testing.T) {
-	requireMachineID(t)
-
 	dir := t.TempDir()
 	store := NewStore(dir)
-
 	in := sampleCreds()
 	if err := store.Save(context.Background(), in); err != nil {
 		t.Fatalf("first Save: %v", err)
@@ -76,121 +60,84 @@ func TestSaveIsIdempotent(t *testing.T) {
 	if err := store.Save(context.Background(), in); err != nil {
 		t.Fatalf("second Save: %v", err)
 	}
-
-	out, err := store.Load()
-	if err != nil {
+	if _, err := store.Load(); err != nil {
 		t.Fatalf("Load after double Save: %v", err)
 	}
-	if out.DeviceID != in.DeviceID {
-		t.Errorf("DeviceID mismatch after double Save")
-	}
 }
 
-func TestSaveWritesV1Magic(t *testing.T) {
-	requireMachineID(t)
-
+func TestCredentialsPermissions(t *testing.T) {
 	dir := t.TempDir()
 	store := NewStore(dir)
-
 	if err := store.Save(context.Background(), sampleCreds()); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
-
-	raw, err := os.ReadFile(filepath.Join(dir, credentialsFile))
+	fileInfo, err := os.Stat(filepath.Join(dir, credentialsFile))
 	if err != nil {
-		t.Fatalf("read credentials file: %v", err)
+		t.Fatalf("stat credentials file: %v", err)
 	}
-	if !bytes.HasPrefix(raw, []byte(credentialsMagicV1)) {
-		t.Errorf("credentials file missing v1 magic prefix; first 16 bytes = %q", raw[:min(16, len(raw))])
+	if fileInfo.Mode().Perm() != 0o600 {
+		t.Fatalf("credentials mode = %o, want 600", fileInfo.Mode().Perm())
 	}
-}
-
-func TestLoadRejectsUnknownFutureMagic(t *testing.T) {
-	requireMachineID(t)
-
-	dir := t.TempDir()
-	store := NewStore(dir)
-
-	if _, err := store.loadOrCreateSalt(context.Background()); err != nil {
-		t.Fatalf("loadOrCreateSalt: %v", err)
-	}
-
-	credPath := filepath.Join(dir, credentialsFile)
-	if err := os.WriteFile(credPath, []byte("cadestrocred:v999:opaque"), 0600); err != nil {
-		t.Fatalf("write fake creds: %v", err)
-	}
-
-	_, err := store.Load()
-	if err == nil {
-		t.Fatal("expected Load to reject unknown future magic, got nil error")
-	}
-
-	if msg := err.Error(); !strings.Contains(msg, "re-enroll") {
-		t.Errorf("error message missing re-enroll hint: %q", msg)
-	}
-}
-
-func TestLoadCorruptCiphertextFails(t *testing.T) {
-	requireMachineID(t)
-
-	dir := t.TempDir()
-	store := NewStore(dir)
-
-	if err := store.Save(context.Background(), sampleCreds()); err != nil {
-		t.Fatalf("Save: %v", err)
-	}
-
-	credPath := filepath.Join(dir, credentialsFile)
-	raw, err := os.ReadFile(credPath)
+	dirInfo, err := os.Stat(dir)
 	if err != nil {
-		t.Fatalf("read credentials file: %v", err)
+		t.Fatalf("stat credentials directory: %v", err)
 	}
-
-	if len(raw) < len(credentialsMagicV1)+8 {
-		t.Fatalf("ciphertext too short to corrupt: %d bytes", len(raw))
-	}
-	raw[len(raw)-1] ^= 0xFF
-	if err := os.WriteFile(credPath, raw, 0600); err != nil {
-		t.Fatalf("rewrite credentials file: %v", err)
-	}
-
-	if _, err := store.Load(); err == nil {
-		t.Error("expected Load to fail on corrupted ciphertext, got nil error")
+	if dirInfo.Mode().Perm() != 0o700 {
+		t.Fatalf("credentials directory mode = %o, want 700", dirInfo.Mode().Perm())
 	}
 }
 
-func TestLoadMissingSaltFails(t *testing.T) {
-	requireMachineID(t)
+func TestLoadRejectsUnsafePermissions(t *testing.T) {
+	t.Run("file", func(t *testing.T) {
+		dir := t.TempDir()
+		store := NewStore(dir)
+		if err := store.Save(context.Background(), sampleCreds()); err != nil {
+			t.Fatalf("Save: %v", err)
+		}
+		if err := os.Chmod(filepath.Join(dir, credentialsFile), 0o644); err != nil {
+			t.Fatalf("chmod credentials file: %v", err)
+		}
+		if _, err := store.Load(); err == nil {
+			t.Fatal("Load accepted a group-readable credentials file")
+		}
+	})
+	t.Run("directory", func(t *testing.T) {
+		dir := t.TempDir()
+		store := NewStore(dir)
+		if err := store.Save(context.Background(), sampleCreds()); err != nil {
+			t.Fatalf("Save: %v", err)
+		}
+		if err := os.Chmod(dir, 0o755); err != nil {
+			t.Fatalf("chmod credentials directory: %v", err)
+		}
+		t.Cleanup(func() { _ = os.Chmod(dir, 0o700) })
+		if _, err := store.Load(); err == nil {
+			t.Fatal("Load accepted a world-readable credentials directory")
+		}
+	})
+}
 
+func TestLoadRejectsCorruptJSON(t *testing.T) {
 	dir := t.TempDir()
 	store := NewStore(dir)
-
+	if err := os.WriteFile(filepath.Join(dir, credentialsFile), []byte("not json"), 0o600); err != nil {
+		t.Fatalf("write credentials file: %v", err)
+	}
 	if _, err := store.Load(); err == nil {
-		t.Error("expected Load with missing salt to fail, got nil error")
+		t.Fatal("Load accepted corrupt JSON")
 	}
 }
 
-func TestExistsAndDelete(t *testing.T) {
-	requireMachineID(t)
-
+func TestExists(t *testing.T) {
 	dir := t.TempDir()
 	store := NewStore(dir)
-
 	if store.Exists() {
-		t.Fatal("Exists returned true for empty data dir")
+		t.Fatal("Exists returned true for an empty data directory")
 	}
-
 	if err := store.Save(context.Background(), sampleCreds()); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 	if !store.Exists() {
 		t.Fatal("Exists returned false after Save")
-	}
-
-	if err := store.Delete(); err != nil {
-		t.Fatalf("Delete: %v", err)
-	}
-	if store.Exists() {
-		t.Fatal("Exists returned true after Delete")
 	}
 }
