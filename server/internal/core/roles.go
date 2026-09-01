@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
@@ -32,10 +31,8 @@ func roleProto(ctx context.Context, queries *db.Queries, role *db.Role) (*cadest
 	if err != nil {
 		return nil, err
 	}
-	return &cadestrov1.Role{Id: &cadestrov1.RoleId{Value: role.ID}, Name: role.Name, Description: role.Description, Permissions: permissions, CreatedAt: timestamp(role.CreatedAt), UpdatedAt: timestamp(role.UpdatedAt)}, nil
+	return &cadestrov1.Role{Id: &cadestrov1.RoleId{Value: role.ID}, Name: role.Name, Description: role.Description, Permissions: permissions, CreatedAt: timestamppb.New(role.CreatedAt), UpdatedAt: timestamppb.New(role.UpdatedAt)}, nil
 }
-
-func timestamp(value time.Time) *timestamppb.Timestamp { return timestamppb.New(value) }
 
 func (service *Service) CreateRole(ctx context.Context, request *connect.Request[cadestrov1.CreateRoleRequest]) (*connect.Response[cadestrov1.CreateRoleResponse], error) {
 	id := ulid.Make().String()

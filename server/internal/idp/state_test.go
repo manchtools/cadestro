@@ -3,8 +3,9 @@ package idp
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"errors"
+	"io"
 	"testing"
+	"testing/iotest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,6 +13,8 @@ import (
 
 func TestGenerateTransactionValues_EntropyAndShape(t *testing.T) {
 	state, nonce, verifier, err := GenerateTransactionValues()
+	require.NoError(t, err)
+	state2, nonce2, verifier2, err := GenerateTransactionValues()
 	require.NoError(t, err)
 	values := []string{state, nonce, verifier}
 	for i, value := range values {
@@ -23,17 +26,14 @@ func TestGenerateTransactionValues_EntropyAndShape(t *testing.T) {
 	assert.NotEqual(t, state, nonce)
 	assert.NotEqual(t, state, verifier)
 	assert.NotEqual(t, nonce, verifier)
-}
-
-type failingReader struct{}
-
-func (failingReader) Read([]byte) (int, error) {
-	return 0, errors.New("entropy unavailable")
+	assert.NotEqual(t, state, state2)
+	assert.NotEqual(t, nonce, nonce2)
+	assert.NotEqual(t, verifier, verifier2)
 }
 
 func TestGenerateTransactionValues_EntropyFailure(t *testing.T) {
 	original := rand.Reader
-	rand.Reader = failingReader{}
+	rand.Reader = iotest.ErrReader(io.ErrUnexpectedEOF)
 	t.Cleanup(func() { rand.Reader = original })
 
 	_, _, _, err := GenerateTransactionValues()
