@@ -11,8 +11,12 @@ export function readSession(storage: Storage = localStorage): Session | null {
 	if (!raw) return null;
 	try {
 		const value = JSON.parse(raw) as Partial<Session>;
-		if (!value.accessToken || !value.refreshToken || typeof value.expiresAt !== 'number') return null;
-		return value as Session;
+		if (
+			typeof value.accessToken !== 'string' || !value.accessToken.trim() ||
+			typeof value.refreshToken !== 'string' || !value.refreshToken.trim() ||
+			typeof value.expiresAt !== 'number' || !Number.isFinite(value.expiresAt)
+		) return null;
+		return { accessToken: value.accessToken, refreshToken: value.refreshToken, expiresAt: value.expiresAt };
 	} catch {
 		return null;
 	}
@@ -24,9 +28,4 @@ export function writeSession(session: Session, storage: Storage = localStorage):
 
 export function clearSession(storage: Storage = localStorage): void {
 	storage.removeItem(key);
-}
-
-export function safeRedirect(value: string | null): string {
-	if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) return '/';
-	return value;
 }
