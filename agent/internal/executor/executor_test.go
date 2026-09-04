@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/sdk/pkg"
@@ -13,9 +14,10 @@ import (
 )
 
 type fakeRunner struct {
-	commands []sysexec.Command
-	results  []sysexec.Result
-	errors   []error
+	commands  []sysexec.Command
+	results   []sysexec.Result
+	errors    []error
+	deadlines []time.Time
 }
 
 func mustExecutor(t *testing.T, runner sysexec.Runner) *Executor {
@@ -52,8 +54,83 @@ func TestNewExecutorRejectsNilRunner(t *testing.T) {
 	}
 }
 
-func (f *fakeRunner) Run(_ context.Context, command sysexec.Command) (sysexec.Result, error) {
+func requireRunnerDeadline(t *testing.T, runner *fakeRunner, started time.Time, want time.Duration) {
+	t.Helper()
+	if len(runner.deadlines) == 0 || runner.deadlines[0].IsZero() {
+		t.Fatal("runner context has no deadline")
+	}
+	got := runner.deadlines[0].Sub(started)
+	if got < want-time.Second || got > want+time.Second {
+		t.Fatalf("runner deadline = %s after start, want %s", got, want)
+	}
+}
+
+func TestExecuteActionAppliesDeadline(t *testing.T) {
+	tests := []struct {
+		name    string
+		backend pkg.Backend
+		action  *pb.Action
+		results []sysexec.Result
+		want    time.Duration
+	}{
+		{
+			name: "shell default", want: time.Hour,
+			action: &pb.Action{Params: &pb.Action_Shell{Shell: &pb.ShellActionParams{Script: "true"}}},
+		},
+		{
+			name: "package default", backend: pkg.Pacman, want: 30 * time.Minute,
+			action:  &pb.Action{Params: &pb.Action_Package{Package: &pb.PackageActionParams{Name: "example"}}},
+			results: []sysexec.Result{{ExitCode: 1}, {}},
+		},
+		{
+			name: "update default", backend: pkg.Pacman, want: 30 * time.Minute,
+			action: &pb.Action{Params: &pb.Action_Update{Update: &pb.UpdateActionParams{}}},
+		},
+		{
+			name: "explicit override", want: 47 * time.Second,
+			action: &pb.Action{TimeoutSeconds: 47, Params: &pb.Action_Shell{Shell: &pb.ShellActionParams{Script: "true"}}},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			runner := &fakeRunner{results: test.results}
+			var executor *Executor
+			if test.backend == 0 {
+				executor = mustExecutor(t, runner)
+			} else {
+				executor = executorWithBackend(t, test.backend, runner)
+			}
+			test.action.Id = &pb.ActionId{Value: "01J0000000000000000000000A"}
+			test.action.DesiredState = pb.DesiredState_DESIRED_STATE_PRESENT
+			started := time.Now()
+			result := executor.ExecuteAction(context.Background(), test.action)
+			if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS {
+				t.Fatalf("status = %s, want success", result.GetStatus())
+			}
+			requireRunnerDeadline(t, runner, started, test.want)
+		})
+	}
+}
+
+func TestExecuteActionMapsDeadlineExceeded(t *testing.T) {
+	runner := &fakeRunner{errors: []error{context.DeadlineExceeded}}
+	result := mustExecutor(t, runner).ExecuteAction(context.Background(), &pb.Action{
+		Id:           &pb.ActionId{Value: "01J0000000000000000000000A"},
+		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
+		Params:       &pb.Action_Shell{Shell: &pb.ShellActionParams{Script: "true"}},
+	})
+	if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_TIMEOUT {
+		t.Fatalf("status = %s, want timeout", result.GetStatus())
+	}
+}
+
+func (f *fakeRunner) Run(ctx context.Context, command sysexec.Command) (sysexec.Result, error) {
 	f.commands = append(f.commands, command)
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		deadline = time.Time{}
+	}
+	f.deadlines = append(f.deadlines, deadline)
 	index := len(f.commands) - 1
 	var result sysexec.Result
 	if index < len(f.results) {

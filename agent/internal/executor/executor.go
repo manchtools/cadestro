@@ -20,6 +20,23 @@ type Executor struct {
 	now        func() time.Time
 }
 
+const defaultShellTimeout = time.Hour
+const defaultPackageTimeout = 30 * time.Minute
+
+func actionTimeout(action *pb.Action) time.Duration {
+	if requested := action.GetTimeoutSeconds(); requested > 0 {
+		return time.Duration(requested) * time.Second
+	}
+	switch action.GetParams().(type) {
+	case *pb.Action_Shell:
+		return defaultShellTimeout
+	case *pb.Action_Package, *pb.Action_Update:
+		return defaultPackageTimeout
+	default:
+		return 0
+	}
+}
+
 func NewExecutor(runner sysexec.Runner) (*Executor, error) {
 	if runner == nil {
 		return nil, errors.New("executor: runner is required")
@@ -43,9 +60,9 @@ func (e *Executor) ExecuteAction(ctx context.Context, action *pb.Action) *pb.Act
 		return e.finish(result)
 	}
 	result.ActionId = action.GetId()
-	if timeout := action.GetTimeoutSeconds(); timeout > 0 {
+	if timeout := actionTimeout(action); timeout > 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+		ctx, cancel = context.WithTimeout(ctx, timeout)
 		defer cancel()
 	}
 
