@@ -575,6 +575,8 @@ message ManagedAction {
   google.protobuf.Timestamp updated_at = 8;
 
   oneof params {
+    option (buf.validate.oneof).required = true;
+
     PackageActionParams package = 9;
     UpdateActionParams update = 10;
     ShellActionParams shell = 11;
@@ -600,6 +602,8 @@ message CreateActionRequest {
   ActionSchedule schedule = 5;
 
   oneof params {
+    option (buf.validate.oneof).required = true;
+
     PackageActionParams package = 6;
     UpdateActionParams update = 7;
     ShellActionParams shell = 8;
@@ -661,6 +665,8 @@ message ConfigureActionRequest {
   ActionSchedule schedule = 4;
 
   oneof params {
+    option (buf.validate.oneof).required = true;
+
     PackageActionParams package = 5;
     UpdateActionParams update = 6;
     ShellActionParams shell = 7;
@@ -852,7 +858,7 @@ message GetDeviceAssignmentsResponse {
 message ComplianceCheckResult {
   ActionId action_id = 1 [(buf.validate.field).required = true];
   string action_name = 2;
-  bool compliant = 3;
+  ComplianceStatus status = 3;
   CommandOutput detection_output = 4;
   google.protobuf.Timestamp checked_at = 5;
 }
@@ -873,7 +879,7 @@ message ExecutionResult {
   ExecutionStatus status = 4;
   CommandOutput output = 5;
   google.protobuf.Timestamp completed_at = 6;
-  bool compliant = 7;
+  ComplianceStatus compliance_status = 7;
   CommandOutput detection_output = 8;
 }
 

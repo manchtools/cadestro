@@ -181,6 +181,7 @@ const (
 	ComplianceStatus_COMPLIANCE_STATUS_UNSPECIFIED   ComplianceStatus = 0
 	ComplianceStatus_COMPLIANCE_STATUS_COMPLIANT     ComplianceStatus = 1
 	ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT ComplianceStatus = 2
+	ComplianceStatus_COMPLIANCE_STATUS_PENDING       ComplianceStatus = 3
 )
 
 // Enum value maps for ComplianceStatus.
@@ -189,11 +190,13 @@ var (
 		0: "COMPLIANCE_STATUS_UNSPECIFIED",
 		1: "COMPLIANCE_STATUS_COMPLIANT",
 		2: "COMPLIANCE_STATUS_NON_COMPLIANT",
+		3: "COMPLIANCE_STATUS_PENDING",
 	}
 	ComplianceStatus_value = map[string]int32{
 		"COMPLIANCE_STATUS_UNSPECIFIED":   0,
 		"COMPLIANCE_STATUS_COMPLIANT":     1,
 		"COMPLIANCE_STATUS_NON_COMPLIANT": 2,
+		"COMPLIANCE_STATUS_PENDING":       3,
 	}
 )
 
@@ -449,50 +452,6 @@ func (x *MessageId) GetValue() string {
 	return ""
 }
 
-type PolicyRevisionId struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PolicyRevisionId) Reset() {
-	*x = PolicyRevisionId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PolicyRevisionId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PolicyRevisionId) ProtoMessage() {}
-
-func (x *PolicyRevisionId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PolicyRevisionId.ProtoReflect.Descriptor instead.
-func (*PolicyRevisionId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *PolicyRevisionId) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
 type UserId struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Value         string                 `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
@@ -502,7 +461,7 @@ type UserId struct {
 
 func (x *UserId) Reset() {
 	*x = UserId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[5]
+	mi := &file_cadestro_v1_common_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -514,7 +473,7 @@ func (x *UserId) String() string {
 func (*UserId) ProtoMessage() {}
 
 func (x *UserId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[5]
+	mi := &file_cadestro_v1_common_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -527,7 +486,7 @@ func (x *UserId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserId.ProtoReflect.Descriptor instead.
 func (*UserId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{5}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *UserId) GetValue() string {
@@ -546,7 +505,7 @@ type RoleId struct {
 
 func (x *RoleId) Reset() {
 	*x = RoleId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[6]
+	mi := &file_cadestro_v1_common_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -558,7 +517,7 @@ func (x *RoleId) String() string {
 func (*RoleId) ProtoMessage() {}
 
 func (x *RoleId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[6]
+	mi := &file_cadestro_v1_common_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -571,7 +530,7 @@ func (x *RoleId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoleId.ProtoReflect.Descriptor instead.
 func (*RoleId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{6}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *RoleId) GetValue() string {
@@ -590,7 +549,7 @@ type RegistrationTokenId struct {
 
 func (x *RegistrationTokenId) Reset() {
 	*x = RegistrationTokenId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[7]
+	mi := &file_cadestro_v1_common_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -602,7 +561,7 @@ func (x *RegistrationTokenId) String() string {
 func (*RegistrationTokenId) ProtoMessage() {}
 
 func (x *RegistrationTokenId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[7]
+	mi := &file_cadestro_v1_common_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -615,7 +574,7 @@ func (x *RegistrationTokenId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegistrationTokenId.ProtoReflect.Descriptor instead.
 func (*RegistrationTokenId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{7}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *RegistrationTokenId) GetValue() string {
@@ -634,7 +593,7 @@ type DeviceGroupId struct {
 
 func (x *DeviceGroupId) Reset() {
 	*x = DeviceGroupId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[8]
+	mi := &file_cadestro_v1_common_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -646,7 +605,7 @@ func (x *DeviceGroupId) String() string {
 func (*DeviceGroupId) ProtoMessage() {}
 
 func (x *DeviceGroupId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[8]
+	mi := &file_cadestro_v1_common_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -659,7 +618,7 @@ func (x *DeviceGroupId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceGroupId.ProtoReflect.Descriptor instead.
 func (*DeviceGroupId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{8}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DeviceGroupId) GetValue() string {
@@ -678,7 +637,7 @@ type AssignmentId struct {
 
 func (x *AssignmentId) Reset() {
 	*x = AssignmentId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[9]
+	mi := &file_cadestro_v1_common_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -690,7 +649,7 @@ func (x *AssignmentId) String() string {
 func (*AssignmentId) ProtoMessage() {}
 
 func (x *AssignmentId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[9]
+	mi := &file_cadestro_v1_common_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -703,7 +662,7 @@ func (x *AssignmentId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssignmentId.ProtoReflect.Descriptor instead.
 func (*AssignmentId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{9}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *AssignmentId) GetValue() string {
@@ -722,7 +681,7 @@ type IdentityProviderId struct {
 
 func (x *IdentityProviderId) Reset() {
 	*x = IdentityProviderId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[10]
+	mi := &file_cadestro_v1_common_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -734,7 +693,7 @@ func (x *IdentityProviderId) String() string {
 func (*IdentityProviderId) ProtoMessage() {}
 
 func (x *IdentityProviderId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[10]
+	mi := &file_cadestro_v1_common_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -747,7 +706,7 @@ func (x *IdentityProviderId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IdentityProviderId.ProtoReflect.Descriptor instead.
 func (*IdentityProviderId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{10}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *IdentityProviderId) GetValue() string {
@@ -766,7 +725,7 @@ type OidcClientId struct {
 
 func (x *OidcClientId) Reset() {
 	*x = OidcClientId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[11]
+	mi := &file_cadestro_v1_common_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -778,7 +737,7 @@ func (x *OidcClientId) String() string {
 func (*OidcClientId) ProtoMessage() {}
 
 func (x *OidcClientId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[11]
+	mi := &file_cadestro_v1_common_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -791,7 +750,7 @@ func (x *OidcClientId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OidcClientId.ProtoReflect.Descriptor instead.
 func (*OidcClientId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{11}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *OidcClientId) GetValue() string {
@@ -810,7 +769,7 @@ type AssignmentTargetId struct {
 
 func (x *AssignmentTargetId) Reset() {
 	*x = AssignmentTargetId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[12]
+	mi := &file_cadestro_v1_common_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -822,7 +781,7 @@ func (x *AssignmentTargetId) String() string {
 func (*AssignmentTargetId) ProtoMessage() {}
 
 func (x *AssignmentTargetId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[12]
+	mi := &file_cadestro_v1_common_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -835,7 +794,7 @@ func (x *AssignmentTargetId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssignmentTargetId.ProtoReflect.Descriptor instead.
 func (*AssignmentTargetId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{12}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *AssignmentTargetId) GetValue() string {
@@ -854,7 +813,7 @@ type AuditEventId struct {
 
 func (x *AuditEventId) Reset() {
 	*x = AuditEventId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[13]
+	mi := &file_cadestro_v1_common_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -866,7 +825,7 @@ func (x *AuditEventId) String() string {
 func (*AuditEventId) ProtoMessage() {}
 
 func (x *AuditEventId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[13]
+	mi := &file_cadestro_v1_common_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -879,7 +838,7 @@ func (x *AuditEventId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuditEventId.ProtoReflect.Descriptor instead.
 func (*AuditEventId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{13}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *AuditEventId) GetValue() string {
@@ -898,7 +857,7 @@ type AuditStreamId struct {
 
 func (x *AuditStreamId) Reset() {
 	*x = AuditStreamId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[14]
+	mi := &file_cadestro_v1_common_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -910,7 +869,7 @@ func (x *AuditStreamId) String() string {
 func (*AuditStreamId) ProtoMessage() {}
 
 func (x *AuditStreamId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[14]
+	mi := &file_cadestro_v1_common_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -923,7 +882,7 @@ func (x *AuditStreamId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuditStreamId.ProtoReflect.Descriptor instead.
 func (*AuditStreamId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{14}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *AuditStreamId) GetValue() string {
@@ -942,7 +901,7 @@ type AuditActorId struct {
 
 func (x *AuditActorId) Reset() {
 	*x = AuditActorId{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[15]
+	mi := &file_cadestro_v1_common_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -954,7 +913,7 @@ func (x *AuditActorId) String() string {
 func (*AuditActorId) ProtoMessage() {}
 
 func (x *AuditActorId) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[15]
+	mi := &file_cadestro_v1_common_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -967,7 +926,7 @@ func (x *AuditActorId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuditActorId.ProtoReflect.Descriptor instead.
 func (*AuditActorId) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{15}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *AuditActorId) GetValue() string {
@@ -988,7 +947,7 @@ type CommandOutput struct {
 
 func (x *CommandOutput) Reset() {
 	*x = CommandOutput{}
-	mi := &file_cadestro_v1_common_proto_msgTypes[16]
+	mi := &file_cadestro_v1_common_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1000,7 +959,7 @@ func (x *CommandOutput) String() string {
 func (*CommandOutput) ProtoMessage() {}
 
 func (x *CommandOutput) ProtoReflect() protoreflect.Message {
-	mi := &file_cadestro_v1_common_proto_msgTypes[16]
+	mi := &file_cadestro_v1_common_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1013,7 +972,7 @@ func (x *CommandOutput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommandOutput.ProtoReflect.Descriptor instead.
 func (*CommandOutput) Descriptor() ([]byte, []int) {
-	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{16}
+	return file_cadestro_v1_common_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *CommandOutput) GetExitCode() int32 {
@@ -1049,8 +1008,6 @@ const file_cadestro_v1_common_proto_rawDesc = "" +
 	"\x05RunId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"+\n" +
 	"\tMessageId\x12\x1e\n" +
-	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"2\n" +
-	"\x10PolicyRevisionId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"(\n" +
 	"\x06UserId\x12\x1e\n" +
 	"\x05value\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x98\x02\x01R\x05value\"(\n" +
@@ -1091,11 +1048,12 @@ const file_cadestro_v1_common_proto_rawDesc = "" +
 	"\fDeviceStatus\x12\x1d\n" +
 	"\x19DEVICE_STATUS_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14DEVICE_STATUS_ONLINE\x10\x01\x12\x19\n" +
-	"\x15DEVICE_STATUS_OFFLINE\x10\x02*{\n" +
+	"\x15DEVICE_STATUS_OFFLINE\x10\x02*\x9a\x01\n" +
 	"\x10ComplianceStatus\x12!\n" +
 	"\x1dCOMPLIANCE_STATUS_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bCOMPLIANCE_STATUS_COMPLIANT\x10\x01\x12#\n" +
-	"\x1fCOMPLIANCE_STATUS_NON_COMPLIANT\x10\x02*\x8a\x01\n" +
+	"\x1fCOMPLIANCE_STATUS_NON_COMPLIANT\x10\x02\x12\x1d\n" +
+	"\x19COMPLIANCE_STATUS_PENDING\x10\x03*\x8a\x01\n" +
 	"\x14AssignmentTargetType\x12&\n" +
 	"\"ASSIGNMENT_TARGET_TYPE_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dASSIGNMENT_TARGET_TYPE_DEVICE\x10\x01\x12'\n" +
@@ -1114,7 +1072,7 @@ func file_cadestro_v1_common_proto_rawDescGZIP() []byte {
 }
 
 var file_cadestro_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
-var file_cadestro_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_cadestro_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_cadestro_v1_common_proto_goTypes = []any{
 	(ExecutionStatus)(0),        // 0: cadestro.v1.ExecutionStatus
 	(DesiredState)(0),           // 1: cadestro.v1.DesiredState
@@ -1125,19 +1083,18 @@ var file_cadestro_v1_common_proto_goTypes = []any{
 	(*DeviceId)(nil),            // 6: cadestro.v1.DeviceId
 	(*RunId)(nil),               // 7: cadestro.v1.RunId
 	(*MessageId)(nil),           // 8: cadestro.v1.MessageId
-	(*PolicyRevisionId)(nil),    // 9: cadestro.v1.PolicyRevisionId
-	(*UserId)(nil),              // 10: cadestro.v1.UserId
-	(*RoleId)(nil),              // 11: cadestro.v1.RoleId
-	(*RegistrationTokenId)(nil), // 12: cadestro.v1.RegistrationTokenId
-	(*DeviceGroupId)(nil),       // 13: cadestro.v1.DeviceGroupId
-	(*AssignmentId)(nil),        // 14: cadestro.v1.AssignmentId
-	(*IdentityProviderId)(nil),  // 15: cadestro.v1.IdentityProviderId
-	(*OidcClientId)(nil),        // 16: cadestro.v1.OidcClientId
-	(*AssignmentTargetId)(nil),  // 17: cadestro.v1.AssignmentTargetId
-	(*AuditEventId)(nil),        // 18: cadestro.v1.AuditEventId
-	(*AuditStreamId)(nil),       // 19: cadestro.v1.AuditStreamId
-	(*AuditActorId)(nil),        // 20: cadestro.v1.AuditActorId
-	(*CommandOutput)(nil),       // 21: cadestro.v1.CommandOutput
+	(*UserId)(nil),              // 9: cadestro.v1.UserId
+	(*RoleId)(nil),              // 10: cadestro.v1.RoleId
+	(*RegistrationTokenId)(nil), // 11: cadestro.v1.RegistrationTokenId
+	(*DeviceGroupId)(nil),       // 12: cadestro.v1.DeviceGroupId
+	(*AssignmentId)(nil),        // 13: cadestro.v1.AssignmentId
+	(*IdentityProviderId)(nil),  // 14: cadestro.v1.IdentityProviderId
+	(*OidcClientId)(nil),        // 15: cadestro.v1.OidcClientId
+	(*AssignmentTargetId)(nil),  // 16: cadestro.v1.AssignmentTargetId
+	(*AuditEventId)(nil),        // 17: cadestro.v1.AuditEventId
+	(*AuditStreamId)(nil),       // 18: cadestro.v1.AuditStreamId
+	(*AuditActorId)(nil),        // 19: cadestro.v1.AuditActorId
+	(*CommandOutput)(nil),       // 20: cadestro.v1.CommandOutput
 }
 var file_cadestro_v1_common_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -1158,7 +1115,7 @@ func file_cadestro_v1_common_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cadestro_v1_common_proto_rawDesc), len(file_cadestro_v1_common_proto_rawDesc)),
 			NumEnums:      5,
-			NumMessages:   17,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

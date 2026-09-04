@@ -22,10 +22,6 @@ message MessageId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }
 
-message PolicyRevisionId {
-  string value = 1 [(buf.validate.field).string.ulid = true];
-}
-
 message UserId {
   string value = 1 [(buf.validate.field).string.ulid = true];
 }
@@ -94,6 +90,7 @@ enum ComplianceStatus {
   COMPLIANCE_STATUS_UNSPECIFIED = 0;
   COMPLIANCE_STATUS_COMPLIANT = 1;
   COMPLIANCE_STATUS_NON_COMPLIANT = 2;
+  COMPLIANCE_STATUS_PENDING = 3;
 }
 
 enum AssignmentTargetType {

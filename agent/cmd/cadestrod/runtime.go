@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"strings"
 	"sync"
@@ -167,6 +168,14 @@ func syncPendingResults(ctx context.Context, scheduler *scheduler.Scheduler, cli
 	}
 	for _, result := range results {
 		if err := client.SendActionResult(ctx, result.ActionResult); err != nil {
+			if errors.Is(err, sdk.ErrResultRejected) {
+				logger.Warn("drop rejected result", "sequence", result.Sequence, "error", err)
+				if err := scheduler.DeletePendingResult(ctx, result.Sequence); err != nil {
+					logger.Warn("delete rejected result", "sequence", result.Sequence, "error", err)
+					return
+				}
+				continue
+			}
 			logger.Warn("send pending result", "sequence", result.Sequence, "error", err)
 			return
 		}

@@ -25,6 +25,9 @@ import (
 
 const maxInboundMessageBytes = 16 << 20
 
+// ErrResultRejected reports a permanent server rejection of an action result.
+var ErrResultRejected = errors.New("server rejected action result")
+
 // Client maintains one authenticated bidirectional agent stream.
 type Client struct {
 	client     cadestrov1connect.AgentServiceClient
@@ -147,28 +150,43 @@ func RenewCertificate(ctx context.Context, controlURL string, csr []byte, option
 
 // Run connects and owns the stream until it closes or ctx is cancelled.
 func (client *Client) Run(ctx context.Context, hostname, agentVersion string, readiness chan<- struct{}) error {
+	sessionCtx, cancelSession := context.WithCancel(ctx)
 	client.mu.Lock()
 	if client.stream != nil {
 		client.mu.Unlock()
+		cancelSession()
 		return errors.New("agent stream is already connected")
 	}
-	stream := client.client.Stream(ctx)
+	stream := client.client.Stream(sessionCtx)
 	client.stream = stream
 	client.mu.Unlock()
-	defer client.closeStream(stream)
+	var heartbeatDone <-chan struct{}
+	transportClosed := make(chan struct{})
+	context.AfterFunc(sessionCtx, func() {
+		_ = stream.CloseRequest()
+		_ = stream.CloseResponse()
+		close(transportClosed)
+	})
+	defer func() {
+		cancelSession()
+		<-transportClosed
+		if heartbeatDone != nil {
+			<-heartbeatDone
+		}
+		client.closeStream(stream)
+	}()
 
 	id, err := newULID(rand.Reader)
 	if err != nil {
 		return fmt.Errorf("generate hello id: %w", err)
 	}
-	if err := client.send(ctx, &cadestrov1.AgentMessage{
+	if err := client.send(sessionCtx, &cadestrov1.AgentMessage{
 		Id: &cadestrov1.MessageId{Value: id}, Payload: &cadestrov1.AgentMessage_Hello{Hello: &cadestrov1.Hello{
 			DeviceId: &cadestrov1.DeviceId{Value: client.deviceID}, AgentVersion: agentVersion, Hostname: hostname,
 		}},
 	}); err != nil {
 		return fmt.Errorf("send hello: %w", err)
 	}
-	heartbeatStarted := false
 	for {
 		message, err := stream.Receive()
 		if err != nil {
@@ -189,13 +207,17 @@ func (client *Client) Run(ctx context.Context, hostname, agentVersion string, re
 			case readiness <- struct{}{}:
 			default:
 			}
-			if !heartbeatStarted {
+			if heartbeatDone == nil {
 				interval := payload.Welcome.GetHeartbeatInterval().AsDuration()
 				if interval <= 0 {
 					return errors.New("welcome heartbeat interval must be positive")
 				}
-				go client.sendHeartbeats(ctx, interval)
-				heartbeatStarted = true
+				done := make(chan struct{})
+				heartbeatDone = done
+				go func() {
+					defer close(done)
+					client.sendHeartbeats(sessionCtx, interval)
+				}()
 			}
 		default:
 			return fmt.Errorf("unexpected uncorrelated server message %T", payload)
@@ -228,16 +250,17 @@ func (client *Client) sendHeartbeats(ctx context.Context, interval time.Duration
 
 func (client *Client) closeStream(stream *connect.BidiStreamForClient[cadestrov1.AgentMessage, cadestrov1.ServerMessage]) {
 	client.mu.Lock()
-	if client.stream == stream {
-		client.stream = nil
+	defer client.mu.Unlock()
+	if client.stream != stream {
+		return
 	}
-	client.mu.Unlock()
 	client.pendingMu.Lock()
 	for id, pending := range client.pending {
 		close(pending)
 		delete(client.pending, id)
 	}
 	client.pendingMu.Unlock()
+	client.stream = nil
 }
 
 func (client *Client) send(ctx context.Context, message *cadestrov1.AgentMessage) error {
@@ -277,8 +300,10 @@ func (client *Client) unregisterPending(id string) {
 
 func (client *Client) deliverPending(message *cadestrov1.ServerMessage) bool {
 	client.pendingMu.Lock()
-	defer client.pendingMu.Unlock()
-	pending := client.pending[message.GetId().GetValue()]
+	id := message.GetId().GetValue()
+	pending := client.pending[id]
+	delete(client.pending, id)
+	client.pendingMu.Unlock()
 	if pending == nil {
 		return false
 	}
@@ -309,10 +334,18 @@ func (client *Client) sendResult(ctx context.Context, message *cadestrov1.AgentM
 		if !ok {
 			return errors.New("agent stream closed before result acknowledgement")
 		}
-		if response.GetResultAck().GetCode() != cadestrov1.ResultAckCode_RESULT_ACK_CODE_ACCEPTED {
-			return errors.New("server rejected result")
+		ack := response.GetResultAck()
+		if ack == nil {
+			return errors.New("unexpected action result response")
 		}
-		return nil
+		switch ack.GetCode() {
+		case cadestrov1.ResultAckCode_RESULT_ACK_CODE_ACCEPTED:
+			return nil
+		case cadestrov1.ResultAckCode_RESULT_ACK_CODE_REJECTED:
+			return ErrResultRejected
+		default:
+			return fmt.Errorf("unknown action result acknowledgement code %d", ack.GetCode())
+		}
 	}
 }
 

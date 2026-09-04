@@ -308,7 +308,7 @@
 		</div>
 		{#if selectedDevice}
 			<div class="detail-grid">
-				{#if can(Permission.GET_DEVICE_COMPLIANCE)}<div><h3>Compliance</h3>{#if compliance.length === 0}<p>No compliance results.</p>{:else}<ul>{#each compliance as check}<li><strong>{check.actionName}</strong> — {check.compliant ? 'passing' : 'failing'} at {formatDate(check.checkedAt)}</li>{/each}</ul>{/if}</div>{/if}
+				{#if can(Permission.GET_DEVICE_COMPLIANCE)}<div><h3>Compliance</h3>{#if compliance.length === 0}<p>No compliance checks.</p>{:else}<ul>{#each compliance as check}<li><strong>{check.actionName}</strong> — {ComplianceStatus[check.status]}{#if check.checkedAt} at {formatDate(check.checkedAt)}{/if}</li>{/each}</ul>{/if}</div>{/if}
 				{#if can(Permission.LIST_EXECUTION_RESULTS)}<div><h3>Execution history</h3>{#if results.length === 0}<p>No execution results.</p>{:else}<ul>{#each results as result}<li><strong>{result.actionName}</strong> — {result.status} at {formatDate(result.completedAt)}{#if result.output?.stderr}: {result.output.stderr}{/if}</li>{/each}</ul>{/if}</div>{/if}
 			</div>
 		{/if}

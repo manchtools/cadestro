@@ -479,8 +479,7 @@ func (*DesiredPolicyRequest) Descriptor() ([]byte, []int) {
 type DesiredPolicy struct {
 	state                  protoimpl.MessageState `protogen:"open.v1"`
 	RefreshIntervalMinutes int32                  `protobuf:"varint,1,opt,name=refresh_interval_minutes,json=refreshIntervalMinutes,proto3" json:"refresh_interval_minutes,omitempty"`
-	Revision               *PolicyRevisionId      `protobuf:"bytes,2,opt,name=revision,proto3" json:"revision,omitempty"`
-	Actions                []*Action              `protobuf:"bytes,3,rep,name=actions,proto3" json:"actions,omitempty"`
+	Actions                []*Action              `protobuf:"bytes,2,rep,name=actions,proto3" json:"actions,omitempty"`
 	unknownFields          protoimpl.UnknownFields
 	sizeCache              protoimpl.SizeCache
 }
@@ -520,13 +519,6 @@ func (x *DesiredPolicy) GetRefreshIntervalMinutes() int32 {
 		return x.RefreshIntervalMinutes
 	}
 	return 0
-}
-
-func (x *DesiredPolicy) GetRevision() *PolicyRevisionId {
-	if x != nil {
-		return x.Revision
-	}
-	return nil
 }
 
 func (x *DesiredPolicy) GetActions() []*Action {
@@ -584,23 +576,23 @@ var File_cadestro_v1_agent_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x17cadestro/v1/agent.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x19cadestro/v1/actions.proto\x1a\x18cadestro/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\"\xca\x02\n" +
+	"\x17cadestro/v1/agent.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x19cadestro/v1/actions.proto\x1a\x18cadestro/v1/common.proto\x1a\x1egoogle/protobuf/duration.proto\"\xd1\x02\n" +
 	"\fAgentMessage\x12.\n" +
 	"\x02id\x18\x01 \x01(\v2\x16.cadestro.v1.MessageIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x12*\n" +
 	"\x05hello\x18\n" +
 	" \x01(\v2\x12.cadestro.v1.HelloH\x00R\x05hello\x126\n" +
 	"\theartbeat\x18\v \x01(\v2\x16.cadestro.v1.HeartbeatH\x00R\theartbeat\x12Y\n" +
 	"\x16desired_policy_request\x18\f \x01(\v2!.cadestro.v1.DesiredPolicyRequestH\x00R\x14desiredPolicyRequest\x12@\n" +
-	"\raction_result\x18\x14 \x01(\v2\x19.cadestro.v1.ActionResultH\x00R\factionResultB\t\n" +
-	"\apayload\"\xfa\x01\n" +
+	"\raction_result\x18\x14 \x01(\v2\x19.cadestro.v1.ActionResultH\x00R\factionResultB\x10\n" +
+	"\apayload\x12\x05\xbaH\x02\b\x01\"\x81\x02\n" +
 	"\rServerMessage\x12.\n" +
 	"\x02id\x18\x01 \x01(\v2\x16.cadestro.v1.MessageIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x120\n" +
 	"\awelcome\x18\n" +
 	" \x01(\v2\x14.cadestro.v1.WelcomeH\x00R\awelcome\x12C\n" +
 	"\x0edesired_policy\x18\v \x01(\v2\x1a.cadestro.v1.DesiredPolicyH\x00R\rdesiredPolicy\x127\n" +
 	"\n" +
-	"result_ack\x18\f \x01(\v2\x16.cadestro.v1.ResultAckH\x00R\tresultAckB\t\n" +
-	"\apayload\"\xa1\x01\n" +
+	"result_ack\x18\f \x01(\v2\x16.cadestro.v1.ResultAckH\x00R\tresultAckB\x10\n" +
+	"\apayload\x12\x05\xbaH\x02\b\x01\"\xa1\x01\n" +
 	"\x05Hello\x12:\n" +
 	"\tdevice_id\x18\x01 \x01(\v2\x15.cadestro.v1.DeviceIdB\x06\xbaH\x03\xc8\x01\x01R\bdeviceId\x121\n" +
 	"\ragent_version\x18\x02 \x01(\tB\f\xbaH\t\xc8\x01\x01r\x04\x10\x01\x18 R\fagentVersion\x12)\n" +
@@ -609,12 +601,11 @@ const file_cadestro_v1_agent_proto_rawDesc = "" +
 	"\tHeartbeat\"[\n" +
 	"\aWelcome\x12P\n" +
 	"\x12heartbeat_interval\x18\x01 \x01(\v2\x19.google.protobuf.DurationB\x06\xbaH\x03\xc8\x01\x01R\x11heartbeatInterval\"\x16\n" +
-	"\x14DesiredPolicyRequest\"\xc7\x01\n" +
+	"\x14DesiredPolicyRequest\"\x84\x01\n" +
 	"\rDesiredPolicy\x12D\n" +
 	"\x18refresh_interval_minutes\x18\x01 \x01(\x05B\n" +
-	"\xbaH\a\x1a\x05\x18\xa0\v(\x01R\x16refreshIntervalMinutes\x12A\n" +
-	"\brevision\x18\x02 \x01(\v2\x1d.cadestro.v1.PolicyRevisionIdB\x06\xbaH\x03\xc8\x01\x01R\brevision\x12-\n" +
-	"\aactions\x18\x03 \x03(\v2\x13.cadestro.v1.ActionR\aactions\"C\n" +
+	"\xbaH\a\x1a\x05\x18\xa0\v(\x01R\x16refreshIntervalMinutes\x12-\n" +
+	"\aactions\x18\x02 \x03(\v2\x13.cadestro.v1.ActionR\aactions\"C\n" +
 	"\tResultAck\x126\n" +
 	"\x04code\x18\x01 \x01(\x0e2\x1a.cadestro.v1.ResultAckCodeB\x06\xbaH\x03\xc8\x01\x01R\x04code*l\n" +
 	"\rResultAckCode\x12\x1f\n" +
@@ -652,8 +643,7 @@ var file_cadestro_v1_agent_proto_goTypes = []any{
 	(*ActionResult)(nil),         // 10: cadestro.v1.ActionResult
 	(*DeviceId)(nil),             // 11: cadestro.v1.DeviceId
 	(*durationpb.Duration)(nil),  // 12: google.protobuf.Duration
-	(*PolicyRevisionId)(nil),     // 13: cadestro.v1.PolicyRevisionId
-	(*Action)(nil),               // 14: cadestro.v1.Action
+	(*Action)(nil),               // 13: cadestro.v1.Action
 }
 var file_cadestro_v1_agent_proto_depIdxs = []int32{
 	9,  // 0: cadestro.v1.AgentMessage.id:type_name -> cadestro.v1.MessageId
@@ -667,16 +657,15 @@ var file_cadestro_v1_agent_proto_depIdxs = []int32{
 	8,  // 8: cadestro.v1.ServerMessage.result_ack:type_name -> cadestro.v1.ResultAck
 	11, // 9: cadestro.v1.Hello.device_id:type_name -> cadestro.v1.DeviceId
 	12, // 10: cadestro.v1.Welcome.heartbeat_interval:type_name -> google.protobuf.Duration
-	13, // 11: cadestro.v1.DesiredPolicy.revision:type_name -> cadestro.v1.PolicyRevisionId
-	14, // 12: cadestro.v1.DesiredPolicy.actions:type_name -> cadestro.v1.Action
-	0,  // 13: cadestro.v1.ResultAck.code:type_name -> cadestro.v1.ResultAckCode
-	1,  // 14: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
-	2,  // 15: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
-	15, // [15:16] is the sub-list for method output_type
-	14, // [14:15] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	13, // 11: cadestro.v1.DesiredPolicy.actions:type_name -> cadestro.v1.Action
+	0,  // 12: cadestro.v1.ResultAck.code:type_name -> cadestro.v1.ResultAckCode
+	1,  // 13: cadestro.v1.AgentService.Stream:input_type -> cadestro.v1.AgentMessage
+	2,  // 14: cadestro.v1.AgentService.Stream:output_type -> cadestro.v1.ServerMessage
+	14, // [14:15] is the sub-list for method output_type
+	13, // [13:14] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_cadestro_v1_agent_proto_init() }

@@ -1,22 +1,16 @@
 package core
 
 import (
-	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
-	"buf.build/go/protovalidate"
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/mtls"
@@ -24,24 +18,7 @@ import (
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
 )
 
-func deterministicULID(at time.Time, values ...string) (string, error) {
-	hash := sha256.New()
-	for _, value := range values {
-		var length [8]byte
-		binary.BigEndian.PutUint64(length[:], uint64(len(value)))
-		if _, err := hash.Write(length[:]); err != nil {
-			return "", err
-		}
-		if _, err := hash.Write([]byte(value)); err != nil {
-			return "", err
-		}
-	}
-	id, err := ulid.New(ulid.Timestamp(at), bytes.NewReader(hash.Sum(nil)))
-	if err != nil {
-		return "", fmt.Errorf("create deterministic ULID: %w", err)
-	}
-	return id.String(), nil
-}
+var errResultRejected = errors.New("action result rejected")
 
 func AgentMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
@@ -100,10 +77,10 @@ func (service *Service) Stream(ctx context.Context, stream *connect.BidiStream[c
 		if errors.Is(err, io.EOF) {
 			return nil
 		}
-		return connect.NewError(connect.CodeUnavailable, errors.New("agent stream closed"))
+		return err
 	}
-	if err := protovalidate.GlobalValidator.Validate(first); err != nil || first.GetHello() == nil {
-		return connect.NewError(connect.CodeInvalidArgument, errors.New("first frame must be a valid hello"))
+	if first.GetHello() == nil {
+		return connect.NewError(connect.CodeInvalidArgument, errors.New("first frame must be hello"))
 	}
 	hello := first.GetHello()
 	deviceID, err := service.authenticateAgent(ctx, hello)
@@ -125,10 +102,7 @@ func (service *Service) Stream(ctx context.Context, stream *connect.BidiStream[c
 			return nil
 		}
 		if err != nil {
-			return connect.NewError(connect.CodeUnavailable, errors.New("agent stream closed"))
-		}
-		if err := protovalidate.GlobalValidator.Validate(message); err != nil {
-			return connect.NewError(connect.CodeInvalidArgument, errors.New("invalid agent frame"))
+			return err
 		}
 		if err := service.handleAgentMessage(ctx, stream, deviceID, hello, message); err != nil {
 			return err
@@ -156,12 +130,14 @@ func (service *Service) handleAgentMessage(ctx context.Context, stream *connect.
 		return stream.Send(&cadestrov1.ServerMessage{Id: message.Id, Payload: &cadestrov1.ServerMessage_DesiredPolicy{DesiredPolicy: policy}})
 	case *cadestrov1.AgentMessage_ActionResult:
 		err := service.storeActionResult(ctx, deviceID, payload.ActionResult)
-		code := cadestrov1.ResultAckCode_RESULT_ACK_CODE_ACCEPTED
 		if err != nil {
+			if !errors.Is(err, errResultRejected) {
+				return service.internal("store agent result", err)
+			}
 			service.logger.Warn("reject agent result", "device_id", deviceID, "error", err)
-			code = cadestrov1.ResultAckCode_RESULT_ACK_CODE_REJECTED
+			return stream.Send(&cadestrov1.ServerMessage{Id: message.Id, Payload: &cadestrov1.ServerMessage_ResultAck{ResultAck: &cadestrov1.ResultAck{Code: cadestrov1.ResultAckCode_RESULT_ACK_CODE_REJECTED}}})
 		}
-		return stream.Send(&cadestrov1.ServerMessage{Id: message.Id, Payload: &cadestrov1.ServerMessage_ResultAck{ResultAck: &cadestrov1.ResultAck{Code: code}}})
+		return stream.Send(&cadestrov1.ServerMessage{Id: message.Id, Payload: &cadestrov1.ServerMessage_ResultAck{ResultAck: &cadestrov1.ResultAck{Code: cadestrov1.ResultAckCode_RESULT_ACK_CODE_ACCEPTED}}})
 	case *cadestrov1.AgentMessage_Hello:
 		return connect.NewError(connect.CodeInvalidArgument, errors.New("hello is only valid as the first frame"))
 	default:
@@ -174,19 +150,7 @@ func (service *Service) desiredPolicy(ctx context.Context, deviceID string) (*ca
 	if err != nil {
 		return nil, service.internal("compile desired policy", err)
 	}
-	latest := time.UnixMilli(0).UTC()
-	parts := make([]string, 0, len(actions)*2)
-	for _, action := range actions {
-		parts = append(parts, action.ID, action.UpdatedAt.UTC().Format(time.RFC3339Nano))
-		if action.UpdatedAt.After(latest) {
-			latest = action.UpdatedAt
-		}
-	}
-	revision, err := deterministicULID(latest, parts...)
-	if err != nil {
-		return nil, service.internal("create policy revision", err)
-	}
-	policy := &cadestrov1.DesiredPolicy{Revision: &cadestrov1.PolicyRevisionId{Value: revision}}
+	policy := &cadestrov1.DesiredPolicy{}
 	for _, action := range actions {
 		executable, err := executableAction(action)
 		if err != nil {
@@ -199,40 +163,63 @@ func (service *Service) desiredPolicy(ctx context.Context, deviceID string) (*ca
 }
 
 func (service *Service) storeActionResult(ctx context.Context, deviceID string, result *cadestrov1.ActionResult) error {
-	if result == nil {
-		return errors.New("action result is required")
+	if result == nil || result.GetCompletedAt() == nil || len(result.GetActionDigest()) != 32 {
+		return fmt.Errorf("%w: malformed action result", errResultRejected)
 	}
 	actionID := result.GetActionId().GetValue()
-	actions, err := service.store.Queries().ListActionsForDevice(ctx, db.ListActionsForDeviceParams{DeviceID: deviceID, TargetID: deviceID})
-	if err != nil {
-		return fmt.Errorf("list assigned actions: %w", err)
+	completedAt := result.GetCompletedAt().AsTime()
+	if err := result.GetCompletedAt().CheckValid(); err != nil {
+		return fmt.Errorf("%w: invalid completion time", errResultRejected)
 	}
-	var assigned *db.Action
-	for _, action := range actions {
-		if action.ID == actionID {
-			assigned = action
-			break
-		}
-	}
-	if assigned == nil {
-		return errors.New("action is not assigned to device")
-	}
-	if _, err := executableAction(assigned); err != nil {
-		return fmt.Errorf("decode assigned action: %w", err)
-	}
-	stored := proto.CloneOf(result)
-	if stored.GetCompletedAt() == nil {
-		stored.CompletedAt = timestamppb.New(service.now().UTC())
-	}
-	completedAt := stored.GetCompletedAt().AsTime()
-	resultBlob, err := proto.Marshal(stored)
+	resultBlob, err := proto.Marshal(result)
 	if err != nil {
 		return fmt.Errorf("encode action result: %w", err)
 	}
-	if err := service.store.Queries().CreateExecutionResult(ctx, db.CreateExecutionResultParams{
-		RunID: stored.GetRunId().GetValue(), DeviceID: deviceID, ActionID: actionID, CompletedAt: completedAt, ResultBlob: resultBlob,
-	}); err != nil {
-		return fmt.Errorf("store action result: %w", err)
-	}
-	return service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_EXECUTION_RESULT_RECEIVED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ACTION, actionID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_DEVICE, deviceID)
+	return service.store.Transaction(ctx, func(queries *db.Queries) error {
+		existing, err := queries.GetExecutionResult(ctx, result.GetRunId().GetValue())
+		if err == nil {
+			payload, decodeErr := executionResultProto(existing.RunID, existing.ActionID, existing.CompletedAt, existing.ResultBlob)
+			if decodeErr != nil {
+				return fmt.Errorf("decode stored duplicate result: %w", decodeErr)
+			}
+			if existing.DeviceID == deviceID && proto.Equal(payload, result) {
+				return nil
+			}
+			return fmt.Errorf("%w: conflicting run id", errResultRejected)
+		}
+		if !store.IsNotFound(err) {
+			return fmt.Errorf("load existing result: %w", err)
+		}
+		actions, err := queries.ListActionsForDevice(ctx, db.ListActionsForDeviceParams{DeviceID: deviceID, TargetID: deviceID})
+		if err != nil {
+			return fmt.Errorf("list assigned actions: %w", err)
+		}
+		var assigned *db.Action
+		for _, action := range actions {
+			if action.ID == actionID {
+				assigned = action
+				break
+			}
+		}
+		if assigned == nil {
+			return fmt.Errorf("%w: action is not assigned to device", errResultRejected)
+		}
+		if _, err := executableAction(assigned); err != nil {
+			return fmt.Errorf("decode assigned action: %w", err)
+		}
+		inserted, err := queries.CreateExecutionResult(ctx, db.CreateExecutionResultParams{
+			RunID: result.GetRunId().GetValue(), DeviceID: deviceID, ActionID: actionID, CompletedAt: completedAt, ResultBlob: resultBlob,
+		})
+		if err != nil {
+			return fmt.Errorf("store action result: %w", err)
+		}
+		if inserted != 1 {
+			return fmt.Errorf("%w: conflicting run id", errResultRejected)
+		}
+		return queries.CreateAuditEvent(ctx, db.CreateAuditEventParams{
+			ID: ulid.Make().String(), EventType: cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_EXECUTION_RESULT_RECEIVED,
+			StreamType: cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ACTION, StreamID: actionID,
+			ActorType: cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_DEVICE, ActorID: deviceID, OccurredAt: service.now().UTC(),
+		})
+	})
 }

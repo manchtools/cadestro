@@ -2,15 +2,16 @@ package store
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/manchtools/cadestro/agent/internal/store/generated"
+	contract "github.com/manchtools/cadestro/contract"
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"time"
 )
 
 type ScheduledWork struct {
@@ -23,7 +24,7 @@ type PendingResult struct {
 }
 
 func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) error {
-	if policy == nil || policy.GetRevision().GetValue() == "" {
+	if policy == nil {
 		return errors.New("reconcile policy: malformed snapshot")
 	}
 	current := make(map[string]*pb.Action, len(policy.GetActions()))
@@ -44,13 +45,6 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 	}
 	defer tx.Rollback()
 	q := s.queries.WithTx(tx)
-	rev, err := q.GetAssignedPolicyRevision(ctx)
-	if err == nil && rev == policy.GetRevision().GetValue() {
-		return tx.Commit()
-	}
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return err
-	}
 	rows, err := q.ListAllWork(ctx)
 	if err != nil {
 		return err
@@ -105,9 +99,6 @@ func (s *Store) ReconcilePolicy(ctx context.Context, policy *pb.DesiredPolicy) e
 			return fmt.Errorf("reconcile policy: insert %s: %w", id, err)
 		}
 	}
-	if err := q.SetAssignedPolicyRevision(ctx, policy.GetRevision().GetValue()); err != nil {
-		return err
-	}
 	return tx.Commit()
 }
 func decodeAction(blob []byte) (*pb.Action, error) {
@@ -130,12 +121,12 @@ func (s *Store) GetDueScheduledWork(ctx context.Context) ([]ScheduledWork, error
 		if err := proto.Unmarshal(row.ActionBlob, a); err != nil {
 			return nil, fmt.Errorf("decode action %s: %w", row.WorkID, err)
 		}
-		out = append(out, ScheduledWork{Action: a, WorkID: row.WorkID, RunID: row.RunID})
+		out = append(out, ScheduledWork{Action: a, WorkID: row.WorkID})
 	}
 	return out, nil
 }
 func (s *Store) BeginActionRun(ctx context.Context, w *ScheduledWork, started time.Time) error {
-	if w == nil || w.Action == nil || w.WorkID == "" {
+	if w == nil || w.WorkID == "" {
 		return errors.New("begin action run: missing work")
 	}
 	s.mu.Lock()
@@ -146,17 +137,22 @@ func (s *Store) BeginActionRun(ctx context.Context, w *ScheduledWork, started ti
 	}
 	defer tx.Rollback()
 	q := s.queries.WithTx(tx)
-	run, err := q.GetScheduledRun(ctx, generated.GetScheduledRunParams{WorkID: w.WorkID, RunID: &w.RunID})
+	now := s.now().UTC()
+	run, err := q.GetRunnableWork(ctx, generated.GetRunnableWorkParams{WorkID: w.WorkID, NextExecuteAt: now})
 	if err != nil {
 		return err
 	}
-	if run.RunInProgress {
-		w.RunID = run.RunID
-		return tx.Commit()
+	action, err := decodeAction(run.ActionBlob)
+	if err != nil {
+		return fmt.Errorf("begin action run: decode current action: %w", err)
+	}
+	digest, err := contract.ActionDigest(action)
+	if err != nil {
+		return err
 	}
 	started = started.UTC()
 	id := ulid.Make().String()
-	n, err := q.BeginScheduledRun(ctx, generated.BeginScheduledRunParams{RunID: &id, LastExecutedAt: &started, NextExecuteAt: calculateNextExecuteFromSchedule(w.Action.GetSchedule(), &started, s.now()), RunStartedAt: &started, WorkID: w.WorkID})
+	n, err := q.BeginScheduledRun(ctx, generated.BeginScheduledRunParams{RunID: &id, RunActionDigest: digest, LastExecutedAt: &started, NextExecuteAt: calculateNextExecuteFromSchedule(action.GetSchedule(), &started, now), RunStartedAt: &started, WorkID: w.WorkID, NextExecuteAt_2: now})
 	if err != nil {
 		return err
 	}
@@ -166,11 +162,12 @@ func (s *Store) BeginActionRun(ctx context.Context, w *ScheduledWork, started ti
 	if err := tx.Commit(); err != nil {
 		return err
 	}
+	w.Action = action
 	w.RunID = id
 	return nil
 }
 func (s *Store) RecordActionResult(ctx context.Context, r *pb.ActionResult) (int64, error) {
-	if r == nil || r.GetActionId().GetValue() == "" || r.GetRunId().GetValue() == "" {
+	if r == nil || r.GetActionId().GetValue() == "" || r.GetRunId().GetValue() == "" || r.GetCompletedAt() == nil || len(r.GetActionDigest()) != 32 {
 		return 0, errors.New("record action result: malformed result")
 	}
 	payload, err := proto.Marshal(r)
@@ -185,7 +182,7 @@ func (s *Store) RecordActionResult(ctx context.Context, r *pb.ActionResult) (int
 	}
 	defer tx.Rollback()
 	q := s.queries.WithTx(tx)
-	retired, err := q.FinishScheduledRun(ctx, generated.FinishScheduledRunParams{WorkID: r.GetActionId().GetValue(), RunID: &r.RunId.Value})
+	retired, err := q.FinishScheduledRun(ctx, generated.FinishScheduledRunParams{WorkID: r.GetActionId().GetValue(), RunID: &r.RunId.Value, RunActionDigest: r.GetActionDigest()})
 	if err != nil {
 		return 0, err
 	}
@@ -225,41 +222,40 @@ func (s *Store) DeletePendingResult(ctx context.Context, id int64) error {
 	defer s.mu.Unlock()
 	return s.queries.DeletePendingResult(ctx, id)
 }
-func (s *Store) RecoverInterruptedActions(ctx context.Context) error {
+func (s *Store) RecoverInterruptedActions(ctx context.Context) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer tx.Rollback()
 	q := s.queries.WithTx(tx)
 	rows, err := q.ListInterruptedWork(ctx)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	for _, row := range rows {
-		a := &pb.Action{}
-		if err := proto.Unmarshal(row.ActionBlob, a); err != nil {
-			return err
-		}
-		r := &pb.ActionResult{ActionId: a.GetId(), RunId: &pb.RunId{Value: row.RunID}, Status: pb.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE, Output: &pb.CommandOutput{Stderr: "interrupted action run"}, CompletedAt: timestamppb.New(s.now().UTC())}
+		r := &pb.ActionResult{ActionId: &pb.ActionId{Value: row.WorkID}, RunId: &pb.RunId{Value: row.RunID}, Status: pb.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE, Output: &pb.CommandOutput{Stderr: "interrupted action run"}, CompletedAt: timestamppb.New(s.now().UTC()), ActionDigest: row.RunActionDigest}
 		payload, err := proto.Marshal(r)
 		if err != nil {
-			return err
+			return 0, err
 		}
-		retired, err := q.FinishScheduledRun(ctx, generated.FinishScheduledRunParams{WorkID: row.WorkID, RunID: &row.RunID})
+		retired, err := q.FinishScheduledRun(ctx, generated.FinishScheduledRunParams{WorkID: row.WorkID, RunID: &row.RunID, RunActionDigest: row.RunActionDigest})
 		if err != nil {
-			return err
+			return 0, err
 		}
 		if _, err := q.InsertResultOutbox(ctx, payload); err != nil {
-			return err
+			return 0, err
 		}
 		if retired {
 			if err := q.DeleteRetiredWork(ctx, generated.DeleteRetiredWorkParams{WorkID: row.WorkID, RunID: &row.RunID}); err != nil {
-				return fmt.Errorf("recover interrupted action: delete retired work: %w", err)
+				return 0, fmt.Errorf("recover interrupted action: delete retired work: %w", err)
 			}
 		}
 	}
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return 0, err
+	}
+	return len(rows), nil
 }

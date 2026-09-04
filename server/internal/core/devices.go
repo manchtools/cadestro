@@ -24,38 +24,15 @@ func (service *Service) deviceStatus(device *db.Device) cadestrov1.DeviceStatus 
 }
 
 func (service *Service) deviceProto(ctx context.Context, device *db.Device) (*cadestrov1.Device, error) {
-	checks, err := service.store.Queries().ListComplianceResults(ctx, device.ID)
+	compliance, err := service.deviceCompliance(ctx, device.ID)
 	if err != nil {
 		return nil, err
-	}
-	status := cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_UNSPECIFIED
-	passing := int32(0)
-	complianceCount := int32(0)
-	for _, check := range checks {
-		action, result, err := complianceResult(check)
-		if err != nil {
-			return nil, err
-		}
-		if !isComplianceAction(action) {
-			continue
-		}
-		ok := complianceValue(action, result)
-		complianceCount++
-		if ok {
-			passing++
-		}
-	}
-	if complianceCount > 0 {
-		status = cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT
-		if passing == complianceCount {
-			status = cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_COMPLIANT
-		}
 	}
 	mapped := &cadestrov1.Device{
 		Id: &cadestrov1.DeviceId{Value: device.ID}, Hostname: device.Hostname, AgentVersion: device.AgentVersion,
 		Status: service.deviceStatus(device), RegisteredAt: timestamppb.New(device.RegisteredAt),
-		CertExpiresAt: timestamppb.New(device.CertExpiresAt), ComplianceStatus: status,
-		ComplianceTotal: complianceCount, CompliancePassing: passing,
+		CertExpiresAt: timestamppb.New(device.CertExpiresAt), ComplianceStatus: compliance.status,
+		ComplianceTotal: int32(len(compliance.checks)), CompliancePassing: compliance.passing,
 	}
 	if device.LastSeenAt != nil {
 		mapped.LastSeenAt = timestamppb.New(*device.LastSeenAt)

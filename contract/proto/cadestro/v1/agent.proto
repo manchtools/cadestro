@@ -17,6 +17,8 @@ message AgentMessage {
   MessageId id = 1 [(buf.validate.field).required = true];
 
   oneof payload {
+    option (buf.validate.oneof).required = true;
+
     Hello hello = 10;
     Heartbeat heartbeat = 11;
     DesiredPolicyRequest desired_policy_request = 12;
@@ -28,6 +30,8 @@ message ServerMessage {
   MessageId id = 1 [(buf.validate.field).required = true];
 
   oneof payload {
+    option (buf.validate.oneof).required = true;
+
     Welcome welcome = 10;
     DesiredPolicy desired_policy = 11;
     ResultAck result_ack = 12;
@@ -61,8 +65,7 @@ message DesiredPolicy {
     (buf.validate.field).int32.gte = 1,
     (buf.validate.field).int32.lte = 1440
   ];
-  PolicyRevisionId revision = 2 [(buf.validate.field).required = true];
-  repeated Action actions = 3;
+  repeated Action actions = 2;
 }
 
 enum ResultAckCode {

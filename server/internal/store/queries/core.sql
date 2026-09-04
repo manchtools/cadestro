@@ -316,24 +316,38 @@ WHERE (assignments.target_type = 1 AND assignments.target_id = ?)
    OR (assignments.target_type = 2 AND device_group_members.device_id IS NOT NULL)
 ORDER BY actions.id;
 
--- name: CreateExecutionResult :exec
+-- name: CreateExecutionResult :execrows
 INSERT INTO execution_results (
     run_id, device_id, action_id, completed_at, result_blob
 ) VALUES (?, ?, ?, ?, ?)
 ON CONFLICT(run_id) DO NOTHING;
 
+-- name: GetExecutionResult :one
+SELECT * FROM execution_results WHERE run_id = ?;
+
 -- name: ListExecutionResults :many
 SELECT execution_results.*, actions.name AS action_name, actions.action_blob FROM execution_results
 JOIN actions ON actions.id = execution_results.action_id
-WHERE execution_results.device_id = ? ORDER BY execution_results.completed_at DESC LIMIT ?;
+WHERE execution_results.device_id = ? ORDER BY execution_results.completed_at DESC, execution_results.run_id DESC LIMIT ?;
 
 -- name: ListComplianceResults :many
-SELECT execution_results.*, actions.name AS action_name, actions.action_blob FROM execution_results
-JOIN actions ON actions.id = execution_results.action_id
-WHERE execution_results.device_id = ? AND execution_results.completed_at = (
-      SELECT MAX(latest.completed_at) FROM execution_results latest
-      WHERE latest.device_id = execution_results.device_id AND latest.action_id = execution_results.action_id
-  )
+SELECT actions.id AS action_id, actions.name AS action_name, actions.action_blob,
+       latest.run_id, latest.completed_at, latest.result_blob
+FROM actions
+LEFT JOIN execution_results latest ON latest.run_id = (
+    SELECT candidate.run_id FROM execution_results candidate
+    WHERE candidate.device_id = sqlc.arg(device_id) AND candidate.action_id = actions.id
+    ORDER BY candidate.completed_at DESC, candidate.run_id DESC LIMIT 1
+)
+WHERE EXISTS (
+    SELECT 1 FROM assignments
+    LEFT JOIN device_group_members ON assignments.target_type = 2
+        AND assignments.target_id = device_group_members.group_id
+        AND device_group_members.device_id = sqlc.arg(device_id)
+    WHERE assignments.action_id = actions.id
+      AND ((assignments.target_type = 1 AND assignments.target_id = sqlc.arg(device_id))
+        OR (assignments.target_type = 2 AND device_group_members.device_id IS NOT NULL))
+)
 ORDER BY actions.name, actions.id;
 
 -- name: CreateAuditEvent :exec

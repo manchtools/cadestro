@@ -377,6 +377,7 @@ type ActionResult struct {
 	DetectionOutput *CommandOutput         `protobuf:"bytes,4,opt,name=detection_output,json=detectionOutput,proto3" json:"detection_output,omitempty"`
 	CompletedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
 	RunId           *RunId                 `protobuf:"bytes,6,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
+	ActionDigest    []byte                 `protobuf:"bytes,7,opt,name=action_digest,json=actionDigest,proto3" json:"action_digest,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -453,11 +454,18 @@ func (x *ActionResult) GetRunId() *RunId {
 	return nil
 }
 
+func (x *ActionResult) GetActionDigest() []byte {
+	if x != nil {
+		return x.ActionDigest
+	}
+	return nil
+}
+
 var File_cadestro_v1_actions_proto protoreflect.FileDescriptor
 
 const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\n" +
-	"\x19cadestro/v1/actions.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x18cadestro/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xab\x03\n" +
+	"\x19cadestro/v1/actions.proto\x12\vcadestro.v1\x1a\x1bbuf/validate/validate.proto\x1a\x18cadestro/v1/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb2\x03\n" +
 	"\x06Action\x12-\n" +
 	"\x02id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x12F\n" +
 	"\rdesired_state\x18\x02 \x01(\x0e2\x19.cadestro.v1.DesiredStateB\x06\xbaH\x03\xc8\x01\x01R\fdesiredState\x126\n" +
@@ -466,8 +474,8 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\bschedule\x18\x04 \x01(\v2\x1b.cadestro.v1.ActionScheduleR\bschedule\x12<\n" +
 	"\apackage\x18\x05 \x01(\v2 .cadestro.v1.PackageActionParamsH\x00R\apackage\x129\n" +
 	"\x06update\x18\x06 \x01(\v2\x1f.cadestro.v1.UpdateActionParamsH\x00R\x06update\x126\n" +
-	"\x05shell\x18\a \x01(\v2\x1e.cadestro.v1.ShellActionParamsH\x00R\x05shellB\b\n" +
-	"\x06params\"F\n" +
+	"\x05shell\x18\a \x01(\v2\x1e.cadestro.v1.ShellActionParamsH\x00R\x05shellB\x0f\n" +
+	"\x06params\x12\x05\xbaH\x02\b\x01\"F\n" +
 	"\x0eActionSchedule\x124\n" +
 	"\x0einterval_hours\x18\x01 \x01(\x05B\r\xbaH\n" +
 	"\xd8\x01\x01\x1a\x05\x18\xb8D(\x00R\rintervalHours\"_\n" +
@@ -485,14 +493,16 @@ const file_cadestro_v1_actions_proto_rawDesc = "" +
 	"\ris_compliance\x18\x06 \x01(\bR\fisCompliance\x1a>\n" +
 	"\x10EnvironmentEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xf5\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xae\x03\n" +
 	"\fActionResult\x12:\n" +
 	"\taction_id\x18\x01 \x01(\v2\x15.cadestro.v1.ActionIdB\x06\xbaH\x03\xc8\x01\x01R\bactionId\x12<\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x1c.cadestro.v1.ExecutionStatusB\x06\xbaH\x03\xc8\x01\x01R\x06status\x122\n" +
 	"\x06output\x18\x03 \x01(\v2\x1a.cadestro.v1.CommandOutputR\x06output\x12E\n" +
-	"\x10detection_output\x18\x04 \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x12=\n" +
-	"\fcompleted_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x121\n" +
-	"\x06run_id\x18\x06 \x01(\v2\x12.cadestro.v1.RunIdB\x06\xbaH\x03\xc8\x01\x01R\x05runIdBGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
+	"\x10detection_output\x18\x04 \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\x12E\n" +
+	"\fcompleted_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\vcompletedAt\x121\n" +
+	"\x06run_id\x18\x06 \x01(\v2\x12.cadestro.v1.RunIdB\x06\xbaH\x03\xc8\x01\x01R\x05runId\x12/\n" +
+	"\raction_digest\x18\a \x01(\fB\n" +
+	"\xbaH\a\xc8\x01\x01z\x02h R\factionDigestBGZEgithub.com/manchtools/cadestro/contract/gen/go/cadestro/v1;cadestrov1b\x06proto3"
 
 var (
 	file_cadestro_v1_actions_proto_rawDescOnce sync.Once

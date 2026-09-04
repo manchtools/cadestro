@@ -15,22 +15,16 @@ type ResultOutbox struct {
 }
 
 type ScheduledWork struct {
-	WorkID         string     `json:"work_id"`
-	RunID          *string    `json:"run_id"`
-	ActionBlob     []byte     `json:"action_blob"`
-	Retired        bool       `json:"retired"`
-	ReceivedAt     time.Time  `json:"received_at"`
-	LastExecutedAt *time.Time `json:"last_executed_at"`
-	NextExecuteAt  time.Time  `json:"next_execute_at"`
-	RunStartedAt   *time.Time `json:"run_started_at"`
-	RunInProgress  bool       `json:"run_in_progress"`
-	CreatedAt      time.Time  `json:"created_at"`
-	UpdatedAt      time.Time  `json:"updated_at"`
-}
-
-type Setting struct {
-	Key       string    `json:"key"`
-	Value     string    `json:"value"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	WorkID          string     `json:"work_id"`
+	RunID           *string    `json:"run_id"`
+	ActionBlob      []byte     `json:"action_blob"`
+	RunActionDigest []byte     `json:"run_action_digest"`
+	Retired         bool       `json:"retired"`
+	ReceivedAt      time.Time  `json:"received_at"`
+	LastExecutedAt  *time.Time `json:"last_executed_at"`
+	NextExecuteAt   time.Time  `json:"next_execute_at"`
+	RunStartedAt    *time.Time `json:"run_started_at"`
+	RunInProgress   bool       `json:"run_in_progress"`
+	CreatedAt       time.Time  `json:"created_at"`
+	UpdatedAt       time.Time  `json:"updated_at"`
 }

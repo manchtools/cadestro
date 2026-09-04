@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	contract "github.com/manchtools/cadestro/contract"
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
@@ -142,34 +144,11 @@ func (service *Service) GetDeviceCompliance(ctx context.Context, request *connec
 		}
 		return nil, service.internal("get compliance device", err)
 	}
-	checks, err := service.store.Queries().ListComplianceResults(ctx, deviceID)
+	compliance, err := service.deviceCompliance(ctx, deviceID)
 	if err != nil {
-		return nil, service.internal("list compliance results", err)
+		return nil, service.internal("compute device compliance", err)
 	}
-	response := &cadestrov1.GetDeviceComplianceResponse{Status: cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_UNSPECIFIED}
-	compliant := true
-	for _, check := range checks {
-		action, result, err := complianceResult(check)
-		if err != nil {
-			return nil, service.internal("decode compliance result", err)
-		}
-		if !isComplianceAction(action) {
-			continue
-		}
-		ok := complianceValue(action, result)
-		compliant = compliant && ok
-		response.Checks = append(response.Checks, &cadestrov1.ComplianceCheckResult{
-			ActionId: &cadestrov1.ActionId{Value: check.ActionID}, ActionName: check.ActionName, Compliant: ok,
-			DetectionOutput: result.GetDetectionOutput(), CheckedAt: result.GetCompletedAt(),
-		})
-	}
-	if len(response.Checks) > 0 {
-		response.Status = cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT
-		if compliant {
-			response.Status = cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_COMPLIANT
-		}
-	}
-	return connect.NewResponse(response), nil
+	return connect.NewResponse(&cadestrov1.GetDeviceComplianceResponse{Status: compliance.status, Checks: compliance.checks}), nil
 }
 
 func (service *Service) ListExecutionResults(ctx context.Context, request *connect.Request[cadestrov1.ListExecutionResultsRequest]) (*connect.Response[cadestrov1.ListExecutionResultsResponse], error) {
@@ -187,11 +166,14 @@ func (service *Service) ListExecutionResults(ctx context.Context, request *conne
 		if err != nil {
 			return nil, service.internal("decode execution action", err)
 		}
-		compliant := complianceValue(action, payload)
+		complianceStatus, err := complianceStatus(action, payload)
+		if err != nil {
+			return nil, service.internal("classify execution result", err)
+		}
 		response.Results = append(response.Results, &cadestrov1.ExecutionResult{
 			RunId: payload.GetRunId(), ActionId: payload.GetActionId(), ActionName: result.ActionName,
 			Status: payload.GetStatus(), Output: payload.GetOutput(), CompletedAt: payload.GetCompletedAt(),
-			Compliant: compliant, DetectionOutput: payload.GetDetectionOutput(),
+			ComplianceStatus: complianceStatus, DetectionOutput: payload.GetDetectionOutput(),
 		})
 	}
 	return connect.NewResponse(response), nil
@@ -208,25 +190,86 @@ func executionResultProto(runID, actionID string, completedAt time.Time, resultB
 	return result, nil
 }
 
-func complianceResult(row *db.ListComplianceResultsRow) (*cadestrov1.Action, *cadestrov1.ActionResult, error) {
-	action, err := executableAction(&db.Action{ID: row.ActionID, ActionBlob: row.ActionBlob})
-	if err != nil {
-		return nil, nil, err
-	}
-	result, err := executionResultProto(row.RunID, row.ActionID, row.CompletedAt, row.ResultBlob)
-	if err != nil {
-		return nil, nil, err
-	}
-	return action, result, nil
-}
-
 func isComplianceAction(action *cadestrov1.Action) bool {
 	shell, ok := action.GetParams().(*cadestrov1.Action_Shell)
 	return ok && shell.Shell.GetIsCompliance()
 }
 
-func complianceValue(action *cadestrov1.Action, result *cadestrov1.ActionResult) bool {
-	return isComplianceAction(action) && result.GetStatus() == cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS && result.GetDetectionOutput() != nil && result.GetDetectionOutput().GetExitCode() == 0
+func complianceStatus(action *cadestrov1.Action, result *cadestrov1.ActionResult) (cadestrov1.ComplianceStatus, error) {
+	if !isComplianceAction(action) {
+		return cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_UNSPECIFIED, nil
+	}
+	if result == nil {
+		return cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_PENDING, nil
+	}
+	digest, err := contract.ActionDigest(action)
+	if err != nil {
+		return cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_UNSPECIFIED, err
+	}
+	if !bytes.Equal(digest, result.GetActionDigest()) {
+		return cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_PENDING, nil
+	}
+	if result.GetStatus() == cadestrov1.ExecutionStatus_EXECUTION_STATUS_SUCCESS && result.GetDetectionOutput() != nil && result.GetDetectionOutput().GetExitCode() == 0 {
+		return cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_COMPLIANT, nil
+	}
+	return cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT, nil
+}
+
+type deviceComplianceSummary struct {
+	status  cadestrov1.ComplianceStatus
+	passing int32
+	checks  []*cadestrov1.ComplianceCheckResult
+}
+
+func (service *Service) deviceCompliance(ctx context.Context, deviceID string) (deviceComplianceSummary, error) {
+	rows, err := service.store.Queries().ListComplianceResults(ctx, deviceID)
+	if err != nil {
+		return deviceComplianceSummary{}, err
+	}
+	status := cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_UNSPECIFIED
+	var passing int32
+	checks := make([]*cadestrov1.ComplianceCheckResult, 0, len(rows))
+	for _, row := range rows {
+		action, err := executableAction(&db.Action{ID: row.ActionID, ActionBlob: row.ActionBlob})
+		if err != nil {
+			return deviceComplianceSummary{}, err
+		}
+		if !isComplianceAction(action) {
+			continue
+		}
+		var result *cadestrov1.ActionResult
+		if row.RunID != nil {
+			if row.CompletedAt == nil {
+				return deviceComplianceSummary{}, errors.New("stored execution result is missing completion time")
+			}
+			result, err = executionResultProto(*row.RunID, row.ActionID, *row.CompletedAt, row.ResultBlob)
+			if err != nil {
+				return deviceComplianceSummary{}, err
+			}
+		}
+		checkStatus, err := complianceStatus(action, result)
+		if err != nil {
+			return deviceComplianceSummary{}, err
+		}
+		check := &cadestrov1.ComplianceCheckResult{ActionId: &cadestrov1.ActionId{Value: row.ActionID}, ActionName: row.ActionName, Status: checkStatus}
+		if result != nil {
+			check.DetectionOutput = result.GetDetectionOutput()
+			check.CheckedAt = result.GetCompletedAt()
+		}
+		checks = append(checks, check)
+		if checkStatus == cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_COMPLIANT {
+			passing++
+		}
+		switch {
+		case checkStatus == cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT:
+			status = checkStatus
+		case checkStatus == cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_PENDING && status != cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_NON_COMPLIANT:
+			status = checkStatus
+		case checkStatus == cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_COMPLIANT && status == cadestrov1.ComplianceStatus_COMPLIANCE_STATUS_UNSPECIFIED:
+			status = checkStatus
+		}
+	}
+	return deviceComplianceSummary{status: status, passing: passing, checks: checks}, nil
 }
 
 func (service *Service) ListAuditEvents(ctx context.Context, request *connect.Request[cadestrov1.ListAuditEventsRequest]) (*connect.Response[cadestrov1.ListAuditEventsResponse], error) {

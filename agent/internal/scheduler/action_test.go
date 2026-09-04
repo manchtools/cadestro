@@ -23,7 +23,7 @@ func TestActionResultSignalsWakeWithoutPayload(t *testing.T) {
 	s := New(st, testExecutor{}, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	s.now = time.Now
 	action := &pb.Action{Id: &pb.ActionId{Value: "01K00000000000000000000031"}, Params: &pb.Action_Shell{Shell: &pb.ShellActionParams{Script: "true"}}}
-	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Revision: &pb.PolicyRevisionId{Value: "01K00000000000000000000032"}, Actions: []*pb.Action{action}}))
+	require.NoError(t, st.ReconcilePolicy(context.Background(), &pb.DesiredPolicy{Actions: []*pb.Action{action}}))
 	select {
 	case <-s.ResultsReady():
 		t.Fatal("policy reconciliation signaled a result before execution")
@@ -41,4 +41,28 @@ func TestActionResultSignalsWakeWithoutPayload(t *testing.T) {
 	pending, err := st.GetPendingResults(context.Background())
 	require.NoError(t, err)
 	require.Len(t, pending, 1)
+}
+
+func TestRecoveredActionResultSignalsWake(t *testing.T) {
+	ctx := context.Background()
+	st, err := store.New(t.TempDir())
+	require.NoError(t, err)
+	defer st.Close()
+	action := &pb.Action{Id: &pb.ActionId{Value: "01K00000000000000000000033"}, Params: &pb.Action_Shell{Shell: &pb.ShellActionParams{Script: "true"}}, Schedule: &pb.ActionSchedule{IntervalHours: 24}}
+	require.NoError(t, st.ReconcilePolicy(ctx, &pb.DesiredPolicy{Actions: []*pb.Action{action}}))
+	due, err := st.GetDueScheduledWork(ctx)
+	require.NoError(t, err)
+	require.Len(t, due, 1)
+	require.NoError(t, st.BeginActionRun(ctx, &due[0], time.Now()))
+	s := New(st, testExecutor{}, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	s.runDue(ctx)
+	select {
+	case <-s.ResultsReady():
+	case <-time.After(time.Second):
+		t.Fatal("recovered result did not signal wake")
+	}
+	pending, err := st.GetPendingResults(ctx)
+	require.NoError(t, err)
+	require.Len(t, pending, 1)
+	require.Equal(t, pb.ExecutionStatus_EXECUTION_STATUS_INDETERMINATE, pending[0].ActionResult.GetStatus())
 }

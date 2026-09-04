@@ -19,6 +19,8 @@ message Action {
   ActionSchedule schedule = 4;
 
   oneof params {
+    option (buf.validate.oneof).required = true;
+
     PackageActionParams package = 5;
     UpdateActionParams update = 6;
     ShellActionParams shell = 7;
@@ -76,6 +78,10 @@ message ActionResult {
   ExecutionStatus status = 2 [(buf.validate.field).required = true];
   CommandOutput output = 3;
   CommandOutput detection_output = 4;
-  google.protobuf.Timestamp completed_at = 5;
+  google.protobuf.Timestamp completed_at = 5 [(buf.validate.field).required = true];
   RunId run_id = 6 [(buf.validate.field).required = true];
+  bytes action_digest = 7 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).bytes.len = 32
+  ];
 }

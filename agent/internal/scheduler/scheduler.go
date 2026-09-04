@@ -2,11 +2,13 @@ package scheduler
 
 import (
 	"context"
-	"github.com/manchtools/cadestro/agent/internal/store"
-	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"log/slog"
 	"time"
+
+	"github.com/manchtools/cadestro/agent/internal/store"
+	contract "github.com/manchtools/cadestro/contract"
+	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const checkInterval = time.Minute
@@ -59,9 +61,13 @@ func (s *Scheduler) Run(ctx context.Context) {
 	}
 }
 func (s *Scheduler) runDue(ctx context.Context) {
-	if err := s.store.RecoverInterruptedActions(ctx); err != nil {
+	recovered, err := s.store.RecoverInterruptedActions(ctx)
+	if err != nil {
 		s.logger.Error("recover interrupted action", "error", err)
 		return
+	}
+	if recovered > 0 {
+		s.signalResultsReady()
 	}
 	items, err := s.store.GetDueScheduledWork(ctx)
 	if err != nil {
@@ -85,14 +91,24 @@ func (s *Scheduler) executeAction(ctx context.Context, w store.ScheduledWork) {
 		return
 	}
 	r.RunId = &pb.RunId{Value: w.RunID}
+	digest, err := contract.ActionDigest(w.Action)
+	if err != nil {
+		s.logger.Error("digest action result", "run_id", w.RunID, "error", err)
+		return
+	}
+	r.ActionDigest = digest
 	if r.CompletedAt == nil {
 		r.CompletedAt = timestamppb.New(s.now().UTC())
 	}
-	_, err := s.store.RecordActionResult(ctx, r)
+	_, err = s.store.RecordActionResult(ctx, r)
 	if err != nil {
 		s.logger.Error("record action result", "run_id", w.RunID, "error", err)
 		return
 	}
+	s.signalResultsReady()
+}
+
+func (s *Scheduler) signalResultsReady() {
 	select {
 	case s.resultReadyCh <- struct{}{}:
 	default:

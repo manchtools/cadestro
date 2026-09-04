@@ -11,25 +11,29 @@ import (
 )
 
 const beginScheduledRun = `-- name: BeginScheduledRun :execrows
-UPDATE scheduled_work SET run_id = ?, last_executed_at = ?, next_execute_at = ?, run_started_at = ?, run_in_progress = TRUE, updated_at = CURRENT_TIMESTAMP
-WHERE work_id = ? AND run_in_progress = FALSE
+UPDATE scheduled_work SET run_id = ?, run_action_digest = ?, last_executed_at = ?, next_execute_at = ?, run_started_at = ?, run_in_progress = TRUE, updated_at = CURRENT_TIMESTAMP
+WHERE work_id = ? AND retired = FALSE AND run_in_progress = FALSE AND next_execute_at <= ?
 `
 
 type BeginScheduledRunParams struct {
-	RunID          *string    `json:"run_id"`
-	LastExecutedAt *time.Time `json:"last_executed_at"`
-	NextExecuteAt  time.Time  `json:"next_execute_at"`
-	RunStartedAt   *time.Time `json:"run_started_at"`
-	WorkID         string     `json:"work_id"`
+	RunID           *string    `json:"run_id"`
+	RunActionDigest []byte     `json:"run_action_digest"`
+	LastExecutedAt  *time.Time `json:"last_executed_at"`
+	NextExecuteAt   time.Time  `json:"next_execute_at"`
+	RunStartedAt    *time.Time `json:"run_started_at"`
+	WorkID          string     `json:"work_id"`
+	NextExecuteAt_2 time.Time  `json:"next_execute_at_2"`
 }
 
 func (q *Queries) BeginScheduledRun(ctx context.Context, arg BeginScheduledRunParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, beginScheduledRun,
 		arg.RunID,
+		arg.RunActionDigest,
 		arg.LastExecutedAt,
 		arg.NextExecuteAt,
 		arg.RunStartedAt,
 		arg.WorkID,
+		arg.NextExecuteAt_2,
 	)
 	if err != nil {
 		return 0, err
@@ -47,7 +51,7 @@ func (q *Queries) DeletePendingResult(ctx context.Context, sequence int64) error
 }
 
 const deleteRetiredWork = `-- name: DeleteRetiredWork :exec
-DELETE FROM scheduled_work WHERE (work_id = ? OR run_id = ?) AND retired = TRUE
+DELETE FROM scheduled_work WHERE work_id = ? AND run_id = ? AND retired = TRUE
 `
 
 type DeleteRetiredWorkParams struct {
@@ -70,42 +74,31 @@ func (q *Queries) DeleteWork(ctx context.Context, workID string) error {
 }
 
 const finishScheduledRun = `-- name: FinishScheduledRun :one
-UPDATE scheduled_work SET run_in_progress = FALSE, run_started_at = NULL, run_id = CASE WHEN retired THEN run_id ELSE NULL END, updated_at = CURRENT_TIMESTAMP
-WHERE (work_id = ? OR run_id = ?) AND run_in_progress = TRUE RETURNING retired
+UPDATE scheduled_work SET run_in_progress = FALSE, run_started_at = NULL, run_action_digest = NULL, run_id = CASE WHEN retired THEN run_id ELSE NULL END, updated_at = CURRENT_TIMESTAMP
+WHERE work_id = ? AND run_id = ? AND run_action_digest = ? AND run_in_progress = TRUE RETURNING retired
 `
 
 type FinishScheduledRunParams struct {
-	WorkID string  `json:"work_id"`
-	RunID  *string `json:"run_id"`
+	WorkID          string  `json:"work_id"`
+	RunID           *string `json:"run_id"`
+	RunActionDigest []byte  `json:"run_action_digest"`
 }
 
 func (q *Queries) FinishScheduledRun(ctx context.Context, arg FinishScheduledRunParams) (bool, error) {
-	row := q.db.QueryRowContext(ctx, finishScheduledRun, arg.WorkID, arg.RunID)
+	row := q.db.QueryRowContext(ctx, finishScheduledRun, arg.WorkID, arg.RunID, arg.RunActionDigest)
 	var retired bool
 	err := row.Scan(&retired)
 	return retired, err
 }
 
-const getAssignedPolicyRevision = `-- name: GetAssignedPolicyRevision :one
-SELECT value FROM settings WHERE key = 'assigned_policy_revision'
-`
-
-func (q *Queries) GetAssignedPolicyRevision(ctx context.Context) (string, error) {
-	row := q.db.QueryRowContext(ctx, getAssignedPolicyRevision)
-	var value string
-	err := row.Scan(&value)
-	return value, err
-}
-
 const getDueScheduledWork = `-- name: GetDueScheduledWork :many
-SELECT work_id, COALESCE(run_id, ''), action_blob
-FROM scheduled_work WHERE (retired = FALSE OR run_in_progress = TRUE) AND (run_in_progress = TRUE OR next_execute_at <= ?)
-ORDER BY run_in_progress DESC, next_execute_at, work_id
+SELECT work_id, action_blob FROM scheduled_work
+WHERE retired = FALSE AND run_in_progress = FALSE AND next_execute_at <= ?
+ORDER BY next_execute_at, work_id
 `
 
 type GetDueScheduledWorkRow struct {
 	WorkID     string `json:"work_id"`
-	RunID      string `json:"run_id"`
 	ActionBlob []byte `json:"action_blob"`
 }
 
@@ -118,7 +111,7 @@ func (q *Queries) GetDueScheduledWork(ctx context.Context, nextExecuteAt time.Ti
 	items := []GetDueScheduledWorkRow{}
 	for rows.Next() {
 		var i GetDueScheduledWorkRow
-		if err := rows.Scan(&i.WorkID, &i.RunID, &i.ActionBlob); err != nil {
+		if err := rows.Scan(&i.WorkID, &i.ActionBlob); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -164,31 +157,25 @@ func (q *Queries) GetPendingResults(ctx context.Context) ([]GetPendingResultsRow
 	return items, nil
 }
 
-const getScheduledRun = `-- name: GetScheduledRun :one
-SELECT work_id, COALESCE(run_id, ''), run_in_progress, run_started_at FROM scheduled_work WHERE (work_id = ? OR run_id = ?) AND (retired = FALSE OR run_in_progress = TRUE)
+const getRunnableWork = `-- name: GetRunnableWork :one
+SELECT work_id, action_blob FROM scheduled_work
+WHERE work_id = ? AND retired = FALSE AND run_in_progress = FALSE AND next_execute_at <= ?
 `
 
-type GetScheduledRunParams struct {
-	WorkID string  `json:"work_id"`
-	RunID  *string `json:"run_id"`
+type GetRunnableWorkParams struct {
+	WorkID        string    `json:"work_id"`
+	NextExecuteAt time.Time `json:"next_execute_at"`
 }
 
-type GetScheduledRunRow struct {
-	WorkID        string     `json:"work_id"`
-	RunID         string     `json:"run_id"`
-	RunInProgress bool       `json:"run_in_progress"`
-	RunStartedAt  *time.Time `json:"run_started_at"`
+type GetRunnableWorkRow struct {
+	WorkID     string `json:"work_id"`
+	ActionBlob []byte `json:"action_blob"`
 }
 
-func (q *Queries) GetScheduledRun(ctx context.Context, arg GetScheduledRunParams) (GetScheduledRunRow, error) {
-	row := q.db.QueryRowContext(ctx, getScheduledRun, arg.WorkID, arg.RunID)
-	var i GetScheduledRunRow
-	err := row.Scan(
-		&i.WorkID,
-		&i.RunID,
-		&i.RunInProgress,
-		&i.RunStartedAt,
-	)
+func (q *Queries) GetRunnableWork(ctx context.Context, arg GetRunnableWorkParams) (GetRunnableWorkRow, error) {
+	row := q.db.QueryRowContext(ctx, getRunnableWork, arg.WorkID, arg.NextExecuteAt)
+	var i GetRunnableWorkRow
+	err := row.Scan(&i.WorkID, &i.ActionBlob)
 	return i, err
 }
 
@@ -276,14 +263,14 @@ func (q *Queries) ListAllWork(ctx context.Context) ([]ListAllWorkRow, error) {
 }
 
 const listInterruptedWork = `-- name: ListInterruptedWork :many
-SELECT work_id, COALESCE(run_id, ''), action_blob, run_started_at FROM scheduled_work WHERE run_in_progress = TRUE ORDER BY work_id
+SELECT work_id, COALESCE(run_id, ''), run_action_digest, run_started_at FROM scheduled_work WHERE run_in_progress = TRUE ORDER BY work_id
 `
 
 type ListInterruptedWorkRow struct {
-	WorkID       string     `json:"work_id"`
-	RunID        string     `json:"run_id"`
-	ActionBlob   []byte     `json:"action_blob"`
-	RunStartedAt *time.Time `json:"run_started_at"`
+	WorkID          string     `json:"work_id"`
+	RunID           string     `json:"run_id"`
+	RunActionDigest []byte     `json:"run_action_digest"`
+	RunStartedAt    *time.Time `json:"run_started_at"`
 }
 
 func (q *Queries) ListInterruptedWork(ctx context.Context) ([]ListInterruptedWorkRow, error) {
@@ -298,7 +285,7 @@ func (q *Queries) ListInterruptedWork(ctx context.Context) ([]ListInterruptedWor
 		if err := rows.Scan(
 			&i.WorkID,
 			&i.RunID,
-			&i.ActionBlob,
+			&i.RunActionDigest,
 			&i.RunStartedAt,
 		); err != nil {
 			return nil, err
@@ -320,16 +307,6 @@ UPDATE scheduled_work SET retired = TRUE, updated_at = CURRENT_TIMESTAMP WHERE w
 
 func (q *Queries) RetireWork(ctx context.Context, workID string) error {
 	_, err := q.db.ExecContext(ctx, retireWork, workID)
-	return err
-}
-
-const setAssignedPolicyRevision = `-- name: SetAssignedPolicyRevision :exec
-INSERT INTO settings (key, value, created_at, updated_at) VALUES ('assigned_policy_revision', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
-`
-
-func (q *Queries) SetAssignedPolicyRevision(ctx context.Context, value string) error {
-	_, err := q.db.ExecContext(ctx, setAssignedPolicyRevision, value)
 	return err
 }
 
