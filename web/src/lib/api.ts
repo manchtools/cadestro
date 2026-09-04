@@ -6,7 +6,10 @@ import { clearSession, readSession, writeSession, type Session } from './session
 
 function controlURL(): string {
 	const configured = document.querySelector('meta[name="cadestro-control-url"]')?.getAttribute('content')?.trim();
-	return configured?.replace(/\/+$/, '') || window.location.origin;
+	if (!configured) return window.location.origin;
+	const url = new URL(configured);
+	if (url.protocol !== 'https:') throw new Error('Configured control URL must use HTTPS');
+	return configured.replace(/\/+$/, '');
 }
 
 const credentialedFetch: typeof fetch = (input, init) => fetch(input, { ...init, credentials: 'include' });

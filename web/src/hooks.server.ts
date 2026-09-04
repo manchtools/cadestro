@@ -1,13 +1,13 @@
 import type { Handle } from '@sveltejs/kit';
 
-function controlUrl(): string {
-	const raw = (process.env.PUBLIC_CONTROL_URL ?? '').trim().replace(/\/+$/, '');
+export function configuredControlURL(value: string | undefined): string {
+	const raw = (value ?? '').trim().replace(/\/+$/, '');
 	if (!raw) return '';
 	try {
 		const parsed = new URL(raw);
-		if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return '';
+		if (parsed.protocol !== 'https:') throw new Error('PUBLIC_CONTROL_URL must use HTTPS');
 	} catch {
-		return '';
+		throw new Error('PUBLIC_CONTROL_URL must be a valid HTTPS URL');
 	}
 	return raw;
 }
@@ -23,9 +23,8 @@ function escapeAttribute(value: string): string {
 const CONTROL_URL_PLACEHOLDER = '%cadestro.controlUrl%';
 
 export const handle: Handle = async ({ event, resolve }) => {
-	const injected = escapeAttribute(controlUrl());
+	const injected = escapeAttribute(configuredControlURL(process.env.PUBLIC_CONTROL_URL));
 	const response = await resolve(event, {
-
 		transformPageChunk: ({ html }) => html.replace(CONTROL_URL_PLACEHOLDER, () => injected)
 	});
 

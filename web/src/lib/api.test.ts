@@ -30,6 +30,15 @@ vi.mock('@connectrpc/connect', async (importOriginal) => {
 	return { ...actual, createClient: () => ({ refreshToken: state.refreshToken, logout: state.logout }) };
 });
 
+describe('configured control URL', () => {
+	it('rejects an injected plaintext URL', async () => {
+		vi.resetModules();
+		vi.stubGlobal('document', { querySelector: () => ({ getAttribute: () => 'http://control.example' }) });
+		vi.stubGlobal('window', { location: { origin: 'https://web.example' } });
+		await expect(import('./api')).rejects.toThrow('must use HTTPS');
+	});
+});
+
 function deferred<T>() {
 	let resolve!: (value: T) => void;
 	let reject!: (reason: unknown) => void;
