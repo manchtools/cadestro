@@ -6,8 +6,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"log/slog"
-	"net/http"
 	"net/url"
 	"strings"
 )
@@ -51,8 +49,6 @@ type PeerClass string
 
 const (
 	PeerClassAgent PeerClass = "agent"
-
-	PeerClassControl PeerClass = "control"
 )
 
 const (
@@ -89,7 +85,7 @@ func PeerClassFromCert(cert *x509.Certificate) (PeerClass, error) {
 		return "", errors.New("certificate has no peer-class URI SAN")
 	}
 	switch found {
-	case PeerClassAgent, PeerClassControl:
+	case PeerClassAgent:
 		return found, nil
 	default:
 		return "", fmt.Errorf("unknown peer class %q", found)
@@ -106,61 +102,9 @@ func PeerClassFromTLS(state *tls.ConnectionState) (PeerClass, error) {
 	return PeerClassFromCert(state.PeerCertificates[0])
 }
 
-func RequirePeerClass(logger *slog.Logger, allowed ...PeerClass) func(http.Handler) http.Handler {
-	allowSet := make(map[PeerClass]struct{}, len(allowed))
-	for _, c := range allowed {
-		allowSet[c] = struct{}{}
-	}
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path == "/health" || r.URL.Path == "/ready" {
-				next.ServeHTTP(w, r)
-				return
-			}
-			if r.TLS == nil {
-				http.Error(w, "mTLS required", http.StatusUnauthorized)
-				return
-			}
-			class, err := PeerClassFromTLS(r.TLS)
-			if err != nil {
-				if logger != nil {
-					logger.Warn("peer-class check failed: cert missing class",
-						"remote_addr", r.RemoteAddr,
-						"path", r.URL.Path,
-						"error", err,
-					)
-				}
-				http.Error(w, "peer class required", http.StatusForbidden)
-				return
-			}
-			if _, ok := allowSet[class]; !ok {
-				if logger != nil {
-					logger.Warn("peer-class check failed: wrong class",
-						"remote_addr", r.RemoteAddr,
-						"path", r.URL.Path,
-						"presented", class,
-						"allowed", allowedClassString(allowed),
-					)
-				}
-				http.Error(w, "peer class not allowed", http.StatusForbidden)
-				return
-			}
-			next.ServeHTTP(w, r)
-		})
-	}
-}
-
-func allowedClassString(classes []PeerClass) string {
-	out := make([]string, 0, len(classes))
-	for _, c := range classes {
-		out = append(out, string(c))
-	}
-	return strings.Join(out, ",")
-}
-
 func PeerClassURI(class PeerClass) (*url.URL, error) {
 	switch class {
-	case PeerClassAgent, PeerClassControl:
+	case PeerClassAgent:
 	default:
 		return nil, fmt.Errorf("unknown peer class %q", class)
 	}

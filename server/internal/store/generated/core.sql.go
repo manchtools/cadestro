@@ -10,6 +10,7 @@ import (
 	"time"
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	idp "github.com/manchtools/cadestro/server/internal/idp"
 )
 
 const addDeviceToGroup = `-- name: AddDeviceToGroup :exec
@@ -108,10 +109,10 @@ RETURNING id, name, slug, enabled, client_id, issuer_url, scopes_json, created_a
 `
 
 type ConfigureIdentityProviderParams struct {
-	ClientID   string `json:"client_id"`
-	IssuerUrl  string `json:"issuer_url"`
-	ScopesJson string `json:"scopes_json"`
-	ID         string `json:"id"`
+	ClientID   string     `json:"client_id"`
+	IssuerUrl  string     `json:"issuer_url"`
+	ScopesJson idp.Scopes `json:"scopes_json"`
+	ID         string     `json:"id"`
 }
 
 func (q *Queries) ConfigureIdentityProvider(ctx context.Context, arg ConfigureIdentityProviderParams) (*IdentityProvider, error) {
@@ -443,13 +444,13 @@ RETURNING id, name, slug, enabled, client_id, issuer_url, scopes_json, created_a
 `
 
 type CreateIdentityProviderParams struct {
-	ID         string `json:"id"`
-	Name       string `json:"name"`
-	Slug       string `json:"slug"`
-	Enabled    bool   `json:"enabled"`
-	ClientID   string `json:"client_id"`
-	IssuerUrl  string `json:"issuer_url"`
-	ScopesJson string `json:"scopes_json"`
+	ID         string     `json:"id"`
+	Name       string     `json:"name"`
+	Slug       string     `json:"slug"`
+	Enabled    bool       `json:"enabled"`
+	ClientID   string     `json:"client_id"`
+	IssuerUrl  string     `json:"issuer_url"`
+	ScopesJson idp.Scopes `json:"scopes_json"`
 }
 
 func (q *Queries) CreateIdentityProvider(ctx context.Context, arg CreateIdentityProviderParams) (*IdentityProvider, error) {

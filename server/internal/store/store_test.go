@@ -7,6 +7,7 @@ import (
 	"time"
 
 	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/server/internal/idp"
 	generated "github.com/manchtools/cadestro/server/internal/store/generated"
 	"github.com/stretchr/testify/require"
 )
@@ -54,4 +55,20 @@ func TestIsConflictOnlyMatchesUniqueAndPrimaryKeyConstraints(t *testing.T) {
 	_, err = database.Queries().CreateAssignment(ctx, generated.CreateAssignmentParams{ID: "01K00000000000000000000013", ActionID: "01K00000000000000000000099", TargetType: cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE, TargetID: "01K00000000000000000000098"})
 	require.Error(t, err)
 	require.False(t, IsConflict(err))
+}
+
+func TestIdentityProviderScopesRoundTrip(t *testing.T) {
+	ctx := context.Background()
+	database, err := New(ctx, filepath.Join(t.TempDir(), "control.db"))
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, database.Close()) })
+	want := idp.Scopes{"openid", "profile", "email"}
+	_, err = database.Queries().CreateIdentityProvider(ctx, generated.CreateIdentityProviderParams{
+		ID: "01K00000000000000000000014", Name: "SSO", Slug: "sso", Enabled: true,
+		ClientID: "client", IssuerUrl: "https://issuer.example", ScopesJson: want,
+	})
+	require.NoError(t, err)
+	provider, err := database.Queries().GetIdentityProvider(ctx, "01K00000000000000000000014")
+	require.NoError(t, err)
+	require.Equal(t, want, provider.ScopesJson)
 }

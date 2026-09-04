@@ -46,3 +46,8 @@ sql:
             go_type: "int32"
           - column: "registration_tokens.current_uses"
             go_type: "int32"
+          - column: "identity_providers.scopes_json"
+            go_type:
+              import: "github.com/manchtools/cadestro/server/internal/idp"
+              package: "idp"
+              type: "Scopes"

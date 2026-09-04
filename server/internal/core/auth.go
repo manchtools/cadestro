@@ -2,7 +2,7 @@ package core
 
 import (
 	"context"
-	"encoding/json"
+	"database/sql"
 	"errors"
 	"net/http"
 	"net/url"
@@ -22,6 +22,8 @@ import (
 
 const authStateTTL = 10 * time.Minute
 const oidcTransactionCookieName = "__Host-cadestro-oidc"
+
+var errLastIdentityProvider = errors.New("cannot delete the last identity provider")
 
 type BootstrapProvider struct {
 	Name      string
@@ -49,13 +51,9 @@ func (service *Service) EnsureBootstrapProvider(ctx context.Context, config Boot
 	if _, err := service.newOIDCProvider(ctx, config.ClientID, config.IssuerURL, config.Scopes, service.publicBaseURL); err != nil {
 		return err
 	}
-	scopes, err := json.Marshal(config.Scopes)
-	if err != nil {
-		return err
-	}
 	_, err = service.store.Queries().CreateIdentityProvider(ctx, db.CreateIdentityProviderParams{
 		ID: id, Name: config.Name, Slug: config.Slug, Enabled: true, ClientID: config.ClientID,
-		IssuerUrl: config.IssuerURL, ScopesJson: string(scopes),
+		IssuerUrl: config.IssuerURL, ScopesJson: idp.Scopes(config.Scopes),
 	})
 	return err
 }
@@ -263,16 +261,12 @@ func (service *Service) CreateIdentityProvider(ctx context.Context, request *con
 	if _, err := service.newOIDCProvider(ctx, request.Msg.GetClientId().GetValue(), request.Msg.GetIssuerUrl(), request.Msg.GetScopes(), service.publicBaseURL); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("identity provider discovery failed"))
 	}
-	scopes, err := json.Marshal(request.Msg.GetScopes())
-	if err != nil {
-		return nil, service.internal("encode provider scopes", err)
-	}
 	var result *cadestrov1.IdentityProvider
-	err = service.store.Transaction(ctx, func(queries *db.Queries) error {
+	err := service.store.Transaction(ctx, func(queries *db.Queries) error {
 		provider, err := queries.CreateIdentityProvider(ctx, db.CreateIdentityProviderParams{
 			ID: id, Name: request.Msg.GetName(), Slug: request.Msg.GetSlug(), Enabled: true,
 			ClientID: request.Msg.GetClientId().GetValue(), IssuerUrl: request.Msg.GetIssuerUrl(),
-			ScopesJson: string(scopes),
+			ScopesJson: idp.Scopes(request.Msg.GetScopes()),
 		})
 		if err != nil {
 			return err
@@ -280,8 +274,8 @@ func (service *Service) CreateIdentityProvider(ctx context.Context, request *con
 		if err := service.audit(ctx, queries, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_IDENTITY_PROVIDER_CREATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_IDENTITY_PROVIDER, id, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
 			return err
 		}
-		result, err = providerProto(provider)
-		return err
+		result = providerProto(provider)
+		return nil
 	})
 	if err != nil {
 		if store.IsConflict(err) {
@@ -300,10 +294,7 @@ func (service *Service) GetIdentityProvider(ctx context.Context, request *connec
 		}
 		return nil, service.internal("get identity provider", err)
 	}
-	result, err := providerProto(provider)
-	if err != nil {
-		return nil, service.internal("map identity provider", err)
-	}
+	result := providerProto(provider)
 	return connect.NewResponse(&cadestrov1.GetIdentityProviderResponse{Provider: result}), nil
 }
 
@@ -314,11 +305,7 @@ func (service *Service) ListIdentityProviders(ctx context.Context, _ *connect.Re
 	}
 	response := &cadestrov1.ListIdentityProvidersResponse{}
 	for _, provider := range providers {
-		mapped, err := providerProto(provider)
-		if err != nil {
-			return nil, service.internal("map identity provider", err)
-		}
-		response.Providers = append(response.Providers, mapped)
+		response.Providers = append(response.Providers, providerProto(provider))
 	}
 	return connect.NewResponse(response), nil
 }
@@ -332,11 +319,7 @@ func (service *Service) RenameIdentityProvider(ctx context.Context, request *con
 		}
 		return nil, service.internal("rename identity provider", err)
 	}
-	mapped, err := providerProto(provider)
-	if err != nil {
-		return nil, service.internal("map identity provider", err)
-	}
-	return connect.NewResponse(&cadestrov1.RenameIdentityProviderResponse{Provider: mapped}), nil
+	return connect.NewResponse(&cadestrov1.RenameIdentityProviderResponse{Provider: providerProto(provider)}), nil
 }
 
 func (service *Service) ConfigureIdentityProvider(ctx context.Context, request *connect.Request[cadestrov1.ConfigureIdentityProviderRequest]) (*connect.Response[cadestrov1.ConfigureIdentityProviderResponse], error) {
@@ -351,23 +334,18 @@ func (service *Service) ConfigureIdentityProvider(ctx context.Context, request *
 	if _, err := service.newOIDCProvider(ctx, request.Msg.GetClientId().GetValue(), request.Msg.GetIssuerUrl(), request.Msg.GetScopes(), service.publicBaseURL); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("identity provider discovery failed"))
 	}
-	scopes, err := json.Marshal(request.Msg.GetScopes())
-	if err != nil {
-		return nil, service.internal("encode provider scopes", err)
-	}
 	provider, err := service.store.Queries().ConfigureIdentityProvider(ctx, db.ConfigureIdentityProviderParams{
 		ClientID:  request.Msg.GetClientId().GetValue(),
-		IssuerUrl: request.Msg.GetIssuerUrl(), ScopesJson: string(scopes),
+		IssuerUrl: request.Msg.GetIssuerUrl(), ScopesJson: idp.Scopes(request.Msg.GetScopes()),
 		ID: id,
 	})
 	if err != nil {
+		if store.IsNotFound(err) {
+			return nil, rpcNotFound("identity provider")
+		}
 		return nil, service.internal("configure identity provider", err)
 	}
-	mapped, err := providerProto(provider)
-	if err != nil {
-		return nil, service.internal("map identity provider", err)
-	}
-	return connect.NewResponse(&cadestrov1.ConfigureIdentityProviderResponse{Provider: mapped}), nil
+	return connect.NewResponse(&cadestrov1.ConfigureIdentityProviderResponse{Provider: providerProto(provider)}), nil
 }
 
 func (service *Service) EnableIdentityProvider(ctx context.Context, request *connect.Request[cadestrov1.EnableIdentityProviderRequest]) (*connect.Response[cadestrov1.EnableIdentityProviderResponse], error) {
@@ -379,11 +357,7 @@ func (service *Service) EnableIdentityProvider(ctx context.Context, request *con
 		}
 		return nil, service.internal("get provider for enable", err)
 	}
-	var scopes []string
-	if err := json.Unmarshal([]byte(current.ScopesJson), &scopes); err != nil {
-		return nil, service.internal("decode provider scopes", err)
-	}
-	if _, err := service.newOIDCProvider(ctx, current.ClientID, current.IssuerUrl, scopes, service.publicBaseURL); err != nil {
+	if _, err := service.newOIDCProvider(ctx, current.ClientID, current.IssuerUrl, current.ScopesJson, service.publicBaseURL); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("identity provider discovery failed"))
 	}
 	provider, err := service.store.Queries().EnableIdentityProvider(ctx, id)
@@ -393,11 +367,7 @@ func (service *Service) EnableIdentityProvider(ctx context.Context, request *con
 		}
 		return nil, service.internal("enable identity provider", err)
 	}
-	mapped, err := providerProto(provider)
-	if err != nil {
-		return nil, service.internal("map identity provider", err)
-	}
-	return connect.NewResponse(&cadestrov1.EnableIdentityProviderResponse{Provider: mapped}), nil
+	return connect.NewResponse(&cadestrov1.EnableIdentityProviderResponse{Provider: providerProto(provider)}), nil
 }
 
 func (service *Service) DisableIdentityProvider(ctx context.Context, request *connect.Request[cadestrov1.DisableIdentityProviderRequest]) (*connect.Response[cadestrov1.DisableIdentityProviderResponse], error) {
@@ -408,37 +378,45 @@ func (service *Service) DisableIdentityProvider(ctx context.Context, request *co
 		}
 		return nil, service.internal("disable identity provider", err)
 	}
-	mapped, err := providerProto(provider)
-	if err != nil {
-		return nil, service.internal("map identity provider", err)
-	}
-	return connect.NewResponse(&cadestrov1.DisableIdentityProviderResponse{Provider: mapped}), nil
+	return connect.NewResponse(&cadestrov1.DisableIdentityProviderResponse{Provider: providerProto(provider)}), nil
 }
 
 func (service *Service) DeleteIdentityProvider(ctx context.Context, request *connect.Request[cadestrov1.DeleteIdentityProviderRequest]) (*connect.Response[cadestrov1.DeleteIdentityProviderResponse], error) {
-	count, err := service.store.Queries().CountIdentityProviders(ctx)
+	id := request.Msg.GetId().GetValue()
+	err := service.store.Transaction(ctx, func(queries *db.Queries) error {
+		if _, err := queries.GetIdentityProvider(ctx, id); err != nil {
+			return err
+		}
+		count, err := queries.CountIdentityProviders(ctx)
+		if err != nil {
+			return err
+		}
+		if count <= 1 {
+			return errLastIdentityProvider
+		}
+		rows, err := queries.DeleteIdentityProvider(ctx, id)
+		if err != nil {
+			return err
+		}
+		if rows != 1 {
+			return sql.ErrNoRows
+		}
+		return nil
+	})
 	if err != nil {
-		return nil, service.internal("count identity providers", err)
-	}
-	if count <= 1 {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("cannot delete the last identity provider"))
-	}
-	rows, err := service.store.Queries().DeleteIdentityProvider(ctx, request.Msg.GetId().GetValue())
-	if err != nil {
+		if store.IsNotFound(err) {
+			return nil, rpcNotFound("identity provider")
+		}
+		if errors.Is(err, errLastIdentityProvider) {
+			return nil, connect.NewError(connect.CodeFailedPrecondition, errLastIdentityProvider)
+		}
 		return nil, service.internal("delete identity provider", err)
-	}
-	if rows != 1 {
-		return nil, rpcNotFound("identity provider")
 	}
 	return connect.NewResponse(&cadestrov1.DeleteIdentityProviderResponse{}), nil
 }
 
 func (service *Service) providerClient(ctx context.Context, provider *db.IdentityProvider, redirectURL string) (*idp.OIDCProvider, error) {
-	var scopes []string
-	if err := json.Unmarshal([]byte(provider.ScopesJson), &scopes); err != nil {
-		return nil, err
-	}
-	return service.newOIDCProvider(ctx, provider.ClientID, provider.IssuerUrl, scopes, redirectURL)
+	return service.newOIDCProvider(ctx, provider.ClientID, provider.IssuerUrl, provider.ScopesJson, redirectURL)
 }
 
 func (service *Service) newOIDCProvider(ctx context.Context, clientID, issuerURL string, scopes []string, redirectURL string) (*idp.OIDCProvider, error) {

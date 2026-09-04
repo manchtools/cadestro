@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -112,16 +111,12 @@ func (service *Service) audit(ctx context.Context, queries *db.Queries, eventTyp
 	})
 }
 
-func providerProto(provider *db.IdentityProvider) (*cadestrov1.IdentityProvider, error) {
-	var scopes []string
-	if err := json.Unmarshal([]byte(provider.ScopesJson), &scopes); err != nil {
-		return nil, fmt.Errorf("decode provider scopes: %w", err)
-	}
+func providerProto(provider *db.IdentityProvider) *cadestrov1.IdentityProvider {
 	return &cadestrov1.IdentityProvider{
 		Id: &cadestrov1.IdentityProviderId{Value: provider.ID}, Name: provider.Name, Slug: provider.Slug,
 		Enabled: provider.Enabled, ClientId: &cadestrov1.OidcClientId{Value: provider.ClientID},
-		IssuerUrl: provider.IssuerUrl, Scopes: scopes, CreatedAt: timestamppb.New(provider.CreatedAt), UpdatedAt: timestamppb.New(provider.UpdatedAt),
-	}, nil
+		IssuerUrl: provider.IssuerUrl, Scopes: provider.ScopesJson, CreatedAt: timestamppb.New(provider.CreatedAt), UpdatedAt: timestamppb.New(provider.UpdatedAt),
+	}
 }
 
 func registrationTokenProto(token *db.RegistrationToken) *cadestrov1.RegistrationToken {

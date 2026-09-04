@@ -141,7 +141,7 @@ func TestRoleMutationsRotateAffectedSessions(t *testing.T) {
 func TestEnableIdentityProviderValidatesBeforeMutation(t *testing.T) {
 	service, ctx, _, _ := testService(t)
 	provider, err := service.store.Queries().CreateIdentityProvider(ctx, db.CreateIdentityProviderParams{
-		ID: "01K00000000000000000000010", Name: "SSO", Slug: "sso", ClientID: "client", IssuerUrl: "://invalid", ScopesJson: "[]",
+		ID: "01K00000000000000000000010", Name: "SSO", Slug: "sso", ClientID: "client", IssuerUrl: "://invalid", ScopesJson: idp.Scopes{},
 	})
 	require.NoError(t, err)
 	require.False(t, provider.Enabled)
@@ -154,7 +154,7 @@ func TestEnableIdentityProviderValidatesBeforeMutation(t *testing.T) {
 
 func TestOIDCUsersReceiveSeedRolesByCreationOrder(t *testing.T) {
 	service, ctx, _, _ := testService(t)
-	_, err := service.store.Queries().CreateIdentityProvider(ctx, db.CreateIdentityProviderParams{ID: "01K00000000000000000000010", Name: "SSO", Slug: "sso", Enabled: true, ClientID: "client", IssuerUrl: "https://issuer.example", ScopesJson: "[]"})
+	_, err := service.store.Queries().CreateIdentityProvider(ctx, db.CreateIdentityProviderParams{ID: "01K00000000000000000000010", Name: "SSO", Slug: "sso", Enabled: true, ClientID: "client", IssuerUrl: "https://issuer.example", ScopesJson: idp.Scopes{}})
 	require.NoError(t, err)
 	first, err := service.linkIdentity(ctx, "01K00000000000000000000010", &idp.UserClaims{Subject: "first", Email: "first@example.com", Name: "First"})
 	require.NoError(t, err)
@@ -177,7 +177,7 @@ func TestOIDCUsersSucceedWithoutDeletedSeedRoles(t *testing.T) {
 	require.NoError(t, err)
 	_, err = service.DeleteRole(ctx, connect.NewRequest(&cadestrov1.DeleteRoleRequest{Id: &cadestrov1.RoleId{Value: usersRoleID}}))
 	require.NoError(t, err)
-	_, err = service.store.Queries().CreateIdentityProvider(ctx, db.CreateIdentityProviderParams{ID: "01K00000000000000000000010", Name: "SSO", Slug: "sso", Enabled: true, ClientID: "client", IssuerUrl: "https://issuer.example", ScopesJson: "[]"})
+	_, err = service.store.Queries().CreateIdentityProvider(ctx, db.CreateIdentityProviderParams{ID: "01K00000000000000000000010", Name: "SSO", Slug: "sso", Enabled: true, ClientID: "client", IssuerUrl: "https://issuer.example", ScopesJson: idp.Scopes{}})
 	require.NoError(t, err)
 	first, err := service.linkIdentity(ctx, "01K00000000000000000000010", &idp.UserClaims{Subject: "first", Email: "first@example.com", Name: "First"})
 	require.NoError(t, err)
