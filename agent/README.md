@@ -10,7 +10,7 @@ Supported actions:
 - install or remove one native package;
 - refresh metadata and perform a full system update;
 - run a bounded, non-interactive root shell script;
-- run a detection-only shell script and report compliance.
+- run a detection-only shell script and report the detection result.
 
 The agent has no inbound network listener. Initial enrollment is driven through
 its owner-only local Unix socket with a one-time registration token and an
