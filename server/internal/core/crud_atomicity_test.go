@@ -8,6 +8,7 @@ import (
 	"crypto/x509/pkix"
 	"database/sql"
 	"encoding/pem"
+	"sync"
 	"testing"
 	"time"
 
@@ -111,18 +112,88 @@ func TestRenameActionRollsBackWhenResponseProjectionFails(t *testing.T) {
 	require.Empty(t, events)
 }
 
-func TestRenewCertificateReturnsExistingPendingCertificate(t *testing.T) {
+func TestConcurrentRenewCertificateKeepsSinglePendingCertificate(t *testing.T) {
 	service, ctx, now, _ := testService(t)
 	service.ca = testEnrollmentCA(t, now)
 	deviceID := "01K00000000000000000000093"
 	csr, peer := renewalIdentity(t, service, deviceID, now)
-	ctx = mtls.WithPeerCertificate(mtls.WithDeviceID(ctx, deviceID), peer)
-	first, err := service.RenewCertificate(ctx, connect.NewRequest(&cadestrov1.RenewCertificateRequest{Csr: csr}))
+	runCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	runCtx = mtls.WithPeerCertificate(mtls.WithDeviceID(runCtx, deviceID), peer)
+	entered := make(chan struct{}, 2)
+	release := make(chan struct{})
+	var releaseOnce sync.Once
+	releaseCalls := func() { releaseOnce.Do(func() { close(release) }) }
+	workersDone := make(chan struct{})
+	var workers sync.WaitGroup
+	workers.Add(2)
+	t.Cleanup(func() {
+		releaseCalls()
+		cancel()
+		select {
+		case <-workersDone:
+		case <-time.After(time.Second):
+			t.Error("certificate renewal workers did not stop")
+		}
+	})
+	ca.WithClock(func() time.Time {
+		select {
+		case entered <- struct{}{}:
+		case <-runCtx.Done():
+			return now
+		}
+		select {
+		case <-release:
+		case <-runCtx.Done():
+		}
+		return now
+	})(service.ca)
+
+	type renewalOutcome struct {
+		response *connect.Response[cadestrov1.RenewCertificateResponse]
+		err      error
+	}
+	outcomes := make(chan renewalOutcome, 2)
+	for range 2 {
+		go func() {
+			defer workers.Done()
+			response, err := service.RenewCertificate(runCtx, connect.NewRequest(&cadestrov1.RenewCertificateRequest{Csr: csr}))
+			outcomes <- renewalOutcome{response: response, err: err}
+		}()
+	}
+	go func() {
+		workers.Wait()
+		close(workersDone)
+	}()
+	for range 2 {
+		select {
+		case <-entered:
+		case <-runCtx.Done():
+			t.Fatal("certificate renewal calls did not reach the signing barrier")
+		}
+	}
+	releaseCalls()
+
+	certificates := make([][]byte, 0, 3)
+	for range 2 {
+		select {
+		case outcome := <-outcomes:
+			if outcome.err != nil {
+				require.Equal(t, connect.CodeInternal, connect.CodeOf(outcome.err))
+				continue
+			}
+			certificates = append(certificates, outcome.response.Msg.GetCertificate())
+		case <-runCtx.Done():
+			t.Fatal("certificate renewal calls did not finish")
+		}
+	}
+	require.NotEmpty(t, certificates)
+	retry, err := service.RenewCertificate(runCtx, connect.NewRequest(&cadestrov1.RenewCertificateRequest{Csr: csr}))
 	require.NoError(t, err)
-	second, err := service.RenewCertificate(ctx, connect.NewRequest(&cadestrov1.RenewCertificateRequest{Csr: csr}))
-	require.NoError(t, err)
-	require.Equal(t, first.Msg.GetCertificate(), second.Msg.GetCertificate())
-	events, err := service.store.Queries().ListAuditEvents(ctx, db.ListAuditEventsParams{ID: "~", Limit: 10})
+	certificates = append(certificates, retry.Msg.GetCertificate())
+	for _, certificate := range certificates[1:] {
+		require.Equal(t, certificates[0], certificate)
+	}
+	events, err := service.store.Queries().ListAuditEvents(runCtx, db.ListAuditEventsParams{ID: "~", Limit: 10})
 	require.NoError(t, err)
 	require.Len(t, events, 1)
 }
