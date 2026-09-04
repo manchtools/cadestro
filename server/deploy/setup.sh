@@ -52,28 +52,35 @@ validate_key_pair() {
     cmp -s <(openssl x509 -in "$certificate" -pubkey -noout | openssl pkey -pubin -outform DER 2>/dev/null) <(openssl pkey -in "$key" -pubout -outform DER 2>/dev/null) || fail "$certificate and $key do not match"
 }
 
+validate_ca() {
+    validate_key_pair "$CERTS_DIR/ca.crt" "$CERTS_DIR/ca.key"
+    openssl verify -CAfile "$CERTS_DIR/ca.crt" -check_ss_sig "$CERTS_DIR/ca.crt" >/dev/null || fail "CA certificate is not a valid current self-signed CA"
+}
+
 ensure_ca() {
-    if [[ -f "$CERTS_DIR/ca.crt" && -f "$CERTS_DIR/ca.key" ]]; then
-        validate_key_pair "$CERTS_DIR/ca.crt" "$CERTS_DIR/ca.key"
-        return
+    if [[ ! -f "$CERTS_DIR/ca.crt" || ! -f "$CERTS_DIR/ca.key" ]]; then
+        [[ ! -e "$CERTS_DIR/ca.crt" && ! -e "$CERTS_DIR/ca.key" ]] || fail "CA certificate and key must both exist"
+        openssl genpkey -algorithm Ed25519 -out "$CERTS_DIR/ca.key"
+        openssl req -new -x509 -key "$CERTS_DIR/ca.key" -days 3650 -subj "/CN=Cadestro Internal CA/O=Cadestro" -addext "basicConstraints=critical,CA:TRUE" -addext "keyUsage=critical,keyCertSign,cRLSign" -out "$CERTS_DIR/ca.crt"
     fi
-    [[ ! -e "$CERTS_DIR/ca.crt" && ! -e "$CERTS_DIR/ca.key" ]] || fail "CA certificate and key must both exist"
-    openssl genpkey -algorithm Ed25519 -out "$CERTS_DIR/ca.key"
-    openssl req -new -x509 -key "$CERTS_DIR/ca.key" -days 3650 -subj "/CN=Cadestro Internal CA/O=Cadestro" -addext "basicConstraints=critical,CA:TRUE" -addext "keyUsage=critical,keyCertSign,cRLSign" -out "$CERTS_DIR/ca.crt"
+    validate_ca
+}
+
+validate_control_certificate() {
+    validate_key_pair "$CERTS_DIR/control.crt" "$CERTS_DIR/control.key"
+    openssl verify -CAfile "$CERTS_DIR/ca.crt" -purpose sslserver -verify_hostname "$AGENT_DOMAIN" "$CERTS_DIR/control.crt" >/dev/null || fail "control certificate is invalid for the current CA, purpose, hostname, or time"
 }
 
 ensure_control_certificate() {
-    if [[ -f "$CERTS_DIR/control.crt" && -f "$CERTS_DIR/control.key" ]]; then
-        validate_key_pair "$CERTS_DIR/control.crt" "$CERTS_DIR/control.key"
-        openssl x509 -in "$CERTS_DIR/control.crt" -checkhost "$AGENT_DOMAIN" -noout >/dev/null || fail "control certificate does not cover AGENT_DOMAIN"
-        return
+    if [[ ! -f "$CERTS_DIR/control.crt" || ! -f "$CERTS_DIR/control.key" ]]; then
+        [[ ! -e "$CERTS_DIR/control.crt" && ! -e "$CERTS_DIR/control.key" ]] || fail "control certificate and key must both exist"
+        local csr="$CERTS_DIR/control.csr"
+        openssl genpkey -algorithm Ed25519 -out "$CERTS_DIR/control.key"
+        openssl req -new -key "$CERTS_DIR/control.key" -subj "/CN=$AGENT_DOMAIN/O=Cadestro" -out "$csr"
+        openssl x509 -req -in "$csr" -CA "$CERTS_DIR/ca.crt" -CAkey "$CERTS_DIR/ca.key" -CAcreateserial -days 825 -extfile <(printf 'subjectAltName=DNS:%s,DNS:control,DNS:localhost\nextendedKeyUsage=serverAuth\nkeyUsage=digitalSignature\n' "$AGENT_DOMAIN") -out "$CERTS_DIR/control.crt"
+        rm -f "$csr"
     fi
-    [[ ! -e "$CERTS_DIR/control.crt" && ! -e "$CERTS_DIR/control.key" ]] || fail "control certificate and key must both exist"
-    local csr="$CERTS_DIR/control.csr"
-    openssl genpkey -algorithm Ed25519 -out "$CERTS_DIR/control.key"
-    openssl req -new -key "$CERTS_DIR/control.key" -subj "/CN=$AGENT_DOMAIN/O=Cadestro" -out "$csr"
-    openssl x509 -req -in "$csr" -CA "$CERTS_DIR/ca.crt" -CAkey "$CERTS_DIR/ca.key" -CAcreateserial -days 825 -extfile <(printf 'subjectAltName=DNS:%s,DNS:control,DNS:localhost\nextendedKeyUsage=serverAuth\nkeyUsage=digitalSignature\n' "$AGENT_DOMAIN") -out "$CERTS_DIR/control.crt"
-    rm -f "$csr"
+    validate_control_certificate
 }
 
 ensure_secrets() {
