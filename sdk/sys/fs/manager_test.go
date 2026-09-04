@@ -301,6 +301,15 @@ func TestExists(t *testing.T) {
 			t.Fatalf("err = %v, want the runner error, not a silent 'absent'", err)
 		}
 	})
+	t.Run("probe failure fails closed", func(t *testing.T) {
+		f := exectest.New(sysexec.Sudo)
+		f.Push(sysexec.Result{ExitCode: 2, Stderr: "test: invalid expression"}, nil)
+		ok, err := mustManager(t, f).Exists(context.Background(), "/x")
+		var commandErr *sysexec.CommandError
+		if ok || !errors.As(err, &commandErr) || commandErr.ExitCode != 2 {
+			t.Fatalf("Exists = (%v,%v), want (false,*exec.CommandError with exit 2)", ok, err)
+		}
+	})
 	t.Run("invalid path", func(t *testing.T) {
 		if _, err := mustManager(t, exectest.New(sysexec.Sudo)).Exists(context.Background(), "-rf"); !errors.Is(err, ErrInvalidPath) {
 			t.Fatalf("err = %v, want ErrInvalidPath", err)

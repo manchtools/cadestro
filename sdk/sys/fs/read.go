@@ -79,5 +79,12 @@ func (m *Manager) Exists(ctx context.Context, path string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return res.ExitCode == 0, nil
+	switch res.ExitCode {
+	case 0:
+		return true, nil
+	case 1:
+		return false, nil
+	default:
+		return false, cmdError("test", res)
+	}
 }

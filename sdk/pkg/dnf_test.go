@@ -275,6 +275,44 @@ func TestDnf_Search(t *testing.T) {
 	})
 }
 
+func TestDnf_DottedPackageNames(t *testing.T) {
+	backends := []struct {
+		name    string
+		manager func(*testing.T) (Manager, *exectest.FakeRunner)
+	}{
+		{name: "dnf", manager: dnfM},
+		{name: "dnf5", manager: dnf5M},
+	}
+	for _, backend := range backends {
+		t.Run(backend.name+" search", func(t *testing.T) {
+			m, f := backend.manager(t)
+			ok(f, "containerd.io.x86_64 : OCI container runtime\n")
+			results, err := m.Search(context.Background(), "containerd")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(results) != 1 || results[0].Name != "containerd.io" {
+				t.Fatalf("results = %+v, want package name containerd.io", results)
+			}
+		})
+		t.Run(backend.name+" list upgradable", func(t *testing.T) {
+			m, f := backend.manager(t)
+			f.Push(sysexec.Result{ExitCode: 100, Stdout: "containerd.io.x86_64 2.3.4-2.fc44 updates\n"}, nil)
+			ok(f, "2.3.3-1.fc44\n")
+			updates, err := m.ListUpgradable(context.Background())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(updates) != 1 || updates[0].Name != "containerd.io" || updates[0].Architecture != "x86_64" {
+				t.Fatalf("updates = %+v, want package name containerd.io and architecture x86_64", updates)
+			}
+			if got := argv(f.Calls()[1]); got != "rpm -q --queryformat %{VERSION}-%{RELEASE} containerd.io" {
+				t.Fatalf("installed-version argv = %q", got)
+			}
+		})
+	}
+}
+
 func TestDnf_List(t *testing.T) {
 	t.Run("parses rpm query", func(t *testing.T) {
 		m, f := dnfM(t)

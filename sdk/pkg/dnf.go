@@ -28,6 +28,14 @@ func parseNEVRAName(nevra string) string {
 	return nevra[:loc[0]]
 }
 
+func splitRPMNameArch(value string) (string, string) {
+	index := strings.LastIndexByte(value, '.')
+	if index < 0 {
+		return value, ""
+	}
+	return value[:index], value[index+1:]
+}
+
 func (d *dnf) Backend() Backend {
 	if d.command == "dnf5" {
 		return Dnf5
@@ -205,7 +213,7 @@ func (d *dnf) Search(ctx context.Context, query string) ([]SearchResult, error) 
 		if len(parts) < 2 {
 			continue
 		}
-		name := strings.SplitN(parts[0], ".", 2)[0]
+		name, _ := splitRPMNameArch(parts[0])
 		results = append(results, SearchResult{
 			Name:        name,
 			Description: strings.TrimSpace(parts[1]),
@@ -264,12 +272,7 @@ func (d *dnf) ListUpgradable(ctx context.Context) ([]PackageUpdate, error) {
 		if len(fields) < 3 {
 			continue
 		}
-		nameParts := strings.Split(fields[0], ".")
-		name := nameParts[0]
-		arch := ""
-		if len(nameParts) > 1 {
-			arch = nameParts[len(nameParts)-1]
-		}
+		name, arch := splitRPMNameArch(fields[0])
 		current, err := d.InstalledVersion(ctx, name)
 		if err != nil {
 			return nil, err
