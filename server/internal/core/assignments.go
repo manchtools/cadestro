@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
@@ -171,11 +173,32 @@ func (service *Service) GetDeviceCompliance(ctx context.Context, request *connec
 }
 
 func (service *Service) ListExecutionResults(ctx context.Context, request *connect.Request[cadestrov1.ListExecutionResultsRequest]) (*connect.Response[cadestrov1.ListExecutionResultsResponse], error) {
-	results, err := service.store.Queries().ListExecutionResults(ctx, db.ListExecutionResultsParams{DeviceID: request.Msg.GetDeviceId().GetValue(), Limit: pageSize(request.Msg.GetPageSize())})
+	deviceID := request.Msg.GetDeviceId().GetValue()
+	if _, err := service.store.Queries().GetDevice(ctx, deviceID); err != nil {
+		if store.IsNotFound(err) {
+			return nil, rpcNotFound("device")
+		}
+		return nil, service.internal("get execution result device", err)
+	}
+	completedBefore, runBefore, err := parseExecutionPageToken(request.Msg.GetPageToken())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid execution results page token"))
+	}
+	var hasCursor int64
+	if request.Msg.GetPageToken() != "" {
+		hasCursor = 1
+	}
+	limit := pageSize(request.Msg.GetPageSize())
+	results, err := service.store.Queries().ListExecutionResults(ctx, db.ListExecutionResultsParams{
+		DeviceID: deviceID, HasCursor: hasCursor, BeforeCompletedAt: completedBefore, BeforeRunID: runBefore, PageLimit: limit + 1,
+	})
 	if err != nil {
 		return nil, service.internal("list execution results", err)
 	}
-	response := &cadestrov1.ListExecutionResultsResponse{}
+	results, next := paginate(results, limit, func(result *db.ListExecutionResultsRow) string {
+		return executionPageToken(result.CompletedAt, result.RunID)
+	})
+	response := &cadestrov1.ListExecutionResultsResponse{NextPageToken: next}
 	for _, result := range results {
 		payload, err := executionResultProto(result.RunID, result.ActionID, result.CompletedAt, result.ResultBlob)
 		if err != nil {
@@ -196,6 +219,33 @@ func (service *Service) ListExecutionResults(ctx context.Context, request *conne
 		})
 	}
 	return connect.NewResponse(response), nil
+}
+
+func executionPageToken(completedAt time.Time, runID string) string {
+	value := completedAt.UTC().Format(time.RFC3339Nano) + "\n" + runID
+	return base64.RawURLEncoding.EncodeToString([]byte(value))
+}
+
+func parseExecutionPageToken(value string) (time.Time, string, error) {
+	if value == "" {
+		return time.Time{}, "", nil
+	}
+	decoded, err := base64.RawURLEncoding.DecodeString(value)
+	if err != nil {
+		return time.Time{}, "", err
+	}
+	parts := strings.SplitN(string(decoded), "\n", 2)
+	if len(parts) != 2 {
+		return time.Time{}, "", errors.New("page token fields are missing")
+	}
+	completedAt, err := time.Parse(time.RFC3339Nano, parts[0])
+	if err != nil {
+		return time.Time{}, "", err
+	}
+	if _, err := ulid.ParseStrict(parts[1]); err != nil {
+		return time.Time{}, "", err
+	}
+	return completedAt.UTC(), parts[1], nil
 }
 
 func executionResultProto(runID, actionID string, completedAt time.Time, resultBlob []byte) (*cadestrov1.ActionResult, error) {
@@ -297,11 +347,12 @@ func (service *Service) ListAuditEvents(ctx context.Context, request *connect.Re
 		before = "~"
 	}
 	limit := pageSize(request.Msg.GetPageSize())
-	events, err := service.store.Queries().ListAuditEvents(ctx, db.ListAuditEventsParams{ID: before, Limit: limit})
+	events, err := service.store.Queries().ListAuditEvents(ctx, db.ListAuditEventsParams{ID: before, Limit: limit + 1})
 	if err != nil {
 		return nil, service.internal("list audit events", err)
 	}
-	response := &cadestrov1.ListAuditEventsResponse{NextPageToken: nextPageToken(events, limit, func(event *db.AuditEvent) string { return event.ID })}
+	events, next := paginate(events, limit, func(event *db.AuditEvent) string { return event.ID })
+	response := &cadestrov1.ListAuditEventsResponse{NextPageToken: next}
 	for _, event := range events {
 		response.Events = append(response.Events, &cadestrov1.AuditEvent{
 			Id: &cadestrov1.AuditEventId{Value: event.ID}, EventType: event.EventType, StreamType: event.StreamType,

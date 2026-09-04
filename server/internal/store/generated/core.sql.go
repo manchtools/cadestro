@@ -1492,12 +1492,20 @@ func (q *Queries) ListEnabledIdentityProviders(ctx context.Context) ([]*Identity
 const listExecutionResults = `-- name: ListExecutionResults :many
 SELECT execution_results.run_id, execution_results.device_id, execution_results.action_id, execution_results.completed_at, execution_results.result_blob, actions.name AS action_name, actions.action_blob FROM execution_results
 JOIN actions ON actions.id = execution_results.action_id
-WHERE execution_results.device_id = ? ORDER BY execution_results.completed_at DESC, execution_results.run_id DESC LIMIT ?
+WHERE execution_results.device_id = ?1
+  AND (CAST(?2 AS INTEGER) = 0
+    OR execution_results.completed_at < ?3
+    OR (execution_results.completed_at = ?3 AND execution_results.run_id < ?4))
+ORDER BY execution_results.completed_at DESC, execution_results.run_id DESC
+LIMIT ?5
 `
 
 type ListExecutionResultsParams struct {
-	DeviceID string `json:"device_id"`
-	Limit    int64  `json:"limit"`
+	DeviceID          string    `json:"device_id"`
+	HasCursor         int64     `json:"has_cursor"`
+	BeforeCompletedAt time.Time `json:"before_completed_at"`
+	BeforeRunID       string    `json:"before_run_id"`
+	PageLimit         int64     `json:"page_limit"`
 }
 
 type ListExecutionResultsRow struct {
@@ -1511,7 +1519,13 @@ type ListExecutionResultsRow struct {
 }
 
 func (q *Queries) ListExecutionResults(ctx context.Context, arg ListExecutionResultsParams) ([]*ListExecutionResultsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listExecutionResults, arg.DeviceID, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, listExecutionResults,
+		arg.DeviceID,
+		arg.HasCursor,
+		arg.BeforeCompletedAt,
+		arg.BeforeRunID,
+		arg.PageLimit,
+	)
 	if err != nil {
 		return nil, err
 	}

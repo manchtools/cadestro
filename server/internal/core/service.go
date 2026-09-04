@@ -87,11 +87,12 @@ func pageSize(requested int32) int64 {
 	return int64(requested)
 }
 
-func nextPageToken[T any](rows []T, limit int64, id func(T) string) string {
-	if int64(len(rows)) < limit || len(rows) == 0 {
-		return ""
+func paginate[T any](rows []T, limit int64, cursor func(T) string) ([]T, string) {
+	if int64(len(rows)) <= limit {
+		return rows, ""
 	}
-	return id(rows[len(rows)-1])
+	rows = rows[:limit]
+	return rows, cursor(rows[len(rows)-1])
 }
 
 func auditActor(ctx context.Context) string {

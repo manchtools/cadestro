@@ -75,11 +75,12 @@ func (service *Service) GetRole(ctx context.Context, request *connect.Request[ca
 
 func (service *Service) ListRoles(ctx context.Context, request *connect.Request[cadestrov1.ListRolesRequest]) (*connect.Response[cadestrov1.ListRolesResponse], error) {
 	limit := pageSize(request.Msg.GetPageSize())
-	roles, err := service.store.Queries().ListRoles(ctx, db.ListRolesParams{ID: request.Msg.GetPageToken(), Limit: limit})
+	roles, err := service.store.Queries().ListRoles(ctx, db.ListRolesParams{ID: request.Msg.GetPageToken(), Limit: limit + 1})
 	if err != nil {
 		return nil, service.internal("list roles", err)
 	}
-	response := &cadestrov1.ListRolesResponse{NextPageToken: nextPageToken(roles, limit, func(role *db.Role) string { return role.ID })}
+	roles, next := paginate(roles, limit, func(role *db.Role) string { return role.ID })
+	response := &cadestrov1.ListRolesResponse{NextPageToken: next}
 	for _, role := range roles {
 		value, err := roleProto(ctx, service.store.Queries(), role)
 		if err != nil {
@@ -241,11 +242,13 @@ func (service *Service) ListPermissions(context.Context, *connect.Request[cadest
 }
 
 func (service *Service) ListUsers(ctx context.Context, request *connect.Request[cadestrov1.ListUsersRequest]) (*connect.Response[cadestrov1.ListUsersResponse], error) {
-	users, err := service.store.Queries().ListUsers(ctx, db.ListUsersParams{ID: request.Msg.GetPageToken(), Limit: pageSize(request.Msg.GetPageSize())})
+	limit := pageSize(request.Msg.GetPageSize())
+	users, err := service.store.Queries().ListUsers(ctx, db.ListUsersParams{ID: request.Msg.GetPageToken(), Limit: limit + 1})
 	if err != nil {
 		return nil, service.internal("list users", err)
 	}
-	response := &cadestrov1.ListUsersResponse{NextPageToken: nextPageToken(users, pageSize(request.Msg.GetPageSize()), func(user *db.User) string { return user.ID })}
+	users, next := paginate(users, limit, func(user *db.User) string { return user.ID })
+	response := &cadestrov1.ListUsersResponse{NextPageToken: next}
 	for _, user := range users {
 		value, err := service.userProto(ctx, user)
 		if err != nil {

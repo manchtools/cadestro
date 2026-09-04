@@ -161,7 +161,7 @@ func (service *Service) GetAction(ctx context.Context, request *connect.Request[
 
 func (service *Service) ListActions(ctx context.Context, request *connect.Request[cadestrov1.ListActionsRequest]) (*connect.Response[cadestrov1.ListActionsResponse], error) {
 	limit := pageSize(request.Msg.GetPageSize())
-	actions, err := service.store.Queries().ListActions(ctx, db.ListActionsParams{AfterID: request.Msg.GetPageToken(), PageLimit: limit})
+	actions, err := service.store.Queries().ListActions(ctx, db.ListActionsParams{AfterID: request.Msg.GetPageToken(), PageLimit: limit + 1})
 	if err != nil {
 		return nil, service.internal("list actions", err)
 	}
@@ -169,7 +169,8 @@ func (service *Service) ListActions(ctx context.Context, request *connect.Reques
 	if err != nil {
 		return nil, service.internal("count actions", err)
 	}
-	response := &cadestrov1.ListActionsResponse{TotalCount: int32(total), NextPageToken: nextPageToken(actions, limit, func(action *db.Action) string { return action.ID })}
+	actions, next := paginate(actions, limit, func(action *db.Action) string { return action.ID })
+	response := &cadestrov1.ListActionsResponse{TotalCount: int32(total), NextPageToken: next}
 	for _, action := range actions {
 		mapped, err := actionProto(action)
 		if err != nil {

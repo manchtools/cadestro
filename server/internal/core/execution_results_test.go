@@ -65,7 +65,7 @@ func TestExecutionResultPersistsPayloadAndDuplicateIsIdempotent(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, service.storeActionResult(ctx, deviceID, proto.CloneOf(result)))
 	require.ErrorIs(t, service.storeActionResult(ctx, deviceID, resultForAction(t, action, "01K00000000000000000000005", now, 0)), errResultRejected)
-	rows, err := service.store.Queries().ListExecutionResults(ctx, db.ListExecutionResultsParams{DeviceID: deviceID, Limit: 10})
+	rows, err := service.store.Queries().ListExecutionResults(ctx, db.ListExecutionResultsParams{DeviceID: deviceID, PageLimit: 10})
 	require.NoError(t, err)
 	require.Len(t, rows, 1)
 	stored := &cadestrov1.ActionResult{}

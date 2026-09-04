@@ -160,7 +160,8 @@ CREATE TABLE execution_results (
     FOREIGN KEY (action_id) REFERENCES actions(id) ON DELETE CASCADE
 );
 
-CREATE INDEX execution_results_device_time ON execution_results(device_id, completed_at DESC);
+CREATE INDEX execution_results_device_completed ON execution_results(device_id, completed_at DESC, run_id DESC);
+CREATE INDEX execution_results_device_action_completed ON execution_results(device_id, action_id, completed_at DESC, run_id DESC);
 
 CREATE TABLE audit_events (
     id TEXT PRIMARY KEY,

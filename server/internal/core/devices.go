@@ -43,7 +43,7 @@ func (service *Service) deviceProto(ctx context.Context, device *db.Device) (*ca
 
 func (service *Service) ListDevices(ctx context.Context, request *connect.Request[cadestrov1.ListDevicesRequest]) (*connect.Response[cadestrov1.ListDevicesResponse], error) {
 	limit := pageSize(request.Msg.GetPageSize())
-	devices, err := service.store.Queries().ListDevices(ctx, db.ListDevicesParams{ID: request.Msg.GetPageToken(), Limit: limit})
+	devices, err := service.store.Queries().ListDevices(ctx, db.ListDevicesParams{ID: request.Msg.GetPageToken(), Limit: limit + 1})
 	if err != nil {
 		return nil, service.internal("list devices", err)
 	}
@@ -51,7 +51,8 @@ func (service *Service) ListDevices(ctx context.Context, request *connect.Reques
 	if err != nil {
 		return nil, service.internal("count devices", err)
 	}
-	response := &cadestrov1.ListDevicesResponse{TotalCount: int32(total), NextPageToken: nextPageToken(devices, limit, func(device *db.Device) string { return device.ID })}
+	devices, next := paginate(devices, limit, func(device *db.Device) string { return device.ID })
+	response := &cadestrov1.ListDevicesResponse{TotalCount: int32(total), NextPageToken: next}
 	for _, device := range devices {
 		mapped, err := service.deviceProto(ctx, device)
 		if err != nil {
@@ -143,7 +144,7 @@ func (service *Service) CreateToken(ctx context.Context, request *connect.Reques
 func (service *Service) ListTokens(ctx context.Context, request *connect.Request[cadestrov1.ListTokensRequest]) (*connect.Response[cadestrov1.ListTokensResponse], error) {
 	limit := pageSize(request.Msg.GetPageSize())
 	tokens, err := service.store.Queries().ListRegistrationTokens(ctx, db.ListRegistrationTokensParams{
-		AfterID: request.Msg.GetPageToken(), PageLimit: limit,
+		AfterID: request.Msg.GetPageToken(), PageLimit: limit + 1,
 	})
 	if err != nil {
 		return nil, service.internal("list registration tokens", err)
@@ -152,7 +153,8 @@ func (service *Service) ListTokens(ctx context.Context, request *connect.Request
 	if err != nil {
 		return nil, service.internal("count registration tokens", err)
 	}
-	response := &cadestrov1.ListTokensResponse{TotalCount: int32(total), NextPageToken: nextPageToken(tokens, limit, func(token *db.RegistrationToken) string { return token.ID })}
+	tokens, next := paginate(tokens, limit, func(token *db.RegistrationToken) string { return token.ID })
+	response := &cadestrov1.ListTokensResponse{TotalCount: int32(total), NextPageToken: next}
 	for _, token := range tokens {
 		response.Tokens = append(response.Tokens, registrationTokenProto(token))
 	}
@@ -257,7 +259,7 @@ func (service *Service) GetDeviceGroup(ctx context.Context, request *connect.Req
 
 func (service *Service) ListDeviceGroups(ctx context.Context, request *connect.Request[cadestrov1.ListDeviceGroupsRequest]) (*connect.Response[cadestrov1.ListDeviceGroupsResponse], error) {
 	limit := pageSize(request.Msg.GetPageSize())
-	groups, err := service.store.Queries().ListDeviceGroups(ctx, db.ListDeviceGroupsParams{ID: request.Msg.GetPageToken(), Limit: limit})
+	groups, err := service.store.Queries().ListDeviceGroups(ctx, db.ListDeviceGroupsParams{ID: request.Msg.GetPageToken(), Limit: limit + 1})
 	if err != nil {
 		return nil, service.internal("list device groups", err)
 	}
@@ -265,7 +267,8 @@ func (service *Service) ListDeviceGroups(ctx context.Context, request *connect.R
 	if err != nil {
 		return nil, service.internal("count device groups", err)
 	}
-	response := &cadestrov1.ListDeviceGroupsResponse{TotalCount: int32(total), NextPageToken: nextPageToken(groups, limit, func(group *db.ListDeviceGroupsRow) string { return group.ID })}
+	groups, next := paginate(groups, limit, func(group *db.ListDeviceGroupsRow) string { return group.ID })
+	response := &cadestrov1.ListDeviceGroupsResponse{TotalCount: int32(total), NextPageToken: next}
 	for _, group := range groups {
 		response.Groups = append(response.Groups, groupProto(group.ID, group.Name, group.Description, group.MemberCount, group.CreatedAt))
 	}
@@ -273,7 +276,14 @@ func (service *Service) ListDeviceGroups(ctx context.Context, request *connect.R
 }
 
 func (service *Service) ListDeviceGroupsForDevice(ctx context.Context, request *connect.Request[cadestrov1.ListDeviceGroupsForDeviceRequest]) (*connect.Response[cadestrov1.ListDeviceGroupsForDeviceResponse], error) {
-	groups, err := service.store.Queries().ListDeviceGroupsForDevice(ctx, request.Msg.GetDeviceId().GetValue())
+	deviceID := request.Msg.GetDeviceId().GetValue()
+	if _, err := service.store.Queries().GetDevice(ctx, deviceID); err != nil {
+		if store.IsNotFound(err) {
+			return nil, rpcNotFound("device")
+		}
+		return nil, service.internal("get device for groups", err)
+	}
+	groups, err := service.store.Queries().ListDeviceGroupsForDevice(ctx, deviceID)
 	if err != nil {
 		return nil, service.internal("list groups for device", err)
 	}

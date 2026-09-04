@@ -7114,6 +7114,7 @@ type ListExecutionResultsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DeviceId      *DeviceId              `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	PageSize      int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7162,9 +7163,17 @@ func (x *ListExecutionResultsRequest) GetPageSize() int32 {
 	return 0
 }
 
+func (x *ListExecutionResultsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
 type ListExecutionResultsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Results       []*ExecutionResult     `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7204,6 +7213,13 @@ func (x *ListExecutionResultsResponse) GetResults() []*ExecutionResult {
 		return x.Results
 	}
 	return nil
+}
+
+func (x *ListExecutionResultsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
 }
 
 type AuditEvent struct {
@@ -7857,12 +7873,15 @@ const file_cadestro_v1_control_proto_rawDesc = "" +
 	"\x06output\x18\x05 \x01(\v2\x1a.cadestro.v1.CommandOutputR\x06output\x12=\n" +
 	"\fcompleted_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\vcompletedAt\x12J\n" +
 	"\x11compliance_status\x18\a \x01(\x0e2\x1d.cadestro.v1.ComplianceStatusR\x10complianceStatus\x12E\n" +
-	"\x10detection_output\x18\b \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\"\x84\x01\n" +
+	"\x10detection_output\x18\b \x01(\v2\x1a.cadestro.v1.CommandOutputR\x0fdetectionOutput\"\xb0\x01\n" +
 	"\x1bListExecutionResultsRequest\x12:\n" +
 	"\tdevice_id\x18\x01 \x01(\v2\x15.cadestro.v1.DeviceIdB\x06\xbaH\x03\xc8\x01\x01R\bdeviceId\x12)\n" +
-	"\tpage_size\x18\x02 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\"V\n" +
+	"\tpage_size\x18\x02 \x01(\x05B\f\xbaH\t\xd8\x01\x01\x1a\x04\x18d(\x01R\bpageSize\x12*\n" +
+	"\n" +
+	"page_token\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\x80\x02R\tpageToken\"~\n" +
 	"\x1cListExecutionResultsResponse\x126\n" +
-	"\aresults\x18\x01 \x03(\v2\x1c.cadestro.v1.ExecutionResultR\aresults\"\xc6\x03\n" +
+	"\aresults\x18\x01 \x03(\v2\x1c.cadestro.v1.ExecutionResultR\aresults\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xc6\x03\n" +
 	"\n" +
 	"AuditEvent\x121\n" +
 	"\x02id\x18\x01 \x01(\v2\x19.cadestro.v1.AuditEventIdB\x06\xbaH\x03\xc8\x01\x01R\x02id\x12F\n" +

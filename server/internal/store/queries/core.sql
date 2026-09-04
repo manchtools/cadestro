@@ -334,7 +334,12 @@ SELECT * FROM execution_results WHERE run_id = ?;
 -- name: ListExecutionResults :many
 SELECT execution_results.*, actions.name AS action_name, actions.action_blob FROM execution_results
 JOIN actions ON actions.id = execution_results.action_id
-WHERE execution_results.device_id = ? ORDER BY execution_results.completed_at DESC, execution_results.run_id DESC LIMIT ?;
+WHERE execution_results.device_id = sqlc.arg(device_id)
+  AND (CAST(sqlc.arg(has_cursor) AS INTEGER) = 0
+    OR execution_results.completed_at < sqlc.arg(before_completed_at)
+    OR (execution_results.completed_at = sqlc.arg(before_completed_at) AND execution_results.run_id < sqlc.arg(before_run_id)))
+ORDER BY execution_results.completed_at DESC, execution_results.run_id DESC
+LIMIT sqlc.arg(page_limit);
 
 -- name: ListComplianceResults :many
 SELECT actions.id AS action_id, actions.name AS action_name, actions.action_blob,

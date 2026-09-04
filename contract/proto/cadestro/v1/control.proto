@@ -890,10 +890,15 @@ message ListExecutionResultsRequest {
     (buf.validate.field).int32.lte = 100,
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
   ];
+  string page_token = 3 [
+    (buf.validate.field).string.max_len = 256,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
 }
 
 message ListExecutionResultsResponse {
   repeated ExecutionResult results = 1;
+  string next_page_token = 2;
 }
 
 enum AuditEventType {
