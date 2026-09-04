@@ -3,6 +3,8 @@ package executor
 import (
 	"context"
 	"errors"
+	"reflect"
+	"strings"
 	"testing"
 
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
@@ -23,6 +25,25 @@ func mustExecutor(t *testing.T, runner sysexec.Runner) *Executor {
 		t.Fatal(err)
 	}
 	return executor
+}
+
+func executorWithBackend(t *testing.T, backend pkg.Backend, runner *fakeRunner) *Executor {
+	t.Helper()
+	manager, err := pkg.New(backend, runner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	executor := mustExecutor(t, runner)
+	executor.pkgManager = manager
+	return executor
+}
+
+func commandLines(commands []sysexec.Command) []string {
+	lines := make([]string, len(commands))
+	for i, command := range commands {
+		lines[i] = strings.TrimSpace(command.Name + " " + strings.Join(command.Args, " "))
+	}
+	return lines
 }
 
 func TestNewExecutorRejectsNilRunner(t *testing.T) {
@@ -54,11 +75,8 @@ type fakePackageManager struct {
 	pkg.Manager
 	installed    bool
 	version      string
-	updates      bool
 	installCalls int
 	removeCalls  int
-	updateCalls  int
-	upgradeCalls int
 	operationErr error
 }
 
@@ -77,20 +95,6 @@ func (f *fakePackageManager) Install(context.Context, pkg.InstallOptions, ...pkg
 
 func (f *fakePackageManager) Remove(context.Context, pkg.RemoveOptions, ...string) (sysexec.Result, error) {
 	f.removeCalls++
-	return sysexec.Result{}, f.operationErr
-}
-
-func (f *fakePackageManager) Update(context.Context) (sysexec.Result, error) {
-	f.updateCalls++
-	return sysexec.Result{}, f.operationErr
-}
-
-func (f *fakePackageManager) HasUpdates(context.Context) (bool, error) {
-	return f.updates, f.operationErr
-}
-
-func (f *fakePackageManager) UpgradeAll(context.Context) (sysexec.Result, error) {
-	f.upgradeCalls++
 	return sysexec.Result{}, f.operationErr
 }
 
@@ -192,16 +196,80 @@ func TestPackageSkipsInstalledVersion(t *testing.T) {
 	}
 }
 
-func TestUpdateSkipsCurrentSystem(t *testing.T) {
-	manager := &fakePackageManager{}
-	executor := mustExecutor(t, &fakeRunner{})
-	executor.pkgManager = manager
-	result := executor.ExecuteAction(context.Background(), &pb.Action{
+func TestPackageInstallUsesPacmanWithoutPartialUpgrade(t *testing.T) {
+	runner := &fakeRunner{results: []sysexec.Result{{ExitCode: 1}, {}}}
+	result := executorWithBackend(t, pkg.Pacman, runner).ExecuteAction(context.Background(), &pb.Action{
+		Id:           &pb.ActionId{Value: "01J0000000000000000000000A"},
+		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
+		Params:       &pb.Action_Package{Package: &pb.PackageActionParams{Name: "example"}},
+	})
+	if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS {
+		t.Fatalf("status = %s, want success", result.GetStatus())
+	}
+	want := []string{"pacman -Q example", "pacman -S --noconfirm --needed example"}
+	if got := commandLines(runner.commands); !reflect.DeepEqual(got, want) {
+		t.Fatalf("commands = %q, want %q", got, want)
+	}
+}
+
+func TestUpdateUsesBackendUpgradeSequence(t *testing.T) {
+	tests := []struct {
+		name    string
+		backend pkg.Backend
+		want    []string
+	}{
+		{"apt", pkg.Apt, []string{"apt-get update", "apt-get upgrade -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold"}},
+		{"dnf", pkg.Dnf, []string{"dnf check-update", "dnf upgrade -y"}},
+		{"dnf5", pkg.Dnf5, []string{"dnf5 check-update", "dnf5 upgrade -y"}},
+		{"pacman", pkg.Pacman, []string{"pacman -Syu --noconfirm"}},
+		{"zypper", pkg.Zypper, []string{"zypper --non-interactive refresh", "zypper --non-interactive update"}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			runner := &fakeRunner{}
+			result := executorWithBackend(t, test.backend, runner).ExecuteAction(context.Background(), &pb.Action{
+				Id:           &pb.ActionId{Value: "01J0000000000000000000000A"},
+				DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
+				Params:       &pb.Action_Update{Update: &pb.UpdateActionParams{}},
+			})
+			if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS {
+				t.Fatalf("status = %s, want success", result.GetStatus())
+			}
+			if got := commandLines(runner.commands); !reflect.DeepEqual(got, test.want) {
+				t.Fatalf("commands = %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
+func TestPackageInstallPreservesRefreshFailure(t *testing.T) {
+	runner := &fakeRunner{results: []sysexec.Result{{ExitCode: 1}, {ExitCode: 2}}}
+	result := executorWithBackend(t, pkg.Apt, runner).ExecuteAction(context.Background(), &pb.Action{
+		Id:           &pb.ActionId{Value: "01J0000000000000000000000A"},
+		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
+		Params:       &pb.Action_Package{Package: &pb.PackageActionParams{Name: "example"}},
+	})
+	if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_FAILED {
+		t.Fatalf("status = %s, want failed", result.GetStatus())
+	}
+	want := []string{"dpkg -s example", "apt-get update"}
+	if got := commandLines(runner.commands); !reflect.DeepEqual(got, want) {
+		t.Fatalf("commands = %q, want %q", got, want)
+	}
+}
+
+func TestUpdatePreservesRefreshFailure(t *testing.T) {
+	runner := &fakeRunner{results: []sysexec.Result{{ExitCode: 2}}}
+	result := executorWithBackend(t, pkg.Dnf, runner).ExecuteAction(context.Background(), &pb.Action{
 		Id:           &pb.ActionId{Value: "01J0000000000000000000000A"},
 		DesiredState: pb.DesiredState_DESIRED_STATE_PRESENT,
 		Params:       &pb.Action_Update{Update: &pb.UpdateActionParams{}},
 	})
-	if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_SUCCESS || manager.upgradeCalls != 0 {
-		t.Fatalf("status=%s upgrades=%d", result.GetStatus(), manager.upgradeCalls)
+	if result.GetStatus() != pb.ExecutionStatus_EXECUTION_STATUS_FAILED {
+		t.Fatalf("status = %s, want failed", result.GetStatus())
+	}
+	want := []string{"dnf check-update"}
+	if got := commandLines(runner.commands); !reflect.DeepEqual(got, want) {
+		t.Fatalf("commands = %q, want %q", got, want)
 	}
 }

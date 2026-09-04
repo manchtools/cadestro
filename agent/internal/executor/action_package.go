@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
@@ -34,7 +35,7 @@ func (e *Executor) executePackage(ctx context.Context, params *pb.PackageActionP
 				return &pb.CommandOutput{Stdout: fmt.Sprintf("package %s version %s is already installed", params.GetName(), version)}, nil
 			}
 		}
-		if _, err := e.pkgManager.Update(ctx); err != nil {
+		if _, err := e.pkgManager.Update(ctx); err != nil && !errors.Is(err, pkg.ErrUnsupported) {
 			return nil, fmt.Errorf("update package index: %w", err)
 		}
 		run, err := e.pkgManager.Install(ctx, pkg.InstallOptions{}, pkg.InstallSpec{Name: params.GetName(), Version: params.GetVersion()})

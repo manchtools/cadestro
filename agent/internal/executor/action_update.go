@@ -2,10 +2,12 @@ package executor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	pb "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
+	"github.com/manchtools/cadestro/sdk/pkg"
 )
 
 func (e *Executor) executeUpdate(ctx context.Context, _ *pb.UpdateActionParams) (*pb.CommandOutput, error) {
@@ -15,12 +17,8 @@ func (e *Executor) executeUpdate(ctx context.Context, _ *pb.UpdateActionParams) 
 	var stdout strings.Builder
 	index, err := e.pkgManager.Update(ctx)
 	stdout.WriteString(index.Stdout)
-	if err != nil {
+	if err != nil && !errors.Is(err, pkg.ErrUnsupported) {
 		return &pb.CommandOutput{ExitCode: int32(index.ExitCode), Stdout: stdout.String(), Stderr: index.Stderr}, fmt.Errorf("update package index: %w", err)
-	}
-	available, probeErr := e.pkgManager.HasUpdates(ctx)
-	if probeErr == nil && !available {
-		return &pb.CommandOutput{Stdout: stdout.String() + "system is already up to date"}, nil
 	}
 	upgrade, err := e.pkgManager.UpgradeAll(ctx)
 	stdout.WriteString(upgrade.Stdout)
