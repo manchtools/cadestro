@@ -651,6 +651,24 @@ func TestDnf_VersionLock(t *testing.T) {
 			t.Fatalf("pkgs=%+v err=%v", pkgs, err)
 		}
 	})
+	t.Run("dnf4 preserves digits and hyphens before epoch", func(t *testing.T) {
+		const name = "java-21-openjdk-headless"
+		const lock = name + "-0:21.0.8-1.fc40.*\n"
+		m, f := dnfM(t)
+		ok(f, "")
+		ok(f, lock)
+		got, err := m.IsPinned(ctx, name)
+		if err != nil || !got {
+			t.Fatalf("isPinned=%v err=%v", got, err)
+		}
+		ok(f, "")
+		ok(f, lock)
+		ok(f, "21.0.8-1.fc40\n")
+		pkgs, err := m.ListPinned(ctx)
+		if err != nil || len(pkgs) != 1 || pkgs[0].Name != name {
+			t.Fatalf("pkgs=%+v err=%v", pkgs, err)
+		}
+	})
 }
 
 func TestDnf_NEVRAParsing(t *testing.T) {
@@ -659,6 +677,7 @@ func TestDnf_NEVRAParsing(t *testing.T) {
 		"glibc-langpack-en-2.3": "glibc-langpack-en",
 		"noversion":             "noversion",
 		"2048-cli-0.9":          "2048-cli",
+		"bash-5.*":              "bash",
 	}
 	for in, want := range cases {
 		if got := parseNEVRAName(in); got != want {

@@ -18,9 +18,13 @@ type dnf struct {
 
 var _ Manager = (*dnf)(nil)
 
+var nevraEpochRe = regexp.MustCompile(`-\d+:`)
 var nevraVersionRe = regexp.MustCompile(`-\d`)
 
 func parseNEVRAName(nevra string) string {
+	if loc := nevraEpochRe.FindStringIndex(nevra); loc != nil {
+		return nevra[:loc[0]]
+	}
 	loc := nevraVersionRe.FindStringIndex(nevra)
 	if loc == nil {
 		return nevra

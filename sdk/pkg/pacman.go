@@ -102,7 +102,7 @@ func (p *pacman) Update(ctx context.Context) (sysexec.Result, error) {
 	return sysexec.Result{}, fmt.Errorf("pacman metadata refresh: %w", ErrUnsupported)
 }
 
-// Upgrade upgrades the named packages, or the whole system (-Syu) with no names.
+// Upgrade upgrades the named packages and is a no-op with no names.
 func (p *pacman) Upgrade(ctx context.Context, packages ...string) (sysexec.Result, error) {
 	if len(packages) == 0 {
 		return sysexec.Result{}, nil
