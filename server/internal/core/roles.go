@@ -36,10 +36,9 @@ func roleProto(ctx context.Context, queries *db.Queries, role *db.Role) (*cadest
 
 func (service *Service) CreateRole(ctx context.Context, request *connect.Request[cadestrov1.CreateRoleRequest]) (*connect.Response[cadestrov1.CreateRoleResponse], error) {
 	id := ulid.Make().String()
-	var role *db.Role
+	var value *cadestrov1.Role
 	if err := service.store.Transaction(ctx, func(queries *db.Queries) error {
-		var err error
-		role, err = queries.CreateRole(ctx, db.CreateRoleParams{ID: id, Name: request.Msg.GetName(), Description: request.Msg.GetDescription()})
+		role, err := queries.CreateRole(ctx, db.CreateRoleParams{ID: id, Name: request.Msg.GetName(), Description: request.Msg.GetDescription()})
 		if err != nil {
 			return err
 		}
@@ -48,16 +47,13 @@ func (service *Service) CreateRole(ctx context.Context, request *connect.Request
 				return err
 			}
 		}
-		return nil
+		value, err = roleProto(ctx, queries, role)
+		return err
 	}); err != nil {
 		if store.IsConflict(err) {
 			return nil, rpcConflict("role name")
 		}
 		return nil, service.internal("set role permissions", err)
-	}
-	value, err := roleProto(ctx, service.store.Queries(), role)
-	if err != nil {
-		return nil, service.internal("read role permissions", err)
 	}
 	return connect.NewResponse(&cadestrov1.CreateRoleResponse{Role: value}), nil
 }
@@ -149,17 +145,17 @@ func (service *Service) RevokeRolePermission(ctx context.Context, request *conne
 }
 
 func (service *Service) roleMutation(ctx context.Context, id, operation string, mutate func(*db.Queries) (*db.Role, error)) (*cadestrov1.Role, error) {
-	var role *db.Role
+	var value *cadestrov1.Role
 	if err := service.store.Transaction(ctx, func(queries *db.Queries) error {
-		var err error
-		role, err = mutate(queries)
+		role, err := mutate(queries)
 		if err != nil {
 			return err
 		}
 		if err := queries.BumpSessionsForRole(ctx, id); err != nil {
 			return err
 		}
-		return nil
+		value, err = roleProto(ctx, queries, role)
+		return err
 	}); err != nil {
 		if store.IsNotFound(err) {
 			return nil, rpcNotFound("role")
@@ -171,10 +167,6 @@ func (service *Service) roleMutation(ctx context.Context, id, operation string, 
 			return nil, rpcConflict("role name")
 		}
 		return nil, service.internal(operation, err)
-	}
-	value, err := roleProto(ctx, service.store.Queries(), role)
-	if err != nil {
-		return nil, service.internal("read role permissions", err)
 	}
 	return value, nil
 }
@@ -265,14 +257,18 @@ func (service *Service) ListUsers(ctx context.Context, request *connect.Request[
 }
 
 func (service *Service) RevokeUserSessions(ctx context.Context, request *connect.Request[cadestrov1.RevokeUserSessionsRequest]) (*connect.Response[cadestrov1.RevokeUserSessionsResponse], error) {
-	if _, err := service.store.Queries().RotateUserSessionByID(ctx, request.Msg.GetUserId().GetValue()); err != nil {
+	userID := request.Msg.GetUserId().GetValue()
+	err := service.store.Transaction(ctx, func(queries *db.Queries) error {
+		if _, err := queries.RotateUserSessionByID(ctx, userID); err != nil {
+			return err
+		}
+		return service.audit(ctx, queries, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_USER_SESSIONS_REVOKED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_USER, userID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, "")
+	})
+	if err != nil {
 		if store.IsNotFound(err) {
 			return nil, rpcNotFound("user")
 		}
 		return nil, service.internal("revoke user sessions", err)
-	}
-	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_USER_SESSIONS_REVOKED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_USER, request.Msg.GetUserId().GetValue(), cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
-		return nil, service.internal("audit session revocation", err)
 	}
 	return connect.NewResponse(&cadestrov1.RevokeUserSessionsResponse{}), nil
 }

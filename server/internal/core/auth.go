@@ -267,23 +267,27 @@ func (service *Service) CreateIdentityProvider(ctx context.Context, request *con
 	if err != nil {
 		return nil, service.internal("encode provider scopes", err)
 	}
-	provider, err := service.store.Queries().CreateIdentityProvider(ctx, db.CreateIdentityProviderParams{
-		ID: id, Name: request.Msg.GetName(), Slug: request.Msg.GetSlug(), Enabled: true,
-		ClientID: request.Msg.GetClientId().GetValue(), IssuerUrl: request.Msg.GetIssuerUrl(),
-		ScopesJson: string(scopes),
+	var result *cadestrov1.IdentityProvider
+	err = service.store.Transaction(ctx, func(queries *db.Queries) error {
+		provider, err := queries.CreateIdentityProvider(ctx, db.CreateIdentityProviderParams{
+			ID: id, Name: request.Msg.GetName(), Slug: request.Msg.GetSlug(), Enabled: true,
+			ClientID: request.Msg.GetClientId().GetValue(), IssuerUrl: request.Msg.GetIssuerUrl(),
+			ScopesJson: string(scopes),
+		})
+		if err != nil {
+			return err
+		}
+		if err := service.audit(ctx, queries, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_IDENTITY_PROVIDER_CREATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_IDENTITY_PROVIDER, id, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
+			return err
+		}
+		result, err = providerProto(provider)
+		return err
 	})
 	if err != nil {
 		if store.IsConflict(err) {
 			return nil, rpcConflict("identity provider slug")
 		}
 		return nil, service.internal("create identity provider", err)
-	}
-	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_IDENTITY_PROVIDER_CREATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_IDENTITY_PROVIDER, id, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
-		return nil, service.internal("audit provider creation", err)
-	}
-	result, err := providerProto(provider)
-	if err != nil {
-		return nil, service.internal("map identity provider", err)
 	}
 	return connect.NewResponse(&cadestrov1.CreateIdentityProviderResponse{Provider: result}), nil
 }

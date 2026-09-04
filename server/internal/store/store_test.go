@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	cadestrov1 "github.com/manchtools/cadestro/contract/gen/go/cadestro/v1"
 	generated "github.com/manchtools/cadestro/server/internal/store/generated"
 	"github.com/stretchr/testify/require"
 )
@@ -32,4 +33,25 @@ func TestDatabaseOwnsLifecycleTimestamps(t *testing.T) {
 	role, err = database.Queries().SetRoleDescription(ctx, generated.SetRoleDescriptionParams{ID: role.ID, Description: role.Description})
 	require.NoError(t, err)
 	require.True(t, role.UpdatedAt.After(role.CreatedAt))
+}
+
+func TestIsConflictOnlyMatchesUniqueAndPrimaryKeyConstraints(t *testing.T) {
+	ctx := context.Background()
+	database, err := New(ctx, filepath.Join(t.TempDir(), "control.db"))
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, database.Close()) })
+	role, err := database.Queries().CreateRole(ctx, generated.CreateRoleParams{ID: "01K00000000000000000000011", Name: "Conflict", Description: ""})
+	require.NoError(t, err)
+	_, err = database.Queries().CreateRole(ctx, generated.CreateRoleParams{ID: "01K00000000000000000000012", Name: role.Name, Description: ""})
+	require.Error(t, err)
+	require.True(t, IsConflict(err))
+	_, err = database.Queries().CreateRole(ctx, generated.CreateRoleParams{ID: role.ID, Name: "Other", Description: ""})
+	require.Error(t, err)
+	require.True(t, IsConflict(err))
+	_, err = database.Queries().GrantRolePermission(ctx, generated.GrantRolePermissionParams{RoleID: role.ID, Permission: cadestrov1.Permission_PERMISSION_UNSPECIFIED})
+	require.Error(t, err)
+	require.False(t, IsConflict(err))
+	_, err = database.Queries().CreateAssignment(ctx, generated.CreateAssignmentParams{ID: "01K00000000000000000000013", ActionID: "01K00000000000000000000099", TargetType: cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE, TargetID: "01K00000000000000000000098"})
+	require.Error(t, err)
+	require.False(t, IsConflict(err))
 }

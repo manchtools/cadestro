@@ -101,11 +101,11 @@ func auditActor(ctx context.Context) string {
 	return ulid.Make().String()
 }
 
-func (service *Service) audit(ctx context.Context, eventType cadestrov1.AuditEventType, streamType cadestrov1.AuditStreamType, streamID string, actorType cadestrov1.AuditActorType, actorID string) error {
+func (service *Service) audit(ctx context.Context, queries *db.Queries, eventType cadestrov1.AuditEventType, streamType cadestrov1.AuditStreamType, streamID string, actorType cadestrov1.AuditActorType, actorID string) error {
 	if actorID == "" {
 		actorID = auditActor(ctx)
 	}
-	return service.store.Queries().CreateAuditEvent(ctx, db.CreateAuditEventParams{
+	return queries.CreateAuditEvent(ctx, db.CreateAuditEventParams{
 		ID: ulid.Make().String(), EventType: eventType, StreamType: streamType,
 		StreamID: streamID, ActorType: actorType, ActorID: actorID, OccurredAt: service.now().UTC(),
 	})

@@ -3,7 +3,9 @@ package core
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -26,10 +28,10 @@ func assignmentProto(assignment *db.ListAssignmentsRow) *cadestrov1.Assignment {
 	}
 }
 
-func (service *Service) assignmentTargetName(ctx context.Context, targetType cadestrov1.AssignmentTargetType, targetID string) (string, error) {
+func (service *Service) assignmentTargetName(ctx context.Context, queries *db.Queries, targetType cadestrov1.AssignmentTargetType, targetID string) (string, error) {
 	switch targetType {
 	case cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE:
-		device, err := service.store.Queries().GetDevice(ctx, targetID)
+		device, err := queries.GetDevice(ctx, targetID)
 		if err != nil {
 			if store.IsNotFound(err) {
 				return "", rpcNotFound("device")
@@ -38,7 +40,7 @@ func (service *Service) assignmentTargetName(ctx context.Context, targetType cad
 		}
 		return device.Hostname, nil
 	case cadestrov1.AssignmentTargetType_ASSIGNMENT_TARGET_TYPE_DEVICE_GROUP:
-		group, err := service.store.Queries().GetDeviceGroup(ctx, targetID)
+		group, err := queries.GetDeviceGroup(ctx, targetID)
 		if err != nil {
 			if store.IsNotFound(err) {
 				return "", rpcNotFound("device group")
@@ -53,48 +55,65 @@ func (service *Service) assignmentTargetName(ctx context.Context, targetType cad
 
 func (service *Service) CreateAssignment(ctx context.Context, request *connect.Request[cadestrov1.CreateAssignmentRequest]) (*connect.Response[cadestrov1.CreateAssignmentResponse], error) {
 	actionID := request.Msg.GetActionId().GetValue()
-	action, err := service.store.Queries().GetAction(ctx, actionID)
-	if err != nil {
-		if store.IsNotFound(err) {
-			return nil, rpcNotFound("action")
-		}
-		return nil, service.internal("get assignment action", err)
-	}
 	targetID := request.Msg.GetTargetId().GetValue()
-	targetName, err := service.assignmentTargetName(ctx, request.Msg.GetTargetType(), targetID)
-	if err != nil {
-		return nil, err
-	}
-	assignment, err := service.store.Queries().CreateAssignment(ctx, db.CreateAssignmentParams{
-		ID: ulid.Make().String(), ActionID: actionID, TargetType: request.Msg.GetTargetType(), TargetID: targetID,
+	var mapped *cadestrov1.Assignment
+	err := service.store.Transaction(ctx, func(queries *db.Queries) error {
+		action, err := queries.GetAction(ctx, actionID)
+		if err != nil {
+			if store.IsNotFound(err) {
+				return rpcNotFound("action")
+			}
+			return fmt.Errorf("get assignment action: %w", err)
+		}
+		targetName, err := service.assignmentTargetName(ctx, queries, request.Msg.GetTargetType(), targetID)
+		if err != nil {
+			return err
+		}
+		assignment, err := queries.CreateAssignment(ctx, db.CreateAssignmentParams{
+			ID: ulid.Make().String(), ActionID: actionID, TargetType: request.Msg.GetTargetType(), TargetID: targetID,
+		})
+		if err != nil {
+			return err
+		}
+		if err := service.audit(ctx, queries, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_ASSIGNMENT_CREATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ASSIGNMENT, assignment.ID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
+			return err
+		}
+		mapped = assignmentProto(&db.ListAssignmentsRow{
+			ID: assignment.ID, ActionID: assignment.ActionID, TargetType: assignment.TargetType, TargetID: assignment.TargetID,
+			CreatedAt: assignment.CreatedAt, ActionName: action.Name, TargetName: targetName,
+		})
+		return nil
 	})
 	if err != nil {
+		var connectErr *connect.Error
+		if errors.As(err, &connectErr) {
+			return nil, connectErr
+		}
 		if store.IsConflict(err) {
 			return nil, rpcConflict("assignment")
 		}
 		return nil, service.internal("create assignment", err)
 	}
-	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_ASSIGNMENT_CREATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ASSIGNMENT, assignment.ID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
-		return nil, service.internal("audit assignment creation", err)
-	}
-	mapped := assignmentProto(&db.ListAssignmentsRow{
-		ID: assignment.ID, ActionID: assignment.ActionID, TargetType: assignment.TargetType, TargetID: assignment.TargetID,
-		CreatedAt: assignment.CreatedAt, ActionName: action.Name, TargetName: targetName,
-	})
 	return connect.NewResponse(&cadestrov1.CreateAssignmentResponse{Assignment: mapped}), nil
 }
 
 func (service *Service) DeleteAssignment(ctx context.Context, request *connect.Request[cadestrov1.DeleteAssignmentRequest]) (*connect.Response[cadestrov1.DeleteAssignmentResponse], error) {
 	id := request.Msg.GetId().GetValue()
-	rows, err := service.store.Queries().DeleteAssignment(ctx, id)
+	err := service.store.Transaction(ctx, func(queries *db.Queries) error {
+		rows, err := queries.DeleteAssignment(ctx, id)
+		if err != nil {
+			return err
+		}
+		if rows != 1 {
+			return sql.ErrNoRows
+		}
+		return service.audit(ctx, queries, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_ASSIGNMENT_DELETED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ASSIGNMENT, id, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, "")
+	})
 	if err != nil {
+		if store.IsNotFound(err) {
+			return nil, rpcNotFound("assignment")
+		}
 		return nil, service.internal("delete assignment", err)
-	}
-	if rows == 0 {
-		return nil, rpcNotFound("assignment")
-	}
-	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_ASSIGNMENT_DELETED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ASSIGNMENT, id, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
-		return nil, service.internal("audit assignment deletion", err)
 	}
 	return connect.NewResponse(&cadestrov1.DeleteAssignmentResponse{}), nil
 }

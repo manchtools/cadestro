@@ -595,6 +595,20 @@ func (q *Queries) DeleteAssignment(ctx context.Context, id string) (int64, error
 	return result.RowsAffected()
 }
 
+const deleteAssignmentsForTarget = `-- name: DeleteAssignmentsForTarget :exec
+DELETE FROM assignments WHERE target_type = ? AND target_id = ?
+`
+
+type DeleteAssignmentsForTargetParams struct {
+	TargetType cadestrov1.AssignmentTargetType `json:"target_type"`
+	TargetID   string                          `json:"target_id"`
+}
+
+func (q *Queries) DeleteAssignmentsForTarget(ctx context.Context, arg DeleteAssignmentsForTargetParams) error {
+	_, err := q.db.ExecContext(ctx, deleteAssignmentsForTarget, arg.TargetType, arg.TargetID)
+	return err
+}
+
 const deleteDevice = `-- name: DeleteDevice :execrows
 DELETE FROM devices WHERE id = ?
 `
@@ -2129,6 +2143,15 @@ func (q *Queries) TouchDevice(ctx context.Context, arg TouchDeviceParams) error 
 		arg.LastSeenAt,
 		arg.ID,
 	)
+	return err
+}
+
+const touchDeviceGroup = `-- name: TouchDeviceGroup :exec
+UPDATE device_groups SET updated_at = CURRENT_TIMESTAMP WHERE id = ?
+`
+
+func (q *Queries) TouchDeviceGroup(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, touchDeviceGroup, id)
 	return err
 }
 

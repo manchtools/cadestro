@@ -71,5 +71,8 @@ func IsNotFound(err error) bool { return errors.Is(err, sql.ErrNoRows) }
 
 func IsConflict(err error) bool {
 	var sqliteError *sqlite.Error
-	return errors.As(err, &sqliteError) && sqliteError.Code()&0xff == sqlite3.SQLITE_CONSTRAINT
+	if !errors.As(err, &sqliteError) {
+		return false
+	}
+	return sqliteError.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE || sqliteError.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY
 }

@@ -215,6 +215,9 @@ SELECT COUNT(*) FROM devices;
 -- name: DeleteDevice :execrows
 DELETE FROM devices WHERE id = ?;
 
+-- name: DeleteAssignmentsForTarget :exec
+DELETE FROM assignments WHERE target_type = ? AND target_id = ?;
+
 -- name: CreateAction :one
 INSERT INTO actions (id, name, description, action_blob, created_at, updated_at)
 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
@@ -276,6 +279,9 @@ UPDATE device_groups SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? R
 
 -- name: SetDeviceGroupDescription :one
 UPDATE device_groups SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *;
+
+-- name: TouchDeviceGroup :exec
+UPDATE device_groups SET updated_at = CURRENT_TIMESTAMP WHERE id = ?;
 
 -- name: DeleteDeviceGroup :execrows
 DELETE FROM device_groups WHERE id = ?;

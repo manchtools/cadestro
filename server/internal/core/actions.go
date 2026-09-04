@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 
 	"connectrpc.com/connect"
@@ -122,19 +123,23 @@ func (service *Service) CreateAction(ctx context.Context, request *connect.Reque
 	if err != nil {
 		return nil, service.internal("encode action", err)
 	}
-	action, err := service.store.Queries().CreateAction(ctx, params)
+	var mapped *cadestrov1.ManagedAction
+	err = service.store.Transaction(ctx, func(queries *db.Queries) error {
+		action, err := queries.CreateAction(ctx, params)
+		if err != nil {
+			return err
+		}
+		if err := service.audit(ctx, queries, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_ACTION_CREATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ACTION, action.ID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
+			return err
+		}
+		mapped, err = actionProto(action)
+		return err
+	})
 	if err != nil {
 		if store.IsConflict(err) {
 			return nil, rpcConflict("action")
 		}
 		return nil, service.internal("create action", err)
-	}
-	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_ACTION_CREATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ACTION, action.ID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
-		return nil, service.internal("audit action creation", err)
-	}
-	mapped, err := actionProto(action)
-	if err != nil {
-		return nil, service.internal("map action", err)
 	}
 	return connect.NewResponse(&cadestrov1.CreateActionResponse{Action: mapped}), nil
 }
@@ -176,8 +181,10 @@ func (service *Service) ListActions(ctx context.Context, request *connect.Reques
 }
 
 func (service *Service) RenameAction(ctx context.Context, request *connect.Request[cadestrov1.RenameActionRequest]) (*connect.Response[cadestrov1.RenameActionResponse], error) {
-	action, err := service.store.Queries().RenameAction(ctx, db.RenameActionParams{Name: request.Msg.GetName(), ID: request.Msg.GetId().GetValue()})
-	mapped, err := service.actionUpdateResponse(ctx, "rename action", action, err)
+	id := request.Msg.GetId().GetValue()
+	mapped, err := service.actionMutation(ctx, id, "rename action", func(queries *db.Queries) (*db.Action, error) {
+		return queries.RenameAction(ctx, db.RenameActionParams{Name: request.Msg.GetName(), ID: id})
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -185,8 +192,10 @@ func (service *Service) RenameAction(ctx context.Context, request *connect.Reque
 }
 
 func (service *Service) SetActionDescription(ctx context.Context, request *connect.Request[cadestrov1.SetActionDescriptionRequest]) (*connect.Response[cadestrov1.SetActionDescriptionResponse], error) {
-	action, err := service.store.Queries().SetActionDescription(ctx, db.SetActionDescriptionParams{Description: request.Msg.GetDescription(), ID: request.Msg.GetId().GetValue()})
-	mapped, err := service.actionUpdateResponse(ctx, "set action description", action, err)
+	id := request.Msg.GetId().GetValue()
+	mapped, err := service.actionMutation(ctx, id, "set action description", func(queries *db.Queries) (*db.Action, error) {
+		return queries.SetActionDescription(ctx, db.SetActionDescriptionParams{Description: request.Msg.GetDescription(), ID: id})
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -194,41 +203,54 @@ func (service *Service) SetActionDescription(ctx context.Context, request *conne
 }
 
 func (service *Service) ConfigureAction(ctx context.Context, request *connect.Request[cadestrov1.ConfigureActionRequest]) (*connect.Response[cadestrov1.ConfigureActionResponse], error) {
-	current, err := service.store.Queries().GetAction(ctx, request.Msg.GetId().GetValue())
-	if err != nil {
-		if store.IsNotFound(err) {
-			return nil, rpcNotFound("action")
-		}
-		return nil, service.internal("get action for update", err)
-	}
-	stored, err := executableAction(current)
-	if err != nil {
-		return nil, service.internal("decode action for update", err)
-	}
 	actionValue, err := validateAction(request.Msg.GetDesiredState(), request.Msg.GetTimeoutSeconds(), request.Msg.GetSchedule(), request.Msg.GetPackage(), request.Msg.GetUpdate(), request.Msg.GetShell())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
-	if !sameActionKind(stored, actionValue) {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("action kind cannot change"))
-	}
-	actionValue.Id = &cadestrov1.ActionId{Value: current.ID}
-	blob, err := proto.Marshal(actionValue)
-	if err != nil {
-		return nil, service.internal("encode action parameters", err)
-	}
-	action, err := service.store.Queries().ConfigureAction(ctx, db.ConfigureActionParams{
-		ActionBlob: blob, ID: current.ID,
+	id := request.Msg.GetId().GetValue()
+	mapped, err := service.actionMutation(ctx, id, "configure action", func(queries *db.Queries) (*db.Action, error) {
+		current, err := queries.GetAction(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		stored, err := executableAction(current)
+		if err != nil {
+			return nil, err
+		}
+		if !sameActionKind(stored, actionValue) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("action kind cannot change"))
+		}
+		actionValue.Id = &cadestrov1.ActionId{Value: current.ID}
+		blob, err := proto.Marshal(actionValue)
+		if err != nil {
+			return nil, err
+		}
+		return queries.ConfigureAction(ctx, db.ConfigureActionParams{ActionBlob: blob, ID: current.ID})
 	})
-	mapped, err := service.actionUpdateResponse(ctx, "configure action", action, err)
 	if err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(&cadestrov1.ConfigureActionResponse{Action: mapped}), nil
 }
 
-func (service *Service) actionUpdateResponse(ctx context.Context, operation string, action *db.Action, err error) (*cadestrov1.ManagedAction, error) {
+func (service *Service) actionMutation(ctx context.Context, id, operation string, mutate func(*db.Queries) (*db.Action, error)) (*cadestrov1.ManagedAction, error) {
+	var mapped *cadestrov1.ManagedAction
+	err := service.store.Transaction(ctx, func(queries *db.Queries) error {
+		action, err := mutate(queries)
+		if err != nil {
+			return err
+		}
+		if err := service.audit(ctx, queries, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_ACTION_UPDATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ACTION, id, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
+			return err
+		}
+		mapped, err = actionProto(action)
+		return err
+	})
 	if err != nil {
+		var connectErr *connect.Error
+		if errors.As(err, &connectErr) {
+			return nil, connectErr
+		}
 		if store.IsNotFound(err) {
 			return nil, rpcNotFound("action")
 		}
@@ -237,27 +259,26 @@ func (service *Service) actionUpdateResponse(ctx context.Context, operation stri
 		}
 		return nil, service.internal(operation, err)
 	}
-	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_ACTION_UPDATED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ACTION, action.ID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
-		return nil, service.internal("audit action update", err)
-	}
-	mapped, err := actionProto(action)
-	if err != nil {
-		return nil, service.internal("map action", err)
-	}
 	return mapped, nil
 }
 
 func (service *Service) DeleteAction(ctx context.Context, request *connect.Request[cadestrov1.DeleteActionRequest]) (*connect.Response[cadestrov1.DeleteActionResponse], error) {
 	id := request.Msg.GetId().GetValue()
-	rows, err := service.store.Queries().DeleteAction(ctx, id)
+	err := service.store.Transaction(ctx, func(queries *db.Queries) error {
+		rows, err := queries.DeleteAction(ctx, id)
+		if err != nil {
+			return err
+		}
+		if rows != 1 {
+			return sql.ErrNoRows
+		}
+		return service.audit(ctx, queries, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_ACTION_DELETED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ACTION, id, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, "")
+	})
 	if err != nil {
+		if store.IsNotFound(err) {
+			return nil, rpcNotFound("action")
+		}
 		return nil, service.internal("delete action", err)
-	}
-	if rows == 0 {
-		return nil, rpcNotFound("action")
-	}
-	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_ACTION_DELETED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_ACTION, id, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_USER, ""); err != nil {
-		return nil, service.internal("audit action deletion", err)
 	}
 	return connect.NewResponse(&cadestrov1.DeleteActionResponse{}), nil
 }

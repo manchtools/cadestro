@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -15,6 +16,11 @@ import (
 	"github.com/manchtools/cadestro/server/internal/mtls"
 	"github.com/manchtools/cadestro/server/internal/store"
 	db "github.com/manchtools/cadestro/server/internal/store/generated"
+)
+
+var (
+	errCertificateNotRecognized  = errors.New("certificate not recognized")
+	errInvalidCertificateRequest = errors.New("invalid certificate signing request")
 )
 
 func tokenHash(value string) string {
@@ -123,38 +129,58 @@ func (service *Service) RenewCertificate(ctx context.Context, request *connect.R
 	if err != nil {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("certificate not recognized"))
 	}
-	device, err := service.store.Queries().GetDevice(ctx, deviceID)
-	if err != nil || device.ActiveCertSerial != peerSerial {
-		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("certificate not recognized"))
-	}
-	if device.PendingCertSerial != nil {
-		if device.PendingCertExpiresAt == nil || len(device.PendingCertificatePem) == 0 {
-			return nil, service.internal("read pending certificate", errors.New("pending certificate is incomplete"))
+	var certificate []byte
+	err = service.store.Transaction(ctx, func(queries *db.Queries) error {
+		device, err := queries.GetDevice(ctx, deviceID)
+		if err != nil {
+			if store.IsNotFound(err) {
+				return errCertificateNotRecognized
+			}
+			return fmt.Errorf("get renewal device: %w", err)
 		}
-		return connect.NewResponse(&cadestrov1.RenewCertificateResponse{
-			Certificate: device.PendingCertificatePem,
-		}), nil
-	}
-	certificate, err := service.ca.IssueCertificateFromCSR(deviceID, request.Msg.GetCsr())
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid certificate signing request"))
-	}
-	serial, err := ca.SerialFromPEM(certificate.CertPEM)
-	if err != nil {
-		return nil, service.internal("read renewed certificate", err)
-	}
-	rows, err := service.store.Queries().SetPendingDeviceCertificate(ctx, db.SetPendingDeviceCertificateParams{
-		PendingCertificatePem: certificate.CertPEM, PendingCertSerial: &serial, PendingCertExpiresAt: &certificate.NotAfter,
-		ID: deviceID, ActiveCertSerial: peerSerial,
+		if device.ActiveCertSerial != peerSerial {
+			return errCertificateNotRecognized
+		}
+		if device.PendingCertSerial != nil {
+			if device.PendingCertExpiresAt == nil || len(device.PendingCertificatePem) == 0 {
+				return errors.New("pending certificate is incomplete")
+			}
+			certificate = device.PendingCertificatePem
+			return nil
+		}
+		issued, err := service.ca.IssueCertificateFromCSR(deviceID, request.Msg.GetCsr())
+		if err != nil {
+			return errInvalidCertificateRequest
+		}
+		serial, err := ca.SerialFromPEM(issued.CertPEM)
+		if err != nil {
+			return fmt.Errorf("read renewed certificate: %w", err)
+		}
+		rows, err := queries.SetPendingDeviceCertificate(ctx, db.SetPendingDeviceCertificateParams{
+			PendingCertificatePem: issued.CertPEM, PendingCertSerial: &serial, PendingCertExpiresAt: &issued.NotAfter,
+			ID: deviceID, ActiveCertSerial: peerSerial,
+		})
+		if err != nil {
+			return fmt.Errorf("store renewed certificate: %w", err)
+		}
+		if rows != 1 {
+			return errCertificateNotRecognized
+		}
+		if err := service.audit(ctx, queries, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_DEVICE_CERTIFICATE_RENEWED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_DEVICE, deviceID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_DEVICE, deviceID); err != nil {
+			return err
+		}
+		certificate = issued.CertPEM
+		return nil
 	})
 	if err != nil {
-		return nil, service.internal("store renewed certificate", err)
+		switch {
+		case errors.Is(err, errCertificateNotRecognized):
+			return nil, connect.NewError(connect.CodePermissionDenied, errCertificateNotRecognized)
+		case errors.Is(err, errInvalidCertificateRequest):
+			return nil, connect.NewError(connect.CodeInvalidArgument, errInvalidCertificateRequest)
+		default:
+			return nil, service.internal("renew certificate", err)
+		}
 	}
-	if rows != 1 {
-		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("certificate not recognized"))
-	}
-	if err := service.audit(ctx, cadestrov1.AuditEventType_AUDIT_EVENT_TYPE_DEVICE_CERTIFICATE_RENEWED, cadestrov1.AuditStreamType_AUDIT_STREAM_TYPE_DEVICE, deviceID, cadestrov1.AuditActorType_AUDIT_ACTOR_TYPE_DEVICE, deviceID); err != nil {
-		return nil, service.internal("audit certificate renewal", err)
-	}
-	return connect.NewResponse(&cadestrov1.RenewCertificateResponse{Certificate: certificate.CertPEM}), nil
+	return connect.NewResponse(&cadestrov1.RenewCertificateResponse{Certificate: certificate}), nil
 }
