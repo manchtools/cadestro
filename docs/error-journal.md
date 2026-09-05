@@ -240,4 +240,4 @@
 
 **Harness fix**: Added an AGENTS.md ruling that central orchestration serves servers and clients, endpoints stay minimal, no Ansible runtime is installed on endpoints, broad public Linux SDK maintenance is not assumed, and Semaphore is excluded; it supersedes the offline/no-server-push guidance only for architectural recommendations and authorizes no product rewrite.
 
-**Prevention**: Before recommending an orchestration architecture or endpoint dependency, trace the original product boundary and current rulings; keep Python and module-specific endpoint dependency acceptance explicitly unestablished until separately decided.
+**Prevention**: Before recommending an orchestration architecture or endpoint dependency, trace the original product boundary and current rulings; distinguish permitted system Python on managed Linux machines from additional module-specific dependencies, which require a separate decision.

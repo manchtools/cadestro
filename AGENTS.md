@@ -93,7 +93,9 @@ maintenance burden. Semaphore is excluded from architectural recommendations
 because its SSO gating is unacceptable. This ruling supersedes the
 no-server-push/offline-preservation guidance above for architectural
 recommendations only; it authorizes no product rewrite. Whether Python or any
-module-specific endpoint dependency is acceptable remains unestablished.
+System Python on managed Linux machines is permitted; the Ansible binary and
+controller runtime remain central, and additional module-specific endpoint
+dependencies are not automatically approved.
 
 Agent-stream messages and SDK methods must name desired-policy delivery
 explicitly. Generic sync/state names hide that the agent requests its assigned
