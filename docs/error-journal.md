@@ -225,3 +225,15 @@
 **Harness fix**: Added the AGENTS.md ruling to preserve existing UI and interaction design when reducing backend scope, adapting retained workflows to the current API without a visual redesign.
 
 **Prevention**: Verify historical source provenance and retained usability tests before claiming a UI restoration is complete.
+
+## 2026-09-05 Assumed intent: Recommended endpoint-local orchestration instead of central orchestration
+
+**What happened**: I recommended endpoint-local Ansible as the primary architecture and treated offline implementation, an installed Ansible runtime, a broad public Linux SDK, and Semaphore as viable directions instead of preserving Cadestro's central orchestration intent.
+
+**What the user said**: "That was the whole idea behind cadestro in the first place." and "The client should know basically as little as possible about \"how do i apply this state\"."
+
+**Root cause**: I inferred an endpoint-local architecture from implementation convenience without checking the product's original central-orchestration goal, endpoint boundary, and stated maintenance constraints.
+
+**Harness fix**: Added an AGENTS.md ruling that central orchestration serves servers and clients, endpoints stay minimal, no Ansible runtime is installed on endpoints, broad public Linux SDK maintenance is not assumed, and Semaphore is excluded; it supersedes the offline/no-server-push guidance only for architectural recommendations and authorizes no product rewrite.
+
+**Prevention**: Before recommending an orchestration architecture or endpoint dependency, trace the original product boundary and current rulings; keep Python and module-specific endpoint dependency acceptance explicitly unestablished until separately decided.

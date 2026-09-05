@@ -84,6 +84,17 @@ or reintroduce server-push dispatch for actions, action sets, definitions, or
 groups, including durable one-shot delivery built only for that path. Push is
 for genuinely live operations such as OSQuery, reboot, and terminal traffic.
 
+Cadestro's intended architecture is centrally orchestrated: the control plane
+serves both servers and clients, while endpoints remain small and know as
+little as possible about how desired state is applied. Do not recommend
+endpoint-local Ansible as the primary architecture, an installed Ansible
+runtime on endpoints, or a broad public Linux SDK that creates an ongoing solo
+maintenance burden. Semaphore is excluded from architectural recommendations
+because its SSO gating is unacceptable. This ruling supersedes the
+no-server-push/offline-preservation guidance above for architectural
+recommendations only; it authorizes no product rewrite. Whether Python or any
+module-specific endpoint dependency is acceptable remains unestablished.
+
 Agent-stream messages and SDK methods must name desired-policy delivery
 explicitly. Generic sync/state names hide that the agent requests its assigned
 desired policy and must not be used for that operation. Names describe the state
