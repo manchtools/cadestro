@@ -201,3 +201,15 @@
 **Harness fix**: This is the third Wrong scope entry. Added a standing AGENTS.md rule that setup questions and supplied configuration values authorize instructions, with implementation requiring an explicit request.
 
 **Prevention**: Before editing in response to a setup question, identify the explicit implementation request. If none exists, inspect the current supported commands, explain any missing path, and answer without modifying the product.
+
+## 2026-09-05 User correction: Rebuilt console did not meet UI expectations
+
+**What happened**: I delivered the console rewrite as complete after functional checks, and the operator rejected the UI on trying it locally.
+
+**What the user said**: "Gonna be honest, your ui rewrite is shit"
+
+**Root cause**: Functional verification was treated as sufficient evidence of a successful UI rewrite without establishing the operator's visual and interaction expectations.
+
+**Harness fix**: None; the existing requirement to leave product design rulings to the operator applies.
+
+**Prevention**: Establish the intended design reference and assess representative rendered workflows against it; report functional verification separately from visual and usability acceptance.
