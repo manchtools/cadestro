@@ -1,5 +1,10 @@
 # Project audit rules
 
+Questions about how to run or configure the project request instructions, not
+implementation. Supplied configuration values refine those instructions; they
+do not authorize adding launchers, changing deployment files, or starting services.
+Make those changes only when the operator explicitly asks for implementation.
+
 Interactive learning material must derive completion from a durable learner-produced answer or exercise result, never a self-certification checkbox.
 
 ## Class-wide coverage
