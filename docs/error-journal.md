@@ -228,11 +228,15 @@
 
 ## 2026-09-05 Assumed intent: Recommended endpoint-local orchestration instead of central orchestration
 
-**What happened**: I recommended endpoint-local Ansible as the primary architecture and treated offline implementation, an installed Ansible runtime, a broad public Linux SDK, and Semaphore as viable directions instead of preserving Cadestro's central orchestration intent.
+**What happened**: I recommended endpoint-local Ansible primarily to preserve the current offline implementation and treated central orchestration as a new product decision, although the operator intended central orchestration from the outset.
 
-**What the user said**: "That was the whole idea behind cadestro in the first place." and "The client should know basically as little as possible about \"how do i apply this state\"."
+**What the user said**:
 
-**Root cause**: I inferred an endpoint-local architecture from implementation convenience without checking the product's original central-orchestration goal, endpoint boundary, and stated maintenance constraints.
+> “That was the whole idea behind cadestro in the first place.”
+>
+> “The client should know basically as little as possible about "how do i apply this state".”
+
+**Root cause**: I treated an implemented capability as the product priority instead of separating current architecture from the operator’s intended scope and endpoint dependency boundary.
 
 **Harness fix**: Added an AGENTS.md ruling that central orchestration serves servers and clients, endpoints stay minimal, no Ansible runtime is installed on endpoints, broad public Linux SDK maintenance is not assumed, and Semaphore is excluded; it supersedes the offline/no-server-push guidance only for architectural recommendations and authorizes no product rewrite.
 
