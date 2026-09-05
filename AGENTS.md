@@ -92,7 +92,7 @@ runtime on endpoints, or a broad public Linux SDK that creates an ongoing solo
 maintenance burden. Semaphore is excluded from architectural recommendations
 because its SSO gating is unacceptable. This ruling supersedes the
 no-server-push/offline-preservation guidance above for architectural
-recommendations only; it authorizes no product rewrite. Whether Python or any
+recommendations only; it authorizes no product rewrite.
 System Python on managed Linux machines is permitted; the Ansible binary and
 controller runtime remain central, and additional module-specific endpoint
 dependencies are not automatically approved.
