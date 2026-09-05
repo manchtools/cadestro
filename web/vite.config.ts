@@ -1,4 +1,6 @@
+import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { sveltekit } from '@sveltejs/kit/vite';
+import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 
 const control = process.env.VITE_DEV_CONTROL_URL || 'https://localhost:8081';
@@ -12,5 +14,9 @@ export default defineConfig({
 			'/health': { target: control, changeOrigin: true }
 		}
 	},
-	plugins: [sveltekit()]
+	plugins: [
+		paraglideVitePlugin({ project: './project.inlang', outdir: './src/lib/paraglide' }),
+		tailwindcss(),
+		sveltekit()
+	]
 });

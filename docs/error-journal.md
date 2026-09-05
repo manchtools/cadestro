@@ -213,3 +213,15 @@
 **Harness fix**: None; the existing requirement to leave product design rulings to the operator applies.
 
 **Prevention**: Establish the intended design reference and assess representative rendered workflows against it; report functional verification separately from visual and usability acceptance.
+
+## 2026-09-05 Wrong scope: Replaced an established UI while reducing product scope
+
+**What happened**: I replaced the established UI while reducing backend scope instead of adapting its retained workflows to the current API.
+
+**What the user said**: "Please restore the previous UI it already had multiple usability passes and yours is jut a bunch of form tabs. The UI needed replacing the least"
+
+**Root cause**: Backend simplification was wrongly treated as authorization to discard established UI workflows.
+
+**Harness fix**: Added the AGENTS.md ruling to preserve existing UI and interaction design when reducing backend scope, adapting retained workflows to the current API without a visual redesign.
+
+**Prevention**: Verify historical source provenance and retained usability tests before claiming a UI restoration is complete.

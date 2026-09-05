@@ -1,4 +1,7 @@
 <script lang="ts">
+ import { Button } from '$lib/components/ui/button';
+ import { Globe } from '@lucide/svelte';
+ import * as m from '$lib/paraglide/messages';
 	import { onMount } from 'svelte';
 	import { publicAPI, errorMessage } from '$lib/api';
 
@@ -32,20 +35,41 @@
 	}
 </script>
 
-<main class="centered">
-	<section class="card login">
-		<p class="eyebrow">Linux device management</p>
-		<h1>Cadestro</h1>
-		<p>Sign in with your administrator identity.</p>
-		{#if loading}
-			<p>Loading identity providers…</p>
-		{:else if providers.length === 0}
-			<p class="error">{error || 'No identity provider is configured.'}</p>
-		{:else}
-			{#each providers as provider (provider.slug)}
-				<button class="primary wide" onclick={() => signIn(provider.slug)}>Continue with {provider.name}</button>
-			{/each}
-		{/if}
-		{#if error && providers.length > 0}<p class="error" role="alert">{error}</p>{/if}
-	</section>
-</main>
+<div class="flex min-h-screen items-center justify-center bg-page p-4">
+	<div class="w-full max-w-md rounded-[14px] border bg-surface shadow-plate">
+		<div class="space-y-1 px-6 pb-4 pt-6">
+			<div class="flex items-center justify-between">
+				<h1 class="text-2xl font-semibold tracking-tight">{m.login_title()}</h1>
+
+			</div>
+			<p class="text-sm text-muted-foreground">{m.login_description()}</p>
+		</div>
+		<div class="space-y-4 px-6 pb-6">
+
+
+			{#if loading}
+				<p class="text-sm text-muted-foreground">{m.login_sso_loading()}</p>
+			{:else if providers.length === 0}
+				<p class="text-sm text-muted-foreground">{error || m.login_no_identity_providers()}</p>
+			{:else}
+				<div class="space-y-2">
+					{#each providers as provider, i (provider.slug)}
+						<Button
+							variant={i === 0 ? 'default' : 'outline'}
+							class="w-full"
+
+							onclick={() => signIn(provider.slug)}
+						>
+							<Globe class="mr-2 h-4 w-4" />
+							{provider.name}
+						</Button>
+					{/each}
+				</div>
+			{/if}
+
+			{#if error && providers.length > 0}
+				<p role="alert" class="text-sm text-crit">{error}</p>
+			{/if}
+		</div>
+	</div>
+</div>
